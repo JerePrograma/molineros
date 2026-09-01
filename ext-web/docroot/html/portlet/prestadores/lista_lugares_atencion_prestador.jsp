@@ -77,29 +77,29 @@
 
 			StringBuffer direccionBuffer = new StringBuffer();
 
+			if (nvl(domicilio.getCalle()).length() > 0) {
+			    direccionBuffer.append(nvl(domicilio.getCalle()));
+			}
+
 			if (nvl(domicilio.getNumero()).length() > 0) {
-				direccionBuffer.append("Nro: ").append(nvl(domicilio.getNumero()));
+			    if (direccionBuffer.length() > 0) {
+			        direccionBuffer.append(" ");
+			    }
+			    direccionBuffer.append(nvl(domicilio.getNumero()));
 			}
 
 			if (nvl(domicilio.getPiso()).length() > 0) {
-				if (direccionBuffer.length() > 0) {
-					direccionBuffer.append(" ");
-				}
-				direccionBuffer.append("Piso: ").append(nvl(domicilio.getPiso()));
+			    if (direccionBuffer.length() > 0) {
+			        direccionBuffer.append(" ");
+			    }
+			    direccionBuffer.append("Piso: ").append(nvl(domicilio.getPiso()));
 			}
 
 			if (nvl(domicilio.getDepto()).length() > 0) {
-				if (direccionBuffer.length() > 0) {
-					direccionBuffer.append(" ");
-				}
-				direccionBuffer.append("Dto: ").append(nvl(domicilio.getDepto()));
-			}
-
-			if (nvl(domicilio.getPostal_codi()).length() > 0) {
-				if (direccionBuffer.length() > 0) {
-					direccionBuffer.append(" ");
-				}
-				direccionBuffer.append("CP: ").append(nvl(domicilio.getPostal_codi()));
+			    if (direccionBuffer.length() > 0) {
+			        direccionBuffer.append(" ");
+			    }
+			    direccionBuffer.append("Dto: ").append(nvl(domicilio.getDepto()));
 			}
 
 			direccion = direccionBuffer.toString();
@@ -111,13 +111,46 @@
 			vigenciaDesde = DateUtils.format(la.getVigen_desde(), DateUtils.SHORT);
 		}
 
+		StringBuffer correosBuffer = new StringBuffer();
+
+		if (la.getContactosElectronicos() != null) {
+
+		    for (ContactoElectronicoPrestador contacto : la.getContactosElectronicos()) {
+
+		        if (contacto.getTipo() != null) {
+
+		            String tipo = contacto.getTipo().getId();
+
+		            if ("E".equals(tipo)) {
+
+		                if (correosBuffer.length() > 0) {
+		                    correosBuffer.append("<br/>");
+		                }
+
+		                correosBuffer.append("Email: ");
+		                correosBuffer.append(nvl(contacto.getContacto()));
+
+		            } else if ("F".equals(tipo)) {
+
+		                if (correosBuffer.length() > 0) {
+		                    correosBuffer.append("<br/>");
+		                }
+
+		                correosBuffer.append("Factura: ");
+		                correosBuffer.append(nvl(contacto.getContacto()));
+		            }
+		        }
+		    }
+		}
+
+		String correosElectronicos = correosBuffer.toString();
 		row.addText(vigenciaDesde, rowURL);
 		row.addText(nvl(la.getFactura()), rowURL);
 		row.addText(nvl(la.getNombre()), rowURL);
 		row.addText(provincia, rowURL);
 		row.addText(localidad, rowURL);
 		row.addText(direccion, rowURL);
-		row.addText(nvl(la.getCorreoElectronico()), rowURL);
+		row.addText(correosElectronicos, rowURL);
 		row.addText(nvl(la.getTelefonosConcatenados()), rowURL);
 
 		row.addJSP(

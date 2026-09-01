@@ -376,28 +376,127 @@ for(EmpresaLiferay empSecUsu : empresasSectoresUsuarios){ %>
 <script src="/html/js/disableKeys.js" type="text/javascript"></script>
 <script src="/html/js/combosDinamicos.js" type="text/javascript"></script>
 
+<link
+    rel="stylesheet"
+    type="text/css"
+    href="/html/jquery.mb.containerPlus/css/mbContainer.css"
+/>
+
+<script
+    type="text/javascript"
+    src="/html/jquery.mb.containerPlus/inc/jquery.metadata.js">
+</script>
+
+<script
+    type="text/javascript"
+    src="/html/jquery.mb.containerPlus/inc/mbContainer.js">
+</script>
 
 <script type="text/javascript">
 
 function addEvent(obj, evType, fn, useCapture) {
-// General function for adding an event listener
-	if (obj.addEventListener) {
-		obj.addEventListener(evType, fn, useCapture);
-		return true;} else if (obj.attachEvent) {
-	var r = obj.attachEvent("on" + evType, fn);
-		return r;
-	} else {
-		alert(evType+" handler could not be attached");
-	}
+
+    if (obj.addEventListener) {
+
+        obj.addEventListener(
+            evType,
+            fn,
+            useCapture
+        );
+
+        return true;
+
+    } else if (obj.attachEvent) {
+
+        var r = obj.attachEvent(
+            "on" + evType,
+            fn
+        );
+
+        return r;
+
+    } else {
+
+        alert(
+            evType +
+            " handler could not be attached"
+        );
+    }
 }
 
 function addKeyEvent() {
-// Specific function for this particular browser
-	var e = (document.addEventListener) ? 'keypress' : 'keydown';
-	addEvent(document,e,keyEventHandler,false);
+
+    var e =
+        document.addEventListener
+            ? "keypress"
+            : "keydown";
+
+    addEvent(
+        document,
+        e,
+        keyEventHandler,
+        false
+    );
+}
+
+/*
+ * Inicializa las ventanas de ayuda.
+ */
+jQuery(document).ready(function() {
+
+    jQuery(".containerPlus").buildContainers({
+
+        containment: "document",
+
+        elementsPath:
+            "/html/jquery.mb.containerPlus/elements/",
+
+        onResize: function(o) {},
+        onClose: function(o) {},
+        onCollapse: function(o) {},
+        onIconize: function(o) {},
+        onDrag: function(o) {},
+        onLoad: function(o) {}
+    });
+});
+
+/*
+ * Cierra cualquier ventana de ayuda abierta.
+ */
+function closeHelps() {
+
+    var elements =
+        jQuery(".containerPlus");
+
+    elements.each(function() {
+        jQuery(this).mb_close();
+    });
+}
+
+/*
+ * Abre la ayuda seleccionada y la posiciona cerca
+ * del lugar donde hizo clic el usuario.
+ */
+function help(event, id) {
+
+    closeHelps();
+
+    jQuery("#" + id).mb_open();
+
+    jQuery("#" + id).css(
+        "top",
+        event.clientY +
+        jQuery(document).scrollTop()
+    );
+
+    jQuery("#" + id).css(
+        "left",
+        600
+    );
 }
 
 addKeyEvent();
-//To disable the right mouse button
-document.oncontextmenu=new Function("return false");
+
+document.oncontextmenu =
+    new Function("return false");
 </script>

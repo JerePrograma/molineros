@@ -303,10 +303,10 @@ public class ClienteProveedoresLPA {
 					        	tipo="FCP";
 					        	letra="A";	
 					        }else if("Nota de Crédito B".equalsIgnoreCase(tipoComprobante)) {
-					        	tipo="NCP";
+						tipo="NCR";
 					        	letra="B";
 					        }else if("Nota de Crédito C".equalsIgnoreCase(tipoComprobante)) {
-					        	tipo="NCP";
+						tipo="NCR";
 					        	letra="C";
 					        }else if("Recibo C".equalsIgnoreCase(tipoComprobante)) {
 					        	tipo="RCB";

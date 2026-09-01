@@ -83,7 +83,7 @@ public class GrabarTercerizadoraAction extends PortletAction {
 			List<AfiTercerizadoraServicio> afiliadoTercerizadoras){
 		
 		String cuilTitular = ParamUtil.getString(renderRequest,"cuil_titular");
-//		Integer inte = ParamUtil.getInteger(renderRequest,"inte");
+		Integer inte = ParamUtil.getInteger(renderRequest,"inte"); //se descomenta 27/08/2026
 		Integer idPlan = ParamUtil.getInteger(renderRequest,"idPlanNuevo");
 //		ArrayList<TercerizadoraServicio> tercerizadorasPlanNuevo;
 //		AfiTercerizadoraServicio tercAfiVigente = null;
@@ -96,6 +96,11 @@ public class GrabarTercerizadoraAction extends PortletAction {
 		Date fechaHastaNuevoPlan = this.getFechaHastaPlanNuevo(renderRequest);
 //
 //		deshacemos cambios nuevos, porque puede ser que se arrepientan de bajas cascadas o seleccionan otro plan nuevo, etc...
+
+		//NUEVO 27/08/2026 - Mauro
+		// Se reemplaza el manejo de la lista en sesión por una recarga desde BD,
+		// para evitar conservar modificaciones temporales al cambiar varias veces de plan.
+		/*
 		if(afiliadoTercerizadoras != null && afiliadoTercerizadoras.size() >0){
 			for (int j=0; j<afiliadoTercerizadoras.size();j++){
 				
@@ -106,6 +111,15 @@ public class GrabarTercerizadoraAction extends PortletAction {
 				}
 			}
 		}
+*/
+		//se agrega 27/08/2026
+		try {
+		    afiliadoTercerizadoras =
+		        TercerizadoraServiceUtil.buscaTercerizadoras(cuilTitular, inte);
+		} catch (Exception e) {
+		    _log.error("Error recargando tercerizadoras del afiliado", e);
+		}
+
 //		try {
 //			tercerizadorasPlanNuevo=(ArrayList<TercerizadoraServicio>) TercerizadoraServiceUtil.getInstance().getTercerizadoraPlan(idPlan);
 //			

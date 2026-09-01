@@ -1698,26 +1698,45 @@ import ar.com.ospim.util.StringUtils;
 		
 		if (reclamo.getFechaMailSeccional() != null){
 			SessionErrors.add(renderRequest, "error-enviar-mail");
-			renderRequest.setAttribute("msg-error-enviar-mail","El reclamos ya fue enviado");
+			renderRequest.setAttribute("msg-error-enviar-mail","Email enviado. No se puede volver a enviar.");
 			return true;
 		}
 		
-		//NUEVO: validar que tenga al menos una prestación
-	    int activas = 0;
-	    if (reclamo.getPrestaciones() != null) {
-	        for (PrestacionesReclamo p : reclamo.getPrestaciones()) {
-	            if (!PrestacionesReclamo.ESTADOS.BAJA.equals(p.getEstado())) {
-	                activas++;
-	                break;
-	            }
-	        }
-	    }
+		//validar que exista al menos una prestacion activa
+		boolean tienePrestacionCargada = false;
 
-	    if (activas == 0) {
-	        SessionErrors.add(renderRequest, "error-enviar-mail_4");
-	        renderRequest.setAttribute("msg-error-enviar-mail_4","Debe cargar al menos una prestación");
-	        error = true;
-	    }
+		if (reclamo.getPrestaciones() != null) {
+
+		    for (PrestacionesReclamo p : reclamo.getPrestaciones()) {
+
+		        boolean activa =
+		            !PrestacionesReclamo.ESTADOS.BAJA.equals(p.getEstado());
+
+		        boolean tienePrestacionMedica =
+		            StringUtils.checkNotEmpty(p.getCodigoPrestacion())
+		            && p.getId_prestacion() > 0
+		            && StringUtils.checkNotEmpty(p.getNombreprestacion());
+
+		        boolean tieneMedicamento =
+		            p.getId_medicamento() > 0;
+
+		        if (activa && (tienePrestacionMedica || tieneMedicamento)) {
+		            tienePrestacionCargada = true;
+		            break;
+		        }
+		    }
+		}
+
+		if (!tienePrestacionCargada) {
+		    SessionErrors.add(renderRequest, "error-enviar-mail_4");
+
+		    renderRequest.setAttribute(
+		        "msg-error-enviar-mail_4",
+		        "Debe cargar una prestación antes de enviar el email"
+		    );
+
+		    error = true;
+		}
 	    
 		if (reclamo.getCantidadImagenes(reclamo.getId_reclamo()) == 0){
 			SessionErrors.add(renderRequest, "error-enviar-mail");

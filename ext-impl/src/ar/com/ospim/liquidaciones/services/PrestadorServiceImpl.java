@@ -2,6 +2,7 @@ package ar.com.ospim.liquidaciones.services;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -648,6 +649,30 @@ public class PrestadorServiceImpl {
 		return planesPrest;
 	}
 
+	public List<String> getRubrosPrestador(int idPrestador) throws SystemException {
+
+		List<String> rubros = new ArrayList<String>();
+		Connection con = null;
+		PreparedStatement stmt = null;
+		try {
+			String sql = "SELECT rubro FROM public.prestador_rubro "
+					+ "WHERE id_prestador = ? ORDER BY rubro";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareStatement(sql);
+			stmt.setInt(1, idPrestador);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				rubros.add(rs.getString("rubro"));
+			}
+		} catch (Exception e) {
+			_log.error("Error al buscar rubros del prestador", e);
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return rubros;
+	}
+
 	public List<ProfesionPrestador> getProfesionesEspecialidadesySubEspecialidades(int idPrestador) {
 		
 		Connection con = null;
@@ -1167,33 +1192,97 @@ public class PrestadorServiceImpl {
 		return listaPrestadores;
 	}
 
-	public int actualizarSolicitarCotizacionPrestador(
-			int idPrestador, boolean solicitarCotizacion,
-			String screenName) throws SystemException {
-		Connection con = null;
-		CallableStatement stmt = null;
-		int resultado = 0;
+	public int actualizarSolicitarCotizacionPrestador(int idPrestador, boolean solicitarCotizacion, String screenName)
+			throws SystemException {
 
-		try {
-			String sql = "{call autorizaciones.actualizar_solicitar_cotizacion_prestador(?,?,?)}";
-			con = ConnectionHelper.getConnection();
-			stmt = con.prepareCall(sql);
-			stmt.setInt(1, idPrestador);
-			stmt.setBoolean(2, solicitarCotizacion);
-			stmt.setString(3, screenName);
+	    Connection con = null;
+	    CallableStatement stmt = null;
 
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				resultado = rs.getInt(1);
-			}
-		} catch (SQLException e) {
-			_log.error("Error al actualizar solicitar cotizacion del prestador", e);
-			throw new SystemException(e);
-		} finally {
-			ConnectionHelper.cerrar(stmt, con);
-		}
+	    try {
 
-		return resultado;
+	        String sql = "{call autorizaciones.actualizar_solicitar_cotizacion_prestador(?,?,?)}";
+
+	        con = ConnectionHelper.getConnection();
+
+	        stmt = con.prepareCall(sql);
+
+	        stmt.setInt(1, idPrestador);
+	        stmt.setBoolean(2, solicitarCotizacion);
+	        stmt.setString(3, screenName);
+
+	        ResultSet rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            return rs.getInt(1);
+	        }
+
+	        return 0;
+
+	    } catch (Exception e) {
+
+	        _log.error("Error al actualizar solicitar cotizacion del prestador", e);
+	        throw new SystemException(e);
+
+	    } finally {
+
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
 	}
 
+	public void actualizarRubrosPrestador(int idPrestador, List<String> rubros, String screenName)
+			throws SystemException {
+
+	    Connection con = null;
+	    CallableStatement stmtBorrar = null;
+	    CallableStatement stmtInsertar = null;
+
+	    try {
+
+	        con = ConnectionHelper.getConnection();
+	        con.setAutoCommit(false);
+
+	        String sqlBorrar = "{ ? = call autorizaciones.borrar_rubros_prestador(?) }";
+
+	        stmtBorrar = con.prepareCall(sqlBorrar);
+	        stmtBorrar.registerOutParameter(1, Types.INTEGER);
+	        stmtBorrar.setInt(2, idPrestador);
+	        stmtBorrar.execute();
+
+	        if (rubros != null) {
+
+	            String sqlInsertar = "{ ? = call autorizaciones.insertar_rubro_prestador(?,?) }";
+
+	            stmtInsertar = con.prepareCall(sqlInsertar);
+
+	            for (String rubro : rubros) {
+
+	                stmtInsertar.registerOutParameter(1, Types.INTEGER);
+	                stmtInsertar.setInt(2, idPrestador);
+	                stmtInsertar.setString(3, rubro);
+
+	                stmtInsertar.execute();
+	            }
+	        }
+
+	        con.commit();
+
+	    } catch (Exception e) {
+
+	        _log.error("Error al actualizar rubros del prestador", e);
+	        try {
+	            if (con != null) {
+	                con.rollback();
+	            }
+	        } catch (Exception ignored) {
+	            _log.error("Error al revertir rubros del prestador", ignored);
+	        }
+
+	        throw new SystemException(e);
+
+	    } finally {
+
+	        ConnectionHelper.cerrar(stmtInsertar, null);
+	        ConnectionHelper.cerrar(stmtBorrar, con);
+	    }
+	}
 }

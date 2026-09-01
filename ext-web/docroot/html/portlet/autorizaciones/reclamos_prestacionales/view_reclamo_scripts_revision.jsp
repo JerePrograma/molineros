@@ -177,36 +177,35 @@ function <%= reclamoPortletNamespace %>agregarRevision() {
 
         if (resolucion.toUpperCase()!="AUTORIZADO"){
             if(confirm("Confirma el Cierre del Caso con el Rechazo en la revision ?")){
-                     /* var estadoSelectsector  =document.getElementById("<%= reclamoPortletNamespace %>estado"); */
-                    //estadoSelectsector.selectedIndex = 2; // setea el estado en cerrado
-                    /* estadoSelectsector.selectedIndex = ubicacionOpcionEstadoCerradoCombo();	 */
-                    /* jQuery("#<%= reclamoPortletNamespace %>estado option[value='3']").attr("selected", true); //CERARADO */
+
+                    cierrePorRevisionRechazada = true;
+
+                    jQuery(
+                        "#<%= reclamoPortletNamespace %>cantrevisionesactivas"
+                    ).val(1);
+
                     jQuery(
                         "#<%= reclamoPortletNamespace %>estado"
                     ).val("3");
-                    controlarEstadoCerrado(); // hace visible los controles del estado cerrado
 
                     document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").disabled = false;
 
-                    var tipoSelectsector  =document.getElementById("<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo");
-
                     seteaControlesFacturacionDirecta(true);
-                    /* tipoSelectsector.selectedIndex= ubicacionOpcionRechazadoenCombo(); */
-                    /* jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo option[value='5']").attr("selected", true); //RECHAZADO */
-                    /*jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo option[value='RECHAZADO']").attr("selected",true);*/
-
 
                     jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").val("5");
-                    tipoGestionCierreReclamo();
 
-                    /* var tipoGestionArray=jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val().split("|"); */
-                    var idgestion=jQuery('#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo').val()
+                    var idgestion =
+                        jQuery(
+                            "#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo"
+                        ).val();
 
-                    /* var idgestion =tipoGestionArray [0]; */
                     jQuery('#<%= reclamoPortletNamespace %>tipogestion').val(idgestion);
                     jQuery('#<%= reclamoPortletNamespace %>reclamo_observacion_cierre').val('RECHAZO DE LA PRESTACION EN LA REVISION.');
-                    revisionConCierre=true;
-                    jQuery('#<%= reclamoPortletNamespace %>cantrevisionesactivas').val(1); // para que no valide esto
+
+                    tipoGestionCierreReclamo();
+                    controlarEstadoCerrado();
+
+                    revisionConCierre = true;
                     desactivaCheckCierre();
 
              }else{
@@ -1074,13 +1073,21 @@ function <%= reclamoPortletNamespace %>agregarPrestacion() {
 
 function controlarEstadoCerrado() {
 
-    var varCantRevisiones =
-        parseInt(
-            jQuery(
-                "#<%= reclamoPortletNamespace %>cantrevisionesactivas"
-            ).val(),
-            10
-        ) || 0;
+    var varCantRevisiones = <%=cantRevisiones%>;
+
+    var cantRevisionesPantalla = parseInt(
+        jQuery(
+            "#<%= reclamoPortletNamespace %>cantrevisionesactivas"
+        ).val(),
+        10
+    );
+
+    if (
+        !isNaN(cantRevisionesPantalla) &&
+        cantRevisionesPantalla > varCantRevisiones
+    ) {
+        varCantRevisiones = cantRevisionesPantalla;
+    }
 
     var  varDebitoTercerizadora = <%=debitoTercerizadora%>;
 

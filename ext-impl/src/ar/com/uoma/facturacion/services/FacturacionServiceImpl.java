@@ -172,7 +172,9 @@ public class FacturacionServiceImpl {
 	public int saveFactura(Factura factura, String usuario) throws SystemException, SQLException{
 		
 		Connection con = null;
-		CallableStatement stmt = null, stmt1 = null, stmt2 = null, stmt3 = null, stmt4 = null;
+		CallableStatement stmt = null, stmt1 = null, stmt2 = null, stmt3 = null, stmt4 = null,stmtCheque = null;
+
+		String sqlCheque = null;
 		
 		int idClienteNuevo = -1, idFacturaNueva = 0;
 //		String numeroFacturaSucursalLetra = null;
@@ -301,6 +303,10 @@ public class FacturacionServiceImpl {
 
 			stmt3 = con.prepareCall(sql3.toString());
 			
+			sqlCheque = "{call uoma.insertar_cheques_uoma(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+			stmtCheque = con.prepareCall(sqlCheque.toString());
+
+
 			for (Iterator<FacturaIngreso> iterator = factura.getIngresos().iterator(); iterator.hasNext();) {
 				FacturaIngreso fi =  iterator.next();
 				Ingreso i =  fi.getIngreso();
@@ -442,6 +448,27 @@ public class FacturacionServiceImpl {
 				stmt3.executeUpdate();
 				
 				
+				if (i.getTipo().equals("Cheque")) {
+					stmtCheque.setBigDecimal(1, new BigDecimal( i.getNumeroStr()) ) ;
+					if(((Cheque)i).getCuit()!=null){
+						stmtCheque.setString(2, ((Cheque)i).getCuit());
+					}else {
+						stmtCheque.setNull(2,Types.VARCHAR);
+					}
+					stmtCheque.setNull(3,Types.VARCHAR); //A nombre de
+					stmtCheque.setDate(4, new java.sql.Date( ((Cheque)i).getFecha().getTime()));
+					stmtCheque.setBigDecimal(5,((Cheque)i).getImporte());
+					stmtCheque.setString(6, usuario);
+					stmtCheque.setBoolean(7, false); //prestador
+					stmtCheque.setNull(8, Types.VARCHAR); //concepto
+					stmtCheque.setInt(9, ((Cheque)i).getCuentaBancaria().getId_cuenta_bcria());
+					stmtCheque.setString(10,"C");
+					stmtCheque.setInt(11, ((Cheque)i).getBanco().getId_banco());
+					stmtCheque.setInt(12,  ((Cheque)i).getEstado().getId());
+
+					stmtCheque.executeUpdate();
+				}
+
 				String sql4 = "{call uoma.inserta_factura_recibo(?,?,?,?,?) }";
 				
 				stmt4 = con.prepareCall(sql4.toString());
@@ -472,6 +499,7 @@ public class FacturacionServiceImpl {
 			throw new SystemException(e);
 			
 		} finally {
+			ConnectionHelper.cerrar(stmtCheque);
 			ConnectionHelper.cerrar(stmt4);
 			ConnectionHelper.cerrar(stmt3);
 			ConnectionHelper.cerrar(stmt2);
@@ -1126,4 +1154,3 @@ public Cliente getClienteById(Integer idCliente) throws SystemException {
 }
 	
 }
-

@@ -386,7 +386,6 @@ public class ReporteListadoPadron extends ReporteXLS {
 		}
 		boolean esExportaTercerizadora= ParamUtil.getBoolean(req, "vistaTercerizadora");
 		
-		
 		if(esExportaTercerizadora) {
 			idPlan="";
 			List<Plan> pls=TraeListasServiceUtil.getPlanesSoloOspim();
@@ -523,6 +522,7 @@ public class ReporteListadoPadron extends ReporteXLS {
 //		Recuperamos el filtro para que todos los reportes unifiquen lso criterios de busqueda
 //		pegamos el filtro en la session
 		BusquedaReportePadronFiltro filtro = getFiltrosPadron(req,res);
+		boolean esVistaAdmifarm = ParamUtil.getBoolean(req, "vistaAdmifarm");
 		
 		SXSSFWorkbook wb = new SXSSFWorkbook(100);
 		//HSSFWorkbook wb = null;
@@ -568,7 +568,7 @@ public class ReporteListadoPadron extends ReporteXLS {
 			if(filtro.getTipoBusqueda() == 2 ){ // baja fecha proceso
 				wb = getReporteBajas(repo);
 			}else{
-				wb = getReporte(repo, filtro);
+				wb = getReporte(repo, filtro, esVistaAdmifarm);
 			}	
 		}
 
@@ -1051,7 +1051,7 @@ public class ReporteListadoPadron extends ReporteXLS {
 		return index;
 	}
 
-	private static SXSSFWorkbook getReporte(List<ReportePadronResult> repo, BusquedaReportePadronFiltro filtro) {
+	private static SXSSFWorkbook getReporte(List<ReportePadronResult> repo, BusquedaReportePadronFiltro filtro, boolean esVistaAdmifarm) {
 		SXSSFWorkbook wb = new SXSSFWorkbook(100);
 		int sh = 1, colNum=0;
 		Sheet sheet = wb.createSheet("Hoja " + sh);
@@ -1061,14 +1061,17 @@ public class ReporteListadoPadron extends ReporteXLS {
 		int index = 0;
 		Row row1 = sheet.createRow(index);
 		
-		index++;
-		Row row2 = sheet.createRow(index);
-		
-		if(filtro.isVistaPrevencion()){
+		if (esVistaAdmifarm) {
+		    createHeaderAdmifarm(row1);
+		} else if (filtro.isVistaPrevencion()) {
 			createTitulos(sheet, row1, filtro);
+
+			index++;
+			Row row2 = sheet.createRow(index);
 			createHeaderTercerizadora(row2);
 		}else{
 			createHeader(row1);
+
 		}
 		
 		if (repo != null) {
@@ -1080,14 +1083,21 @@ public class ReporteListadoPadron extends ReporteXLS {
 					sh++;
 					sheet = wb.createSheet("Hoja " + sh);
 					Row rowNew = sheet.createRow(index);
-					if(filtro.isVistaPrevencion()){
+
+					if (esVistaAdmifarm) {
+					    createHeaderAdmifarm(rowNew);
+					} else if(filtro.isVistaPrevencion()){
 						createHeaderTercerizadora(rowNew);
 					}else{
 						createHeader(rowNew);
 					}
+
+					index++;
 				}
 				Row rowI = sheet.createRow(index);
-				if(filtro.isVistaPrevencion()){
+				if (esVistaAdmifarm) {
+				    createReportePadronDetalleAdmifarm(colNum, styleDate, r, rowI);
+				} else if(filtro.isVistaPrevencion()){
 					createReportePadronDetalleTercerizadora(colNum, styleDate, r, rowI);
 				}else{
 					createReportePadronDetalle(colNum, styleDate, r, rowI );
@@ -2219,6 +2229,256 @@ public class ReporteListadoPadron extends ReporteXLS {
 //		cell40.setCellValue(new HSSFRichTextString("DISCAPACITADO"));
 		Cell cell41 = row.createCell(col++);
 		cell41.setCellValue(new HSSFRichTextString("MOTIVO BAJA"));
+	}
+
+	private static void createHeaderAdmifarm(Row row) {
+
+	    int colNum = 0;
+
+	    CellUtil.createCell(row, colNum++, "TIPO DOC");
+	    CellUtil.createCell(row, colNum++, "NRO DOC");
+	    CellUtil.createCell(row, colNum++, "NUMERO AFILIADO");
+	    CellUtil.createCell(row, colNum++, "CATEGORIA");
+	    CellUtil.createCell(row, colNum++, "PARENTESCO");
+	    CellUtil.createCell(row, colNum++, "APELLIDO");
+	    CellUtil.createCell(row, colNum++, "NOMBRE");
+	    CellUtil.createCell(row, colNum++, "FECHA NAC");
+	    CellUtil.createCell(row, colNum++, "SEXO");
+	    CellUtil.createCell(row, colNum++, "ESTADO CIVIL");
+	    CellUtil.createCell(row, colNum++, "NACIONALIDAD");
+	    CellUtil.createCell(row, colNum++, "PROVINCIA");
+	    CellUtil.createCell(row, colNum++, "LOCALIDAD");
+	    CellUtil.createCell(row, colNum++, "CP");
+	    CellUtil.createCell(row, colNum++, "CALLE");
+	    CellUtil.createCell(row, colNum++, "NUMERO");
+	    CellUtil.createCell(row, colNum++, "PISO");
+	    CellUtil.createCell(row, colNum++, "DEPTO");
+	    CellUtil.createCell(row, colNum++, "COD.AREA TEL.");
+	    CellUtil.createCell(row, colNum++, "TELEFONO");
+	    CellUtil.createCell(row, colNum++, "COD.AREA CELU.");
+	    CellUtil.createCell(row, colNum++, "CELULAR");
+	    CellUtil.createCell(row, colNum++, "COD.AREA TEL.LABO.");
+	    CellUtil.createCell(row, colNum++, "TELEF. LABORAL");
+	    CellUtil.createCell(row, colNum++, "CORREO ELECTRONICO");
+	    CellUtil.createCell(row, colNum++, "PLAN TERCERIZADORA");
+	    CellUtil.createCell(row, colNum++, "FARMACIA TERCERIZADORA");
+	    CellUtil.createCell(row, colNum++, "FECHA VIGENCIA");
+	    CellUtil.createCell(row, colNum++, "FECHA BAJA");
+	    CellUtil.createCell(row, colNum++, "CUIT");
+	    CellUtil.createCell(row, colNum++, "RAZON SOCIAL");
+	    CellUtil.createCell(row, colNum++, "DISCAPACITADO");
+	    CellUtil.createCell(row, colNum++, "ID MOT. BAJA");
+	    CellUtil.createCell(row, colNum++, "MOTIVO BAJA");
+	    CellUtil.createCell(row, colNum++, "PERTENECE A LA ORG.");
+	    CellUtil.createCell(row, colNum++, "VTO. PMI");
+	    CellUtil.createCell(row, colNum++, "COPAGO");
+	    CellUtil.createCell(row, colNum++, "CATEGORIA");
+	    CellUtil.createCell(row, colNum++, "CUIL TITULAR");
+	    CellUtil.createCell(row, colNum++, "CUIL");
+	    CellUtil.createCell(row, colNum++, "FECHA OSPIM");
+	    CellUtil.createCell(row, colNum++, "SECCIONAL");
+	    CellUtil.createCell(row, colNum++, "PLAN AFILIADO");
+	    CellUtil.createCell(row, colNum++, "PMI");
+	    CellUtil.createCell(row, colNum++, "ACO");
+	}
+
+	private static void createReportePadronDetalleAdmifarm(int colNum, CellStyle styleDate,
+			ReportePadronResult r, Row rowI) {
+
+	    // TIPO DOC
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getDocumento_tipo()));
+
+	    // NRO DOC
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getDocu_numero()));
+
+	    // NUMERO AFILIADO
+	    CellUtil.createCell(rowI, colNum++, String.valueOf(r.getId_ospim()));
+
+	    // CATEGORIA
+	    CellUtil.createCell(rowI, colNum++, String.valueOf(r.getInte()));
+
+	    // PARENTESCO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getParentesco()));
+
+	    // APELLIDO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getApellido()));
+
+	    // NOMBRE
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getNombre()));
+
+	    // FECHA NAC
+	    Cell fechaNac = rowI.createCell(colNum++);
+	    if (r.getNaci_fecha() != null) {
+	        fechaNac.setCellValue(r.getNaci_fecha());
+	        fechaNac.setCellStyle(styleDate);
+	    } else {
+	        fechaNac.setCellValue("");
+	    }
+
+	    // SEXO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getSexo()));
+
+	    // ESTADO CIVIL
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCivil_esta()));
+
+	    // NACIONALIDAD
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getNacionalidad()));
+
+	    // PROVINCIA
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getProvincia()));
+
+	    // LOCALIDAD
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getLocalidad()));
+
+	    // CP
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getPostal_codi()));
+
+	    // CALLE
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCalle()));
+
+	    // NUMERO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getNumero()));
+
+	    // PISO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getPiso()));
+
+	    // DEPTO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getDepto()));
+
+	    // COD.AREA TEL.
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCodAreaTelefono()));
+
+	    // TELEFONO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getTelefono1()));
+
+	    // COD.AREA CELU.
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCodAreaCelular()));
+
+	    // CELULAR
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCelular()));
+
+	    // COD.AREA TEL.LABO.
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCodAreaTelLaboral()));
+
+	    // TELEF. LABORAL
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getTelLaboral()));
+
+	    // CORREO ELECTRONICO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getEmail()));
+
+	    // PLAN TERCERIZADORA
+	    String planTercerizadora = StringUtils.getValueOrEmpty(Plan.getHealthPlan(r.getPlanTercerizadora()));
+
+	    CellUtil.createCell(rowI, colNum++, planTercerizadora);
+
+	    // FARMACIA TERCERIZADORA
+	    String farmaciaTercerizadora =StringUtils.getValueOrEmpty(r.getFarmaciaTercerizadora());
+
+	    CellUtil.createCell(rowI, colNum++, farmaciaTercerizadora);
+
+	    // FECHA VIGENCIA
+	    Cell fechaVigencia = rowI.createCell(colNum++);
+	    if (r.getVigenFecha() != null) {
+	        fechaVigencia.setCellValue(r.getVigenFecha());
+	        fechaVigencia.setCellStyle(styleDate);
+	    } else {
+	        fechaVigencia.setCellValue("");
+	    }
+
+	    // FECHA BAJA
+	    Cell fechaBaja = rowI.createCell(colNum++);
+	    if (r.getBaja_fecha() != null) {
+	        fechaBaja.setCellValue(r.getBaja_fecha());
+	        fechaBaja.setCellStyle(styleDate);
+	    } else {
+	        fechaBaja.setCellValue("");
+	    }
+
+	    // CUIT
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCuit()));
+
+	    // RAZON SOCIAL
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getRazon_soc()));
+
+	    // DISCAPACITADO
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getDiscapacitado()));
+
+	    // ID MOT. BAJA
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getIdMotivoBaja()));
+
+	    // MOTIVO BAJA
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getMotivoBaja()));
+
+	    // PERTENECE A LA ORG.
+	    CellUtil.createCell(rowI, colNum++, r.getPerteneceAlaOrganizacion() == 1 ? "SI" : "NO");
+
+	    // VTO. PMI
+	    Cell fechaPmi = rowI.createCell(colNum++);
+	    if (r.getFpp() != null) {
+	        fechaPmi.setCellValue(r.getFpp());
+	        fechaPmi.setCellStyle(styleDate);
+	    } else {
+	        fechaPmi.setCellValue("");
+	    }
+
+	    // COPAGO
+	    CellUtil.createCell(rowI, colNum++, r.getCopago());
+
+	    // CATEGORIA
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCategoria()));
+
+	    // CUIL TITULAR
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCuil_titular()));
+
+	    // CUIL
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getCuil()));
+
+	    // FECHA OSPIM
+	    Cell fechaOspim = rowI.createCell(colNum++);
+	    if (r.getFecha_ospim() != null) {
+	        fechaOspim.setCellValue(r.getFecha_ospim());
+	        fechaOspim.setCellStyle(styleDate);
+	    } else {
+	        fechaOspim.setCellValue("");
+	    }
+
+	    // SECCIONAL
+	    CellUtil.createCell(rowI, colNum++, StringUtils.getValueOrEmpty(r.getSeccional()));
+
+	    // PLAN AFILIADO = PLAN TERCERIZADORA + FARMACIA TERCERIZADORA
+	    String planAfiliado = (planTercerizadora + " " + farmaciaTercerizadora).trim();
+
+	    CellUtil.createCell(rowI, colNum++, planAfiliado);
+
+	    // PMI
+	    CellUtil.createCell(rowI, colNum++, "");
+
+	    // ACO
+	    String aco = "";
+
+	    if ("F".equalsIgnoreCase(r.getSexo()) && r.getNaci_fecha() != null) {
+	        int edad = calcularEdad(r.getNaci_fecha());
+
+	        if (edad >= 15 && edad <= 60) {
+	            aco = "S";
+	        }
+	    }
+
+	    CellUtil.createCell(rowI, colNum++, aco);
+
+	}
+
+	private static int calcularEdad(Date fechaNacimiento) {
+	    Calendar nacimiento = Calendar.getInstance();
+	    nacimiento.setTime(fechaNacimiento);
+	    Calendar hoy = Calendar.getInstance();
+	    int edad = hoy.get(Calendar.YEAR) - nacimiento.get(Calendar.YEAR);
+
+	    if (hoy.get(Calendar.DAY_OF_YEAR) < nacimiento.get(Calendar.DAY_OF_YEAR)) {
+	        edad--;
+	    }
+
+	    return edad;
 	}
 
 }

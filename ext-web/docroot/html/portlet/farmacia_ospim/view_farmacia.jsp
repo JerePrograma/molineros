@@ -461,6 +461,11 @@ function validaDatos(){
 	var resp;
 	resp=jQuery('#cuitvalidoprestador').val();
 	
+	if (resp === "") {
+        alert("Se está validando el CUIT. Aguarde un momento y vuelva a grabar.");
+        return false;
+    }
+
 	if (resp=="1" ){
 		alert('El Cuit corresponde a otra Farmacia ya cargada.');
 		return false;
@@ -554,7 +559,7 @@ function validaCuitFarmacia () {
 		   var cuit  = jQuery("#<portlet:namespace />cuit_entidad").val();
 	      /*  var params="";	       
 	       params += "&nroCuitFarmacia="+cuit; */	       
-	       jQuery('#cuitvalidoprestador').val(2);
+	       jQuery('#cuitvalidoprestador').val("");
 	       <%-- var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/farmaciaospim/validar_cuit_farmacia';
 	  	   url = url + params;
 	  	    --%>

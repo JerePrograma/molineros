@@ -7290,13 +7290,20 @@
                 path="/afiliados/generar_pre_afiliado_integrante_comercial"
                 type="ar.com.ospim.afiliados.action.GenerarPreAfiliadoIntegranteComercialAction" />
 
-        <action path="/farmaciaospim/upload_admifarm_general"
-                type="ar.com.ospim.farmaciaOspim.action.UploadAdmifarmOspimGeneralAction">
+		<action path="/farmaciaospim/upload_admifarm_general"
+		        type="ar.com.ospim.farmaciaOspim.action.UploadAdmifarmOspimGeneralAction">
 
             <forward name="portlet.farmaciaospim.view" path="portlet.farmaciaospim.view" />
-            <forward name="portlet.farmaciaospim.error" path="portlet.farmaciaospim.error" />
-        </action>
- </action-mappings>
+			<forward name="portlet.farmaciaospim.error" path="portlet.farmaciaospim.error" />
+		</action>
+
+		<action path="/prestadores/cartilla_sop"
+		        type="ar.com.ospim.prestadores.action.ImportarCartillaSOPAction">
+
+			<forward name="portlet.prestadores.cartilla_sop"
+			         path="portlet.prestadores.cartilla_sop" />
+		</action>
+	</action-mappings>
   
 </struts-config>
 	  

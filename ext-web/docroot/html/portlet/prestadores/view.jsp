@@ -35,6 +35,8 @@ boolean showPrestador =
 boolean showConveniosPrestacionales = showPrestador;
 boolean showCartillaConveniosPrestadores = showPrestador;
 
+boolean showCartillaSOP = showPrestador;
+
 boolean showAumentoNomenclador =
 	PermissionUtil.userContainsRole(user, WebKeysLiquidaciones.ROL_AUMENTO_NOMENCLADOR);
 
@@ -82,6 +84,19 @@ if (showAumentoNomenclador) {
 	tieneTabs = true;
 }
 
+if (showCartillaSOP) {
+
+    if (tieneTabs) {
+        tabs1ValuesBuffer.append(",");
+        tabs1NamesBuffer.append(",");
+    }
+
+    tabs1ValuesBuffer.append("cartilla-sop");
+    tabs1NamesBuffer.append("Cartilla SOP");
+
+    tieneTabs = true;
+}
+
 String tabs1Values = tabs1ValuesBuffer.toString();
 String tabs1Names = tabs1NamesBuffer.toString();
 
@@ -116,6 +131,8 @@ if ("convenios-prestacionales".equals(tabs1)) {
 	subtitle = "Cartilla de Convenios de Prestadores";
 } else if ("aumento-prestaciones".equals(tabs1)) {
 	subtitle = "Aumento de Prestaciones";
+}else if ("cartilla-sop".equals(tabs1)) {
+	 subtitle = "Cartilla SOP";
 } else if (tabs1 == null) {
 	subtitle = "Sin permisos";
 }
@@ -130,6 +147,30 @@ if (tabs1 != null) {
 
 currentURL = PortalUtil.getCurrentURL(request);
 %>
+
+<liferay-ui:error
+    key="error-cartilla-sop-consulta"
+    message="No se pudo consultar el historial de importaciones."/>
+
+<liferay-ui:error
+    key="error-cartilla-sop-procesamiento"
+    message="No se pudo procesar el archivo."/>
+
+<liferay-ui:error
+    key="error-cartilla-sop-archivo"
+    message="Debe seleccionar un archivo."/>
+
+<liferay-ui:error
+    key="error-cartilla-sop-formato"
+    message="El archivo no tiene el formato requerido."/>
+
+<liferay-ui:error
+    key="error-cartilla-sop-nombre"
+    message="El archivo debe llamarse cartilla_sop.xlsx."/>
+
+<liferay-ui:success
+    key="cartilla-sop-importada"
+    message="La Cartilla SOP fue importada correctamente."/>
 
 <liferay-portlet:renderURLParams varImpl="portletURL" />
 
@@ -163,6 +204,10 @@ currentURL = PortalUtil.getCurrentURL(request);
 
 			<c:when test='<%= "aumento-prestaciones".equals(tabs1) %>'>
 				<liferay-util:include page="/html/portlet/prestadores/convenios_prest/aumento_prestaciones.jsp" />
+			</c:when>
+
+			<c:when test='<%= "cartilla-sop".equals(tabs1) %>'>
+				<liferay-util:include page="/html/portlet/prestadores/convenios_prest/cartilla_sop.jsp" />
 			</c:when>
 		</c:choose>
 	</c:otherwise>

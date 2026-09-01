@@ -123,13 +123,35 @@ public class MolinerosEnSalud extends TercerizadoraService implements Serializab
 				tercAfiAux.setEstado(AfiTercerizadoraServicio.ESTADOS.ALTA);
 //				int pos = afiliadoTercerizadoras.indexOf(tercAfiAux.getTercerizadora());
 				
-				int pos =-1;
-				for (int j=0; j<afiliadoTercerizadoras.size();j++){
-					AfiTercerizadoraServicio afiTercServ = afiliadoTercerizadoras.get(j);
-					if(afiTercServ.getTercerizadora().getId_tercerizadora().equals(tercAfiAux.getTercerizadora().getId_tercerizadora())) {
-						pos=j;
-						break;
-					}
+				//se modifica 27/08/2026
+				//poder agregar tercerizadora que ya tuvo, no permite agregar una vigente
+				int pos = -1;
+
+				for (int j = 0; j < afiliadoTercerizadoras.size(); j++) {
+				    AfiTercerizadoraServicio afiTercServ = afiliadoTercerizadoras.get(j);
+
+				    boolean mismaTercerizadora =
+				        afiTercServ.getTercerizadora().getId_tercerizadora()
+				            .equals(tercPlanVigente.getId_tercerizadora());
+
+				    boolean vigente =
+				        afiTercServ.getFechaInicioPres() != null
+				        && afiTercServ.getFechaInicioPres().compareTo(fechaDesdeNuevoPlan) <= 0
+				        && (
+				            afiTercServ.getFechaFinPres() == null
+				            || afiTercServ.getFechaFinPres().compareTo(fechaDesdeNuevoPlan) >= 0
+				        );
+
+				    boolean noEstaDeBaja =
+				        afiTercServ.getEstado() == null
+				        || !afiTercServ.getEstado().equals(
+				            AfiTercerizadoraServicio.ESTADOS.BAJA
+				        );
+
+				    if (mismaTercerizadora && vigente && noEstaDeBaja) {
+				        pos = j;
+				        break;
+				    }
 				}
 				
 //DS Fin Agregado 28-10-2022

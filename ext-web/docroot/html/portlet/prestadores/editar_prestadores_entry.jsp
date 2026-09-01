@@ -42,7 +42,7 @@ portletURL.setParameter("prestador_id", String.valueOf(idPrestAux));
 <liferay-ui:error key="error-prestador-contacto" message="falta-prestador-contactoe" />	
 <liferay-ui:error key="error-prestador-contacto-facturacion" message="falta-contacto-facturacion" />
 <liferay-ui:error key="error-prestador-cbu" message="falta-prestador-cbu" />	
-
+<liferay-ui:error key="error-prestador-contacto-email" message="falta-prestador-contacto-email"/>
 
 <portlet:renderURL windowState="<%= WindowState.MAXIMIZED.toString() %>" var="volver">
 			<portlet:param name="struts_action" value="/prestadores/prestadores" />

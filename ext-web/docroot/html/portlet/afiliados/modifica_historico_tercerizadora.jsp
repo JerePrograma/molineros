@@ -84,7 +84,7 @@ List<AfiTercerizadoraServicio> AfiTercServList = (ArrayList<AfiTercerizadoraServ
 							yearParam="<%=nuevaInicioYearParamName%>"
 							yearNullable="<%= true %>"
 							yearRangeStart="<%= inicio.get(Calendar.YEAR) - 40 %>"
-							yearRangeEnd="<%= inicio.get(Calendar.YEAR)+20%>"
+							yearRangeEnd="<%= inicio.get(Calendar.YEAR)+40%>"
 							firstDayOfWeek="<%= inicio.getFirstDayOfWeek() - 1 %>"
 							disabled="<%= ats.getBajaFecha()!=null?true:false %>" />
 				</div>
@@ -145,7 +145,7 @@ List<AfiTercerizadoraServicio> AfiTercServList = (ArrayList<AfiTercerizadoraServ
 							yearParam="<%=inicioYearParamName%>"
 							yearValue="<%= inicio.get(Calendar.YEAR) %>"
 							yearRangeStart="<%= inicio.get(Calendar.YEAR) - 40 %>"
-							yearRangeEnd="<%= inicio.get(Calendar.YEAR)+20%>"
+							yearRangeEnd="<%= inicio.get(Calendar.YEAR)+40%>"
 							firstDayOfWeek="<%= inicio.getFirstDayOfWeek() - 1 %>"
 							disabled="<%= ats.getBajaFecha()!=null?true:false %>" />
 				</div>

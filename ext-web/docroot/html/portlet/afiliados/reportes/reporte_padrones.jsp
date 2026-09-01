@@ -263,6 +263,14 @@ if (seccionales == null) {
 				<liferay-ui:message key="vista-tercerizadora" />:
 				<input type="checkbox" id="<portlet:namespace />vista_tercerizadora" name="<portlet:namespace />vista_tercerizadora" value=""  />
 			</td> 
+
+			<td  colspan="6">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+
+			<td style="background-color:#AEB6BF">
+				<liferay-ui:message key="Vista Admifarm" />:
+				<input type="checkbox" id="<portlet:namespace />vista_admifarm" name="<portlet:namespace />vista_admifarm" value=""  />
+			</td>
 			<td>&nbsp;</td>
 		</tr>
 	</table>
@@ -316,6 +324,7 @@ if (seccionales == null) {
 		var total_empresa=jQuery("#<portlet:namespace/>agrupar_empresa").is(':checked');
 		var total_entidad=jQuery("#<portlet:namespace/>agrupar_entidad").is(':checked');
 		var para_tercerizadora=jQuery("#<portlet:namespace/>vista_tercerizadora").is(':checked');
+		var para_admifarm=jQuery("#<portlet:namespace/>vista_admifarm").is(':checked');
 		var tipoBusqueda= jQuery("#<portlet:namespace/>tipo_busqueda").val();
 		var descTipoBusqueda= jQuery("#<portlet:namespace/>tipo_busqueda option:selected").html();
 		var motivo_baja= jQuery("#<portlet:namespace/>motivo_baja").val();
@@ -411,6 +420,7 @@ if (seccionales == null) {
 			+'&fechaProcHastaMes=00'
 			+'&fechaProcHastaAnio=1900'
 			+'&vistaTercerizadora='+para_tercerizadora
+			+'&vistaAdmifarm='+para_admifarm
 			+'&idsMotivoBaja='+motivo_baja
 			+'&motivosBajaDesc='+motivosBajaDesc
 			+'&proyecto='+proyectos;  

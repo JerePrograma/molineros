@@ -85,7 +85,7 @@
 							yearParam="<%=nuevaVigDesdeYearParamName%>"
 							yearNullable="<%= true %>"
 							yearRangeStart="<%= vigenDesde.get(Calendar.YEAR) - 40 %>"
-							yearRangeEnd="<%= vigenDesde.get(Calendar.YEAR)+20%>"
+							yearRangeEnd="<%= vigenDesde.get(Calendar.YEAR)+40%>"
 							firstDayOfWeek="<%= vigenDesde.getFirstDayOfWeek() - 1 %>"
 							disabled="<%= ap.getBajaFecha()!=null?true:false %>" />
 				</div>
@@ -157,7 +157,7 @@
 							yearParam="<%=vigDesdeYearParamName%>"
 							yearValue="<%= vigenDesde.get(Calendar.YEAR) %>"
 							yearRangeStart="<%= vigenDesde.get(Calendar.YEAR) - 40 %>"
-							yearRangeEnd="<%= vigenDesde.get(Calendar.YEAR)+20%>"
+							yearRangeEnd="<%= vigenDesde.get(Calendar.YEAR)+40%>"
 							firstDayOfWeek="<%= vigenDesde.getFirstDayOfWeek() - 1 %>"
 							disabled="<%= ap.getBajaFecha()!=null?true:false %>" />
 				</div>

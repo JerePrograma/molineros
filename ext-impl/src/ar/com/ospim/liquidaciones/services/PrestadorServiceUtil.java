@@ -59,6 +59,10 @@ public class PrestadorServiceUtil {
 	public static Prestador getPrestador(int id) throws Exception {
 		return getInstance().getPrestador(id);
 	}
+
+	public static List<String> getRubrosPrestador(int idPrestador) throws Exception {
+		return getInstance().getRubrosPrestador(idPrestador);
+	}
 	
 	public static void update(Prestador prestador, User user)
 			throws Exception {
@@ -68,7 +72,25 @@ public class PrestadorServiceUtil {
 		getInstance().actualizar(prestador, user.getScreenName());
 	}
 
+	public static int actualizarSolicitarCotizacionPrestador(int idPrestador, boolean solicitarCotizacion, User user)
+			throws Exception {
+
+	    return getInstance().actualizarSolicitarCotizacionPrestador(
+	            idPrestador,
+	            solicitarCotizacion,
+	            user.getScreenName()
+	    );
+	}
 	
+	public static void actualizarRubrosPrestador(int idPrestador, List<String> rubros, User user)
+			throws Exception {
+
+	    getInstance().actualizarRubrosPrestador(
+	            idPrestador,
+	            rubros,
+	            user.getScreenName()
+	    );
+	}
 
 	public static void borrar(int id, User user)
 			throws ImposibleBorrarPrestadorException, SQLException {
@@ -144,11 +166,5 @@ public class PrestadorServiceUtil {
 		return getInstance().getPrestadores(id, cuit, descripcion, provincia, localidad,
 				soloVigentes, profesion, especialidad, subEspecialidad, tipoPrestador,
 				hospital, soloHabilitadosCotizar);
-	}
-
-	public static int actualizarSolicitarCotizacionPrestador(
-			int idPrestador, boolean solicitarCotizacion, User user) throws Exception {
-		return getInstance().actualizarSolicitarCotizacionPrestador(
-				idPrestador, solicitarCotizacion, user.getScreenName());
 	}
 }

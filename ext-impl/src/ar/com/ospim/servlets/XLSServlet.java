@@ -399,10 +399,13 @@ public class XLSServlet extends HttpServlet {
 			wb = ReporteListadoPadron.generaReportePadron(req, res);
 
 			boolean esExportaTercerizadora = ParamUtil.getBoolean(req, "vistaTercerizadora");
+			boolean esVistaAdmifarm = ParamUtil.getBoolean(req, "vistaAdmifarm");
 			SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
 			String fecha = format.format(Calendar.getInstance().getTime());
 			String salida = "OSPIM" + fecha + ".xlsx";
-			if (esExportaTercerizadora) {
+			if(esVistaAdmifarm) {
+				res.setHeader("Content-Disposition", "attachment; filename=\"listadoPadronAdmifarm.xlsx\"");
+			}else if (esExportaTercerizadora) {
 				res.setHeader("Content-Disposition", "attachment;filename=" + salida);
 			} else {
 				res.setHeader("Content-Disposition", "attachment; filename=\"listadoPadron.xlsx\"");

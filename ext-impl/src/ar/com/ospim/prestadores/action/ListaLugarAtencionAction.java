@@ -20,6 +20,7 @@ import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.global.beans.ContactoElectronico;
 import ar.com.ospim.global.beans.Domicilio;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
 import ar.com.ospim.prestadores.exception.LugarAtencionPrestadorException;
 import ar.com.ospim.liquidaciones.beans.ContactoElectronicoPrestador;
@@ -327,6 +328,15 @@ public class ListaLugarAtencionAction extends PortletAction {
 			dom.setPostal_codi(codigoPostal);
 			dom.setProvinciaId(idProvincia);
 			
+			//Para que Provincia y Localidad tengan descripción antes de guardar en BD
+		    dom.setProvincia(
+		        TraeListasServiceUtil.getProvincia(idProvincia, renderRequest)
+		    );
+
+		    dom.setLocalidad(
+		        TraeListasServiceUtil.getLocalidad(idLocalidad, renderRequest)
+		    );
+
 			dom.setId_domicilio(idDomicilio);
 		
 			pla = new PrestadorLugarAtencion();

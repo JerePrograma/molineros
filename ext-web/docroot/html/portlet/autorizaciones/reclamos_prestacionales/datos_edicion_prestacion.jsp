@@ -31,6 +31,20 @@ boolean restringirRecuperableCompras =
 Calendar fechaseccional = Calendar.getInstance();
 Calendar fechaPrestacion = Calendar.getInstance();
 
+ReclamoPrestacional reclamoEnEdicion =
+        (ReclamoPrestacional) request
+                .getSession()
+                .getAttribute(
+                        WebKeysAutorizaciones
+                                .RECLAMO_PRESTACION_EN_EDICION
+                );
+
+boolean esFarmacia =
+        reclamoEnEdicion != null
+        && "FARMACIA".equalsIgnoreCase(
+                reclamoEnEdicion.getSector()
+        );
+
 if (prestacionEnEdicion != null) {
     Object tipoEdicionObj =
             request.getAttribute(
@@ -132,30 +146,16 @@ String comprobanteLetraEdicion =
                         .getComprobanteLetra()
                 : "";
 
-Integer idPrest = null;
 Integer idMedic = null;
 
 if (prestacionEnEdicion != null) {
-    idPrest =
-            prestacionEnEdicion
-                    .getId_prestacion();
-
     idMedic =
             prestacionEnEdicion
                     .getId_medicamento();
 }
 
-boolean sinMedicamento =
-        idMedic == null
-        || idMedic.intValue() == 0;
-
-boolean hayPrestacion =
-        idPrest != null
-        && idPrest.intValue() != 0;
-
 boolean mostrarCodigoPresentado =
-        hayPrestacion
-        || sinMedicamento;
+        !esFarmacia;
 %>
 
 <input
@@ -1156,7 +1156,13 @@ boolean mostrarCodigoPresentado =
         "<%=prestacionEnEdicion.getIdRegistro()%>"
     );
 
-        <% if (hayPrestacion) { %>
+        <% if (!esFarmacia) { %>
+
+    jQuery(
+        "#<portlet:namespace />nom_seleccionado"
+    ).val(
+        "1"
+    );
 
     jQuery(
         "#<portlet:namespace />codigoSeguimiento_filtro_edit"
@@ -1182,9 +1188,21 @@ boolean mostrarCodigoPresentado =
         )%>"
     );
 
+            <% if (Validator.isNotNull(
+                    prestacionEnEdicion.getCodigoPrestacion()
+            )) { %>
+
     <portlet:namespace />buscarNomencladorAutocompletar_edit();
 
+            <% } %>
+
         <% } else { %>
+
+    jQuery(
+        "#<portlet:namespace />nom_seleccionado"
+    ).val(
+        "2"
+    );
 
     jQuery(
         "#<portlet:namespace />troquel_edit"

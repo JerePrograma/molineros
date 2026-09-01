@@ -4633,4 +4633,32 @@
 		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias_resultado.jsp" />
 	</definition>
 
+	<definition name="portlet.afiliados.pre_afiliados_pendientes"
+	            extends="portlet.afiliados">
+
+		<put name="portlet_content"
+		     value="/portlet/novedades/pre_afiliados_pendientes.jsp" />
+	</definition>
+
+	<definition name="portlet.afiliados.familiares_comerciales_pendientes"
+	            extends="portlet.afiliados">
+
+		<put name="portlet_content"
+		     value="/portlet/novedades/familiares_comerciales_pendientes.jsp" />
+	</definition>
+
+	<definition name="portlet.liquidaciones.comprobantes.interbanking.search.result"
+	            extends="portlet.liquidaciones">
+
+		<put name="portlet_content"
+		     value="/portlet/liquidaciones/comprobantes/comprobantes_interbanking_search_result.jsp" />
+	</definition>
+
+	<definition name="portlet.prestadores.cartilla_sop"
+	            extends="portlet.prestadores">
+
+		<put name="portlet_content"
+		     value="/portlet/prestadores/convenios_prest/cartilla_sop.jsp" />
+	</definition>
+
 </tiles-definitions>

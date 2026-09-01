@@ -30,6 +30,8 @@ import ar.com.ospim.liquidaciones.beans.PrestadorLugarAtencion;
 import ar.com.ospim.liquidaciones.beans.PrestadorPlan;
 import ar.com.ospim.liquidaciones.beans.ProfesionPrestador;
 import ar.com.ospim.liquidaciones.services.PrestadorServiceUtil;
+import ar.com.ospim.prestadores.WebKeysPrestadores;
+import ar.com.ospim.util.PermissionUtil;
 import ar.com.ospim.util.StringUtils;
 
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -50,6 +52,9 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 
 	private Logger _log = Logger.getLogger(this.getClass());
 	
+	private static final String SESSION_SOLICITAR_COTIZACION =
+	        "SOLICITAR_COTIZACION_PRESTADOR";
+
 	public void processAction(ActionMapping mapping, ActionForm form,
 			PortletConfig portletConfig, ActionRequest actionRequest,
 			ActionResponse actionResponse) throws Exception {
@@ -59,15 +64,75 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		String cmd = ParamUtil.getString(actionRequest, Constants.CMD);
 		Boolean esDatosTab = ParamUtil.getBoolean(actionRequest, "esDatosTab");
 		
+		User user = PortalUtil.getUser(actionRequest);
+
+		boolean puedeSolicitarCotizacion =
+		    PermissionUtil.userContainsRole(
+		        user,
+		        WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR
+		    );
+
 		if (cmd.equals(Constants.MOVE) && esDatosTab){  // cambio a solapa Lugar Atencion.
 			
+			Prestador prestadorAnterior = (Prestador) session.getAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION);
+
 			Prestador prestador = null;
 			// Datos del Prestador (solapa datos) 
 			prestador = getPrestadorFromRequest(PortalUtil.getHttpServletRequest(actionRequest), prestador);
 			
-			session.setAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION, prestador);
+			// Mantener datos de auditoría al cambiar de solapa
+		    if (prestadorAnterior != null) {
+
+		        prestador.setAlta_usr(prestadorAnterior.getAlta_usr());
+		        prestador.setAlta_fecha(prestadorAnterior.getAlta_fecha());
+		        prestador.setModi_usr(prestadorAnterior.getModi_usr());
+		        prestador.setModi_fecha(prestadorAnterior.getModi_fecha());
+		        prestador.setBaja_usr(prestadorAnterior.getBaja_usr());
+		        prestador.setBaja_fecha(prestadorAnterior.getBaja_fecha());
+		    }
+
+			// NUEVO
+		    if (puedeSolicitarCotizacion) {
+
+		        boolean solicitarCotizacion = ParamUtil.getBoolean(actionRequest, "solicitar_cotizacion");
+		        session.setAttribute(SESSION_SOLICITAR_COTIZACION, solicitarCotizacion);
+
+		        List<String> rubros = new ArrayList<String>();
+
+		        if (solicitarCotizacion) {
+
+			if (ParamUtil.getBoolean(actionRequest, "prov_insumos")) {
+			    rubros.add("INSUMOS");
+			}
+
+			if (ParamUtil.getBoolean(actionRequest, "prov_leches")) {
+			    rubros.add("ALIMENTACION");
+			}
+
+			if (ParamUtil.getBoolean(actionRequest, "prov_paniales")) {
+			    rubros.add("PAÑALES");
+			}
+
+			if (ParamUtil.getBoolean(actionRequest, "prov_medicamentos")) {
+			    rubros.add("MEDICAMENTOS");
+			}
+
+			if (ParamUtil.getBoolean(actionRequest, "protesis_cardiologia")) {
+			    rubros.add("PROTESIS_CARDIOLOGIA");
+			}
+
+			if (ParamUtil.getBoolean(actionRequest, "protesis_general")) {
+			    rubros.add("PROTESIS_GENERAL");
+			}
+
+			if (ParamUtil.getBoolean(actionRequest, "protesis_traumatologia")) {
+			    rubros.add("PROTESIS_TRAUMATOLOGIA");
+			}
+		        }
+		        session.setAttribute("RUBROS_PRESTADOR", rubros);
+			 }
+			    session.setAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION, prestador);
 		}
-		
 	}
 
 	public ActionForward render(ActionMapping mapping, ActionForm form,
@@ -78,6 +143,13 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		
 		String cmd = ParamUtil.getString(renderRequest, Constants.CMD);
 		User user = PortalUtil.getUser(renderRequest);
+
+		boolean puedeSolicitarCotizacion =
+			    PermissionUtil.userContainsRole(
+			        user,
+			        WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR
+			    );
+
 		boolean validaOk = true;
 		String tabSel = ParamUtil.get(renderRequest, "tab_seleccionada", "datos");
 		int idPrestador = 0;
@@ -145,6 +217,8 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 				List<PrestadorLugarAtencion> lugares = (List<PrestadorLugarAtencion>) session.getAttribute(WebKeysLiquidaciones.LUGARES_ATENCION_PRESTADOR_EN_SESSION);
 				List<PrestadorPlan> planes =  (List<PrestadorPlan>) session.getAttribute(WebKeysLiquidaciones.PLANES_PRESTADOR_EN_SESSION);
 				
+				Boolean solicitarCotizacion = (Boolean) session.getAttribute(SESSION_SOLICITAR_COTIZACION);
+
 //				List<Telefono> telefonos = (List<Telefono>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION);
 				List<ContactoElectronico> contactElec = (List<ContactoElectronico>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_CONTACTOES_EN_SESSION);
 				
@@ -200,19 +274,37 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 					tabSel = "lugar_atencion";
 				}else if(lugares.size()>0) {
 					Integer qCorreosValidos=0;
+					Integer qCorreosElectronicos = 0;
+
 					for(PrestadorLugarAtencion la:lugares) {
 						if(la.getContactosElectronicos()!=null) {
 						  if(!inexistenteMailFacturacion(la.getContactosElectronicos())) {
 							qCorreosValidos++;
-							break;
 						  }	
+
+							// Solo buscamos EMAIL si solicita cotización
+				            if(Boolean.TRUE.equals(solicitarCotizacion)) {
+				                if(!inexistenteMailElectronico(la.getContactosElectronicos())) {
+				                    qCorreosElectronicos++;
+				                }
+				            }
 						}
+
+				        if(qCorreosValidos > 0 && (!Boolean.TRUE.equals(solicitarCotizacion) || qCorreosElectronicos > 0)) {
+				            break;
+				        }
 					}
 					
 					if(qCorreosValidos==0) {
 						SessionErrors.add(renderRequest, "error-prestador-contacto-facturacion");
 						validaOk = false;
 						tabSel = "lugar_atencion";
+					}
+
+					if (puedeSolicitarCotizacion && Boolean.TRUE.equals(solicitarCotizacion) && qCorreosElectronicos == 0) {
+					    SessionErrors.add(renderRequest, "error-prestador-contacto-email");
+					    validaOk = false;
+					    tabSel = "lugar_atencion";
 					}
 				}
 				
@@ -240,7 +332,28 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 					prestador.setPlanes(planes);
 					
 					idPrestador = PrestadorServiceUtil.insertar(prestador, user);
-					
+
+					if (puedeSolicitarCotizacion) {
+						if (solicitarCotizacion != null) {
+						    PrestadorServiceUtil.actualizarSolicitarCotizacionPrestador(
+						            idPrestador,
+						            solicitarCotizacion.booleanValue(),
+						            user
+						    );
+						}
+
+						List<String> rubros =
+						        (List<String>) session.getAttribute("RUBROS_PRESTADOR");
+
+						if (rubros != null) {
+						    PrestadorServiceUtil.actualizarRubrosPrestador(
+						            idPrestador,
+						            rubros,
+						            user
+						    );
+						}
+					}
+
 					prestador = PrestadorServiceUtil.getPrestador(idPrestador);
 					
 					session.removeAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION);
@@ -284,12 +397,20 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 					session.removeAttribute(WebKeysLiquidaciones.MATRICULAS_PRESTADOR_EN_SESSION);
 					session.removeAttribute(WebKeysLiquidaciones.PROF_ESPEC_SUBESPEC_PRESTADOR_EN_SESSION);
 					session.removeAttribute(WebKeysLiquidaciones.PLANES_PRESTADOR_EN_SESSION);
+					session.removeAttribute(SESSION_SOLICITAR_COTIZACION);
+					session.removeAttribute("RUBROS_PRESTADOR");
 
 					session.setAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION, prestador);
 					session.setAttribute(WebKeysLiquidaciones.MATRICULAS_PRESTADOR_EN_SESSION, prestador.getMatriculas());
 					session.setAttribute(WebKeysLiquidaciones.PROF_ESPEC_SUBESPEC_PRESTADOR_EN_SESSION, prestador.getProfesiones());
 					session.setAttribute(WebKeysLiquidaciones.LUGARES_ATENCION_PRESTADOR_EN_SESSION, prestador.getLugaresAtencion());
 					session.setAttribute(WebKeysLiquidaciones.PLANES_PRESTADOR_EN_SESSION, prestador.getPlanes());
+					if (puedeSolicitarCotizacion) {
+						session.setAttribute(SESSION_SOLICITAR_COTIZACION,
+								Boolean.valueOf(prestador.isSolicitarCotizacion()));
+						session.setAttribute("RUBROS_PRESTADOR",
+								PrestadorServiceUtil.getRubrosPrestador(idPrest));
+					}
 
 	//				session.setAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION, prestador.getLugaresAtencion().get(0).getTelefonos());
 	//				session.setAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_CONTACTOES_EN_SESSION, prestador.getLugaresAtencion().get(0).getContactosElectronicos());
@@ -311,6 +432,8 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 //				List<Telefono> telefonos = (List<Telefono>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION);
 				List<ContactoElectronico> contactElec = (List<ContactoElectronico>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_CONTACTOES_EN_SESSION);
 				
+				Boolean solicitarCotizacion = (Boolean) session.getAttribute(SESSION_SOLICITAR_COTIZACION);
+
 //				Validamos ingreso minimo de las caracteristicas que forman al prestador
 				if(prestador == null){
 					SessionErrors.add(renderRequest, "error-prestador");
@@ -349,13 +472,25 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 					tabSel = "lugar_atencion";
 				}else if(lugares.size()>0) {
 					Integer qCorreosValidos=0;
+					Integer qCorreosElectronicos = 0;
+
 					for(PrestadorLugarAtencion la:lugares) {
 						if(la.getContactosElectronicos()!=null) {
 						  if(!inexistenteMailFacturacion(la.getContactosElectronicos())) {
 							qCorreosValidos++;
-							break;
-						  }	
+						  }
+
+						// Solo buscamos EMAIL si solicita cotización
+				            if(Boolean.TRUE.equals(solicitarCotizacion)) {
+				                if(!inexistenteMailElectronico(la.getContactosElectronicos())) {
+				                    qCorreosElectronicos++;
+				                }
+				            }
 						}
+
+						if(qCorreosValidos > 0 &&  (!Boolean.TRUE.equals(solicitarCotizacion) || qCorreosElectronicos > 0)) {
+				            break;
+				        }
 					}
 					
 					if(qCorreosValidos==0) {
@@ -363,6 +498,13 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 						validaOk = false;
 						tabSel = "lugar_atencion";
 					}
+
+					if(puedeSolicitarCotizacion && Boolean.TRUE.equals(solicitarCotizacion) && qCorreosElectronicos == 0) {
+
+				        SessionErrors.add(renderRequest,"error-prestador-contacto-email");
+				        validaOk = false;
+				        tabSel = "lugar_atencion";
+				    }
 				}
 				
 //				if(telefonos == null || telefonos.size() == 0 || estanTodosTelefonosLugarAtdeBaja(telefonos)){
@@ -387,7 +529,28 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 					prestador.setPlanes(planes);
 					
 					PrestadorServiceUtil.update(prestador, user);
+
+					if (puedeSolicitarCotizacion) {
 					
+						if (solicitarCotizacion != null) {
+						    PrestadorServiceUtil.actualizarSolicitarCotizacionPrestador(
+								prestador.getId_prestador(),
+						            solicitarCotizacion.booleanValue(),
+						            user
+						    );
+						}
+
+						List<String> rubros =
+						        (List<String>) session.getAttribute("RUBROS_PRESTADOR");
+
+						if (rubros != null) {
+						    PrestadorServiceUtil.actualizarRubrosPrestador(
+						            prestador.getId_prestador(),
+						            rubros,
+						            user
+						    );
+						}
+					}
 					prestador = PrestadorServiceUtil.getPrestador(prestador.getId_prestador());
 					
 					session.removeAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION);
@@ -422,6 +585,8 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 			session.removeAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_PRESTADOR_INDIRECTO_EN_EDICION);
 			session.removeAttribute(WebKeysLiquidaciones.PLANES_PRESTADOR_EN_SESSION);
 
+			session.removeAttribute(SESSION_SOLICITAR_COTIZACION);
+			session.removeAttribute("RUBROS_PRESTADOR");
 			
 //			accionEnCurso
 			renderRequest.setAttribute(Constants.CMD, Constants.ADD);
@@ -582,4 +747,20 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		return result;
 	}
 	
+     private boolean inexistenteMailElectronico(List<ContactoElectronicoPrestador> ce) {
+
+	    boolean result = true;
+
+	    for (Iterator<ContactoElectronicoPrestador> iterator = ce.iterator(); iterator.hasNext();) {
+
+	        ContactoElectronico c = iterator.next();
+
+	        if (c.getTipo().getId().equals(ContactoElectronico.Tipo.EMAIL.getId())) {
+	            result = false;
+	            break;
+	        }
+	    }
+
+	    return result;
+	}
 }

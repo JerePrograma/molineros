@@ -111,6 +111,8 @@ ReclamoPrestacionalCompraContexto
                         : null;
 %>
 <script type="text/javascript">
+var cierrePorRevisionRechazada = false;
+
 var popupMD;
 var guardandoReclamo = false;
 var popupDomicilio;
@@ -462,28 +464,67 @@ function tipoGestionCierreReclamo(observacionSeleccionada) {
         var idGestion = String(jQuery("#<%= reclamoPortletNamespace %>tipo_gestion_cierre_reclamo").val() || "0");
         var filaObservacion = jQuery("#<%= reclamoPortletNamespace %>observacion_medica_tr");
         var comboObservacion = jQuery("#<%= reclamoPortletNamespace %>observacion_medica");
-        var esRechazado = idGestion == "5";
-        var esReintegro =  tipoPedido == "REINTEGRO" && idGestion == "4";
-        var esExcepcionFacturacionDirecta =tipoPedido == "EXCEPCION" &&idGestion == "3";
 
-        if (esRechazado) {
+        if (cierrePorRevisionRechazada) {
 
-            cargarObservacionesMedicas(observacionesRechazado, observacionSeleccionada);
+            cargarObservacionesMedicas([], "0");
+
+            filaObservacion.hide();
+
+            comboObservacion.removeAttr("required");
+
+            return;
+        }
+
+        var esPedidoReintegro =
+            tipoPedido == "REINTEGRO";
+
+        var esGestionReintegro =
+            idGestion == "4";
+
+        var esGestionRechazado =
+            idGestion == "5";
+
+        if (
+            esPedidoReintegro &&
+            esGestionRechazado
+        ) {
+
+            cargarObservacionesMedicas(
+                observacionesRechazado,
+                observacionSeleccionada
+            );
 
             filaObservacion.show();
 
-            comboObservacion.attr("required","required");
+            comboObservacion.attr(
+                "required",
+                "required"
+            );
 
-        } else if (esReintegro || esExcepcionFacturacionDirecta) {
+        } else if (
+            esPedidoReintegro &&
+            esGestionReintegro
+        ) {
 
-            cargarObservacionesMedicas(observacionesAutorizado,observacionSeleccionada);
+            cargarObservacionesMedicas(
+                observacionesAutorizado,
+                observacionSeleccionada
+            );
+
             filaObservacion.show();
-            comboObservacion.attr("required","required");
+
+            comboObservacion.attr(
+                "required",
+                "required"
+            );
 
         } else {
 
             cargarObservacionesMedicas([], "0");
+
             filaObservacion.hide();
+
             comboObservacion.removeAttr("required");
         }
 
@@ -971,36 +1012,40 @@ function ValidarDatosObligatorios(Edicion){
 
     var justificacion=jQuery('#<%= reclamoPortletNamespace %>justificacionmedcica_reclamo').val();
 
-    var tipoPedidoCierre = jQuery("#<%= reclamoPortletNamespace %>tipopedido").val();
+    var tipoPedidoCierre =
+        jQuery("#<%= reclamoPortletNamespace %>tipopedido").val();
 
-        var observacionMedica = jQuery("#<%= reclamoPortletNamespace %>observacion_medica").val();
+    var estadoCierre =
+        jQuery("#<%= reclamoPortletNamespace %>estado").val();
 
-        var requiereObservacionMedica =
-            tipoPedidoCierre == "REINTEGRO" &&
-            (
-                idgestion == "4" ||
-                idgestion == "5"
-            );
+    var observacionMedica =
+        jQuery("#<%= reclamoPortletNamespace %>observacion_medica").val();
 
-        if (
-            requiereObservacionMedica &&
-            (
-                observacionMedica == null ||
-                observacionMedica == "" ||
-                observacionMedica == "0"
-            )
-        ) {
+    var requiereObservacionMedica =
+        tipoPedidoCierre == "REINTEGRO" &&
+        estadoCierre == "3" &&
+        idgestion != "0" &&
+        !cierrePorRevisionRechazada;
 
-            alert(
-                "Debe seleccionar una observación del área médica."
-            );
+    if (
+        requiereObservacionMedica &&
+        (
+            observacionMedica == null ||
+            observacionMedica == "" ||
+            observacionMedica == "0"
+        )
+    ) {
 
-            jQuery(
-                "#<%= reclamoPortletNamespace %>observacion_medica"
-            ).focus();
+        alert(
+            "Debe seleccionar una observación del área médica."
+        );
 
-            return false;
-        }
+        jQuery(
+            "#<%= reclamoPortletNamespace %>observacion_medica"
+        ).focus();
+
+        return false;
+    }
 
     if (idgestion == 0  && jQuery('#<%= reclamoPortletNamespace %>estado option:selected').text().trim() == 'CERRADO' ){
         alert('Debe ingresar el tipo de gestión del Reclamo ( Sección Cierre de Reclamo) ');
