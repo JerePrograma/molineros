@@ -33,6 +33,11 @@ String nonceReclamoCompras = ParamUtil.getString(
         WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
         ""
 );
+String nonceRecuperacionReclamo = ParamUtil.getString(
+        request,
+        WebKeysCompras.PARAM_RECUPERACION_RECLAMO_NONCE,
+        ""
+);
 Object contextoReclamoComprasObj = request.getSession().getAttribute(
         WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
 );
@@ -60,6 +65,7 @@ boolean handoffReclamoComprasValido =
 if (handoffReclamoComprasValido) {
     request.setAttribute(Constants.CMD, Constants.ADD);
 } else if (!reclamoPersistido
+        && StringUtils.checkEmpty(nonceRecuperacionReclamo)
         && Constants.ADD.equalsIgnoreCase(
                 cmdParametroCompras
         )
@@ -70,36 +76,6 @@ if (handoffReclamoComprasValido) {
             || "compras".equalsIgnoreCase(
                     origenReclamoCompras
             ))) {
-
-    request.getSession().removeAttribute(
-            WebKeysCompras
-                    .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-    );
-
-    request.getSession().removeAttribute(
-            WebKeysAutorizaciones
-                    .RECLAMO_PRESTACION_EN_EDICION
-    );
-
-    request.getSession().removeAttribute(
-            WebKeysAutorizaciones
-                    .LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
-    );
-
-    request.getSession().removeAttribute(
-            WebKeysAutorizaciones
-                    .PRESTACION_EN_PROCESO_DE_EDICION
-    );
-
-    request.getSession().removeAttribute(
-            WebKeysAutorizaciones
-                    .LISTADO_REVISIONES_RECLAMOS_EN_SESION
-    );
-
-    request.getSession().removeAttribute(
-            WebKeysAutorizaciones
-                    .LISTADO_CONTACTOS_RECLAMOS_EN_SESION
-    );
 
     request.setAttribute(
             Constants.CMD,

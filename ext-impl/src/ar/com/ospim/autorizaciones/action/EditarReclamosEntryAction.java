@@ -13,8 +13,11 @@ import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletSession;
+import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
+import javax.portlet.WindowState;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
@@ -50,6 +53,7 @@ import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.helper.ReclamoPrestacionalCompraPrecargaHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.ReclamoPrestacionalCompraPrecargaServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
@@ -62,6 +66,7 @@ import ar.com.ospim.liquidaciones.services.PrestadorServiceUtil;
 import ar.com.ospim.util.ConnectionHelper;
 import ar.com.ospim.util.PermissionUtil;
 import ar.com.ospim.util.StringUtils;
+import com.liferay.portlet.PortletURLFactoryUtil;
 
 
 	public class EditarReclamosEntryAction extends ReclamosBaseAction {
@@ -70,6 +75,10 @@ import ar.com.ospim.util.StringUtils;
 	
 	private static final String RECLAMO_PRESTACION_ESTADO_ORIGINAL =
             "RECLAMO_PRESTACION_ESTADO_ORIGINAL";
+	private static final String STRUTS_ACTION_INICIAR_RECLAMO_COMPRA =
+			"/compras/iniciar_reclamo_prestacional";
+	private static final String STRUTS_ACTION_VER_REQUERIMIENTO_COMPRA =
+			"/compras/ver_requerimiento";
 	
 	private static final int PLAN_COBERTURA = 3;
 	private static final int PLAN_COBERTURA_TOTAL_O = 9;
@@ -211,31 +220,97 @@ import ar.com.ospim.util.StringUtils;
 		
 		User user = PortalUtil.getUser(renderRequest);
 		ReclamoPrestacionalCompraContexto contextoCompra = null;
+		ReclamoPrestacionalCompraPrecargaHelper.RecuperacionEdicion
+				recuperacionEdicion = null;
+		String recuperacionNonce = ParamUtil.getString(
+				renderRequest,
+				WebKeysCompras.PARAM_RECUPERACION_RECLAMO_NONCE,
+				""
+		);
 
-		try {
-			contextoCompra = resolverContextoCompra(
-					session,
-					renderRequest,
-					user
-			);
-		} catch (Exception contextoError) {
-			limpiarSesionHandoffCompra(session);
-			_log.warn(
-					"Se rechazo un contexto invalido de Compras.",
-					contextoError
-			);
-			SessionErrors.add(renderRequest, "error-reclamo-compras");
-			renderRequest.setAttribute(
-					"msgErrorReclamoCompras",
-					contextoError.getMessage()
-			);
-			renderRequest.setAttribute(Constants.CMD, Constants.ADD);
+		if (!StringUtils.checkEmpty(recuperacionNonce)) {
+			try {
+				recuperacionEdicion =
+						ReclamoPrestacionalCompraPrecargaHelper
+								.obtenerRecuperacionEdicion(
+										session,
+										recuperacionNonce,
+										user != null
+												? user.getScreenName()
+												: ""
+								);
 
-			return mapping.findForward(getForward(
-					renderRequest,
-					"portlet.autorizaciones.reclamosprestacionales."
-							+ "editar_reclamos_entry"
-			));
+				contextoCompra = recuperacionEdicion
+						.getContextoCompraVigente(
+								user != null
+										? user.getScreenName()
+										: ""
+						);
+
+				if (recuperacionEdicion.getIdReclamoActual() > 0) {
+					cmd = Constants.EDIT;
+				} else if (recuperacionEdicion
+						.tieneContextoCompraNoVigente(
+								user != null
+										? user.getScreenName()
+										: ""
+						)) {
+					cmd = Constants.VIEW;
+				} else {
+					cmd = Constants.ADD;
+				}
+
+				renderRequest.setAttribute(
+						Constants.CMD,
+						cmd
+				);
+
+				prepararRecuperacionEdicion(
+						renderRequest,
+						recuperacionEdicion,
+						user
+				);
+			} catch (Exception recuperacionError) {
+				_log.warn(
+						"Se rechazo una recuperacion de edicion de RP. "
+								+ "motivo="
+								+ recuperacionError.getMessage()
+				);
+				SessionErrors.add(renderRequest, "error-reclamo-compras");
+				renderRequest.setAttribute(
+						"msgErrorReclamoCompras",
+						recuperacionError.getMessage()
+				);
+				cmd = Constants.VIEW;
+				renderRequest.setAttribute(Constants.CMD, cmd);
+			}
+		} else {
+			try {
+				contextoCompra = resolverContextoCompra(
+						session,
+						renderRequest,
+						user
+				);
+			} catch (Exception contextoError) {
+				_log.warn(
+						"Se rechazo un contexto invalido de Compras. "
+								+ "El editor de RP se conserva en sesion. "
+								+ "motivo="
+								+ contextoError.getMessage()
+				);
+				SessionErrors.add(renderRequest, "error-reclamo-compras");
+				renderRequest.setAttribute(
+						"msgErrorReclamoCompras",
+						contextoError.getMessage()
+				);
+				renderRequest.setAttribute(Constants.CMD, Constants.VIEW);
+
+				return mapping.findForward(getForward(
+						renderRequest,
+						"portlet.autorizaciones.reclamosprestacionales."
+								+ "editar_reclamos_entry"
+				));
+			}
 		}
 
 		String seccionalDefecto=user.getExpandoBridge().getAttribute("id_seccional").toString();
@@ -249,7 +324,9 @@ import ar.com.ospim.util.StringUtils;
 		
 		int idReclamo = 0;
 		
-        int idReclamoDeBuscador = ParamUtil.getInteger(renderRequest, "id_reclamosel",0); 
+        int idReclamoDeBuscador = recuperacionEdicion != null
+                ? 0
+                : ParamUtil.getInteger(renderRequest, "id_reclamosel",0);
         int casoAsociado=ParamUtil.getInteger(renderRequest, "casoasociado",0);       	
         
         int autorizacion =ParamUtil.getInteger(renderRequest, "autorizacion",0);
@@ -1145,32 +1222,107 @@ import ar.com.ospim.util.StringUtils;
 		}
 	}	
 
-	private void limpiarSesionHandoffCompra(HttpSession session) {
-		if (session == null) {
-			return;
+	private void prepararRecuperacionEdicion(
+			RenderRequest renderRequest,
+			ReclamoPrestacionalCompraPrecargaHelper
+					.RecuperacionEdicion recuperacion,
+			User user) throws Exception {
+
+		HttpServletRequest httpRequest =
+				PortalUtil.getHttpServletRequest(
+						renderRequest
+				);
+
+		if (httpRequest == null || recuperacion == null) {
+			throw new Exception(
+					"No se pudo preparar la recuperacion de la edicion."
+			);
 		}
 
-		session.removeAttribute(
-				WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+		PortletURL descartarURL =
+				PortletURLFactoryUtil.create(
+						httpRequest,
+						recuperacion.getPortletComprasId(),
+						recuperacion.getPlidCompras(),
+						PortletRequest.ACTION_PHASE
+				);
+		PortletURL volverURL =
+				PortletURLFactoryUtil.create(
+						httpRequest,
+						recuperacion.getPortletComprasId(),
+						recuperacion.getPlidCompras(),
+						PortletRequest.RENDER_PHASE
+				);
+
+		if (descartarURL == null || volverURL == null) {
+			throw new Exception(
+					"Liferay no pudo construir las URLs de recuperacion."
+			);
+		}
+
+		descartarURL.setWindowState(
+				WindowState.MAXIMIZED
 		);
-		session.removeAttribute(
-				WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
+		descartarURL.setParameter(
+				"struts_action",
+				STRUTS_ACTION_INICIAR_RECLAMO_COMPRA
 		);
-		session.removeAttribute(
-				WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION
+		descartarURL.setParameter(
+				Constants.CMD,
+				WebKeysCompras.CMD_DESCARTAR_EDICION_RECLAMO
 		);
-		session.removeAttribute(
-				WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION
+		descartarURL.setParameter(
+				WebKeysCompras.PARAM_RECUPERACION_RECLAMO_NONCE,
+				recuperacion.getNonce()
 		);
-		session.removeAttribute(
-				WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION
+		descartarURL.setParameter(
+				WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+				String.valueOf(
+						recuperacion.getIdRequerimientoCompra()
+				)
 		);
-		session.removeAttribute(
-				WebKeysAutorizaciones.LISTADO_CONTACTOS_RECLAMOS_EN_SESION
+
+		volverURL.setWindowState(
+				WindowState.MAXIMIZED
 		);
-		session.removeAttribute(
-				WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+		volverURL.setParameter(
+				"struts_action",
+				STRUTS_ACTION_VER_REQUERIMIENTO_COMPRA
 		);
+		volverURL.setParameter(
+				WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+				String.valueOf(
+						recuperacion.getIdRequerimientoCompra()
+				)
+		);
+
+		renderRequest.setAttribute(
+				WebKeysCompras.ATR_RECUPERACION_RECLAMO_ACTIVA,
+				Boolean.TRUE
+		);
+		renderRequest.setAttribute(
+				WebKeysCompras.ATR_RECUPERACION_RECLAMO_URL_DESCARTAR,
+				descartarURL.toString()
+		);
+		renderRequest.setAttribute(
+				WebKeysCompras.ATR_RECUPERACION_RECLAMO_URL_VOLVER,
+				volverURL.toString()
+		);
+		renderRequest.setAttribute(
+				WebKeysCompras.ATR_RECUPERACION_RECLAMO_ID_ACTUAL,
+				Integer.valueOf(
+						recuperacion.getIdReclamoActual()
+				)
+		);
+		renderRequest.setAttribute(
+				WebKeysCompras.ATR_RECUPERACION_CONTEXTO_VENCIDO,
+				Boolean.valueOf(
+						recuperacion.tieneContextoCompraNoVigente(
+								user != null
+										? user.getScreenName()
+										: ""
+						)
+			));
 	}
 
 	private ReclamoPrestacionalCompraContexto resolverContextoCompra(

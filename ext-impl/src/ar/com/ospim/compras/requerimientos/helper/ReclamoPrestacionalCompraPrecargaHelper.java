@@ -11,6 +11,7 @@ import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraSe
 import ar.com.ospim.crm.beans.ContactoCRM;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -33,6 +34,12 @@ import javax.servlet.http.HttpSession;
  * usuario confirme el nomenclador correspondiente.
  */
 public final class ReclamoPrestacionalCompraPrecargaHelper {
+
+    private static final long VIGENCIA_RECUPERACION_MILLIS =
+            2L * 60L * 60L * 1000L;
+
+    private static final String RECLAMO_PRESTACION_ESTADO_ORIGINAL =
+            "RECLAMO_PRESTACION_ESTADO_ORIGINAL";
 
     private static final int RECUPERABLE_SUR = 1;
     private static final int NO_RECUPERABLE = 2;
@@ -341,9 +348,11 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
      * Registra el contexto temporal de un borrador iniciado desde Compras.
      * Nunca reemplaza una edición ordinaria iniciada desde Autorizaciones.
      */
-    public static void registrarContextoBorrador(
+    public static RegistroContextoBorrador registrarContextoBorrador(
             HttpSession session,
-            ReclamoPrestacionalCompraContexto nuevoContexto)
+            ReclamoPrestacionalCompraContexto nuevoContexto,
+            String portletComprasId,
+            long plidCompras)
             throws Exception {
 
         if (session == null) {
@@ -360,6 +369,14 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             );
         }
 
+        if (WebKeysCompras.isEmpty(portletComprasId)
+                || plidCompras <= 0L) {
+
+            throw new Exception(
+                    "No se pudo determinar el portlet de Compras de origen."
+            );
+        }
+
         synchronized (session) {
             Object contextoAnteriorObj =
                     session.getAttribute(
@@ -367,30 +384,196 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                                     .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
                     );
 
-            Object reclamoEnEdicion =
+            if (contextoAnteriorObj != null
+                    && !(contextoAnteriorObj
+                    instanceof ReclamoPrestacionalCompraContexto)) {
+
+                throw new Exception(
+                        "Existe un contexto temporal de Compras invalido "
+                                + "en la sesion."
+                );
+            }
+
+            Object reclamoEnEdicionObj =
                     session.getAttribute(
                             WebKeysAutorizaciones
                                     .RECLAMO_PRESTACION_EN_EDICION
                     );
 
-            if (reclamoEnEdicion != null
-                    && !(contextoAnteriorObj
-                    instanceof ReclamoPrestacionalCompraContexto)) {
+            if (reclamoEnEdicionObj == null) {
+                if (hayEstadoEdicionEnSesion(session)) {
+                    return RegistroContextoBorrador.bloqueado(
+                            "Existe informacion parcial de un Reclamo "
+                                    + "Prestacional en edicion en esta sesion."
+                    );
+                }
+
+                if (contextoAnteriorObj
+                        instanceof ReclamoPrestacionalCompraContexto) {
+
+                    ReclamoPrestacionalCompraContexto contextoAnterior =
+                            (ReclamoPrestacionalCompraContexto)
+                                    contextoAnteriorObj;
+
+                    if (contextoAnterior.estaVigente(
+                            System.currentTimeMillis()
+                    )) {
+                        return RegistroContextoBorrador.bloqueado(
+                                "Ya existe un inicio de Reclamo Prestacional "
+                                        + "desde Compras en proceso."
+                        );
+                    }
+                }
+
+                session.removeAttribute(
+                        WebKeysCompras
+                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+                );
+                session.removeAttribute(
+                        WebKeysCompras
+                                .RECUPERACION_RECLAMO_PRESTACIONAL_COMPRA
+                );
+
+                session.setAttribute(
+                        WebKeysCompras
+                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA,
+                        nuevoContexto
+                );
+
+                return RegistroContextoBorrador.registrado();
+            }
+
+            if (!(reclamoEnEdicionObj instanceof ReclamoPrestacional)) {
 
                 throw new Exception(
-                        "Existe un Reclamo Prestacional en edición iniciado "
-                                + "desde Autorizaciones. Finalícelo o descártelo "
-                                + "antes de precargar uno desde Compras."
+                        "Existe un Reclamo Prestacional invalido en la sesion."
                 );
             }
 
-            limpiarBorradorComprasEnSesion(session);
+            ReclamoPrestacional reclamoEnEdicion =
+                    (ReclamoPrestacional) reclamoEnEdicionObj;
+
+            if (contextoAnteriorObj
+                    instanceof ReclamoPrestacionalCompraContexto) {
+
+                ReclamoPrestacionalCompraContexto contextoAnterior =
+                        (ReclamoPrestacionalCompraContexto)
+                                contextoAnteriorObj;
+
+                if (reclamoEnEdicion.getId_reclamo() <= 0
+                        && contextoAnterior.getIdRequerimientoCompra()
+                        == nuevoContexto.getIdRequerimientoCompra()
+                        && contextoAnterior.perteneceAUsuario(
+                        nuevoContexto.getUsuarioInicio()
+                )
+                        && contextoAnterior.estaVigente(
+                        System.currentTimeMillis()
+                )) {
+
+                    return RegistroContextoBorrador.reutilizado(
+                            contextoAnterior.getNonce()
+                    );
+                }
+            }
+
+            RecuperacionEdicion recuperacion =
+                    new RecuperacionEdicion(
+                            nuevoContexto.getIdRequerimientoCompra(),
+                            nuevoContexto.getUsuarioInicio(),
+                            System.currentTimeMillis(),
+                            nuevoContexto.getNonce(),
+                            portletComprasId,
+                            plidCompras,
+                            reclamoEnEdicion,
+                            contextoAnteriorObj
+                    );
 
             session.setAttribute(
                     WebKeysCompras
-                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA,
-                    nuevoContexto
+                            .RECUPERACION_RECLAMO_PRESTACIONAL_COMPRA,
+                    recuperacion
             );
+
+            return RegistroContextoBorrador.colision(
+                    recuperacion
+            );
+        }
+    }
+
+    public static RecuperacionEdicion obtenerRecuperacionEdicion(
+            HttpSession session,
+            String nonce,
+            String usuarioActual) throws Exception {
+
+        if (session == null) {
+            throw new Exception(
+                    "No se pudo obtener la sesion del usuario."
+            );
+        }
+
+        synchronized (session) {
+            Object recuperacionObj =
+                    session.getAttribute(
+                            WebKeysCompras
+                                    .RECUPERACION_RECLAMO_PRESTACIONAL_COMPRA
+                    );
+
+            if (!(recuperacionObj instanceof RecuperacionEdicion)) {
+                throw new Exception(
+                        "La recuperacion de la edicion ya no esta disponible."
+                );
+            }
+
+            RecuperacionEdicion recuperacion =
+                    (RecuperacionEdicion) recuperacionObj;
+
+            recuperacion.validar(
+                    session,
+                    nonce,
+                    usuarioActual
+            );
+
+            return recuperacion;
+        }
+    }
+
+    /**
+     * Descarta exclusivamente el estado transitorio de RP de la sesion.
+     * El requerimiento devuelto es autoritativo para reiniciar el flujo y
+     * volver a ejecutar todas sus validaciones.
+     */
+    public static int descartarEdicionActual(
+            HttpSession session,
+            String nonce,
+            String usuarioActual,
+            int idRequerimientoRequest) throws Exception {
+
+        synchronized (session) {
+            RecuperacionEdicion recuperacion =
+                    obtenerRecuperacionEdicion(
+                            session,
+                            nonce,
+                            usuarioActual
+                    );
+
+            if (idRequerimientoRequest <= 0
+                    || recuperacion.getIdRequerimientoCompra()
+                    != idRequerimientoRequest) {
+
+                throw new Exception(
+                        "La solicitud de descarte no coincide con el "
+                                + "requerimiento autorizado."
+                );
+            }
+
+            int idRequerimiento =
+                    recuperacion.getIdRequerimientoCompra();
+
+            limpiarEstadoEditorSincronizado(
+                    session
+            );
+
+            return idRequerimiento;
         }
     }
 
@@ -441,7 +624,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 if (contexto.getIdRequerimientoCompra()
                         == idRequerimientoCompra) {
 
-                    limpiarBorradorComprasEnSesion(session);
+                    limpiarEstadoEditorSincronizado(session);
                     return;
                 }
 
@@ -489,7 +672,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             if (reclamoEnEdicion.getId_reclamo()
                     == idReclamoPrestacional) {
 
-                limpiarBorradorComprasEnSesion(session);
+                limpiarEstadoEditorSincronizado(session);
                 return;
             }
 
@@ -501,11 +684,28 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         }
     }
 
-    private static void limpiarBorradorComprasEnSesion(
+    public static void limpiarEstadoEditorReclamoPrestacional(
+            HttpSession session) {
+
+        if (session == null) {
+            return;
+        }
+
+        synchronized (session) {
+            limpiarEstadoEditorSincronizado(
+                    session
+            );
+        }
+    }
+
+    private static void limpiarEstadoEditorSincronizado(
             HttpSession session) {
 
         session.removeAttribute(
-                WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+            WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+        );
+        session.removeAttribute(
+                WebKeysCompras.RECUPERACION_RECLAMO_PRESTACIONAL_COMPRA
         );
         session.removeAttribute(
                 WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
@@ -524,6 +724,16 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         );
         session.removeAttribute(
                 WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_PRESTACIONES_ASOCIADAS_RECLAMOS_EN_SESION
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones.RECLAMO_PRESTACION_CUENTA_SELECT
+        );
+        session.removeAttribute(
+                RECLAMO_PRESTACION_ESTADO_ORIGINAL
         );
     }
 
@@ -553,6 +763,17 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 || session.getAttribute(
                 WebKeysAutorizaciones
                         .RECLAMO_NUEVO_ESTADO_OBS
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .LISTADO_PRESTACIONES_ASOCIADAS_RECLAMOS_EN_SESION
+        ) != null
+                || session.getAttribute(
+                WebKeysAutorizaciones
+                        .RECLAMO_PRESTACION_CUENTA_SELECT
+        ) != null
+                || session.getAttribute(
+                RECLAMO_PRESTACION_ESTADO_ORIGINAL
         ) != null;
     }
 
@@ -1910,6 +2131,217 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         return normalizado.length() > 0
                 ? normalizado
                 : null;
+    }
+
+    public static final class RegistroContextoBorrador {
+
+        private static final int REGISTRADO = 1;
+        private static final int REUTILIZADO = 2;
+        private static final int COLISION = 3;
+        private static final int BLOQUEADO = 4;
+
+        private final int estado;
+        private final String nonceContextoActual;
+        private final RecuperacionEdicion recuperacion;
+        private final String mensaje;
+
+        private RegistroContextoBorrador(
+                int estado,
+                String nonceContextoActual,
+                RecuperacionEdicion recuperacion,
+                String mensaje) {
+
+            this.estado = estado;
+            this.nonceContextoActual = nonceContextoActual;
+            this.recuperacion = recuperacion;
+            this.mensaje = mensaje;
+        }
+
+        private static RegistroContextoBorrador registrado() {
+            return new RegistroContextoBorrador(
+                    REGISTRADO,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        private static RegistroContextoBorrador reutilizado(
+                String nonceContextoActual) {
+
+            return new RegistroContextoBorrador(
+                    REUTILIZADO,
+                    nonceContextoActual,
+                    null,
+                    null
+            );
+        }
+
+        private static RegistroContextoBorrador colision(
+                RecuperacionEdicion recuperacion) {
+
+            return new RegistroContextoBorrador(
+                    COLISION,
+                    null,
+                    recuperacion,
+                    null
+            );
+        }
+
+        private static RegistroContextoBorrador bloqueado(
+                String mensaje) {
+
+            return new RegistroContextoBorrador(
+                    BLOQUEADO,
+                    null,
+                    null,
+                    mensaje
+            );
+        }
+
+        public boolean isRegistrado() {
+            return estado == REGISTRADO;
+        }
+
+        public boolean isReutilizado() {
+            return estado == REUTILIZADO;
+        }
+
+        public boolean isColision() {
+            return estado == COLISION;
+        }
+
+        public boolean isBloqueado() {
+            return estado == BLOQUEADO;
+        }
+
+        public String getNonceContextoActual() {
+            return nonceContextoActual;
+        }
+
+        public RecuperacionEdicion getRecuperacion() {
+            return recuperacion;
+        }
+
+        public String getMensaje() {
+            return mensaje;
+        }
+    }
+
+    public static final class RecuperacionEdicion
+            implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        private final int idRequerimientoCompra;
+        private final String usuario;
+        private final long fechaCreacion;
+        private final String nonce;
+        private final String portletComprasId;
+        private final long plidCompras;
+        private final Object reclamoEsperado;
+        private final Object contextoCompraEsperado;
+
+        private RecuperacionEdicion(
+                int idRequerimientoCompra,
+                String usuario,
+                long fechaCreacion,
+                String nonce,
+                String portletComprasId,
+                long plidCompras,
+                Object reclamoEsperado,
+                Object contextoCompraEsperado) {
+
+            this.idRequerimientoCompra = idRequerimientoCompra;
+            this.usuario = usuario;
+            this.fechaCreacion = fechaCreacion;
+            this.nonce = nonce;
+            this.portletComprasId = portletComprasId;
+            this.plidCompras = plidCompras;
+            this.reclamoEsperado = reclamoEsperado;
+            this.contextoCompraEsperado = contextoCompraEsperado;
+        }
+
+        private void validar(
+                HttpSession session,
+                String nonceRequest,
+                String usuarioActual) throws Exception {
+
+            if (WebKeysCompras.isEmpty(nonceRequest)
+                    || !nonce.equals(nonceRequest)
+                    || WebKeysCompras.isEmpty(usuarioActual)
+                    || !usuario.equals(usuarioActual)
+                    || System.currentTimeMillis() - fechaCreacion
+                    > VIGENCIA_RECUPERACION_MILLIS) {
+
+                throw new Exception(
+                        "La recuperacion de la edicion no es valida o vencio."
+                );
+            }
+
+            if (session.getAttribute(
+                    WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION
+            ) != reclamoEsperado
+                    || session.getAttribute(
+                    WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
+            ) != contextoCompraEsperado) {
+
+                throw new Exception(
+                        "La edicion activa cambio desde que se detecto "
+                                + "la colision."
+                );
+            }
+        }
+
+        public int getIdRequerimientoCompra() {
+            return idRequerimientoCompra;
+        }
+
+        public String getNonce() {
+            return nonce;
+        }
+
+        public String getPortletComprasId() {
+            return portletComprasId;
+        }
+
+        public long getPlidCompras() {
+            return plidCompras;
+        }
+
+        public int getIdReclamoActual() {
+            return reclamoEsperado instanceof ReclamoPrestacional
+                    ? ((ReclamoPrestacional) reclamoEsperado)
+                    .getId_reclamo()
+                    : 0;
+        }
+
+        public ReclamoPrestacionalCompraContexto
+        getContextoCompraVigente(
+                String usuarioActual) {
+
+            if (!(contextoCompraEsperado
+                    instanceof ReclamoPrestacionalCompraContexto)) {
+
+                return null;
+            }
+
+            ReclamoPrestacionalCompraContexto contexto =
+                    (ReclamoPrestacionalCompraContexto)
+                            contextoCompraEsperado;
+
+            return contexto.perteneceAUsuario(usuarioActual)
+                    && contexto.estaVigente(System.currentTimeMillis())
+                    ? contexto
+                    : null;
+        }
+
+        public boolean tieneContextoCompraNoVigente(
+                String usuarioActual) {
+
+            return contextoCompraEsperado != null
+                    && getContextoCompraVigente(usuarioActual) == null;
+        }
     }
 
     /**

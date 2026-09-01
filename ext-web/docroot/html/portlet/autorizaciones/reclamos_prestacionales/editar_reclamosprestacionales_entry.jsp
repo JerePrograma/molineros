@@ -131,7 +131,82 @@ if (!StringUtils.checkEmpty(contextoCompraNonce)
     );
 }
 
+boolean recuperacionReclamoActiva = Boolean.TRUE.equals(
+        request.getAttribute(
+                WebKeysCompras.ATR_RECUPERACION_RECLAMO_ACTIVA
+        )
+);
+String recuperacionUrlDescartar = recuperacionReclamoActiva
+        ? String.valueOf(request.getAttribute(
+                WebKeysCompras.ATR_RECUPERACION_RECLAMO_URL_DESCARTAR
+        ))
+        : "";
+String recuperacionUrlVolver = recuperacionReclamoActiva
+        ? String.valueOf(request.getAttribute(
+                WebKeysCompras.ATR_RECUPERACION_RECLAMO_URL_VOLVER
+        ))
+        : "";
+Integer recuperacionIdReclamo = recuperacionReclamoActiva
+        ? (Integer) request.getAttribute(
+                WebKeysCompras.ATR_RECUPERACION_RECLAMO_ID_ACTUAL
+        )
+        : Integer.valueOf(0);
+boolean recuperacionContextoVencido = recuperacionReclamoActiva
+        && Boolean.TRUE.equals(request.getAttribute(
+                WebKeysCompras.ATR_RECUPERACION_CONTEXTO_VENCIDO
+        ));
+
 %>
+<% if (recuperacionReclamoActiva) { %>
+<div
+    id="<portlet:namespace />recuperacionEdicionReclamo"
+    class="portlet-msg-alert">
+    <strong>Ya hay otro Reclamo Prestacional abierto en esta sesión.</strong>
+
+    <% if (recuperacionIdReclamo != null
+            && recuperacionIdReclamo.intValue() > 0) { %>
+        <p>
+            El Reclamo Prestacional Nº <%= recuperacionIdReclamo %>
+            ya guardado no será eliminado. Si descarta la edición actual,
+            sólo se perderán los cambios no guardados de esta sesión.
+        </p>
+    <% } else { %>
+        <p>
+            El Reclamo Prestacional actual todavía no fue guardado.
+            Si descarta la edición, se perderá el borrador.
+        </p>
+    <% } %>
+
+    <% if (recuperacionContextoVencido) { %>
+        <p>
+            El contexto de Compras del borrador venció. Puede revisar la
+            edición actual, pero deberá descartarla y reiniciar el flujo
+            desde el requerimiento para crear un nuevo reclamo.
+        </p>
+    <% } %>
+
+    <input
+        type="button"
+        value="Continuar edición actual"
+        onclick="document.getElementById('<portlet:namespace />recuperacionEdicionReclamo').style.display='none'; return false;"
+    />
+
+    <form
+        action="<%= HtmlUtil.escape(recuperacionUrlDescartar) %>"
+        method="post"
+        style="display:inline;">
+        <input
+            type="submit"
+            value="Descartar edición actual y continuar"
+            onclick="return confirm('¿Está seguro de que desea descartar el estado transitorio de la edición actual?');"
+        />
+    </form>
+
+    <a href="<%= HtmlUtil.escape(recuperacionUrlVolver) %>">
+        <input type="button" value="Volver al requerimiento" />
+    </a>
+</div>
+<% } %>
 <liferay-ui:error key="error-estado-reclamo" message="falta-estado-reclamo-prestacion" />
 <liferay-ui:error key="error-fechaseccional-reclamo" message="falta-fechaseccional-reclamo-prestacion" />
 <liferay-ui:error key="error-fechaingresoospim-reclamo" message="falta-fechaingresoospim-reclamo-prestacion" />

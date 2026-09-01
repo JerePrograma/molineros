@@ -147,10 +147,15 @@ public final class ComprasRequerimientosUiContractTest {
                 editar,
                 "\"origen\",\n                    \"compras\""
         );
-        assertContains(
-                "limpia precarga invalida",
+        assertNotContains(
+                "contexto invalido conserva la edicion",
                 editar,
                 "limpiarSesionHandoffCompra(session)"
+        );
+        assertContains(
+                "contexto invalido queda en consulta",
+                editar,
+                "renderRequest.setAttribute(Constants.CMD, Constants.VIEW)"
         );
         assertNotContains(
                 "insertar interno no confirma transaccion del caller",

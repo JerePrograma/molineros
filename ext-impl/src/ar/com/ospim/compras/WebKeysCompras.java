@@ -147,6 +147,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA =
             "CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA";
 
+    public static final String RECUPERACION_RECLAMO_PRESTACIONAL_COMPRA =
+            "RECUPERACION_RECLAMO_PRESTACIONAL_COMPRA";
+
     public static final String PARAM_ID_REQUERIMIENTO_COMPRA =
             "id_requerimiento_compra";
 
@@ -155,6 +158,27 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static final String PARAM_RECLAMO_PRESTACIONAL_NONCE =
             "compras_reclamo_nonce";
+
+    public static final String PARAM_RECUPERACION_RECLAMO_NONCE =
+            "compras_recuperacion_reclamo_nonce";
+
+    public static final String CMD_DESCARTAR_EDICION_RECLAMO =
+            "descartar_edicion_reclamo";
+
+    public static final String ATR_RECUPERACION_RECLAMO_ACTIVA =
+            "recuperacion_reclamo_activa";
+
+    public static final String ATR_RECUPERACION_RECLAMO_URL_DESCARTAR =
+            "recuperacion_reclamo_url_descartar";
+
+    public static final String ATR_RECUPERACION_RECLAMO_URL_VOLVER =
+            "recuperacion_reclamo_url_volver";
+
+    public static final String ATR_RECUPERACION_RECLAMO_ID_ACTUAL =
+            "recuperacion_reclamo_id_actual";
+
+    public static final String ATR_RECUPERACION_CONTEXTO_VENCIDO =
+            "recuperacion_reclamo_contexto_vencido";
 
     public static final String VINCULO_RECLAMO_RESERVADO =
             "RESERVADO";

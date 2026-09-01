@@ -121,17 +121,6 @@ public class IniciarReclamoPrestacionalCompraAction
                             actionRequest
                     );
 
-            RequerimientoCompra requerimiento =
-                    obtenerRequerimientoActivo(
-                            idRequerimientoCompra
-                    );
-
-            RequerimientoCompraReclamoPrestacional relacion =
-                    reclamoHelper
-                            .obtenerPorRequerimiento(
-                                    idRequerimientoCompra
-                            );
-
             HttpServletRequest httpRequest =
                     PortalUtil.getHttpServletRequest(
                             actionRequest
@@ -145,6 +134,71 @@ public class IniciarReclamoPrestacionalCompraAction
 
             session =
                     httpRequest.getSession();
+
+            String usuario =
+                    user != null ? user.getScreenName() : "";
+
+            String cmd =
+                    ParamUtil.getString(
+                            actionRequest,
+                            Constants.CMD,
+                            ""
+                    );
+
+            if (WebKeysCompras.CMD_DESCARTAR_EDICION_RECLAMO.equals(
+                    cmd
+            )) {
+                try {
+                    idRequerimientoCompra =
+                            ReclamoPrestacionalCompraPrecargaHelper
+                                    .descartarEdicionActual(
+                                            session,
+                                            ParamUtil.getString(
+                                                    actionRequest,
+                                                    WebKeysCompras
+                                                            .PARAM_RECUPERACION_RECLAMO_NONCE,
+                                                    ""
+                                            ),
+                                            usuario,
+                                            idRequerimientoCompra
+                                    );
+
+                    _log.info(
+                            "Se descarto explicitamente el estado transitorio "
+                                    + "del editor de Reclamo Prestacional. "
+                                    + "idRequerimiento="
+                                    + idRequerimientoCompra
+                    );
+                } catch (Exception descarteError) {
+                    _log.warn(
+                            "Se rechazo un descarte de edicion de Reclamo "
+                                    + "Prestacional. idRequerimiento="
+                                    + idRequerimientoCompra
+                                    + ", motivo="
+                                    + descarteError.getMessage()
+                    );
+
+                    informarConflictoFuncional(
+                            actionRequest,
+                            actionResponse,
+                            idRequerimientoCompra,
+                            descarteError.getMessage()
+                    );
+
+                    return;
+                }
+            }
+
+            RequerimientoCompra requerimiento =
+                    obtenerRequerimientoActivo(
+                            idRequerimientoCompra
+                    );
+
+            RequerimientoCompraReclamoPrestacional relacion =
+                    reclamoHelper
+                            .obtenerPorRequerimiento(
+                                    idRequerimientoCompra
+                            );
 
             if (relacion != null
                     && relacion.isVinculado()) {
@@ -218,9 +272,6 @@ public class IniciarReclamoPrestacionalCompraAction
                     user
             );
 
-            String usuario =
-                    user.getScreenName();
-
             /*
              * Se transportan al contexto temporal los porcentajes y
              * las marcas de recuperabilidad del requerimiento.
@@ -259,6 +310,12 @@ public class IniciarReclamoPrestacionalCompraAction
                             actionRequest
                     );
 
+            DestinoPortlet origenCompras =
+                    resolverOrigenCompras(
+                            actionRequest,
+                            httpRequest
+                    );
+
             String redirect =
                     construirURLAutorizaciones(
                             httpRequest,
@@ -273,10 +330,86 @@ public class IniciarReclamoPrestacionalCompraAction
              * se reutiliza idRequerimientoCompra como idReclamo.
              */
             ReclamoPrestacionalCompraPrecargaHelper
-                    .registrarContextoBorrador(
+                    .RegistroContextoBorrador registroContexto =
+                    ReclamoPrestacionalCompraPrecargaHelper
+                            .registrarContextoBorrador(
                             session,
-                    contextoHandoff
-            );
+                            contextoHandoff,
+                            origenCompras.getPortletId(),
+                            origenCompras.getPlid()
+                    );
+
+            if (registroContexto.isBloqueado()) {
+                _log.warn(
+                        "No se inicio el Reclamo Prestacional porque la "
+                                + "sesion contiene una edicion parcial. "
+                                + "idRequerimiento="
+                                + idRequerimientoCompra
+                );
+
+                informarConflictoFuncional(
+                        actionRequest,
+                        actionResponse,
+                        idRequerimientoCompra,
+                        registroContexto.getMensaje()
+                );
+
+                return;
+            }
+
+            if (registroContexto.isReutilizado()) {
+                _log.info(
+                        "Se reutilizo el borrador vigente del mismo "
+                                + "requerimiento. idRequerimiento="
+                                + idRequerimientoCompra
+                );
+
+                actionResponse.sendRedirect(
+                        construirURLAutorizaciones(
+                                httpRequest,
+                                destino,
+                                registroContexto.getNonceContextoActual(),
+                                null
+                        )
+                );
+
+                return;
+            }
+
+            if (registroContexto.isColision()) {
+                ReclamoPrestacionalCompraPrecargaHelper
+                        .RecuperacionEdicion recuperacion =
+                        registroContexto.getRecuperacion();
+
+                _log.warn(
+                        "Colision funcional al iniciar Reclamo Prestacional "
+                                + "desde Compras. idRequerimientoSolicitado="
+                                + idRequerimientoCompra
+                                + ", idReclamoActual="
+                                + recuperacion.getIdReclamoActual()
+                                + ", contextoCompraActual="
+                                + (recuperacion.getContextoCompraVigente(
+                                usuario
+                        ) != null)
+                );
+
+                actionResponse.sendRedirect(
+                        construirURLRecuperacionEdicion(
+                                httpRequest,
+                                destino,
+                                recuperacion,
+                                usuario
+                        )
+                );
+
+                return;
+            }
+
+            if (!registroContexto.isRegistrado()) {
+                throw new Exception(
+                        "No se pudo registrar el contexto temporal de Compras."
+                );
+            }
 
             /*
              * Construye en sesión la cabecera temporal y la lista temporal
@@ -366,6 +499,151 @@ public class IniciarReclamoPrestacionalCompraAction
                 WebKeysCompras
                         .FORWARD_COMPRAS_VER_REQUERIMIENTO
         );
+    }
+
+    private void informarConflictoFuncional(
+            ActionRequest actionRequest,
+            ActionResponse actionResponse,
+            int idRequerimientoCompra,
+            String mensaje) {
+
+        SessionErrors.add(
+                actionRequest,
+                "reclamo-prestacional-compra-error"
+        );
+
+        actionRequest.setAttribute(
+                WebKeysCompras.ERROR_PARA_ALERT,
+                WebKeysCompras.isEmpty(mensaje)
+                        ? "Existe un Reclamo Prestacional en edicion "
+                        + "en esta sesion."
+                        : mensaje
+        );
+
+        actionResponse.setRenderParameter(
+                "struts_action",
+                STRUTS_ACTION_VER_REQUERIMIENTO
+        );
+
+        if (idRequerimientoCompra > 0) {
+            actionResponse.setRenderParameter(
+                    WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                    String.valueOf(idRequerimientoCompra)
+            );
+        }
+
+        setForward(
+                actionRequest,
+                WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO
+        );
+    }
+
+    private DestinoPortlet resolverOrigenCompras(
+            ActionRequest actionRequest,
+            HttpServletRequest httpRequest) throws Exception {
+
+        String portletId =
+                PortalUtil.getPortletId(
+                        actionRequest
+                );
+
+        ThemeDisplay themeDisplay =
+                (ThemeDisplay) httpRequest.getAttribute(
+                        WebKeys.THEME_DISPLAY
+                );
+
+        if (WebKeysCompras.isEmpty(portletId)
+                || themeDisplay == null
+                || themeDisplay.getPlid() <= 0L) {
+
+            throw new Exception(
+                    "No se pudo determinar el portlet de Compras de origen."
+            );
+        }
+
+        return new DestinoPortlet(
+                portletId,
+                themeDisplay.getPlid()
+        );
+    }
+
+    private String construirURLRecuperacionEdicion(
+            HttpServletRequest httpRequest,
+            DestinoPortlet destino,
+            ReclamoPrestacionalCompraPrecargaHelper
+                    .RecuperacionEdicion recuperacion,
+            String usuarioActual) throws Exception {
+
+        if (recuperacion == null) {
+            throw new Exception(
+                    "No se pudo obtener la recuperacion de la edicion."
+            );
+        }
+
+        PortletURL url =
+                PortletURLFactoryUtil.create(
+                        httpRequest,
+                        destino.getPortletId(),
+                        destino.getPlid(),
+                        PortletRequest.RENDER_PHASE
+                );
+
+        if (url == null) {
+            throw new Exception(
+                    "Liferay no pudo construir la URL de recuperacion."
+            );
+        }
+
+        url.setWindowState(
+                WindowState.MAXIMIZED
+        );
+        url.setParameter(
+                "struts_action",
+                STRUTS_ACTION_RECLAMO
+        );
+        url.setParameter(
+                WebKeysCompras.PARAM_RECUPERACION_RECLAMO_NONCE,
+                recuperacion.getNonce()
+        );
+
+        ReclamoPrestacionalCompraContexto contextoActual =
+                recuperacion.getContextoCompraVigente(
+                        usuarioActual
+                );
+
+        if (recuperacion.getIdReclamoActual() > 0) {
+            url.setParameter(
+                    Constants.CMD,
+                    Constants.EDIT
+            );
+        } else if (recuperacion.tieneContextoCompraNoVigente(
+                usuarioActual
+        )) {
+            url.setParameter(
+                    Constants.CMD,
+                    Constants.VIEW
+            );
+        } else {
+            url.setParameter(
+                    Constants.CMD,
+                    Constants.ADD
+            );
+        }
+
+        if (contextoActual != null
+                && recuperacion.getIdReclamoActual() <= 0) {
+
+            url.setParameter(
+                    PARAM_ORIGEN,
+                    ORIGEN_COMPRAS
+            );
+            url.setParameter(
+                    WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+                    contextoActual.getNonce()
+            );
+        }
+
+        return url.toString();
     }
 
     /**
