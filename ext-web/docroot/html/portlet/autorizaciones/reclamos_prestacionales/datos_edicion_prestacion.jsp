@@ -39,10 +39,13 @@ ReclamoPrestacional reclamoEnEdicion =
                                 .RECLAMO_PRESTACION_EN_EDICION
                 );
 
-boolean esFarmacia =
+boolean esReintegroFarmacia =
         reclamoEnEdicion != null
         && "FARMACIA".equalsIgnoreCase(
                 reclamoEnEdicion.getSector()
+        )
+        && "REINTEGRO".equalsIgnoreCase(
+                reclamoEnEdicion.getTipoPedido()
         );
 
 if (prestacionEnEdicion != null) {
@@ -155,7 +158,7 @@ if (prestacionEnEdicion != null) {
 }
 
 boolean mostrarCodigoPresentado =
-        !esFarmacia;
+        !esReintegroFarmacia;
 %>
 
 <input
@@ -1156,7 +1159,7 @@ boolean mostrarCodigoPresentado =
         "<%=prestacionEnEdicion.getIdRegistro()%>"
     );
 
-        <% if (!esFarmacia) { %>
+        <% if (mostrarCodigoPresentado) { %>
 
     jQuery(
         "#<portlet:namespace />nom_seleccionado"

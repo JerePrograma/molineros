@@ -1401,6 +1401,12 @@ function manejarTipoSector(){
     var tipoSector  =document.getElementById("<%= reclamoPortletNamespace %>sector");
     var tipopedido  = document.getElementById("<%= reclamoPortletNamespace %>tipopedido");
     try {
+        if (!jQuery("#<%= reclamoPortletNamespace %>datos_edicion_prestacion").is(":hidden")) {
+            jQuery("#<%= reclamoPortletNamespace %>busqueda_prestaciones").hide();
+            jQuery("#<%= reclamoPortletNamespace %>busqueda_farmacia").hide();
+            return;
+        }
+
         jQuery("#<%= reclamoPortletNamespace %>busqueda_prestaciones").show();
         jQuery("#<%= reclamoPortletNamespace %>busqueda_farmacia").hide();
         jQuery("#<%= reclamoPortletNamespace %>nom_seleccionado").val("1"); // se selecciono maestra de prestaciones medicas
