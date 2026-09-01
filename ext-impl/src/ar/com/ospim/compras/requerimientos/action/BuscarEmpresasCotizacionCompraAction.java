@@ -1,7 +1,6 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.beans.Empresa;
 import ar.com.ospim.util.PermissionUtil;
@@ -35,6 +34,8 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
             );
 
     private static final int MAX_RESULTADOS = 100;
+    private static final int LIMITE_CON_MARCA = MAX_RESULTADOS + 1;
+    private static final int MIN_CARACTERES_RAZON_SOCIAL = 3;
 
     public ActionForward render(
             ActionMapping mapping,
@@ -99,18 +100,26 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
         boolean limitada = false;
 
         if (buscar) {
-            if (cuit == null
-                    && sucursal == null
-                    && descripcion == null) {
+            if (cuit == null && descripcion == null) {
 
                 error =
-                        "Debe informar CUIT, sucursal o razón social para buscar.";
+                        "Debe informar un CUIT completo o al menos tres "
+                                + "caracteres de raz\u00f3n social.";
 
-            } else if (cuit != null && cuit.length() > 11) {
-                error = "El CUIT informado supera la longitud permitida.";
+            } else if (cuit != null && !cuit.matches("^[0-9]{11}$")) {
+                error = "El CUIT debe contener exactamente 11 d\u00edgitos.";
 
             } else if (sucursal != null && sucursal.length() > 6) {
                 error = "La sucursal informada supera la longitud permitida.";
+
+            } else if (cuit == null
+                    && descripcion != null
+                    && descripcion.length()
+                    < MIN_CARACTERES_RAZON_SOCIAL) {
+
+                error =
+                        "La raz\u00f3n social debe contener al menos tres "
+                                + "caracteres.";
 
             } else if (descripcion != null
                     && descripcion.length() > 200) {
@@ -122,11 +131,11 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
                 try {
                     List<Empresa> empresas =
                             BusquedaRequerimientoCompraServiceUtil
-                                    .buscarEmpresasCotizacion(
+                                    .buscarEmpresasCotizacionRapida(
                                     cuit,
                                     descripcion,
                                     sucursal,
-                                    MAX_RESULTADOS
+                                    LIMITE_CON_MARCA
                             );
 
                     if (empresas == null) {
@@ -134,8 +143,16 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
                                 "No se pudo consultar el padrón de empleadores.";
 
                     } else {
-                        resultados.addAll(empresas);
-                        limitada = resultados.size() >= MAX_RESULTADOS;
+                        int cantidadVisible = Math.min(
+                                empresas.size(),
+                                MAX_RESULTADOS
+                        );
+
+                        for (int i = 0; i < cantidadVisible; i++) {
+                            resultados.add(empresas.get(i));
+                        }
+
+                        limitada = empresas.size() > MAX_RESULTADOS;
                     }
 
                 } catch (Exception e) {
@@ -185,15 +202,10 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
             );
         }
 
-        RequerimientoCompra requerimiento =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getRequerimientoCompra(
-                                idRequerimientoCompra
-                        );
-
-        if (requerimiento == null
-                || !requerimiento.esSectorSinCotizacionPrestador()
-                || !requerimiento.puedeAdministrarPresupuestos()) {
+        if (!BusquedaRequerimientoCompraServiceUtil
+                .esRequerimientoHabilitadoBusquedaEmpresaCotizacion(
+                        idRequerimientoCompra
+                )) {
 
             throw new Exception(
                     "El requerimiento informado no admite "

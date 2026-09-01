@@ -364,6 +364,30 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
+    public static List<Empresa> buscarEmpresasCotizacionRapida(
+            String cuit,
+            String descripcion,
+            String sucursal,
+            int limite) throws Exception {
+
+        return getInstance().buscarEmpresasCotizacionRapida(
+                cuit,
+                descripcion,
+                sucursal,
+                limite
+        );
+    }
+
+    public static boolean esRequerimientoHabilitadoBusquedaEmpresaCotizacion(
+            int idRequerimientoCompra) throws Exception {
+
+        validarIdRequerimiento(idRequerimientoCompra);
+        return getInstance()
+                .esRequerimientoHabilitadoBusquedaEmpresaCotizacion(
+                        idRequerimientoCompra
+                );
+    }
+
     public static List<RequerimientoCompraPresupuesto> listarPresupuestos(
             int idRequerimientoCompra) throws Exception {
 

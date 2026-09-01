@@ -59,6 +59,9 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
         String migracion = leer(
                 "docs/sql/20260827_aislar_cotizaciones_empresas_compras.sql"
         );
+        String migracionBusqueda = leer(
+                "docs/sql/20260901_optimizar_busqueda_empresas_compras.sql"
+        );
         String acciones = leer(
                 "ext-web/docroot/html/portlet/compras/requerimientos/partials/"
                         + "requerimiento_compra_acciones_componente.jsp"
@@ -321,6 +324,36 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 sql,
                 "FROM informacion_afip.empresa e"
         );
+        assertContains(
+                "busqueda rapida aditiva de Compras",
+                sql,
+                "CREATE FUNCTION compras.buscar_empresas_cotizacion_rapida("
+        );
+        assertContains(
+                "busqueda por CUIT conserva identidad ordenada",
+                sql,
+                "ORDER BY e.cuit, e.sucursal"
+        );
+        assertNotContains(
+                "busqueda por CUIT no recorre todo el padron como fallback",
+                sql,
+                "AND btrim(e.cuit) = v_cuit"
+        );
+        assertContains(
+                "busqueda textual conserva coincidencia por contenido",
+                sql,
+                "LIKE '%' || upper(v_descripcion) || '%'"
+        );
+        assertContains(
+                "busqueda textual limita antes de ordenar resultados",
+                sql,
+                "El subconjunto se corta sin orden interno por rendimiento"
+        );
+        assertContains(
+                "elegibilidad focalizada del requerimiento",
+                sql,
+                "es_requerimiento_habilitado_busqueda_empresa_cotizacion("
+        );
         assertNotContains(
                 "canonico no depende de buscar_empleadores",
                 sql,
@@ -380,7 +413,7 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
         assertContains(
                 "buscador usa Service de Compras",
                 buscador,
-                ".buscarEmpresasCotizacion("
+                ".buscarEmpresasCotizacionRapida("
         );
         assertNotContains(
                 "persistencia de Compras desacoplada de EmpresaServiceUtil",
@@ -398,6 +431,16 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "validarRequerimientoInterno("
         );
         assertContains(
+                "endpoint valida elegibilidad sin cargar detalles",
+                buscador,
+                ".esRequerimientoHabilitadoBusquedaEmpresaCotizacion("
+        );
+        assertNotContains(
+                "endpoint no carga requerimiento completo",
+                buscador,
+                ".getRequerimientoCompra("
+        );
+        assertContains(
                 "popup conserva contexto del requerimiento",
                 documentos,
                 "WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA"
@@ -411,6 +454,21 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "buscador limita CUIT funcional",
                 selector,
                 "maxlength=\"11\""
+        );
+        assertContains(
+                "buscador exige tres caracteres si no hay CUIT",
+                selector,
+                "cuit == '' && descripcion != '' && descripcion.length < 3"
+        );
+        assertContains(
+                "endpoint exige tres caracteres si no hay CUIT",
+                buscador,
+                "else if (cuit == null"
+        );
+        assertContains(
+                "buscador evita solicitudes simultaneas",
+                selector,
+                "boton.attr('disabled', 'disabled')"
         );
         assertContains(
                 "buscador exige permiso existente",
@@ -506,6 +564,59 @@ public final class ComprasSectoresInternosCotizacionEmpresaContractTest {
                 "migracion no deja funciones no reejecutables",
                 migracion,
                 "CREATE FUNCTION compras."
+        );
+
+        assertContains(
+                "migracion agrega busqueda rapida reejecutable",
+                migracionBusqueda,
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.buscar_empresas_cotizacion_rapida("
+        );
+        assertContains(
+                "migracion agrega elegibilidad focalizada",
+                migracionBusqueda,
+                "es_requerimiento_habilitado_busqueda_empresa_cotizacion("
+        );
+        assertContains(
+                "migracion limita antes de ordenar busqueda textual",
+                migracionBusqueda,
+                "El subconjunto se corta sin orden interno por rendimiento"
+        );
+        assertNotContains(
+                "migracion no agrega fallback no indexable por CUIT",
+                migracionBusqueda,
+                "AND btrim(e.cuit) = v_cuit"
+        );
+        assertNotContains(
+                "migracion conserva funcion de busqueda vigente",
+                migracionBusqueda,
+                "CREATE OR REPLACE FUNCTION "
+                        + "compras.buscar_empresas_cotizacion("
+        );
+        assertNotContains(
+                "optimizacion no altera tabla externa",
+                migracionBusqueda,
+                "ALTER TABLE informacion_afip.empresa"
+        );
+        assertNotContains(
+                "optimizacion no escribe tabla externa",
+                migracionBusqueda,
+                "UPDATE informacion_afip.empresa"
+        );
+        assertNotContains(
+                "optimizacion no inserta tabla externa",
+                migracionBusqueda,
+                "INSERT INTO informacion_afip.empresa"
+        );
+        assertNotContains(
+                "optimizacion no elimina de tabla externa",
+                migracionBusqueda,
+                "DELETE FROM informacion_afip.empresa"
+        );
+        assertNotContains(
+                "optimizacion no crea indices externos",
+                migracionBusqueda,
+                "ON informacion_afip.empresa"
         );
     }
 

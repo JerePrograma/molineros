@@ -81,6 +81,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private static final String SQL_BUSCAR_EMPRESAS_COTIZACION =
             "SELECT * FROM compras.buscar_empresas_cotizacion(?,?,?,?)";
 
+    private static final String SQL_BUSCAR_EMPRESAS_COTIZACION_RAPIDA =
+            "SELECT * FROM "
+                    + "compras.buscar_empresas_cotizacion_rapida(?,?,?,?)";
+
+    private static final String SQL_REQUERIMIENTO_HABILITADO_BUSQUEDA_EMPRESA =
+            "SELECT compras."
+                    + "es_requerimiento_habilitado_busqueda_empresa_cotizacion(?)";
+
     private static final String SQL_LISTAR_PRESUPUESTOS =
             "SELECT rp.id_requerimiento_presupuesto, "
                     + "rp.id_requerimiento, rp.id_prestador, "
@@ -636,6 +644,67 @@ public class BusquedaRequerimientoCompraServiceImpl {
             }
 
             return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<Empresa> buscarEmpresasCotizacionRapida(
+            String cuit,
+            String descripcion,
+            String sucursal,
+            int limite) throws Exception {
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<Empresa> resultado = new ArrayList<Empresa>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(
+                    SQL_BUSCAR_EMPRESAS_COTIZACION_RAPIDA
+            );
+            stmt.setString(1, cuit);
+            stmt.setString(2, descripcion);
+            stmt.setString(3, sucursal);
+            stmt.setInt(4, limite);
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                resultado.add(
+                        new Empresa(
+                                rs.getString("cuit"),
+                                rs.getString("sucursal"),
+                                rs.getString("razon_soc")
+                        )
+                );
+            }
+
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public boolean esRequerimientoHabilitadoBusquedaEmpresaCotizacion(
+            int idRequerimientoCompra) throws Exception {
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(
+                    SQL_REQUERIMIENTO_HABILITADO_BUSQUEDA_EMPRESA
+            );
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+
+            return rs.next() && rs.getBoolean(1);
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);

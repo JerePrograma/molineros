@@ -129,6 +129,7 @@ buscarEmpresasURL.setParameter(
                 </td>
                 <td>
                     <input type="button"
+                           id="<portlet:namespace />empresa_busqueda_boton"
                            value="Buscar"
                            onclick="return <portlet:namespace />buscarEmpresasCotizacionPopup();" />
                 </td>
@@ -142,7 +143,8 @@ buscarEmpresasURL.setParameter(
         </div>
     <% } else if (!busquedaRealizada) { %>
         <div class="portlet-msg-info">
-            Ingrese CUIT, sucursal o razón social para buscar una Empresa.
+            Ingrese un CUIT completo o al menos 3 caracteres de razón social.
+            La sucursal permite refinar la búsqueda.
         </div>
     <% } else if (empresas.isEmpty()) { %>
         <div class="portlet-msg-info">
@@ -213,8 +215,21 @@ buscarEmpresasURL.setParameter(
                         || ''
         );
 
-        if (cuit == '' && sucursal == '' && descripcion == '') {
-            alert('Debe informar CUIT, sucursal o razón social para buscar.');
+        if (cuit == '' && descripcion == '') {
+            alert(
+                    'Debe informar un CUIT completo o al menos '
+                            + '3 caracteres de razón social.'
+            );
+            return false;
+        }
+
+        if (cuit != '' && !/^[0-9]{11}$/.test(cuit)) {
+            alert('El CUIT debe contener exactamente 11 dígitos.');
+            return false;
+        }
+
+        if (cuit == '' && descripcion != '' && descripcion.length < 3) {
+            alert('La razón social debe contener al menos 3 caracteres.');
             return false;
         }
 
@@ -225,6 +240,16 @@ buscarEmpresasURL.setParameter(
             return false;
         }
 
+        var boton = jQuery(
+                '#<portlet:namespace />empresa_busqueda_boton'
+        );
+
+        if (boton.attr('disabled')) {
+            return false;
+        }
+
+        boton.attr('disabled', 'disabled');
+
         var url =
                 '<%= jsEmpresaCotizacion(buscarEmpresasURL.toString()) %>'
                         + '&buscar=true'
@@ -232,7 +257,12 @@ buscarEmpresasURL.setParameter(
                         + '&sucu=' + encodeURIComponent(sucursal)
                         + '&descripcion=' + encodeURIComponent(descripcion);
 
-        jQuery(popup).load(url);
+        jQuery(popup).load(
+                url,
+                function() {
+                    boton.removeAttr('disabled');
+                }
+        );
         return false;
     }
 </script>
