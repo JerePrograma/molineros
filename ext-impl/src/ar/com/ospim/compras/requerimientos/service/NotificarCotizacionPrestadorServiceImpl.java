@@ -5,7 +5,6 @@ import ar.com.ospim.util.ConnectionHelper;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,26 +21,7 @@ public class NotificarCotizacionPrestadorServiceImpl {
             "{call compras.listar_prestadores_notificacion_cotizacion(?)}";
 
     private static final String SQL_LISTAR_CONFIGURACION_CORREOS_RUBRO =
-            "SELECT DISTINCT p.id_prestador, p.descripcion, p.cuit, "
-                    + "compras.resolver_emails_cotizacion_prestador("
-                    + "p.id_prestador) AS email, "
-                    + "p.id_tipo_prestador, "
-                    + "tp.descripcion AS tipo_prestador "
-                    + "FROM compras.tipo_prestacion t "
-                    + "JOIN compras.sector_requerimiento s "
-                    + "ON s.id_sector = t.id_sector "
-                    + "JOIN public.prestador_rubro pr "
-                    + "ON compras.normalizar_rubro(pr.rubro) = t.descripcion "
-                    + "JOIN public.prestador p "
-                    + "ON p.id_prestador = pr.id_prestador "
-                    + "LEFT JOIN trae_tipos_prestadores() tp "
-                    + "ON tp.id_tipo_prestador = p.id_tipo_prestador "
-                    + "WHERE t.id_tipo_prestacion = ? "
-                    + "AND s.activo = TRUE "
-                    + "AND s.baja_fecha IS NULL "
-                    + "AND COALESCE(p.solicitar_cotizacion, FALSE) = TRUE "
-                    + "AND p.baja_fecha IS NULL "
-                    + "ORDER BY p.descripcion, p.id_prestador";
+            "{call compras.listar_configuracion_correos_rubro(?)}";
 
     private static final String SQL_DIAGNOSTICAR_CANDIDATOS =
             "{call compras.diagnosticar_prestadores_notificacion_cotizacion(?)}";
@@ -88,14 +68,14 @@ public class NotificarCotizacionPrestadorServiceImpl {
             int idTipoPrestacion) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<PrestadorCotizacion> resultado =
                 new ArrayList<PrestadorCotizacion>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(
+            stmt = con.prepareCall(
                     SQL_LISTAR_CONFIGURACION_CORREOS_RUBRO
             );
             stmt.setInt(1, idTipoPrestacion);

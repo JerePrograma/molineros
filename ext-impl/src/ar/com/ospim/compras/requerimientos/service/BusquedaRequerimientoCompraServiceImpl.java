@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.List;
@@ -18,7 +17,7 @@ import java.util.List;
  *
  * Regla de esta clase:
  * - abrir/cerrar conexiones;
- * - ejecutar CALL funcionales o SQL directo de lectura;
+ * - ejecutar CALL a funciones PostgreSQL;
  * - parametrizar;
  * - mapear ResultSet a beans.
  *
@@ -36,38 +35,16 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.get_requerimiento_detalle_clasificado(?)}";
 
     private static final String SQL_LISTAR_SECTORES =
-            "SELECT s.id_sector AS id, s.descripcion, "
-                    + "s.requiere_afiliado "
-                    + "FROM compras.sector_requerimiento s "
-                    + "WHERE compras.es_sector_seleccionable_compras("
-                    + "s.id_sector) "
-                    + "ORDER BY s.descripcion";
+            "{call compras.listar_sectores_requerimiento()}";
 
     private static final String SQL_LISTAR_TIPOS_PRESTACION =
-            "SELECT t.id_tipo_prestacion::INTEGER "
-                    + "AS id_tipo_prestacion, t.descripcion, "
-                    + "t.id_sector, s.descripcion AS sector_descripcion "
-                    + "FROM compras.tipo_prestacion t "
-                    + "JOIN compras.sector_requerimiento s "
-                    + "ON s.id_sector = t.id_sector "
-                    + "WHERE s.activo = TRUE "
-                    + "AND s.baja_fecha IS NULL "
-                    + "ORDER BY t.id_tipo_prestacion";
+            "{call compras.listar_tipos_prestacion()}";
 
     private static final String SQL_GET_ESTADO =
-            "SELECT r.estado AS id, "
-                    + "compras.estado_requerimiento_descripcion("
-                    + "r.estado) AS descripcion "
-                    + "FROM compras.requerimiento r "
-                    + "WHERE r.id_requerimiento = ?";
+            "{call compras.get_estado_requerimiento(?)}";
 
     private static final String SQL_GET_SECTOR =
-            "SELECT s.id_sector AS id, s.descripcion, "
-                    + "s.requiere_afiliado "
-                    + "FROM compras.sector_requerimiento s "
-                    + "WHERE s.id_sector = ? "
-                    + "AND s.activo = TRUE "
-                    + "AND s.baja_fecha IS NULL";
+            "{call compras.get_sector_requerimiento(?)}";
 
     private static final String SQL_BUSCAR_PRESTADORES_ENVIADOS =
             "{call compras.buscar_prestadores_enviados(?,?,?)}";
@@ -79,114 +56,46 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.hay_prestadores_pendientes_notificacion(?)}";
 
     private static final String SQL_BUSCAR_EMPRESAS_COTIZACION =
-            "SELECT * FROM compras.buscar_empresas_cotizacion(?,?,?,?)";
+            "{call compras.buscar_empresas_cotizacion(?,?,?,?)}";
 
     private static final String SQL_BUSCAR_EMPRESAS_COTIZACION_RAPIDA =
-            "SELECT * FROM "
-                    + "compras.buscar_empresas_cotizacion_rapida(?,?,?,?)";
+            "{call compras.buscar_empresas_cotizacion_rapida(?,?,?,?)}";
 
     private static final String SQL_REQUERIMIENTO_HABILITADO_BUSQUEDA_EMPRESA =
-            "SELECT compras."
-                    + "es_requerimiento_habilitado_busqueda_empresa_cotizacion(?)";
+            "{call compras.es_requerimiento_habilitado_busqueda_empresa_cotizacion(?)}";
 
     private static final String SQL_LISTAR_PRESUPUESTOS =
-            "SELECT rp.id_requerimiento_presupuesto, "
-                    + "rp.id_requerimiento, rp.id_prestador, "
-                    + "rp.tipo_documento, rp.fecha_documento, "
-                    + "rp.dl_group_id, rp.dl_folder_id, "
-                    + "rp.dl_file_entry_id, rp.dl_file_uuid, "
-                    + "rp.nombre_original, rp.nombre_persistido, "
-                    + "rp.titulo, rp.descripcion_prestador, "
-                    + "rp.alta_fecha, rp.alta_usr "
-                    + "FROM compras.requerimiento_presupuesto rp "
-                    + "WHERE rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = 1 "
-                    + "AND rp.baja_fecha IS NULL "
-                    + "ORDER BY rp.alta_fecha DESC, "
-                    + "rp.id_requerimiento_presupuesto DESC";
+            "{call compras.listar_documentos_requerimiento(?,?)}";
 
     private static final String SQL_GET_PRESUPUESTO =
-            "SELECT rp.* "
-                    + "FROM compras.requerimiento_presupuesto rp "
-                    + "WHERE rp.id_requerimiento_presupuesto = ? "
-                    + "AND rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = 1 "
-                    + "AND rp.baja_fecha IS NULL";
+            "{call compras.get_documento_requerimiento(?,?,?)}";
 
     private static final String SQL_LISTAR_COTIZACIONES_EMPRESA =
-            "SELECT rp.id_requerimiento_presupuesto, "
-                    + "rp.id_requerimiento, rp.id_prestador, "
-                    + "rp.tipo_documento, rp.fecha_documento, "
-                    + "rp.dl_group_id, rp.dl_folder_id, "
-                    + "rp.dl_file_entry_id, rp.dl_file_uuid, "
-                    + "rp.nombre_original, rp.nombre_persistido, "
-                    + "rp.titulo, rp.descripcion_prestador, "
-                    + "rp.empresa_cuit, rp.empresa_sucursal, "
-                    + "rp.descripcion_empresa, "
-                    + "rp.alta_fecha, rp.alta_usr "
-                    + "FROM compras.requerimiento_presupuesto rp "
-                    + "WHERE rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = 3 "
-                    + "AND rp.baja_fecha IS NULL "
-                    + "ORDER BY rp.alta_fecha DESC, "
-                    + "rp.id_requerimiento_presupuesto DESC";
+            "{call compras.listar_documentos_requerimiento(?,?)}";
 
     private static final String SQL_GET_COTIZACION_EMPRESA =
-            "SELECT rp.* "
-                    + "FROM compras.requerimiento_presupuesto rp "
-                    + "WHERE rp.id_requerimiento_presupuesto = ? "
-                    + "AND rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = 3 "
-                    + "AND rp.baja_fecha IS NULL";
+            "{call compras.get_documento_requerimiento(?,?,?)}";
 
     private static final String SQL_GET_ORDEN_MEDICA =
-            "SELECT rp.* "
-                    + "FROM compras.requerimiento_presupuesto rp "
-                    + "WHERE rp.id_requerimiento = ? "
-                    + "AND rp.tipo_documento = 2 "
-                    + "AND rp.baja_fecha IS NULL";
+            "{call compras.listar_ordenes_medicas_requerimiento(?)}";
 
     private static final String SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO =
             "{call compras.buscar_items_historicos_afiliado(?,?,?,?,?)}";
 
     private static final String SQL_TIENE_SITUACION_MEDICA_VIGENTE =
-            "SELECT EXISTS ("
-                    + "SELECT 1 FROM public.afi_situ_medica sm "
-                    + "WHERE sm.cuil_titular = ? "
-                    + "AND sm.inte = ? "
-                    + "AND sm.baja_fecha IS NULL "
-                    + "AND (sm.vigen_hasta IS NULL "
-                    + "OR sm.vigen_hasta > CURRENT_DATE))";
+            "{call compras.tiene_situacion_medica_vigente(?,?)}";
 
     private static final String SQL_EXISTE_REQUERIMIENTO_DUPLICADO =
             "{ ? = call compras.existe_requerimiento_duplicado(?,?,?,?,?) }";
 
     private static final String SQL_LISTAR_PRESTADORES_ADJUDICADOS =
-            "SELECT DISTINCT d.id_prestador "
-                    + "FROM compras.requerimiento_detalle d "
-                    + "WHERE d.id_requerimiento = ? "
-                    + "AND d.baja_fecha IS NULL";
+            "{call compras.listar_prestadores_adjudicados(?)}";
 
     private static final String SQL_LISTAR_PRESUPUESTOS_PRESTADOR =
-            "SELECT rp.* "
-                    + "FROM compras.requerimiento_presupuesto rp "
-                    + "WHERE rp.id_requerimiento = ? "
-                    + "AND rp.id_prestador = ? "
-                    + "AND rp.tipo_documento = 1 "
-                    + "AND rp.baja_fecha IS NULL "
-                    + "ORDER BY rp.id_requerimiento_presupuesto";
+            "{call compras.listar_presupuestos_prestador(?,?)}";
 
     private static final String SQL_GET_PEDIDO_COTIZACION_PRESTADOR =
-            "SELECT pc.* "
-                    + "FROM compras.requerimiento_pedido_cotizacion pc "
-                    + "JOIN compras.requerimiento_cotizacion_prestador rcp "
-                    + "ON rcp.id_requerimiento = pc.id_requerimiento "
-                    + "AND rcp.id_prestador = pc.id_prestador "
-                    + "WHERE pc.id_requerimiento = ? "
-                    + "AND pc.id_prestador = ? "
-                    + "AND pc.intento = rcp.intentos "
-                    + "AND rcp.estado_envio IN ('ENVIADO', 'COTIZADO') "
-                    + "ORDER BY pc.intento DESC LIMIT 1";
+            "{call compras.get_pedido_cotizacion_prestador(?,?)}";
 
     public List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
@@ -334,14 +243,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     public List<RequerimientoCompraSector> listarSectores() throws Exception {
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraSector> resultado =
                 new ArrayList<RequerimientoCompraSector>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_SECTORES);
+            stmt = con.prepareCall(SQL_LISTAR_SECTORES);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -359,14 +268,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<TipoPrestacionCompra> resultado =
                 new ArrayList<TipoPrestacionCompra>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_TIPOS_PRESTACION);
+            stmt = con.prepareCall(SQL_LISTAR_TIPOS_PRESTACION);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -392,12 +301,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_ESTADO);
+            stmt = con.prepareCall(SQL_GET_ESTADO);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -420,12 +329,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_SECTOR);
+            stmt = con.prepareCall(SQL_GET_SECTOR);
             stmt.setInt(1, idSector);
             rs = stmt.executeQuery();
 
@@ -441,12 +350,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int inte) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_TIENE_SITUACION_MEDICA_VIGENTE);
+            stmt = con.prepareCall(SQL_TIENE_SITUACION_MEDICA_VIGENTE);
             stmt.setString(1, cuilTitular);
             stmt.setInt(2, inte);
             rs = stmt.executeQuery();
@@ -620,13 +529,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int limite) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<Empresa> resultado = new ArrayList<Empresa>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_BUSCAR_EMPRESAS_COTIZACION);
+            stmt = con.prepareCall(SQL_BUSCAR_EMPRESAS_COTIZACION);
             stmt.setString(1, cuit);
             stmt.setString(2, descripcion);
             stmt.setString(3, sucursal);
@@ -657,13 +566,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int limite) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<Empresa> resultado = new ArrayList<Empresa>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(
+            stmt = con.prepareCall(
                     SQL_BUSCAR_EMPRESAS_COTIZACION_RAPIDA
             );
             stmt.setString(1, cuit);
@@ -693,12 +602,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(
+            stmt = con.prepareCall(
                     SQL_REQUERIMIENTO_HABILITADO_BUSQUEDA_EMPRESA
             );
             stmt.setInt(1, idRequerimientoCompra);
@@ -715,15 +624,16 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_PRESUPUESTOS);
+            stmt = con.prepareCall(SQL_LISTAR_PRESUPUESTOS);
             stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, 1);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -741,15 +651,16 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_COTIZACIONES_EMPRESA);
+            stmt = con.prepareCall(SQL_LISTAR_COTIZACIONES_EMPRESA);
             stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, 3);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -768,14 +679,15 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_PRESUPUESTO);
+            stmt = con.prepareCall(SQL_GET_PRESUPUESTO);
             stmt.setInt(1, idRequerimientoPresupuesto);
             stmt.setInt(2, idRequerimientoCompra);
+            stmt.setInt(3, 1);
             rs = stmt.executeQuery();
 
             return rs.next() ? mapPresupuesto(rs) : null;
@@ -790,14 +702,15 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_COTIZACION_EMPRESA);
+            stmt = con.prepareCall(SQL_GET_COTIZACION_EMPRESA);
             stmt.setInt(1, idRequerimientoPresupuesto);
             stmt.setInt(2, idRequerimientoCompra);
+            stmt.setInt(3, 3);
             rs = stmt.executeQuery();
 
             return rs.next() ? mapCotizacionEmpresa(rs) : null;
@@ -811,14 +724,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_GET_ORDEN_MEDICA);
+            stmt = con.prepareCall(SQL_GET_ORDEN_MEDICA);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -837,13 +750,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<Integer> resultado = new ArrayList<Integer>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_PRESTADORES_ADJUDICADOS);
+            stmt = con.prepareCall(SQL_LISTAR_PRESTADORES_ADJUDICADOS);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -866,14 +779,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idPrestador) throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(SQL_LISTAR_PRESUPUESTOS_PRESTADOR);
+            stmt = con.prepareCall(SQL_LISTAR_PRESUPUESTOS_PRESTADOR);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, idPrestador);
             rs = stmt.executeQuery();
@@ -1176,7 +1089,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             throws Exception {
 
         Connection con = null;
-        PreparedStatement stmt = null;
+        CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
@@ -1184,7 +1097,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     ConnectionHelper.getConnection();
 
             stmt =
-                    con.prepareStatement(
+                    con.prepareCall(
                             SQL_GET_PEDIDO_COTIZACION_PRESTADOR
                     );
 

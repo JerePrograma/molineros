@@ -6740,4 +6740,376 @@ $func$
 LANGUAGE plpgsql
 VOLATILE;
 
+
+-- =====================================================================
+-- CONSULTAS JDBC LEGACY: ACCESO EXCLUSIVO MEDIANTE CALL
+-- =====================================================================
+
+CREATE FUNCTION compras.listar_sectores_requerimiento()
+RETURNS TABLE (
+    id INTEGER,
+    descripcion VARCHAR,
+    requiere_afiliado BOOLEAN
+)
+AS $func$
+    SELECT
+        s.id_sector::INTEGER AS id,
+        s.descripcion::VARCHAR AS descripcion,
+        s.requiere_afiliado
+    FROM compras.sector_requerimiento s
+    WHERE compras.es_sector_seleccionable_compras(s.id_sector)
+    ORDER BY s.descripcion;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.listar_tipos_prestacion()
+RETURNS TABLE (
+    id_tipo_prestacion INTEGER,
+    descripcion VARCHAR,
+    id_sector INTEGER,
+    sector_descripcion VARCHAR
+)
+AS $func$
+    SELECT
+        t.id_tipo_prestacion::INTEGER AS id_tipo_prestacion,
+        t.descripcion::VARCHAR AS descripcion,
+        t.id_sector::INTEGER AS id_sector,
+        s.descripcion::VARCHAR AS sector_descripcion
+    FROM compras.tipo_prestacion t
+    JOIN compras.sector_requerimiento s
+      ON s.id_sector = t.id_sector
+    WHERE s.activo = TRUE
+      AND s.baja_fecha IS NULL
+    ORDER BY t.id_tipo_prestacion;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.get_estado_requerimiento(
+    p_id_requerimiento INTEGER
+)
+RETURNS TABLE (
+    id INTEGER,
+    descripcion VARCHAR
+)
+AS $func$
+    SELECT
+        r.estado::INTEGER AS id,
+        compras.estado_requerimiento_descripcion(r.estado)::VARCHAR
+            AS descripcion
+    FROM compras.requerimiento r
+    WHERE r.id_requerimiento = $1;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.get_sector_requerimiento(
+    p_id_sector INTEGER
+)
+RETURNS TABLE (
+    id INTEGER,
+    descripcion VARCHAR,
+    requiere_afiliado BOOLEAN
+)
+AS $func$
+    SELECT
+        s.id_sector::INTEGER AS id,
+        s.descripcion::VARCHAR AS descripcion,
+        s.requiere_afiliado
+    FROM compras.sector_requerimiento s
+    WHERE s.id_sector = $1
+      AND s.activo = TRUE
+      AND s.baja_fecha IS NULL;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.listar_documentos_requerimiento(
+    p_id_requerimiento INTEGER,
+    p_tipo_documento INTEGER
+)
+RETURNS SETOF compras.requerimiento_presupuesto
+AS $func$
+    SELECT rp.*
+    FROM compras.requerimiento_presupuesto rp
+    WHERE rp.id_requerimiento = $1
+      AND rp.tipo_documento = $2
+      AND rp.baja_fecha IS NULL
+    ORDER BY
+        rp.alta_fecha DESC,
+        rp.id_requerimiento_presupuesto DESC;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.get_documento_requerimiento(
+    p_id_requerimiento_presupuesto INTEGER,
+    p_id_requerimiento INTEGER,
+    p_tipo_documento INTEGER
+)
+RETURNS SETOF compras.requerimiento_presupuesto
+AS $func$
+    SELECT rp.*
+    FROM compras.requerimiento_presupuesto rp
+    WHERE rp.id_requerimiento_presupuesto = $1
+      AND rp.id_requerimiento = $2
+      AND rp.tipo_documento = $3
+      AND rp.baja_fecha IS NULL;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.listar_ordenes_medicas_requerimiento(
+    p_id_requerimiento INTEGER
+)
+RETURNS SETOF compras.requerimiento_presupuesto
+AS $func$
+    SELECT rp.*
+    FROM compras.requerimiento_presupuesto rp
+    WHERE rp.id_requerimiento = $1
+      AND rp.tipo_documento = 2
+      AND rp.baja_fecha IS NULL;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.tiene_situacion_medica_vigente(
+    p_cuil_titular VARCHAR,
+    p_inte INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+    SELECT EXISTS (
+        SELECT 1
+        FROM public.afi_situ_medica sm
+        WHERE sm.cuil_titular = $1
+          AND sm.inte = $2
+          AND sm.baja_fecha IS NULL
+          AND (
+                sm.vigen_hasta IS NULL
+                OR sm.vigen_hasta > CURRENT_DATE
+              )
+    );
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.listar_prestadores_adjudicados(
+    p_id_requerimiento INTEGER
+)
+RETURNS TABLE (
+    id_prestador INTEGER
+)
+AS $func$
+    SELECT DISTINCT
+        d.id_prestador::INTEGER AS id_prestador
+    FROM compras.requerimiento_detalle d
+    WHERE d.id_requerimiento = $1
+      AND d.baja_fecha IS NULL;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.listar_presupuestos_prestador(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER
+)
+RETURNS SETOF compras.requerimiento_presupuesto
+AS $func$
+    SELECT rp.*
+    FROM compras.requerimiento_presupuesto rp
+    WHERE rp.id_requerimiento = $1
+      AND rp.id_prestador = $2
+      AND rp.tipo_documento = 1
+      AND rp.baja_fecha IS NULL
+    ORDER BY rp.id_requerimiento_presupuesto;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.get_pedido_cotizacion_prestador(
+    p_id_requerimiento INTEGER,
+    p_id_prestador INTEGER
+)
+RETURNS SETOF compras.requerimiento_pedido_cotizacion
+AS $func$
+    SELECT pc.*
+    FROM compras.requerimiento_pedido_cotizacion pc
+    JOIN compras.requerimiento_cotizacion_prestador rcp
+      ON rcp.id_requerimiento = pc.id_requerimiento
+     AND rcp.id_prestador = pc.id_prestador
+    WHERE pc.id_requerimiento = $1
+      AND pc.id_prestador = $2
+      AND pc.intento = rcp.intentos
+      AND rcp.estado_envio IN ('ENVIADO', 'COTIZADO')
+    ORDER BY pc.intento DESC
+    LIMIT 1;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.listar_configuracion_correos_rubro(
+    p_id_tipo_prestacion INTEGER
+)
+RETURNS TABLE (
+    id_prestador INTEGER,
+    descripcion VARCHAR,
+    cuit VARCHAR,
+    email VARCHAR,
+    id_tipo_prestador INTEGER,
+    tipo_prestador VARCHAR
+)
+AS $func$
+    SELECT DISTINCT
+        p.id_prestador::INTEGER AS id_prestador,
+        p.descripcion::VARCHAR AS descripcion,
+        p.cuit::VARCHAR AS cuit,
+        compras.resolver_emails_cotizacion_prestador(
+            p.id_prestador
+        )::VARCHAR AS email,
+        p.id_tipo_prestador::INTEGER AS id_tipo_prestador,
+        tp.descripcion::VARCHAR AS tipo_prestador
+    FROM compras.tipo_prestacion t
+    JOIN compras.sector_requerimiento s
+      ON s.id_sector = t.id_sector
+    JOIN public.prestador_rubro pr
+      ON compras.normalizar_rubro(pr.rubro) = t.descripcion
+    JOIN public.prestador p
+      ON p.id_prestador = pr.id_prestador
+    LEFT JOIN trae_tipos_prestadores() tp
+      ON tp.id_tipo_prestador = p.id_tipo_prestador
+    WHERE t.id_tipo_prestacion = $1
+      AND s.activo = TRUE
+      AND s.baja_fecha IS NULL
+      AND COALESCE(p.solicitar_cotizacion, FALSE) = TRUE
+      AND p.baja_fecha IS NULL
+    ORDER BY 2, 1;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.get_requerimiento_reclamo_prestacional(
+    p_id_requerimiento INTEGER
+)
+RETURNS SETOF compras.requerimiento_reclamo_prestacional
+AS $func$
+    SELECT relacion.*
+    FROM compras.requerimiento_reclamo_prestacional relacion
+    WHERE relacion.id_requerimiento = $1;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.listar_relaciones_reclamo_prestacional_batch(
+    p_estado VARCHAR,
+    p_ids_requerimientos TEXT
+)
+RETURNS SETOF compras.requerimiento_reclamo_prestacional
+AS $func$
+    SELECT relacion.*
+    FROM compras.requerimiento_reclamo_prestacional relacion
+    WHERE relacion.estado = $1
+      AND relacion.id_reclamo_prestacional IS NOT NULL
+      AND relacion.id_requerimiento = ANY ($2::INTEGER[])
+    ORDER BY relacion.id_requerimiento;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION
+compras.listar_relaciones_reclamo_prestacional_por_reclamo(
+    p_id_reclamo_prestacional INTEGER,
+    p_estado VARCHAR
+)
+RETURNS SETOF compras.requerimiento_reclamo_prestacional
+AS $func$
+    SELECT relacion.*
+    FROM compras.requerimiento_reclamo_prestacional relacion
+    JOIN compras.requerimiento requerimiento
+      ON requerimiento.id_requerimiento = relacion.id_requerimiento
+    WHERE relacion.id_reclamo_prestacional = $1
+      AND relacion.estado = $2
+      AND requerimiento.baja_fecha IS NULL
+    ORDER BY relacion.id_requerimiento;
+$func$
+LANGUAGE sql
+STABLE;
+
+
+CREATE FUNCTION compras.liberar_reserva_reclamo_prestacional(
+    p_id_requerimiento INTEGER,
+    p_token_reserva VARCHAR,
+    p_usuario VARCHAR
+)
+RETURNS BOOLEAN
+AS $func$
+DECLARE
+    v_filas_afectadas INTEGER;
+BEGIN
+    DELETE FROM compras.requerimiento_reclamo_prestacional
+    WHERE id_requerimiento = p_id_requerimiento
+      AND estado = 'RESERVADO'
+      AND id_reclamo_prestacional IS NULL
+      AND token_reserva = btrim(p_token_reserva);
+
+    GET DIAGNOSTICS v_filas_afectadas = ROW_COUNT;
+
+    -- p_usuario se conserva como parte del contrato JDBC legacy.
+    RETURN v_filas_afectadas > 0;
+END;
+$func$
+LANGUAGE plpgsql
+VOLATILE;
+
+
+CREATE FUNCTION compras.bloquear_requerimiento_reclamo_prestacional(
+    p_id_requerimiento INTEGER
+)
+RETURNS BOOLEAN
+AS $func$
+BEGIN
+    PERFORM pg_advisory_xact_lock(5391184, p_id_requerimiento);
+    RETURN TRUE;
+END;
+$func$
+LANGUAGE plpgsql
+VOLATILE;
+
+
+CREATE FUNCTION compras.get_estado_requerimiento_for_update(
+    p_id_requerimiento INTEGER
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_estado INTEGER;
+BEGIN
+    SELECT r.estado
+      INTO v_estado
+    FROM compras.requerimiento r
+    WHERE r.id_requerimiento = p_id_requerimiento
+      AND r.baja_fecha IS NULL
+    FOR UPDATE;
+
+    RETURN COALESCE(v_estado, 0);
+END;
+$func$
+LANGUAGE plpgsql
+VOLATILE;
+
 COMMIT;
