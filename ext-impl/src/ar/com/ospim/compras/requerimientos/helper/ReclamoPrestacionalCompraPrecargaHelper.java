@@ -346,7 +346,14 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
     /**
      * Registra el contexto temporal de un borrador iniciado desde Compras.
-     * Nunca reemplaza una edición ordinaria iniciada desde Autorizaciones.
+     *
+     * Un borrador nuevo no persistido (id_reclamo <= 0) nunca se reemplaza
+     * implícitamente: se reutiliza cuando pertenece al mismo requerimiento o
+     * se conserva mediante el flujo de colisión/descarte.
+     *
+     * Un Reclamo Prestacional ya persistido (id_reclamo > 0) no determina el
+     * destino de una navegación iniciada desde Compras. Su estado temporal de
+     * edición se limpia para que el requerimiento solicitado sea autoritativo.
      */
     public static RegistroContextoBorrador registrarContextoBorrador(
             HttpSession session,
@@ -453,6 +460,33 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             ReclamoPrestacional reclamoEnEdicion =
                     (ReclamoPrestacional) reclamoEnEdicionObj;
 
+            /*
+             * Un RP con ID positivo ya existe en base.
+             *
+             * Al navegar nuevamente desde Compras no puede convertirse en el
+             * destino del requerimiento solicitado sólo por permanecer en sesión.
+             *
+             * Se elimina exclusivamente el estado transitorio del editor; el RP
+             * persistido no se borra ni modifica en base.
+             */
+            if (reclamoEnEdicion.getId_reclamo() > 0) {
+
+                limpiarEstadoEditorSincronizado(
+                        session
+                );
+
+                session.setAttribute(
+                        WebKeysCompras
+                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA,
+                        nuevoContexto
+                );
+
+                return RegistroContextoBorrador.registrado();
+            }
+
+            /*
+             * Desde acá solamente pueden quedar borradores no persistidos.
+             */
             if (contextoAnteriorObj
                     instanceof ReclamoPrestacionalCompraContexto) {
 
@@ -578,8 +612,15 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     }
 
     /**
-     * Prepara la sesión para consultar un RP ya persistido sin destruir un
-     * borrador vigente perteneciente a otro requerimiento.
+     * Prepara la sesión para consultar el RP persistido asociado al
+     * requerimiento solicitado.
+     *
+     * Un RP ya persistido que permanezca en el editor es estado transitorio
+     * de navegación y no puede bloquear ni sustituir el vínculo persistido
+     * de Compras.
+     *
+     * Un borrador nuevo no persistido se conserva y bloquea la navegación
+     * para evitar pérdida implícita de datos.
      */
     public static void prepararSesionParaConsulta(
             HttpSession session,
@@ -617,23 +658,67 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 );
             }
 
+            Object reclamoObj =
+                    session.getAttribute(
+                            WebKeysAutorizaciones
+                                    .RECLAMO_PRESTACION_EN_EDICION
+                    );
+
+            if (reclamoObj != null
+                    && !(reclamoObj instanceof ReclamoPrestacional)) {
+
+                throw new Exception(
+                        "Existe un Reclamo Prestacional inválido en la sesión."
+                );
+            }
+
+            /*
+             * Un RP persistido no determina la navegación desde Compras.
+             * El vínculo persistido idRequerimientoCompra -> idReclamoPrestacional
+             * es la única fuente autorizada para elegir el RP destino.
+             */
+            if (reclamoObj instanceof ReclamoPrestacional) {
+
+                ReclamoPrestacional reclamoEnEdicion =
+                        (ReclamoPrestacional) reclamoObj;
+
+                if (reclamoEnEdicion.getId_reclamo() > 0) {
+
+                    limpiarEstadoEditorSincronizado(
+                            session
+                    );
+
+                    return;
+                }
+            }
+
             if (contextoObj instanceof ReclamoPrestacionalCompraContexto) {
+
                 ReclamoPrestacionalCompraContexto contexto =
-                        (ReclamoPrestacionalCompraContexto) contextoObj;
+                        (ReclamoPrestacionalCompraContexto)
+                                contextoObj;
 
                 if (contexto.getIdRequerimientoCompra()
                         == idRequerimientoCompra) {
 
-                    limpiarEstadoEditorSincronizado(session);
+                    limpiarEstadoEditorSincronizado(
+                            session
+                    );
+
                     return;
                 }
 
-                if (contexto.estaVigente(System.currentTimeMillis())) {
+                if (contexto.estaVigente(
+                        System.currentTimeMillis()
+                )) {
+
                     throw new Exception(
                             "Ya existe un inicio de Reclamo Prestacional "
-                                    + "desde Compras en proceso para el requerimiento "
+                                    + "desde Compras en proceso para el "
+                                    + "requerimiento "
                                     + contexto.getIdRequerimientoCompra()
-                                    + ". Finalícelo o descártelo antes de consultar otro."
+                                    + ". Finalícelo o descártelo antes "
+                                    + "de consultar otro."
                     );
                 }
 
@@ -643,14 +728,9 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 );
             }
 
-            Object reclamoObj =
-                    session.getAttribute(
-                            WebKeysAutorizaciones
-                                    .RECLAMO_PRESTACION_EN_EDICION
-                    );
-
             if (reclamoObj == null) {
                 if (hayEstadoEdicionEnSesion(session)) {
+
                     throw new Exception(
                             "Existe información parcial de otro Reclamo "
                                     + "Prestacional en edición en esta sesión."
@@ -660,24 +740,12 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 return;
             }
 
-            if (!(reclamoObj instanceof ReclamoPrestacional)) {
-                throw new Exception(
-                        "Existe un Reclamo Prestacional inválido en la sesión."
-                );
-            }
-
-            ReclamoPrestacional reclamoEnEdicion =
-                    (ReclamoPrestacional) reclamoObj;
-
-            if (reclamoEnEdicion.getId_reclamo()
-                    == idReclamoPrestacional) {
-
-                limpiarEstadoEditorSincronizado(session);
-                return;
-            }
-
+            /*
+             * Un RP con ID positivo ya fue tratado arriba.
+             * Sólo puede quedar un alta todavía no persistida.
+             */
             throw new Exception(
-                    "Ya existe otro Reclamo Prestacional en edición "
+                    "Ya existe un Reclamo Prestacional nuevo sin guardar "
                             + "en esta sesión. Finalícelo o descártelo "
                             + "antes de navegar desde Compras."
             );
