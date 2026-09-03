@@ -28,10 +28,15 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
 
-        return getInstance().buscarRequerimientos(
+        RequerimientoCompraFiltro filtroEfectivo =
                 filtro != null
                         ? filtro
-                        : new RequerimientoCompraFiltro()
+                        : new RequerimientoCompraFiltro();
+
+        validarFiltroBusqueda(filtroEfectivo);
+
+        return getInstance().buscarRequerimientos(
+                filtroEfectivo
         );
     }
 
@@ -43,6 +48,8 @@ public class BusquedaRequerimientoCompraServiceUtil {
                 filtro != null
                         ? filtro
                         : new RequerimientoCompraFiltro();
+
+        validarFiltroBusqueda(filtroEfectivo);
 
         List<RequerimientoCompra> requerimientos =
                 getInstance().buscarRequerimientos(
@@ -484,6 +491,26 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return presupuestos.isEmpty()
                 ? null
                 : presupuestos.get(0);
+    }
+
+    private static void validarFiltroBusqueda(
+            RequerimientoCompraFiltro filtro) throws Exception {
+
+        if (filtro == null) {
+            return;
+        }
+
+        if (filtro.getFechaAltaDesde() != null
+                && filtro.getFechaAltaHasta() != null
+                && filtro.getFechaAltaDesde().after(
+                        filtro.getFechaAltaHasta()
+                )) {
+
+            throw new Exception(
+                    "La fecha de alta desde no puede ser posterior "
+                            + "a la fecha de alta hasta."
+            );
+        }
     }
 
     private static void validarIdRequerimiento(

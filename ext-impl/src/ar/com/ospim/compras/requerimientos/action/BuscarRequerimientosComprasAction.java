@@ -19,7 +19,9 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import javax.portlet.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,12 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             "estado",
             "id_sector",
             "sector_id",
+            "fechaAltaDesdeDia",
+            "fechaAltaDesdeMes",
+            "fechaAltaDesdeAnio",
+            "fechaAltaHastaDia",
+            "fechaAltaHastaMes",
+            "fechaAltaHastaAnio",
             "afiliado_cuil_titular",
             "afiliado_int",
             "id_tercerizadora",
@@ -271,8 +279,38 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
         );
     }
 
-    private RequerimientoCompraFiltro getFiltroFromRequest(RenderRequest request) {
-        RequerimientoCompraFiltro filtro = new RequerimientoCompraFiltro();
+    private RequerimientoCompraFiltro getFiltroFromRequest(
+            RenderRequest request) throws Exception {
+
+        RequerimientoCompraFiltro filtro =
+                new RequerimientoCompraFiltro();
+
+        Date fechaAltaDesde =
+                getFechaFromRequest(
+                        request,
+                        "fechaAltaDesde",
+                        "fecha de alta desde"
+                );
+
+        Date fechaAltaHasta =
+                getFechaFromRequest(
+                        request,
+                        "fechaAltaHasta",
+                        "fecha de alta hasta"
+                );
+
+        if (fechaAltaDesde != null
+                && fechaAltaHasta != null
+                && fechaAltaDesde.after(fechaAltaHasta)) {
+
+            throw new Exception(
+                    "La fecha de alta desde no puede ser posterior "
+                            + "a la fecha de alta hasta."
+            );
+        }
+
+        filtro.setFechaAltaDesde(fechaAltaDesde);
+        filtro.setFechaAltaHasta(fechaAltaHasta);
 
         int idEstado = ParamUtil.getInteger(request, "id_estado", 0);
 
@@ -337,6 +375,95 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
         }
 
         return filtro;
+    }
+
+    private Date getFechaFromRequest(
+            RenderRequest request,
+            String prefijo,
+            String descripcion) throws Exception {
+
+        String diaRaw =
+                getParametro(
+                        request,
+                        prefijo + "Dia"
+                );
+
+        String mesRaw =
+                getParametro(
+                        request,
+                        prefijo + "Mes"
+                );
+
+        String anioRaw =
+                getParametro(
+                        request,
+                        prefijo + "Anio"
+                );
+
+        boolean diaInformado =
+                esParteFechaInformada(diaRaw);
+        boolean mesInformado =
+                esParteFechaInformada(mesRaw);
+        boolean anioInformado =
+                esParteFechaInformada(anioRaw);
+
+        if (!diaInformado
+                && !mesInformado
+                && !anioInformado) {
+
+            return null;
+        }
+
+        if (!diaInformado
+                || !mesInformado
+                || !anioInformado) {
+
+            throw new Exception(
+                    "Debe completar dia, mes y anio de la "
+                            + descripcion
+                            + "."
+            );
+        }
+
+        try {
+            int dia = Integer.parseInt(diaRaw);
+            int mes = Integer.parseInt(mesRaw);
+            int anio = Integer.parseInt(anioRaw);
+
+            if (dia < 1
+                    || dia > 31
+                    || mes < 0
+                    || mes > 11
+                    || anio < 1900
+                    || anio > 9999) {
+
+                throw new Exception();
+            }
+
+            SimpleDateFormat formato =
+                    new SimpleDateFormat("dd/MM/yyyy");
+
+            formato.setLenient(false);
+
+            return formato.parse(
+                    dia
+                            + "/"
+                            + (mes + 1)
+                            + "/"
+                            + anio
+            );
+        } catch (Exception e) {
+            throw new Exception(
+                    "La "
+                            + descripcion
+                            + " no es valida."
+            );
+        }
+    }
+
+    private boolean esParteFechaInformada(String value) {
+        return !WebKeysCompras.isEmpty(value)
+                && !"-1".equals(value);
     }
 
     private String getMensajeError(Exception e) {

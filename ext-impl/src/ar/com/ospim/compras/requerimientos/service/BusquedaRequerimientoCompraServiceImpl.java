@@ -26,7 +26,7 @@ import java.util.List;
 public class BusquedaRequerimientoCompraServiceImpl {
 
     private static final String SQL_BUSCAR_REQUERIMIENTOS =
-            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?)}";
+            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?)}";
 
     private static final String SQL_GET_REQUERIMIENTO =
             "{call compras.get_requerimiento(?)}";
@@ -118,6 +118,8 @@ public class BusquedaRequerimientoCompraServiceImpl {
             setNullableBoolean(stmt, 6, filtro.getRecupero());
             setNullableBoolean(stmt, 7, filtro.getSurge());
             stmt.setString(8, filtro.getTexto());
+            setNullableDate(stmt, 9, filtro.getFechaAltaDesde());
+            setNullableDate(stmt, 10, filtro.getFechaAltaHasta());
 
             rs = stmt.executeQuery();
 
@@ -1010,6 +1012,21 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt.setNull(index, Types.INTEGER);
         } else {
             stmt.setInt(index, value.intValue());
+        }
+    }
+
+    private void setNullableDate(
+            CallableStatement stmt,
+            int index,
+            java.util.Date value) throws Exception {
+
+        if (value == null) {
+            stmt.setNull(index, Types.DATE);
+        } else {
+            stmt.setDate(
+                    index,
+                    new java.sql.Date(value.getTime())
+            );
         }
     }
 

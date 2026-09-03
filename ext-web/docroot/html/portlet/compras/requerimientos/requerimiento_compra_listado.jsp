@@ -135,6 +135,14 @@ if ("0".equals(idTercerizadoraFiltro)) {
     idTercerizadoraFiltro = "";
 }
 
+Calendar fechaAltaDesde =
+        CalendarFactoryUtil.getCalendar();
+fechaAltaDesde.setTime(new Date());
+
+Calendar fechaAltaHasta =
+        CalendarFactoryUtil.getCalendar();
+fechaAltaHasta.setTime(new Date());
+
 List<TercerizadoraServicio> tercerizadoras =
         (List<TercerizadoraServicio>) request.getAttribute(
                 "compras.requerimientos.tercerizadoras"
@@ -174,6 +182,52 @@ if (tercerizadoras == null) {
     </legend>
 
     <table class="lfr-table">
+        <tr>
+            <td>
+                <label>Fecha de alta desde:</label>
+            </td>
+
+            <td>
+                <liferay-ui:input-date
+                        dayParam="fechaAltaDesdeDia"
+                        dayValue="<%= fechaAltaDesde.get(Calendar.DATE) %>"
+                        dayNullable="<%= true %>"
+                        monthParam="fechaAltaDesdeMes"
+                        monthValue="<%= fechaAltaDesde.get(Calendar.MONTH) %>"
+                        monthNullable="<%= true %>"
+                        yearParam="fechaAltaDesdeAnio"
+                        yearValue="<%= fechaAltaDesde.get(Calendar.YEAR) %>"
+                        yearNullable="<%= true %>"
+                        yearRangeStart="<%= fechaAltaDesde.get(Calendar.YEAR) - 50 %>"
+                        yearRangeEnd="<%= fechaAltaDesde.get(Calendar.YEAR) + 2 %>"
+                        firstDayOfWeek="<%= fechaAltaDesde.getFirstDayOfWeek() - 1 %>"
+                        disabled="<%= false %>" />
+            </td>
+
+            <td>
+                <label>Fecha de alta hasta:</label>
+            </td>
+
+            <td>
+                <liferay-ui:input-date
+                        dayParam="fechaAltaHastaDia"
+                        dayValue="<%= fechaAltaHasta.get(Calendar.DATE) %>"
+                        dayNullable="<%= true %>"
+                        monthParam="fechaAltaHastaMes"
+                        monthValue="<%= fechaAltaHasta.get(Calendar.MONTH) %>"
+                        monthNullable="<%= true %>"
+                        yearParam="fechaAltaHastaAnio"
+                        yearValue="<%= fechaAltaHasta.get(Calendar.YEAR) %>"
+                        yearNullable="<%= true %>"
+                        yearRangeStart="<%= fechaAltaHasta.get(Calendar.YEAR) - 50 %>"
+                        yearRangeEnd="<%= fechaAltaHasta.get(Calendar.YEAR) + 2 %>"
+                        firstDayOfWeek="<%= fechaAltaHasta.getFirstDayOfWeek() - 1 %>"
+                        disabled="<%= false %>" />
+            </td>
+
+            <td colspan="2"></td>
+        </tr>
+
         <tr>
             <td>
                 <label>Estado:</label>
@@ -612,11 +666,142 @@ if (tercerizadoras == null) {
         }
     }
 
+    function <portlet:namespace />normalizarValorFechaAlta(value) {
+        if (value == null || value == '-1') {
+            return '';
+        }
+
+        return jQuery.trim(value);
+    }
+
+    function <portlet:namespace />limpiarFechasAltaFiltro() {
+        jQuery('#<portlet:namespace />fechaAltaDesdeDia').val('');
+        jQuery('#<portlet:namespace />fechaAltaDesdeMes').val('');
+        jQuery('#<portlet:namespace />fechaAltaDesdeAnio').val('');
+        jQuery('#<portlet:namespace />fechaAltaHastaDia').val('');
+        jQuery('#<portlet:namespace />fechaAltaHastaMes').val('');
+        jQuery('#<portlet:namespace />fechaAltaHastaAnio').val('');
+    }
+
+    function <portlet:namespace />obtenerFechaAltaFiltro(
+            prefijo,
+            descripcion) {
+
+        var dia =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />'
+                                + prefijo
+                                + 'Dia'
+                        ).val()
+                );
+
+        var mes =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />'
+                                + prefijo
+                                + 'Mes'
+                        ).val()
+                );
+
+        var anio =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />'
+                                + prefijo
+                                + 'Anio'
+                        ).val()
+                );
+
+        var algunoInformado =
+                dia != ''
+                || mes != ''
+                || anio != '';
+
+        if (!algunoInformado) {
+            return null;
+        }
+
+        if (dia == '' || mes == '' || anio == '') {
+            alert(
+                    'Debe completar dia, mes y anio de la '
+                    + descripcion
+                    + '.'
+            );
+
+            return false;
+        }
+
+        var diaNumero = parseInt(dia, 10);
+        var mesNumero = parseInt(mes, 10);
+        var anioNumero = parseInt(anio, 10);
+        var fecha =
+                new Date(
+                        anioNumero,
+                        mesNumero,
+                        diaNumero
+                );
+
+        if (fecha.getFullYear() != anioNumero
+                || fecha.getMonth() != mesNumero
+                || fecha.getDate() != diaNumero) {
+
+            alert(
+                    'La '
+                    + descripcion
+                    + ' no es valida.'
+            );
+
+            return false;
+        }
+
+        return fecha;
+    }
+
+    function <portlet:namespace />validarFechasAltaFiltro() {
+        var fechaDesde =
+                <portlet:namespace />obtenerFechaAltaFiltro(
+                        'fechaAltaDesde',
+                        'fecha de alta desde'
+                );
+
+        if (fechaDesde === false) {
+            return false;
+        }
+
+        var fechaHasta =
+                <portlet:namespace />obtenerFechaAltaFiltro(
+                        'fechaAltaHasta',
+                        'fecha de alta hasta'
+                );
+
+        if (fechaHasta === false) {
+            return false;
+        }
+
+        if (fechaDesde != null
+                && fechaHasta != null
+                && fechaDesde.getTime() > fechaHasta.getTime()) {
+
+            alert(
+                    'La fecha de alta desde no puede ser posterior '
+                    + 'a la fecha de alta hasta.'
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
     function <portlet:namespace />limpiarTodosCamposFiltro() {
         if (typeof <portlet:namespace />limpiarCamposAfiliado
                 == 'function') {
             <portlet:namespace />limpiarCamposAfiliado();
         }
+
+        <portlet:namespace />limpiarFechasAltaFiltro();
 
         jQuery(
                 '#<portlet:namespace />estado'
@@ -720,6 +905,10 @@ if (tercerizadoras == null) {
     function <portlet:namespace />validarFiltroBusqueda() {
         <portlet:namespace />sincronizarAfiliadoFiltro();
         <portlet:namespace />desbloquearTercerizadoraFiltro(false);
+
+        if (!<portlet:namespace />validarFechasAltaFiltro()) {
+            return false;
+        }
 
         var cuil = jQuery.trim(
                 jQuery(
@@ -1111,6 +1300,48 @@ if (tercerizadoras == null) {
         var sector_id =
                 jQuery('#<portlet:namespace />sector_id').val();
 
+        var fechaAltaDesdeDia =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />fechaAltaDesdeDia'
+                        ).val()
+                );
+
+        var fechaAltaDesdeMes =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />fechaAltaDesdeMes'
+                        ).val()
+                );
+
+        var fechaAltaDesdeAnio =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />fechaAltaDesdeAnio'
+                        ).val()
+                );
+
+        var fechaAltaHastaDia =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />fechaAltaHastaDia'
+                        ).val()
+                );
+
+        var fechaAltaHastaMes =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />fechaAltaHastaMes'
+                        ).val()
+                );
+
+        var fechaAltaHastaAnio =
+                <portlet:namespace />normalizarValorFechaAlta(
+                        jQuery(
+                                '#<portlet:namespace />fechaAltaHastaAnio'
+                        ).val()
+                );
+
         var afiliado_cuil_titular =
                 jQuery('#<portlet:namespace />afiliado_cuil_titular').val();
 
@@ -1145,6 +1376,18 @@ if (tercerizadoras == null) {
                 + '&struts_action=/compras/buscar_requerimientos'
                 + '&estado=' + encodeURIComponent(estado)
                 + '&sector_id=' + encodeURIComponent(sector_id)
+                + '&fechaAltaDesdeDia='
+                    + encodeURIComponent(fechaAltaDesdeDia)
+                + '&fechaAltaDesdeMes='
+                    + encodeURIComponent(fechaAltaDesdeMes)
+                + '&fechaAltaDesdeAnio='
+                    + encodeURIComponent(fechaAltaDesdeAnio)
+                + '&fechaAltaHastaDia='
+                    + encodeURIComponent(fechaAltaHastaDia)
+                + '&fechaAltaHastaMes='
+                    + encodeURIComponent(fechaAltaHastaMes)
+                + '&fechaAltaHastaAnio='
+                    + encodeURIComponent(fechaAltaHastaAnio)
                 + '&afiliado_cuil_titular='
                     + encodeURIComponent(afiliado_cuil_titular)
                 + '&afiliado_int='
@@ -1166,6 +1409,18 @@ if (tercerizadoras == null) {
                     + encodeURIComponent(estado)
                 + '&<portlet:namespace />sector_id='
                     + encodeURIComponent(sector_id)
+                + '&<portlet:namespace />fechaAltaDesdeDia='
+                    + encodeURIComponent(fechaAltaDesdeDia)
+                + '&<portlet:namespace />fechaAltaDesdeMes='
+                    + encodeURIComponent(fechaAltaDesdeMes)
+                + '&<portlet:namespace />fechaAltaDesdeAnio='
+                    + encodeURIComponent(fechaAltaDesdeAnio)
+                + '&<portlet:namespace />fechaAltaHastaDia='
+                    + encodeURIComponent(fechaAltaHastaDia)
+                + '&<portlet:namespace />fechaAltaHastaMes='
+                    + encodeURIComponent(fechaAltaHastaMes)
+                + '&<portlet:namespace />fechaAltaHastaAnio='
+                    + encodeURIComponent(fechaAltaHastaAnio)
                 + '&<portlet:namespace />afiliado_cuil_titular='
                     + encodeURIComponent(afiliado_cuil_titular)
                 + '&<portlet:namespace />afiliado_int='
@@ -1275,6 +1530,7 @@ if (tercerizadoras == null) {
             return true;
         });
 
+        <portlet:namespace />limpiarFechasAltaFiltro();
         <portlet:namespace />desbloquearTercerizadoraFiltro(false);
         jQuery('#<portlet:namespace />buscando').show();
         <portlet:namespace />buscarRequerimientos();

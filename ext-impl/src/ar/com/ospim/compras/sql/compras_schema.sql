@@ -1922,7 +1922,9 @@ CREATE FUNCTION compras.buscar_requerimientos(
     p_id_tercerizadora VARCHAR,
     p_recupero BOOLEAN,
     p_surge BOOLEAN,
-    p_texto VARCHAR
+    p_texto VARCHAR,
+    p_fecha_alta_desde DATE,
+    p_fecha_alta_hasta DATE
 )
     RETURNS SETOF compras.requerimiento_base_row
 AS $func$
@@ -2008,6 +2010,15 @@ WHERE (
         OR rb.surge = p_surge
     )
   AND (
+    p_fecha_alta_desde IS NULL
+        OR rb.alta_fecha >= p_fecha_alta_desde
+    )
+  AND (
+    p_fecha_alta_hasta IS NULL
+        OR rb.alta_fecha
+            < p_fecha_alta_hasta + INTERVAL '1 day'
+    )
+  AND (
     v_texto IS NULL
 
         OR rb.id::VARCHAR = btrim(p_texto)
@@ -2079,6 +2090,40 @@ END;
 $func$
 LANGUAGE plpgsql
 STABLE;
+
+
+CREATE FUNCTION compras.buscar_requerimientos(
+    p_estado INTEGER,
+    p_sector INTEGER,
+    p_afiliado_cuil_titular VARCHAR,
+    p_afiliado_int INTEGER,
+    p_id_tercerizadora VARCHAR,
+    p_recupero BOOLEAN,
+    p_surge BOOLEAN,
+    p_texto VARCHAR
+)
+    RETURNS SETOF compras.requerimiento_base_row
+AS $func$
+BEGIN
+RETURN QUERY
+SELECT *
+FROM compras.buscar_requerimientos(
+    p_estado,
+    p_sector,
+    p_afiliado_cuil_titular,
+    p_afiliado_int,
+    p_id_tercerizadora,
+    p_recupero,
+    p_surge,
+    p_texto,
+    NULL::DATE,
+    NULL::DATE
+);
+END;
+$func$
+LANGUAGE plpgsql
+STABLE;
+
 
 
 CREATE FUNCTION compras.get_requerimiento(

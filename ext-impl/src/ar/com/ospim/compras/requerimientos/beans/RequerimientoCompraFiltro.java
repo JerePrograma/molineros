@@ -3,6 +3,7 @@ package ar.com.ospim.compras.requerimientos.beans;
 import ar.com.ospim.compras.WebKeysCompras;
 
 import java.io.Serializable;
+import java.util.Date;
 
 public class RequerimientoCompraFiltro implements Serializable {
 
@@ -21,6 +22,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     private String afiliadoApellido;
     private String afiliadoNombre;
     private Integer afiliadoIdSeccional;
+    private Date fechaAltaDesde;
+    private Date fechaAltaHasta;
 
     public Integer getIdEstado() {
         return idEstado;
@@ -122,6 +125,22 @@ public class RequerimientoCompraFiltro implements Serializable {
         this.texto = WebKeysCompras.trimToNull(texto);
     }
 
+    public Date getFechaAltaDesde() {
+        return fechaAltaDesde;
+    }
+
+    public void setFechaAltaDesde(Date fechaAltaDesde) {
+        this.fechaAltaDesde = fechaAltaDesde;
+    }
+
+    public Date getFechaAltaHasta() {
+        return fechaAltaHasta;
+    }
+
+    public void setFechaAltaHasta(Date fechaAltaHasta) {
+        this.fechaAltaHasta = fechaAltaHasta;
+    }
+
     public boolean tieneFiltros() {
         return idEstado != null
                 || idSector != null
@@ -130,6 +149,8 @@ public class RequerimientoCompraFiltro implements Serializable {
                 || !WebKeysCompras.isEmpty(idTercerizadora)
                 || recupero != null
                 || surge != null
+                || fechaAltaDesde != null
+                || fechaAltaHasta != null
                 || !WebKeysCompras.isEmpty(texto);
     }
 
