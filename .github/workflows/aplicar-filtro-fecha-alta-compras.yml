@@ -33,6 +33,7 @@ jobs:
           gzip -dc .github/scripts/aplicar_filtro_fecha_alta_compras.py.gz \
             > .github/scripts/aplicar_filtro_fecha_alta_compras.py
           python3 .github/scripts/aplicar_filtro_fecha_alta_compras.py
+          rm -f .github/scripts/aplicar_filtro_fecha_alta_compras.py
 
       - name: Verificar diff funcional
         shell: bash
@@ -51,7 +52,10 @@ jobs:
           ext-web/docroot/html/portlet/compras/requerimientos/requerimiento_compra_listado.jsp
           EOF
 
-          git diff --name-only | sort > /tmp/actual-functional-files.txt
+          {
+            git diff --name-only
+            git ls-files --others --exclude-standard
+          } | sort -u > /tmp/actual-functional-files.txt
           diff -u /tmp/expected-functional-files.txt /tmp/actual-functional-files.txt
 
           grep -Fq 'buscar_requerimientos(?,?,?,?,?,?,?,?,?,?)' \
