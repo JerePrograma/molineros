@@ -126,7 +126,11 @@ public class ReportesAfiliadoServiceImpl {
 			}else if(filtro.getTipoBusqueda()==3){
 //				Padrón de vigentes, si es marca vista Prevencion (se usa ahora para Ensalud)
 //				excluimos los beneficiario suspendidos en la cobertura médica
-				if(filtro.isVistaPrevencion()) {
+				if(filtro.isVistaAdmifarm()) {
+
+			        sql = "{call reporte_padron_admifarm(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+
+			    }else if(filtro.isVistaPrevencion()) {
 					sql = "{call  reporte_padron_con_cobertura(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 				}else {
 					sql = "{call  reporte_padron(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
@@ -146,6 +150,10 @@ public class ReportesAfiliadoServiceImpl {
 						
 				if(filtro.getTipoBusqueda()==2){
 					padron = ReportePadronResult.getMapping2(rs);
+				}else if(filtro.isVistaAdmifarm()) {
+
+				    padron = ReportePadronResult.getMappingAdmifarm(rs);
+
 				}else{
 					padron = ReportePadronResult.getMapping(rs);
 				}

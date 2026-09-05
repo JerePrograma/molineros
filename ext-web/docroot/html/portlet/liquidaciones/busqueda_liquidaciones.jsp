@@ -154,6 +154,7 @@
 								<option value=""></option>
 								<option value="FCP">FCP</option>
 								<option value="NCR">NCR</option>
+								<option value="NDB">NDB</option>
 								<option value="RCB">RCB</option>
 							</select> &nbsp;
 							<select name="<portlet:namespace/>comprobante_letra" id="<portlet:namespace/>comprobante_letra">

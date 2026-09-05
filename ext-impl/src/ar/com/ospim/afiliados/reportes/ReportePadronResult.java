@@ -90,7 +90,10 @@ public class ReportePadronResult implements Serializable {
 	private String farmaciaTercerizadora;
 	private String copago;
     
-
+	private String planAfiliado;
+	private String pmi;
+	private String aco;
+	
 	public static ReportePadronResult getMapping(ResultSet rs)
 			throws SQLException {
 		
@@ -894,5 +897,40 @@ public class ReportePadronResult implements Serializable {
 		this.copago = copago;
 	}
 	
+	public String getPlanAfiliado() {
+	    return planAfiliado;
+	}
+
+	public void setPlanAfiliado(String planAfiliado) {
+	    this.planAfiliado = planAfiliado;
+	}
+
+	public String getPmi() {
+	    return pmi;
+	}
+
+	public void setPmi(String pmi) {
+	    this.pmi = pmi;
+	}
+
+	public String getAco() {
+	    return aco;
+	}
+
+	public void setAco(String aco) {
+	    this.aco = aco;
+	}
+	
+	public static ReportePadronResult getMappingAdmifarm(ResultSet rs)
+	        throws SQLException {
+
+	    ReportePadronResult res = getMapping(rs);
+
+	    res.setPlanAfiliado(res.getPlan());
+	    res.setPmi(res.getPlanOmint());
+	    res.setAco(res.getUnsuscribeEmail());
+
+	    return res;
+	}
 	
 }

@@ -381,7 +381,7 @@ public class ComprobanteServiceUtil {
 			}
 
 			if (generarNuevoNroNDB
-					&& comprobante.getTipoComprobante().equals("NDB")) {
+					&& comprobante.getTipoComprobante().equals("NDB") && "30629138567".equals(comprobante.getCuit())) {
 				String compro_numero = getInstance().generarSiguienteDebito(
 						con, comprobante.getTipoComprobante(), entidad);
 				comprobante.setNroComprobante(compro_numero);

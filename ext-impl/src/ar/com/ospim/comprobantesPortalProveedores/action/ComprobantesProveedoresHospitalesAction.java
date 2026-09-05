@@ -517,7 +517,7 @@ private String verificaComprobante(ComprobanteHospital c) throws Exception {
 		 if(cError.length()>0) cError+=";";
 			cError+="PST"; 
 	}else{
-		if("Prestador".equals(c.getSectorDestino())) {
+		if("Prestador".equals(c.getSectorDestino())   && !"NCR".equals(c.getTipoComprobante()) &&  !"NDB".equals(c.getTipoComprobante())) {
 			   Prestador p = new Prestador();
 			   List<Prestador> lpAux =	 PrestadorServiceUtil.getPrestadores(c.getIdPrestador(), null ,null, false);
 			   if(lpAux!=null) {

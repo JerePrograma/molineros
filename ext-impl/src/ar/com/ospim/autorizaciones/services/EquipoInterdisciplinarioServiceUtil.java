@@ -73,5 +73,12 @@ public class EquipoInterdisciplinarioServiceUtil {
 		
 	}
 	
-	
+	public static String getUsuarioUltimaModificacionDictamen(int idEquipoInterdisciplinario, int tipoDictamen) 
+			throws Exception {
+
+	    return getInstance().getUsuarioUltimaModificacionDictamen(
+	        idEquipoInterdisciplinario,
+	        tipoDictamen
+	    );
+	}
 }

@@ -99,6 +99,10 @@
 					               "NCR".equals(comprobante.getTipoComprobante()) ) { %>
 							selected="selected" <%} %>
 						 >NCR</option>
+					    <option value="NDB" <%if (comprobante != null && comprobante.getTipoComprobante() !=null && 
+					               "NDB".equals(comprobante.getTipoComprobante()) ) { %>
+							selected="selected" <%} %>
+						 >NDB</option>	 	 
 						<option value="RCB" <%if (comprobante != null && comprobante.getTipoComprobante() !=null && 
 					               "RCB".equals(comprobante.getTipoComprobante()) ) { %>
 							selected="selected" <%} %>

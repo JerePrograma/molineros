@@ -65,6 +65,8 @@ public class BusquedaReportePadronFiltro implements Serializable {
 	
 	private boolean vistaPrevencion;
 	
+	private boolean vistaAdmifarm;
+	
 //	private int pagina;
 //	private int registrosTotal;
 //	private final int registrosPorPagina = 50;
@@ -363,6 +365,14 @@ public class BusquedaReportePadronFiltro implements Serializable {
 
 	public void setProyecto(String proyecto) {
 		this.proyecto = proyecto;
+	}
+	
+	public boolean isVistaAdmifarm() {
+	    return vistaAdmifarm;
+	}
+
+	public void setVistaAdmifarm(boolean vistaAdmifarm) {
+	    this.vistaAdmifarm = vistaAdmifarm;
 	}
 	
 	public String getDescripcionFiltros(){

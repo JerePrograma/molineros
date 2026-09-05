@@ -3,6 +3,7 @@ package ar.com.ospim.autorizaciones.services;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -673,6 +674,43 @@ public int actualizar(EquipoInterdisciplinario equipoInterDisciplinario , String
 	}
 	
 	
+	public String getUsuarioUltimaModificacionDictamen(int idEquipoInterdisciplinario, int tipoDictamen) {
+
+		String usuario = "";
+	    Connection con = null;
+	    CallableStatement stmt = null;
+
+	    try {
+
+	        String sql = "{call autorizaciones.equipo_interdisciplinario_usuario_dictamen_by_id(?,?)}";
+
+	        con = ConnectionHelper.getConnection();
+
+	        stmt = con.prepareCall(sql);
+
+	        stmt.setInt(1, idEquipoInterdisciplinario);
+	        stmt.setInt(2, tipoDictamen);
+
+	        ResultSet rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            usuario = rs.getString("usuario_modificacion");
+
+	            if (usuario == null) {
+	                usuario = "";
+	            }
+	        }
+
+	    } catch (Exception e) {
+
+	        _log.error("Error al obtener usuario de última modificación del dictamen", e);
+
+	    } finally {
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
+
+	    return usuario;
+	}
 
 }
 

@@ -104,7 +104,7 @@ public EquipoInterdisciplinario  getEquipoInterdisciplinarioFromRequest(HttpServ
 
 	
 	
-public EquipoInterdisciplinario  getEquipoInterdisciplinarioFromRequest(RenderRequest  req,  EquipoInterdisciplinario equipoInterdisciplinario , User user ) {		
+public EquipoInterdisciplinario  getEquipoInterdisciplinarioFromRequest(RenderRequest  req,  EquipoInterdisciplinario equipoInterdisciplinario , User user ) throws Exception {		
 	
 	Date fecha;				
 	SimpleDateFormat formatoDePeriodo = new SimpleDateFormat("dd/MM/yyyy");		
@@ -121,7 +121,7 @@ public EquipoInterdisciplinario  getEquipoInterdisciplinarioFromRequest(RenderRe
 
 	String codAreaTelefono= ParamUtil.getString(req,"cod_area_telefono");
 	String telefono= ParamUtil.getString(req,"telefono");
-	String tipoTelefono = ParamUtil.getString(req,"tipotelefono");
+	String tipoTelefono = ParamUtil.getString(req,"tipo_telefono");
 	
 	int provincia= ParamUtil.getInteger(req,"provincia");
 	int localidad= ParamUtil.getInteger(req,"localidad");
@@ -130,20 +130,106 @@ public EquipoInterdisciplinario  getEquipoInterdisciplinarioFromRequest(RenderRe
 	String dpto= ParamUtil.getString(req,"dpto");
 	String barrio= ParamUtil.getString(req,"barrio");
 	String piso = ParamUtil.getString(req,"piso");
-	String tipoDomicilio = ParamUtil.getString(req,"tipoDomicilio ");
+	String tipoDomicilio = ParamUtil.getString(req,"tipoDomicilio");
 	String codigoPostal= ParamUtil.getString(req,"cod_postal");
 	String emailAfiliado= ParamUtil.getString(req,"email_afiliado");
 	String motivoCierre = ParamUtil.getString(req,"motivo");
 	
 	// carga de dictamenes
 	String dictamenes[] = new String[6]; // soporta 6 tipos de dictamenes
+	/*
 	dictamenes[EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES.ordinal() ]=ParamUtil.getString(req,"dictamenAntecedentes");		
 	dictamenes[EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR.ordinal() ]=ParamUtil.getString(req,"dictamenMedicoAuditor");		
 	dictamenes[EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL.ordinal() ]=ParamUtil.getString(req,"dictamenAsistenteSocial");		
 	dictamenes[EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA.ordinal() ]=ParamUtil.getString(req,"dictamenKinesiologia");		
 	dictamenes[EquipoInterdisciplinario.DICTAMENES.LEGALES.ordinal() ]=ParamUtil.getString(req,"dictamenLegales");		
 	dictamenes[EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO.ordinal() ]=ParamUtil.getString(req,"dictamenEquipoInter");
-		
+	*/
+	
+	String bdAntecedentes = equipoInterdisciplinario != null
+	        && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES) != null
+	        ? equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES)
+	        : "";
+
+	String bdMedicoAuditor = equipoInterdisciplinario != null
+	        && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR) != null
+	        ? equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR)
+	        : "";
+
+	String bdAsistenteSocial = equipoInterdisciplinario != null
+	        && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL) != null
+	        ? equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL)
+	        : "";
+
+	String bdKinesiologia = equipoInterdisciplinario != null
+	        && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA) != null
+	        ? equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA)
+	        : "";
+
+	String bdLegales = equipoInterdisciplinario != null
+	        && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LEGALES) != null
+	        ? equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LEGALES)
+	        : "";
+
+	String bdEquipoInter = equipoInterdisciplinario != null
+	        && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO) != null
+	        ? equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO)
+	        : "";
+	
+	        	dictamenes[EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES.ordinal()] =
+	        	    resolverDictamen(
+	        	        ParamUtil.getString(req, "dictamenAntecedentes"),
+	        	        ParamUtil.getString(req, "origDictamenAntecedentes"),
+	        	        bdAntecedentes,
+	        	        "Psicología",
+	        	        EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES.ordinal()
+	        	    );
+
+	        	dictamenes[EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR.ordinal()] =
+	        	    resolverDictamen(
+	        	        ParamUtil.getString(req, "dictamenMedicoAuditor"),
+	        	        ParamUtil.getString(req, "origDictamenMedicoAuditor"),
+	        	        bdMedicoAuditor,
+	        	        "Médico Auditor",
+	        	        EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR.ordinal()
+	        	    );
+
+	        	dictamenes[EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL.ordinal()] =
+	        	    resolverDictamen(
+	        	        ParamUtil.getString(req, "dictamenAsistenteSocial"),
+	        	        ParamUtil.getString(req, "origDictamenAsistenteSocial"),
+	        	        bdAsistenteSocial,
+	        	        "Trabajadora Social",
+	        	        EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL.ordinal()
+	        	    );
+
+	        	dictamenes[EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA.ordinal()] =
+	        	    resolverDictamen(
+	        	        ParamUtil.getString(req, "dictamenKinesiologia"),
+	        	        ParamUtil.getString(req, "origDictamenKinesiologia"),
+	        	        bdKinesiologia,
+	        	        "Kinesiología",
+	        	        EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA.ordinal()
+	        	    );
+
+	        	dictamenes[EquipoInterdisciplinario.DICTAMENES.LEGALES.ordinal()] =
+	        	    resolverDictamen(
+	        	        ParamUtil.getString(req, "dictamenLegales"),
+	        	        ParamUtil.getString(req, "origDictamenLegales"),
+	        	        bdLegales,
+	        	        "Legales",
+	        	        EquipoInterdisciplinario.DICTAMENES.LEGALES.ordinal()
+	        	    );
+
+	        	dictamenes[EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO.ordinal()] =
+	        	    resolverDictamen(
+	        	        ParamUtil.getString(req, "dictamenEquipoInter"),
+	        	        ParamUtil.getString(req, "origDictamenEquipoInter"),
+	        	        bdEquipoInter,
+	        	        "Equipo Interdisciplinario",
+	        	        EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO.ordinal()
+	        	    );
+	        	
 	fecha= null;
 	
 	String firmaTipoDictamen = ParamUtil.getString(req,"firmaTipoDictamen");
@@ -179,8 +265,69 @@ public EquipoInterdisciplinario  getEquipoInterdisciplinarioFromRequest(RenderRe
 }
 
 
+	private String resolverDictamen(String valorIngresado, String valorOriginalPantalla,
+	        String valorActualBD, String nombreDictamen, int tipoDictamen) {
+	
+	    valorIngresado = valorIngresado != null ? valorIngresado : "";
+	    valorOriginalPantalla = valorOriginalPantalla != null ? valorOriginalPantalla : "";
+	    valorActualBD = valorActualBD != null ? valorActualBD : "";
+	
+	    // No modifico el campo
+	    if (valorIngresado.equals(valorOriginalPantalla)) {
+	        return valorActualBD;
+	    }
 
+	    // Lo modifico y nadie mas lo habia modificado
+	    if (valorActualBD.equals(valorOriginalPantalla)) {
+	        return valorIngresado;
+	    }
+	
+	    // Ambos dejaron el mismo valor
+	    if (valorIngresado.equals(valorActualBD)) {
+	        return valorActualBD;
+	    }
+	
+	    // Ambos modificaron el mismo dictamen
+	    throw new DictamenConcurrenteException(
+	    	    nombreDictamen,
+	    	    tipoDictamen,
+	    	    valorActualBD,
+	    	    valorIngresado
+	    	);
+	}
 
+	public static class DictamenConcurrenteException extends RuntimeException {
+
+		private static final long serialVersionUID = 1L;
+		
+		private final int tipoDictamen;
+		private final String valorActualBD;
+		private final String valorIngresado;
+		
+		public DictamenConcurrenteException(
+		        String nombreDictamen,
+		        int tipoDictamen,
+		        String valorActualBD,
+		        String valorIngresado) {
+		
+		    super(nombreDictamen);
+		    this.tipoDictamen = tipoDictamen;
+		    this.valorActualBD = valorActualBD;
+		    this.valorIngresado = valorIngresado;
+		}
+		
+		public int getTipoDictamen() {
+		    return tipoDictamen;
+		}
+		
+		public String getValorActualBD() {
+		    return valorActualBD;
+		}
+		
+		public String getValorIngresado() {
+		    return valorIngresado;
+		}
+	}
 	
 }
 

@@ -462,7 +462,13 @@ SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
                                id="<portlet:namespace />prov_paniales"
                                name="<portlet:namespace />prov_paniales"
 
+<<<<<<< .mine
                                             <% if (rubrosSession.contains("PAÑALES")) { %>
+||||||| .r7319
+                               <% if (rubrosSession.contains("PANALES")) { %>
+=======
+                               <% if (rubrosSession.contains("PAÑALES")) { %>
+>>>>>>> .r7323
                                    checked="checked"
                                <% } %>
 

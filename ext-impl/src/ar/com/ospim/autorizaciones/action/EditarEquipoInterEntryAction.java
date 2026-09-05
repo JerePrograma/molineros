@@ -157,8 +157,14 @@ import com.liferay.portal.util.PortalUtil;
 				
 				if(cmd.equals(Constants.UPDATE )){
 					
-					idRegEquipoInterdisciplinario =equipoInterdisciplinario.getId_registroEquipoInter();					
-					String diagnosticoOriginal;
+					idRegEquipoInterdisciplinario = ParamUtil.getInteger(renderRequest, "id_registro_eq", 0);
+
+					EquipoInterdisciplinario equipoActualBD = 
+							EquipoInterdisciplinarioServiceUtil.getEquipoInterdisciplinario(idRegEquipoInterdisciplinario);
+						
+					//idRegEquipoInterdisciplinario =equipoInterdisciplinario.getId_registroEquipoInter();					
+					
+						String diagnosticoOriginal;
 					String codigoCie10Original;
 					Telefono telefonoOriginal;
 					Telefono telefonoIngresado ;
@@ -167,7 +173,9 @@ import com.liferay.portal.util.PortalUtil;
 					String emailOriginal ;
 					String[] dictamenesOriginales;
 					int idContactoE =0;
-					//  Datos previos a la carga  
+					//  Datos previos a la carga 
+					
+					/*
 					telefonoOriginal = equipoInterdisciplinario.getTelefonoContacto();					
 					diagnosticoOriginal=equipoInterdisciplinario.getDiagnosticoAfiliado();
 					codigoCie10Original=equipoInterdisciplinario.getCodigoCie10() ;
@@ -175,9 +183,63 @@ import com.liferay.portal.util.PortalUtil;
 					emailOriginal = equipoInterdisciplinario.getAfiliado().getEmail();
 					idContactoE=equipoInterdisciplinario.getIdEmail() ;
 					dictamenesOriginales=equipoInterdisciplinario.getDictamenOriginales();
+					*/
+					
+					telefonoOriginal = equipoActualBD.getTelefonoContacto();
+					diagnosticoOriginal = equipoActualBD.getDiagnosticoAfiliado();
+					codigoCie10Original = equipoActualBD.getCodigoCie10();
+					domicilioOriginal = equipoActualBD.getAfiliado().getDomicilioDefault();
+					emailOriginal = equipoActualBD.getAfiliado().getEmail();
+					idContactoE = equipoActualBD.getIdEmail();
+					dictamenesOriginales = equipoActualBD.getDictamenOriginales();
 					// equipoInterdisciplinario11=equipoInterdisciplinario;  
     				//   Datos posteriores a la carga
-					equipoInterdisciplinario   =getEquipoInterdisciplinarioFromRequest(PortalUtil.getHttpServletRequest(renderRequest), equipoInterdisciplinario ,user);
+					//equipoInterdisciplinario   =getEquipoInterdisciplinarioFromRequest(PortalUtil.getHttpServletRequest(renderRequest), equipoInterdisciplinario ,user);
+					
+					try {
+
+					    equipoInterdisciplinario =
+					        getEquipoInterdisciplinarioFromRequest(renderRequest, equipoActualBD, user);
+
+					} catch (DictamenConcurrenteException e) {
+
+					    String usuarioModificacion =
+					        EquipoInterdisciplinarioServiceUtil
+					            .getUsuarioUltimaModificacionDictamen(
+					                idRegEquipoInterdisciplinario,
+					                e.getTipoDictamen()
+					            );
+
+					    renderRequest.setAttribute("usuarioModificacionConcurrente", usuarioModificacion);
+
+					    String valorMostrar = e.getValorActualBD();
+
+					    if (e.getValorIngresado() != null && !e.getValorIngresado().trim().isEmpty()) {
+					        if (valorMostrar != null && !valorMostrar.trim().isEmpty()) {
+					            valorMostrar += "\n" + e.getValorIngresado();
+					        } else {
+					            valorMostrar = e.getValorIngresado();
+					        }
+					    }
+
+					    renderRequest.setAttribute("tipoDictamenConcurrente", e.getTipoDictamen());
+					    renderRequest.setAttribute("valorDictamenConcurrente", valorMostrar);
+
+					    SessionErrors.add(renderRequest, "dictamen-modificado-concurrentemente");
+
+					    equipoInterdisciplinario = equipoActualBD;
+
+					    session.setAttribute(WebKeysAutorizaciones.EQUIPO_DISCIPLINARIO_EN_EDICION,equipoActualBD);
+
+					    renderRequest.setAttribute(Constants.CMD, Constants.EDIT);
+
+					    return mapping.findForward(
+					        getForward(
+					            renderRequest,
+					            "portlet.autorizaciones.equipointerdisciplinario.editar_equipointerdisciplinarios_entry"
+					        )
+					    );
+					}
 					// aca david
 					equipoInterdisciplinario.setDictamenesOrigianles(dictamenesOriginales);
 					// carga del id del contacto de la base 

@@ -143,6 +143,10 @@ public class ClienteProveedoresLPA {
 	        	tipo="Nota de Crédito B";
 	        }else if("NCR".equals(ix.getTipoComprobante())&& "C".equals(ix.getLetraComprobante()) ) {
 	        	tipo="Nota de Crédito C";
+	        }else if("NDB".equals(ix.getTipoComprobante())&& "B".equals(ix.getLetraComprobante()) ) {
+	        	tipo="Nota de Débito B";
+	        }else if("NDB".equals(ix.getTipoComprobante())&& "C".equals(ix.getLetraComprobante()) ) {
+	        	tipo="Nota de Débito C";
 	        }else if("RCB".equals(ix.getTipoComprobante())&& "C".equals(ix.getLetraComprobante()) ) {
 	        	tipo="Recibo C";
 	        }
@@ -190,13 +194,15 @@ public class ClienteProveedoresLPA {
 						    	fop.close();
 						    	
 						    	DLFileEntry dl=null;
+						    	Integer qIntentos=0;
 						      	do {
+						      		qIntentos++;
 						      		title=idFacturaImg +"-" + ("archivo".equals(opcion)?0:(int)(rnd.nextDouble()*100));
 						      		try{
 						      		   dl=null;
 						      		   dl=	DLFileEntryLocalServiceUtil.getFileEntryByTitle(folderId, title + (extension.length()>0?".":"") + extension);
 						      		} catch(Exception e2){}   
-						      	} while (dl!=null);  
+						      	} while (dl!=null && qIntentos<=10);  
 						    		
 						      	DLFileEntry entry = DLFileEntryLocalServiceUtil.addOrOverwriteFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
 						      			j.getString("nombre"), title, j.getString("nombre"), "", file, serviceContext);
@@ -307,6 +313,12 @@ public class ClienteProveedoresLPA {
 					        	letra="B";
 					        }else if("Nota de Crédito C".equalsIgnoreCase(tipoComprobante)) {
 						tipo="NCR";
+					        	letra="C";
+					        }else if("Nota de Débito B".equalsIgnoreCase(tipoComprobante)) {
+					        	tipo="NDB";
+					        	letra="B";
+					        }else if("Nota de Débito C".equalsIgnoreCase(tipoComprobante)) {
+					        	tipo="NDB";
 					        	letra="C";
 					        }else if("Recibo C".equalsIgnoreCase(tipoComprobante)) {
 					        	tipo="RCB";
@@ -574,6 +586,10 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
         	tipo="Nota de Crédito B";
         }else if("NCR".equals(ix.getTipoComprobante())&& "C".equals(ix.getLetraComprobante()) ) {
         	tipo="Nota de Crédito C";
+        }else if("NDB".equals(ix.getTipoComprobante())&& "B".equals(ix.getLetraComprobante()) ) {
+        	tipo="Nota de Débito B";
+        }else if("NDB".equals(ix.getTipoComprobante())&& "C".equals(ix.getLetraComprobante()) ) {
+        	tipo="Nota de Débito C";
         }else if("RCB".equals(ix.getTipoComprobante())&& "C".equals(ix.getLetraComprobante()) ) {
         	tipo="Recibo C";
         }

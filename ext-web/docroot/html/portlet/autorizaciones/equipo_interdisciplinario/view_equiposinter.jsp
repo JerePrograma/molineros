@@ -111,7 +111,85 @@ if(equipoInterdisciplinario != null  ){
 
 Integer BtnFirmar = (Integer) request.getAttribute("Btn_Firmar");
 
+Integer tipoDictamenConcurrente =
+(Integer) request.getAttribute("tipoDictamenConcurrente");
 
+String valorDictamenConcurrente =
+(String) request.getAttribute("valorDictamenConcurrente");
+
+String valorAntecedentes =
+equipoInterdisciplinario != null
+    ? equipoInterdisciplinario.getDictamen(
+        EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES)
+    : "";
+
+String valorMedicoAuditor =
+equipoInterdisciplinario != null
+    ? equipoInterdisciplinario.getDictamen(
+        EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR)
+    : "";
+
+String valorAsistenteSocial =
+equipoInterdisciplinario != null
+    ? equipoInterdisciplinario.getDictamen(
+        EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL)
+    : "";
+
+String valorKinesiologia =
+equipoInterdisciplinario != null
+    ? equipoInterdisciplinario.getDictamen(
+        EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA)
+    : "";
+
+String valorLegales =
+equipoInterdisciplinario != null
+    ? equipoInterdisciplinario.getDictamen(
+        EquipoInterdisciplinario.DICTAMENES.LEGALES)
+    : "";
+
+String valorEquipoInter =
+equipoInterdisciplinario != null
+    ? equipoInterdisciplinario.getDictamen(
+        EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO)
+    : "";
+
+
+if (tipoDictamenConcurrente != null &&
+valorDictamenConcurrente != null) {
+
+int tipo = tipoDictamenConcurrente.intValue();
+
+if (tipo ==
+    EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES.ordinal()) {
+
+    valorAntecedentes = valorDictamenConcurrente;
+
+} else if (tipo ==
+    EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR.ordinal()) {
+
+    valorMedicoAuditor = valorDictamenConcurrente;
+
+} else if (tipo ==
+    EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL.ordinal()) {
+
+    valorAsistenteSocial = valorDictamenConcurrente;
+
+} else if (tipo ==
+    EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA.ordinal()) {
+
+    valorKinesiologia = valorDictamenConcurrente;
+
+} else if (tipo ==
+    EquipoInterdisciplinario.DICTAMENES.LEGALES.ordinal()) {
+
+    valorLegales = valorDictamenConcurrente;
+
+} else if (tipo ==
+    EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO.ordinal()) {
+
+    valorEquipoInter = valorDictamenConcurrente;
+}
+}
 
 
 
@@ -153,7 +231,43 @@ div.divheaderNroReclamo {
 
 	<input	type="hidden" name="<portlet:namespace />firmaTipoDictamen"  id="<portlet:namespace />firmaTipoDictamen"  value='' />
 	
-		
+	
+	<input type="hidden"
+    name="<portlet:namespace />origDictamenAntecedentes"
+    value="<%=equipoInterdisciplinario != null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES) != null
+        ? HtmlUtil.escape(equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES))
+        : ""%>" />
+
+	<input type="hidden"
+	    name="<portlet:namespace />origDictamenMedicoAuditor"
+	    value="<%=equipoInterdisciplinario != null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR) != null
+	        ? HtmlUtil.escape(equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR))
+	        : ""%>" />
+	
+	<input type="hidden"
+	    name="<portlet:namespace />origDictamenAsistenteSocial"
+	    value="<%=equipoInterdisciplinario != null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL) != null
+	        ? HtmlUtil.escape(equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL))
+	        : ""%>" />
+	
+	<input type="hidden"
+	    name="<portlet:namespace />origDictamenKinesiologia"
+	    value="<%=equipoInterdisciplinario != null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA) != null
+	        ? HtmlUtil.escape(equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA))
+	        : ""%>" />
+	
+	<input type="hidden"
+	    name="<portlet:namespace />origDictamenLegales"
+	    value="<%=equipoInterdisciplinario != null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LEGALES) != null
+	        ? HtmlUtil.escape(equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LEGALES))
+	        : ""%>" />
+	
+	<input type="hidden"
+	    name="<portlet:namespace />origDictamenEquipoInter"
+	    value="<%=equipoInterdisciplinario != null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO) != null
+	        ? HtmlUtil.escape(equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO))
+	        : ""%>" />
+        	
 <fieldset class="block-labels">
 	<legend>		
 		<liferay-ui:message key="Cabecera Registro de Equipo Interdisciplinario" /> 
@@ -608,7 +722,7 @@ div.divheaderNroReclamo {
 				<liferay-ui:message key="Psicóloga" />
 				</legend>
 				<textarea  rows="4" cols="55" <% if (inHabilitar) { %><%="disabled='disabled'" %><%}%>  onkeyup="convertToUppercase(this)"   id="<portlet:namespace />observacion"  				
-				name="<portlet:namespace />dictamenAntecedentes" ><%=equipoInterdisciplinario!=null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES)   !=null ?equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ANTECEDENTES) :""%></textarea>				
+				name="<portlet:namespace />dictamenAntecedentes"><%=HtmlUtil.escape(valorAntecedentes)%></textarea>
 				</fieldset>
 				<div></div>
 			</td>
@@ -617,8 +731,8 @@ div.divheaderNroReclamo {
 				<legend>
 				<liferay-ui:message key="medico-auditor" />
 				</legend>
-				<textarea rows="4" cols="55" <% if (inHabilitar) { %><%="disabled='disabled'" %><%}%>  onkeyup="convertToUppercase(this)"  id="<portlet:namespace />participantes"   
-				name="<portlet:namespace />dictamenMedicoAuditor" ><%=equipoInterdisciplinario!=null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR)   !=null ?equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.MEDICOAUDITOR ) :""%></textarea>				
+				<textarea rows="4" cols="55" <% if (inHabilitar) { %><%="disabled='disabled'" %><%}%>  onkeyup="convertToUppercase(this)"  id="<portlet:namespace />participantes"   				
+				 name="<portlet:namespace />dictamenMedicoAuditor"><%=HtmlUtil.escape(valorMedicoAuditor)%></textarea>
 				</fieldset>      
 			</td>
 			<td colspan="3">				
@@ -627,8 +741,7 @@ div.divheaderNroReclamo {
 				<liferay-ui:message key="Trabajadora Social" />
 				</legend>
 				<textarea rows="4" cols="55" <% if (inHabilitar) { %><%="disabled='disabled'" %><%}%>  onkeyup="convertToUppercase(this)"  id="<portlet:namespace />participantes"   
-				name="<portlet:namespace />dictamenAsistenteSocial" ><%=equipoInterdisciplinario!=null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL )   !=null ?equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.ASISTENTESOCIAL) :""%></textarea>				
-				</fieldset>
+    			name="<portlet:namespace />dictamenAsistenteSocial"><%=HtmlUtil.escape(valorAsistenteSocial)%></textarea>				</fieldset>
 			</td>
 				
 		</tr>
@@ -679,8 +792,7 @@ div.divheaderNroReclamo {
 				<liferay-ui:message key="licenciado-kinesiologia-terapia-fisica" />
 				</legend>
 				<textarea  rows="4" cols="55" <% if (inHabilitar) { %><%="disabled='disabled'" %><%}%>  onkeyup="convertToUppercase(this)"   id="<portlet:namespace />observacion"  
-				name="<portlet:namespace />dictamenKinesiologia" ><%=equipoInterdisciplinario!=null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA)  !=null ?equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LICENCIADOKINESIOTERAPIAFISICA ) :""%></textarea>
-				</fieldset>
+    			name="<portlet:namespace />dictamenKinesiologia"><%=HtmlUtil.escape(valorKinesiologia)%></textarea>				</fieldset>
 			</td>
 			<td colspan="3">				
 				<fieldset class="block-labels">
@@ -688,8 +800,7 @@ div.divheaderNroReclamo {
 				<liferay-ui:message key="Legales" />
 				</legend>
 				<textarea rows="4" cols="55" <% if (inHabilitar) { %><%="disabled='disabled'" %><%}%>  onkeyup="convertToUppercase(this)"  id="<portlet:namespace />participantes"   
-				name="<portlet:namespace />dictamenLegales" ><%=equipoInterdisciplinario!=null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LEGALES )   !=null ?equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.LEGALES) :""%></textarea>				
-				</fieldset>
+    			name="<portlet:namespace />dictamenLegales"><%=HtmlUtil.escape(valorLegales)%></textarea>				</fieldset>
 			</td>
 			<td colspan="3">				
 				<fieldset class="block-labels">
@@ -697,8 +808,7 @@ div.divheaderNroReclamo {
 				<liferay-ui:message key="Equipo Interdisciplinario" />
 				</legend>
 				<textarea rows="4" cols="55" <% if (inHabilitar) { %><%="disabled='disabled'" %><%}%>  onkeyup="convertToUppercase(this)"  id="<portlet:namespace />participantes"   
-				name="<portlet:namespace />dictamenEquipoInter" ><%=equipoInterdisciplinario!=null && equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO)   !=null ?equipoInterdisciplinario.getDictamen(EquipoInterdisciplinario.DICTAMENES.EQUIPOINTERDISCIPLINARIO ) :""%></textarea>				
-				</fieldset>
+    			name="<portlet:namespace />dictamenEquipoInter"><%=HtmlUtil.escape(valorEquipoInter)%></textarea>				</fieldset>
 			</td>			
 		</tr>
 		

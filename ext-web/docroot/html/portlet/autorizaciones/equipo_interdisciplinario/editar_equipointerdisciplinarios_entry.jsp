@@ -45,6 +45,27 @@ portletURL.setParameter("cmd", cmd);
 <liferay-ui:error key="error-estado-reclamo" message="falta-estado-reclamo-prestacion" />
 <liferay-ui:error key="error-fechaseccional-reclamo" message="falta-fechaseccional-reclamo-prestacion" />
 <liferay-ui:error key="error-fechaingresoospim-reclamo" message="falta-fechaingresoospim-reclamo-prestacion" />
+
+<%
+if (SessionErrors.contains(renderRequest, "dictamen-modificado-concurrentemente")) {
+
+    String usuarioModificacionConcurrente = (String) request.getAttribute("usuarioModificacionConcurrente");
+    String mensajeConcurrente;
+
+    if (usuarioModificacionConcurrente == null || usuarioModificacionConcurrente.trim().isEmpty()) {
+        mensajeConcurrente = "El dictamen fue modificado por otro usuario. Se cargaron los últimos cambios.";
+    } else {
+        mensajeConcurrente = "El usuario " + usuarioModificacionConcurrente + " modificó este dictamen. Se cargaron los últimos cambios.";
+    }
+%>
+
+    <div class="portlet-msg-error">
+        <%= HtmlUtil.escape(mensajeConcurrente) %>
+    </div>
+
+<%
+}
+%>
 	
 <liferay-ui-custom:tabs
 	names="<%=tabNames%>"

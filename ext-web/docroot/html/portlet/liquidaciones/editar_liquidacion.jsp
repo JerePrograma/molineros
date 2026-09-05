@@ -311,6 +311,8 @@ if(renderResponse.getNamespace().equals("_COR_1_")){
 							<%=Validator.isNotNull(liquidacion) && liquidacion.getCompro_a_debitar_tipo().equals("RCB") ? "selected" : ""  %>>RCB</option>
 						<option value="NCR"
 							<%=Validator.isNotNull(liquidacion) && liquidacion.getCompro_a_debitar_tipo().equals("NCR") ? "selected" : ""  %>>NCR</option>
+						<option value="NDB"
+							<%=Validator.isNotNull(liquidacion) && liquidacion.getCompro_a_debitar_tipo().equals("NDB") ? "selected" : ""  %>>NDB</option>	
 				</select> &nbsp; <select name="<portlet:namespace/>comprobante_letra"
 					id="<portlet:namespace/>comprobante_letra" <% if (esView) { %>
 					disabled="disabled" <%} %>>
@@ -2115,7 +2117,7 @@ jQuery("#<portlet:namespace />cuit_entidad").blur(function(){ validaMontoOrigina
 	    function formateaNroComprobante(){
 	    	var nro=jQuery("#<portlet:namespace />comprobante_nro").val();
 	    	var tipo=jQuery("#<portlet:namespace />comprobante_tipo").val();
-	    	if(tipo=='FCP' || tipo=='NCR' || tipo=='RCB'){
+	    	if(tipo=='FCP' || tipo=='NCR' || tipo=='RCB' || tipo=='NDB'){
 	    		nro=PadLeft(nro,8);
 	    		jQuery("#<portlet:namespace />comprobante_nro").val(nro);
 	    	}
