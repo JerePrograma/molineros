@@ -198,8 +198,8 @@ if (tercerizadoras == null) {
                         yearParam="fechaAltaDesdeAnio"
                         yearValue="<%= fechaAltaDesde.get(Calendar.YEAR) %>"
                         yearNullable="<%= true %>"
-                        yearRangeStart="<%= fechaAltaDesde.get(Calendar.YEAR) - 50 %>"
-                        yearRangeEnd="<%= fechaAltaDesde.get(Calendar.YEAR) + 2 %>"
+                        yearRangeStart="2025"
+                        yearRangeEnd="<%= fechaAltaDesde.get(Calendar.YEAR)%>"
                         firstDayOfWeek="<%= fechaAltaDesde.getFirstDayOfWeek() - 1 %>"
                         disabled="<%= false %>" />
             </td>
@@ -219,8 +219,8 @@ if (tercerizadoras == null) {
                         yearParam="fechaAltaHastaAnio"
                         yearValue="<%= fechaAltaHasta.get(Calendar.YEAR) %>"
                         yearNullable="<%= true %>"
-                        yearRangeStart="<%= fechaAltaHasta.get(Calendar.YEAR) - 50 %>"
-                        yearRangeEnd="<%= fechaAltaHasta.get(Calendar.YEAR) + 2 %>"
+                        yearRangeStart="2025"
+                        yearRangeEnd="<%= fechaAltaHasta.get(Calendar.YEAR)%>"
                         firstDayOfWeek="<%= fechaAltaHasta.getFirstDayOfWeek() - 1 %>"
                         disabled="<%= false %>" />
             </td>

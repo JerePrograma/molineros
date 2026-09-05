@@ -20,6 +20,11 @@ import ar.com.ospim.autorizaciones.beans.AfiCuentaBancaria;
 import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacionalCuenta;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.comprobantesPortalProveedores.services.ComprobanteServiceUtil;
 import ar.com.ospim.util.StringUtils;
 
@@ -198,8 +203,91 @@ public static String validaImagenPrestacion (ReclamoPrestacional   reclamo  ) th
 	  }
 	}catch(Exception e) {}
 	//Fin nuevo
-	
-	
+
+    // También considerar documentación proveniente de Compras
+    if (total == 0) {
+        try {
+            RequerimientoCompraReclamoPrestacional relacion =
+                    RequerimientoCompraReclamoPrestacionalServiceUtil
+                            .getRelacionPorReclamoPrestacional(
+                                    reclamo.getId_reclamo()
+                            );
+
+            if (relacion != null
+                    && relacion.isVinculado()
+                    && relacion.getIdReclamoPrestacionalInt() == reclamo.getId_reclamo()
+                    && relacion.getIdRequerimientoCompra() > 0) {
+
+                int idRequerimiento =
+                        relacion.getIdRequerimientoCompra();
+
+                // Orden médica
+                List<RequerimientoCompraPresupuesto> ordenes =
+                        BusquedaRequerimientoCompraServiceUtil
+                                .listarOrdenesMedicas(idRequerimiento);
+
+                if (ordenes != null) {
+                    for (RequerimientoCompraPresupuesto orden : ordenes) {
+
+                        if (orden != null
+                                && orden.isActivo()
+                                && orden.getIdRequerimiento() != null
+                                && orden.getIdRequerimiento().intValue() == idRequerimiento
+                                && orden.getTipoDocumento() != null
+                                && orden.getTipoDocumento().intValue()
+                                == RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_ORDEN_MEDICA
+                                && orden.getIdRequerimientoPresupuesto() != null) {
+
+                            total++;
+                            break;
+                        }
+                    }
+                }
+
+                // Pedido de cotización
+                if (total == 0) {
+                    RequerimientoCompraPedidoCotizacion pedido =
+                            BusquedaRequerimientoCompraServiceUtil
+                                    .getPedidoCotizacionAdjudicado(idRequerimiento);
+
+                    if (pedido != null
+                            && pedido.getIdRequerimiento() != null
+                            && pedido.getIdRequerimiento().intValue() == idRequerimiento
+                            && pedido.getDlFileEntryId() != null
+                            && pedido.getDlFileEntryId().longValue() > 0L) {
+
+                        total++;
+                    }
+                }
+
+                // Presupuesto adjudicado
+                if (total == 0) {
+                    RequerimientoCompraPresupuesto presupuesto =
+                            BusquedaRequerimientoCompraServiceUtil
+                                    .getPresupuestoAdjudicado(idRequerimiento);
+
+                    if (presupuesto != null
+                            && presupuesto.isActivo()
+                            && presupuesto.getIdRequerimiento() != null
+                            && presupuesto.getIdRequerimiento().intValue() == idRequerimiento
+                            && presupuesto.getTipoDocumento() != null
+                            && presupuesto.getTipoDocumento().intValue()
+                            == RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_PRESUPUESTO
+                            && presupuesto.getIdRequerimientoPresupuesto() != null) {
+
+                        total++;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error(
+                    "Error validando documentación de Compras para reclamo "
+                            + reclamo.getId_reclamo(),
+                    e
+            );
+        }
+    }
 
 	if (total == 0){
 		outMensaje = "El reclamo debe tener al menos una imagen cargada ";
