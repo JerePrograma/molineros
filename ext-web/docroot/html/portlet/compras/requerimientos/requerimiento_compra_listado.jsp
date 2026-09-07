@@ -500,9 +500,8 @@ if (tercerizadoras == null) {
                     <input type="button" id="<portlet:namespace />exportar"
                            value="Exportar" disabled="disabled"
                            onClick="<portlet:namespace />exportarRequerimientos();" />
-                    <span id="<portlet:namespace />estadoExportacion">
-                        Ejecute una busqueda para exportar.
-                    </span>
+                    <span id="<portlet:namespace />estadoExportacion"
+                          role="status" aria-live="polite"></span>
                     <iframe id="<portlet:namespace />descargaRequerimientos"
                             title="Descarga de requerimientos" style="display:none"
                             onload="<portlet:namespace />verificarDescargaRequerimientos();"></iframe>
@@ -1501,7 +1500,7 @@ if (tercerizadoras == null) {
                     );
 
         <portlet:namespace />busquedasPendientesExportacion++;
-        <portlet:namespace />actualizarExportacion('Busqueda en curso.');
+        <portlet:namespace />actualizarExportacion('');
         jQuery(
                 '#<portlet:namespace />busquedaRequerimientosDiv'
         ).load(
@@ -1514,12 +1513,7 @@ if (tercerizadoras == null) {
                             ? jQuery('#<portlet:namespace />busquedaRequerimientosDiv'
                                     + ' .compras-exportacion-token').val()
                             : null;
-                    <portlet:namespace />actualizarExportacion(
-                            <portlet:namespace />busquedasPendientesExportacion > 0
-                            ? 'Busqueda en curso.'
-                            : (<portlet:namespace />tokenExportacion
-                                    ? 'Se exportara la busqueda mostrada.'
-                                    : 'La busqueda no es valida para exportar. Vuelva a buscar.'));
+                    <portlet:namespace />actualizarExportacion('');
                 }
         );
 
