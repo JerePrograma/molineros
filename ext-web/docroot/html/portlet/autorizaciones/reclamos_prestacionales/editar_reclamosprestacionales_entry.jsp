@@ -19,6 +19,7 @@ ReclamoPrestacionalCompraContexto contextoCompraSesion =
                 : null;
 ReclamoPrestacionalCompraContexto contextoCompra =
         contextoCompraSesion != null
+                && contextoCompraSesion.esBorradorEnEdicion(reclamoprestacional)
                 && contextoCompraSesion.coincideNonce(
                         contextoCompraNonceRequest
                 )
@@ -62,6 +63,7 @@ String cmd =
  * permanezca temporalmente el contexto de Compras en sesión.
  */
 if (contextoCompra != null
+        && !Boolean.TRUE.equals(request.getAttribute("rp.contextoInvalido"))
         && idReclamoAux.intValue() == 0) {
 
     cmd = Constants.ADD;

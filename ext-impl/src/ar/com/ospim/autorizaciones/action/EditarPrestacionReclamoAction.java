@@ -37,18 +37,20 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws Exception {		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+        synchronized (session) {
+            ReclamosBaseAction.validarContextoEditorCompras(renderRequest);
 
 		String cmdSeccional = ParamUtil.getString(renderRequest, Constants.ACTION, null);
 
 		
 		
 		String frecuencia = ParamUtil.getString(renderRequest, "frecuencia");
-		double importe  = ParamUtil.getDouble(renderRequest, "importe");
-		double cantidad = ParamUtil.getDouble(renderRequest, "cantidad");
-		double cargoOspim = ParamUtil.getDouble(renderRequest, "cargoospim");
-		double cargoPs = ParamUtil.getDouble(renderRequest, "cargops");
-		double cargoImesa = ParamUtil.getDouble(renderRequest, "cargoimesa");
-		double reconocidoSSS = ParamUtil.getDouble(renderRequest, "reconocidoSSS");
+		double importe  = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "importe");
+		double cantidad = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cantidad");
+		double cargoOspim = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cargoospim");
+		double cargoPs = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cargops");
+		double cargoImesa = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cargoimesa");
+		double reconocidoSSS = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "reconocidoSSS");
 		String prestacion= ParamUtil.getString(renderRequest, "prestacion");
 		String observaciones= ParamUtil.getString(renderRequest, "observaciones");		
 		int idPrestacion= ParamUtil.getInteger(renderRequest, "idprestacion");
@@ -83,16 +85,16 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 		
 		String codigoPrestacion= ParamUtil.getString(renderRequest, "codigoPrestacion");
 		
-		//double importeFC  = ParamUtil.getDouble(renderRequest, "importeFC");
+		//double importeFC  = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "importeFC");
 		
 		String cpteTipo= ParamUtil.getString(renderRequest, "cpbte_tipo");
 		String cpteNro= ParamUtil.getString(renderRequest, "cpbte_nro");
 		int cpteDia=ParamUtil.getInteger(renderRequest,"cpbte_dia");
 		int cpteMes=ParamUtil.getInteger(renderRequest,"cpbte_mes");
 		int cpteAnio=ParamUtil.getInteger(renderRequest,"cpbte_anio");
-		Double cpbteCantidad  = ParamUtil.getDouble(renderRequest, "cpbte_cantidad");
-		Double cpbteImporte= ParamUtil.getDouble(renderRequest, "cpbte_importe");
-		Double cpbteTotal  = ParamUtil.getDouble(renderRequest, "importeFC");
+		Double cpbteCantidad  = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cpbte_cantidad");
+		Double cpbteImporte= ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cpbte_importe");
+		Double cpbteTotal  = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "importeFC");
 		String cpteCUIT= ParamUtil.getString(renderRequest, "cpbte_cuit");
 		String cpteCUITSucursal= ParamUtil.getString(renderRequest, "cpbte_cuit_sucursal");
 		String cpteSucursal= ParamUtil.getString(renderRequest, "cpbte_sucursal");
@@ -248,6 +250,7 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 		
 		
 		                            
+	        }
 	}
 
     /**

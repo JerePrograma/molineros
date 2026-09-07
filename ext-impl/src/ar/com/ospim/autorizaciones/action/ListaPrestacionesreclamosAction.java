@@ -36,23 +36,25 @@ public class ListaPrestacionesreclamosAction extends PortletAction {
 	public ActionForward render(ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
 			RenderRequest renderRequest, RenderResponse renderResponse) throws Exception {
 		
-		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();								
+		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+        synchronized (session) {
+            ReclamosBaseAction.validarContextoEditorCompras(renderRequest);
 		
 		String cmdAction = ParamUtil.getString(renderRequest, Constants.ACTION);
 		
 		Formatter fmt = new Formatter();
 		
 		String frecuencia = ParamUtil.getString(renderRequest, "frecuencia");
-		double importe  = ParamUtil.getDouble(renderRequest, "importe");
-		double cargoOspim = ParamUtil.getDouble(renderRequest, "cargoospim");
-		double cargoPs = ParamUtil.getDouble(renderRequest, "cargops");
-		double cargoImesa = ParamUtil.getDouble(renderRequest, "cargoimesa");
-		double reconocidoSSS = ParamUtil.getDouble(renderRequest, "reconocidoSSS");
+		double importe  = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "importe");
+		double cargoOspim = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cargoospim");
+		double cargoPs = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cargops");
+		double cargoImesa = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cargoimesa");
+		double reconocidoSSS = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "reconocidoSSS");
 		String troquel = ParamUtil.getString(renderRequest, "troquel");
 		String prestacion= ParamUtil.getString(renderRequest, "prestacion");
 		int  tipoNomenclador= ParamUtil.getInteger(renderRequest, "tiponomenclador");
 		int tipoNomnecladorPrestacion= ParamUtil.getInteger(renderRequest, "tiponomnecladorprestacion");
-		double cantidad= ParamUtil.getDouble(renderRequest, "cantidad");
+		double cantidad= ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cantidad");
 		String observaciones= ParamUtil.getString(renderRequest, "observaciones");
 		String nombreMedicamento = ParamUtil.getString(renderRequest, "nombre_medicamento");
 		String nombrePrestacion= ParamUtil.getString(renderRequest, "nombre_prestacion");	
@@ -68,9 +70,9 @@ public class ListaPrestacionesreclamosAction extends PortletAction {
 		int cpbteDia=ParamUtil.getInteger(renderRequest,"cpbte_dia");
 		int cpbteMes=ParamUtil.getInteger(renderRequest,"cpbte_mes");
 		int cpbteAnio=ParamUtil.getInteger(renderRequest,"cpbte_anio");
-		Double cpbteCantidad  = ParamUtil.getDouble(renderRequest, "cpbte_cantidad");
-		Double cpbteImporte= ParamUtil.getDouble(renderRequest, "cpbte_importe");
-		Double cpbteTotal  = ParamUtil.getDouble(renderRequest, "importeFC");
+		Double cpbteCantidad  = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cpbte_cantidad");
+		Double cpbteImporte= ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "cpbte_importe");
+		Double cpbteTotal  = ReclamosBaseAction.getImportePrestacionFromRequest(renderRequest, "importeFC");
 		String cpbteCUIT= ParamUtil.getString(renderRequest, "cpbte_cuit");
 		int cpbteSucursalAux= ParamUtil.getInteger(renderRequest, "cpbte_sucursal");
 		String cpbteSucursal =  null;
@@ -196,6 +198,7 @@ public class ListaPrestacionesreclamosAction extends PortletAction {
 			
 		}
 		
+	        }
 	}
 	
 	

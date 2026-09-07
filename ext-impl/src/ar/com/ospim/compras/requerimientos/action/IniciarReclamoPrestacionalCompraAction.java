@@ -227,6 +227,26 @@ public class IniciarReclamoPrestacionalCompraAction
                                 actionRequest
                         );
 
+                DestinoPortlet origenConsulta = resolverOrigenCompras(actionRequest, httpRequest);
+                ReclamoPrestacionalCompraContexto contextoConsulta =
+                        new ReclamoPrestacionalCompraContexto(idRequerimientoCompra,
+                                requerimiento.getAfiliadoCuilTitular(), requerimiento.getAfiliadoInt(),
+                                usuario, System.currentTimeMillis(), UUID.randomUUID().toString());
+                ReclamoPrestacionalCompraPrecargaHelper.RegistroContextoBorrador registroConsulta =
+                        ReclamoPrestacionalCompraPrecargaHelper.registrarContextoBorrador(
+                                session, contextoConsulta, origenConsulta.getPortletId(),
+                                origenConsulta.getPlid(), false);
+                if (registroConsulta.isColision()) {
+                    actionResponse.sendRedirect(construirURLRecuperacionEdicion(
+                            httpRequest, destino, registroConsulta.getRecuperacion(), usuario));
+                    return;
+                }
+                if (!registroConsulta.isRegistrado()) {
+                    informarConflictoFuncional(actionRequest, actionResponse,
+                            idRequerimientoCompra, registroConsulta.getMensaje());
+                    return;
+                }
+
                 String redirect =
                         construirURLAutorizaciones(
                                 httpRequest,

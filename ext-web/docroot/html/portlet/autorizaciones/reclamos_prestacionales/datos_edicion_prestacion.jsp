@@ -9,6 +9,7 @@
 PrestacionesReclamo  prestacionEnEdicion  = (PrestacionesReclamo) request.getSession().getAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION   );
 request.getSession().removeAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION);
 Integer tipoedicion=0;
+boolean restringirRecuperableCompras = Boolean.TRUE.equals(request.getAttribute("rp.view.restringirRecuperableCompras"));
 String ocultarSeccional=null;
 
 Calendar fechaseccional  = Calendar.getInstance();
@@ -302,12 +303,12 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 	            <td><label><liferay-ui:message key="Cantidad" />:</label></td>
 	            <td><input id="<portlet:namespace />cantidadEdicion"
 				     name="<portlet:namespace />cantidadEdicion" size="2" maxlength="20" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? prestacionEnEdicion.getCantidad()    : ""  %>'
-				     onkeypress="return validaMonto(event,this)" onblur="calculatotal()" /></td>
+				     onkeypress="return validaMonto(event,this)" onblur="calculatotalEdicion()" /></td>
 			
 			    <td><label><liferay-ui:message key="Importe" />:</label></td>
 			    <td><input id="<portlet:namespace />importeEdicion"
 				     name="<portlet:namespace />importeEdicion" size="12" maxlength="20" type="text" value='<%=Validator.isNotNull(prestacionEnEdicion)  ? new BigDecimal(prestacionEnEdicion.getImporte()).setScale(2, RoundingMode.HALF_UP).toPlainString(): ""  %>'
-				     onkeypress="return validaMonto(event,this)" onblur="calculatotal()" /></td>
+				     onkeypress="return validaMonto(event,this)" onblur="calculatotalEdicion()" /></td>
 		
 			    <td><label><liferay-ui:message key="Total" />:</label></td>
 				<td><input id="<portlet:namespace />totalEdicion"
@@ -343,7 +344,9 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 				<select name="<portlet:namespace />recuperable_surEdicion" id="<portlet:namespace />recuperable_surEdicion" onchange="cambiorecuperableEdicion();">
 						<option value="0">Seleccione Integración</option>
 						<option value="1" <%=Validator.isNotNull(prestacionEnEdicion) &&  prestacionEnEdicion.getRecuperable() != null &&  prestacionEnEdicion.getRecuperable()==1 ? "selected" : ""  %>>SURGE</option>
+<% if (!restringirRecuperableCompras) { %>
 						<option value="3" <%=Validator.isNotNull(prestacionEnEdicion) &&  prestacionEnEdicion.getRecuperable() != null &&  prestacionEnEdicion.getRecuperable()==3 ? "selected" : ""  %>>Integración</option>
+<% } %>
 						<option value="2" <%=Validator.isNotNull(prestacionEnEdicion) &&  prestacionEnEdicion.getRecuperable() != null &&  prestacionEnEdicion.getRecuperable()==2 ? "selected" : ""  %>>NO Recuperable</option>
 				</select>
 				</td>
@@ -417,20 +420,37 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 filtrarLetraComprobanteEdicion();
 cambiorecuperableEdicion();
 
-function calculatotal(){
-	importe=jQuery("#<portlet:namespace />importeEdicion").val();
-	importe1 = importe.replace(",",".");
-	cantidad=jQuery("#<portlet:namespace />cantidadEdicion").val();
-	total= importe1 * cantidad  ;
-	jQuery("#<portlet:namespace />totalEdicion").val(total.toFixed(2));
+function calculatotalEdicion() {
+    var importe = jQuery('#<portlet:namespace />importeEdicion').val().replace(',', '.');
+    var cantidad = jQuery('#<portlet:namespace />cantidadEdicion').val().replace(',', '.');
+    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(importe)
+            || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(cantidad)
+            || !isFinite(Number(importe) * Number(cantidad))) {
+        jQuery('#<portlet:namespace />totalEdicion').val('');
+        return false;
+    }
+    var total = Number(importe) * Number(cantidad);
+    jQuery('#<portlet:namespace />totalEdicion').val(total.toFixed(2));
+    return true;
 }  	
 
-function calculatotalFCEdicion(){
-	importe=jQuery("#<portlet:namespace />importeUnitarioFC_edicion").val();
-	cantidad=jQuery("#<portlet:namespace />cantidadFC_edicion").val();
-	total= importe * cantidad  ;
-	jQuery("#<portlet:namespace />importeFC_edicion").val(Math.round(total.toFixed(2) * 100)/100);
-
+function calculatotalFCEdicion() {
+    var importe = jQuery('#<portlet:namespace />importeUnitarioFC_edicion').val().replace(',', '.');
+    var cantidad = jQuery('#<portlet:namespace />cantidadFC_edicion').val().replace(',', '.');
+    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(importe)
+            || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(cantidad)
+            || !isFinite(Number(importe) * Number(cantidad))) {
+        jQuery('#<portlet:namespace />importeFC_edicion').val('');
+        return false;
+    }
+    var total = Number(importe) * Number(cantidad);
+    var redondeado = Math.round(total.toFixed(2) * 100) / 100;
+    if (!isFinite(redondeado)) {
+        jQuery('#<portlet:namespace />importeFC_edicion').val('');
+        return false;
+    }
+    jQuery('#<portlet:namespace />importeFC_edicion').val(redondeado);
+    return true;
 }
 
 function filtrarLetraComprobanteEdicion() {

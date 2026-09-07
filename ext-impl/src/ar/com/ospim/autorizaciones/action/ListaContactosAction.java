@@ -49,6 +49,8 @@ public class ListaContactosAction extends PortletAction {
 			RenderRequest renderRequest, RenderResponse renderResponse) throws Exception {
 		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+        synchronized (session) {
+            ReclamosBaseAction.validarContextoEditorCompras(renderRequest);
 		
 		String cuil = ParamUtil.getString(renderRequest, "cuil_contacto");		
 		int inte = ParamUtil.getInteger(renderRequest, "inte_contacto");
@@ -82,6 +84,7 @@ public class ListaContactosAction extends PortletAction {
 		
 		
 		return mapping.findForward(getForward(renderRequest,"portlet.autorizaciones.reclamosprestacionales.contactos.reclamo"));
+	        }
 	}
 	
 			

@@ -244,7 +244,7 @@ public final class ComprasReclamoDocumentacionContractTest {
         assertContains(
                 "origen no Compras sigue en VIEW",
                 viewReclamo,
-                "request.setAttribute(\n            Constants.CMD,\n            Constants.VIEW"
+                "request.setAttribute(Constants.CMD, Constants.VIEW"
         );
 
         validarLecturaSinMaterializacion(

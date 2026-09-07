@@ -33,6 +33,8 @@ public class BorrarPrestacionReclamoAction extends PortletAction {
 		throws Exception {
 		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+        synchronized (session) {
+            ReclamosBaseAction.validarContextoEditorCompras(renderRequest);
 		
 		String cmd = ParamUtil.getString(renderRequest, Constants.CMD);
 		
@@ -69,6 +71,7 @@ public class BorrarPrestacionReclamoAction extends PortletAction {
 		}
 	
 
+	        }
 	}
 	
 }

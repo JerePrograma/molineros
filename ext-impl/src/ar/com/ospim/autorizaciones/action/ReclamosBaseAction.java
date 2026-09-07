@@ -6,6 +6,12 @@ import java.util.Date;
 import java.util.List;
 
 import javax.portlet.RenderRequest;
+import javax.portlet.PortletRequest;
+import com.liferay.portal.model.User;
+import com.liferay.portal.util.PortalUtil;
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
+import ar.com.ospim.compras.requerimientos.helper.ReclamoPrestacionalCompraPrecargaHelper;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
@@ -33,6 +39,56 @@ import ar.com.ospim.util.StringUtils;
 
 
 public class ReclamosBaseAction  extends PortletAction {
+
+    public static double getImportePrestacionFromRequest(PortletRequest request, String nombre)
+            throws Exception {
+        String texto = ParamUtil.getString(request, nombre, "").trim();
+        if (texto.length() == 0) {
+            return 0D;
+        }
+        if (!texto.matches("[+-]?(?:[0-9]+(?:[.,][0-9]*)?|[.,][0-9]+)")) {
+            throw new Exception("El valor numerico de " + nombre + " no es valido.");
+        }
+        double valor = Double.parseDouble(texto.replace(',', '.'));
+        if (Double.isNaN(valor) || Double.isInfinite(valor)) {
+            throw new Exception("El valor numerico de " + nombre + " esta fuera de rango.");
+        }
+        return valor;
+    }
+
+    public static ReclamoPrestacionalCompraContexto validarContextoEditorCompras(
+            PortletRequest request) throws Exception {
+        return validarContextoEditorCompras(request, false);
+    }
+
+    public static ReclamoPrestacionalCompraContexto validarContextoEditorCompras(
+            PortletRequest request, boolean permitirSeleccion) throws Exception {
+        User usuario = PortalUtil.getUser(request);
+        String origen = ParamUtil.getString(request, "origen", "");
+        String idSolicitado = ParamUtil.getString(request, "id_reclamosel", "");
+        int idReclamo = Integer.MIN_VALUE;
+        if (idSolicitado.length() > 0) {
+            try {
+                idReclamo = Integer.parseInt(idSolicitado.trim());
+            } catch (NumberFormatException e) {
+                throw new Exception("El identificador del Reclamo Prestacional no es valido.");
+            }
+            if (idReclamo == Integer.MIN_VALUE) {
+                throw new Exception("El identificador del Reclamo Prestacional no es valido.");
+            }
+        }
+        // La consulta vinculada transporta un ID real y no inicia un handoff.
+        if (Constants.VIEW.equals(ParamUtil.getString(request, Constants.CMD)) && idReclamo > 0) {
+            origen = "";
+        }
+        ReclamoPrestacionalCompraContexto contexto =
+                ReclamoPrestacionalCompraPrecargaHelper.validarContextoEditor(
+                        PortalUtil.getHttpServletRequest(request).getSession(),
+                        ParamUtil.getString(request, WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE, ""),
+                        origen, usuario != null ? usuario.getScreenName() : "", idReclamo, permitirSeleccion);
+        request.setAttribute("rp.view.restringirRecuperableCompras", Boolean.valueOf(contexto != null));
+        return contexto;
+    }
 
 	private Logger _log = Logger.getLogger(this.getClass());
 	

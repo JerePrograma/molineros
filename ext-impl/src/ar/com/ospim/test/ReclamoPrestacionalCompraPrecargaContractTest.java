@@ -14,8 +14,8 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
 
     public static void main(String[] args) throws Exception {
         String service = leer(
-                "ext-impl/src/ar/com/ospim/compras/requerimientos/service/"
-                        + "ReclamoPrestacionalCompraPrecargaServiceUtil.java"
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "ReclamoPrestacionalCompraPrecargaHelper.java"
         );
         String contexto = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/beans/"
@@ -37,7 +37,7 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
         String scripts = leer(
                 "ext-web/docroot/html/portlet/autorizaciones/"
                         + "reclamos_prestacionales/"
-                        + "view_reclamo_scripts_inicial.jsp"
+                        + "view_reclamo.jsp"
         );
 
         String validacion = extraerMetodo(
@@ -167,19 +167,18 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 "idTercerizadora = requerimiento.getIdTercerizadora();"
         );
         String resolverContexto = extraerMetodo(
-                guardar,
-                "private ReclamoPrestacionalCompraContexto "
-                        + "resolverContextoCompra("
+                service,
+                "int idReclamoSolicitado, boolean permitirSeleccion) throws Exception"
         );
         antes(
                 resolverContexto,
                 "Object contextoObj = session.getAttribute(",
-                "if (StringUtils.checkEmpty(nonceRequest))"
+                "if (WebKeysCompras.isEmpty(nonce))"
         );
         contiene(
                 resolverContexto,
                 "handoff sin nonce falla cerrado",
-                "if (contextoObj != null)"
+                "borradorActivo"
         );
         contiene(
                 resolverContexto,
@@ -235,7 +234,7 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
 
         String formulario = extraerEntre(
                 view,
-                "<form name=\"<%= reclamoPortletNamespace %>reclamo_fm\"",
+                "<form name=\"<portlet:namespace />reclamo_fm\"",
                 "</form>"
         );
         contiene(
@@ -247,7 +246,7 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
                 formulario,
                 "hidden usa exclusivamente el contexto validado",
                 "handoffReclamoComprasValido "
-                        + "? contextoReclamoCompras.getNonce() : \"\""
+                        + "? nonceReclamoCompras : \"\""
         );
 
         antes(
@@ -274,17 +273,17 @@ public final class ReclamoPrestacionalCompraPrecargaContractTest {
 
         String saveReclamo = extraerMetodo(
                 scripts,
-                "function <%= reclamoPortletNamespace %>saveReclamo()"
+                "function <portlet:namespace />saveReclamo()"
         );
         antes(
                 saveReclamo,
-                ".value = '<%= Constants.SAVE %>';",
+                ".value='<%=Constants.SAVE  %>';",
                 "submitForm("
         );
         contiene(
                 saveReclamo,
                 "save envia el formulario completo",
-                ".<%= reclamoPortletNamespace %>reclamo_fm,"
+                ".<portlet:namespace />reclamo_fm,"
         );
 
         System.out.println(

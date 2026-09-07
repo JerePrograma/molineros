@@ -542,6 +542,9 @@ function borrarRevision(idRevision) {
 
     var url =
             "<%=borrarRevisionURL%>";
+    if (typeof <portlet:namespace />urlContextoReclamo == "function") {
+        url = <portlet:namespace />urlContextoReclamo(url);
+    }
 
     url =
             url.replace(

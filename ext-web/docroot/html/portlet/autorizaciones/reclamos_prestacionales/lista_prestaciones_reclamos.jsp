@@ -229,6 +229,9 @@ function editarPrestacion(idRegistro,codigoPrestacion, tipoEdicion ){
 		
 		onOffcombosestadosprestaciones(false);
 		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/editar_reclamosprestaciones';		
+        if (typeof <portlet:namespace />urlContextoReclamo == "function") {
+            url = <portlet:namespace />urlContextoReclamo(url);
+        }
 		url = url+'&idRegistro='+idRegistro +'&tipoEdicion='+tipoEdicion +'&codigoPrestacion='+  codigoPrestacion +'&estadoAprobacion='+tipoEdicion ;	
 		
 		jQuery("#<portlet:namespace />datos_edicion_prestacion").load(url, function(){
@@ -286,6 +289,9 @@ function borrarPrestacionconvalida(idRegistro){
 		 
 		
 		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/autorizaciones/borrar_reclamosprestaciones';
+        if (typeof <portlet:namespace />urlContextoReclamo == "function") {
+            url = <portlet:namespace />urlContextoReclamo(url);
+        }
 		url = url+'&idRegistro='+idRegistro;	
 		
 		jQuery("#<portlet:namespace />lista_prestaciones_reclamos").load(url);	

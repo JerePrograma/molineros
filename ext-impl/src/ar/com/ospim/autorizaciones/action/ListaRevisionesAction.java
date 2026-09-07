@@ -14,10 +14,7 @@ import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
 import ar.com.ospim.autorizaciones.exceptions.RevisionesReclamosException;
-import ar.com.ospim.compras.WebKeysCompras;
-import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
 import com.liferay.portal.kernel.servlet.SessionErrors;
-import com.liferay.portal.model.User;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -212,6 +209,8 @@ public class ListaRevisionesAction extends PortletAction {
                 revision
         );
 
+        revision.setDescObservacionMedica(ParamUtil.getString(actionRequest, "observacionMedica", ""));
+
         return revision;
     }
 
@@ -333,84 +332,10 @@ public class ListaRevisionesAction extends PortletAction {
             ActionRequest actionRequest)
             throws RevisionesReclamosException {
 
-        String nonceRequest =
-                ParamUtil.getString(
-                        actionRequest,
-                        WebKeysCompras
-                                .PARAM_RECLAMO_PRESTACIONAL_NONCE,
-                        ""
-                );
-
-        Object contextoObj =
-                session.getAttribute(
-                        WebKeysCompras
-                                .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-                );
-
-        /*
-         * Sin contexto y sin nonce se conserva el flujo manual.
-         * Si existe un contexto de Compras, el nonce es obligatorio.
-         */
-        if (WebKeysCompras.isEmpty(
-                nonceRequest
-        )) {
-            if (contextoObj != null) {
-                throw new RevisionesReclamosException(
-                        "El contexto de Compras requiere "
-                                + "un nonce valido."
-                );
-            }
-
-            return;
-        }
-
-        if (!(contextoObj
-                instanceof ReclamoPrestacionalCompraContexto)) {
-
-            throw new RevisionesReclamosException(
-                    "El contexto de Compras expiro "
-                            + "o ya no esta disponible."
-            );
-        }
-
-        ReclamoPrestacionalCompraContexto contexto =
-                (ReclamoPrestacionalCompraContexto)
-                        contextoObj;
-
-        User user;
-
         try {
-            user =
-                    PortalUtil.getUser(
-                            actionRequest
-                    );
+            ReclamosBaseAction.validarContextoEditorCompras(actionRequest);
         } catch (Exception e) {
-            throw new RevisionesReclamosException(
-                    "No se pudo determinar "
-                            + "el usuario actual.",
-                    e
-            );
-        }
-
-        String usuario =
-                user != null
-                        ? user.getScreenName()
-                        : "";
-
-        if (!contexto.coincideNonce(
-                nonceRequest
-        )
-                || !contexto.perteneceAUsuario(
-                usuario
-        )
-                || !contexto.estaVigente(
-                System.currentTimeMillis()
-        )) {
-
-            throw new RevisionesReclamosException(
-                    "El contexto de Compras no es valido "
-                            + "o vencio."
-            );
+            throw new RevisionesReclamosException(e.getMessage(), e);
         }
     }
 }

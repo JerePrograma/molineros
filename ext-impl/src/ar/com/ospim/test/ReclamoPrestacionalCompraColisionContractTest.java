@@ -37,8 +37,7 @@ public final class ReclamoPrestacionalCompraColisionContractTest {
 
         String registrar = extraerMetodo(
                 helper,
-                "public static RegistroContextoBorrador "
-                        + "registrarContextoBorrador("
+                "boolean permitirReutilizacion) throws Exception"
         );
         String descartar = extraerMetodo(
                 helper,

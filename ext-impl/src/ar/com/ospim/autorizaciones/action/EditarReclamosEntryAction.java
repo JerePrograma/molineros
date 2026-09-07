@@ -88,6 +88,7 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 			ActionResponse actionResponse) throws Exception {
 
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(actionRequest).getSession();
+        synchronized (session) {
 
 		PortletSession portletSession = actionRequest.getPortletSession();
 
@@ -99,6 +100,21 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 				WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
 				""
 		);
+
+        ReclamoPrestacionalCompraContexto contextoProcesado = resolverContextoCompra(session, actionRequest, PortalUtil.getUser(actionRequest));
+        if (Constants.CANCEL.equals(cmd)) {
+            ReclamoPrestacional actual = (ReclamoPrestacional) session.getAttribute(
+                    WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+            if (actual != null && actual.getId_reclamo() != ParamUtil.getInteger(actionRequest, "id_reclamosel", 0)) {
+                throw new Exception("El formulario ya no corresponde a la edicion actual.");
+            }
+            ReclamoPrestacionalCompraPrecargaHelper.limpiarEstadoEditorReclamoPrestacional(session);
+            actionResponse.setRenderParameter("struts_action", "/autorizaciones/view");
+            actionResponse.setRenderParameter("tabs1", "reclamos-prestacionales");
+            actionResponse.setRenderParameter(WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE, "");
+            actionResponse.setRenderParameter("origen", "");
+            return;
+        }
 
         if (!StringUtils.checkEmpty(contextoCompraNonce)) {
             actionResponse.setRenderParameter(
@@ -162,9 +178,13 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 		
 		if (esDatosTab){
 			reclamoprestacional =getReclamoPrestacionalFromRequest(PortalUtil.getHttpServletRequest(actionRequest), reclamoprestacional ,cmdAction, cmd);
+            if (contextoProcesado != null) {
+                contextoProcesado.setReclamoEnEdicion(reclamoprestacional);
+            }
 			session.setAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION, reclamoprestacional );	
 			portletSession.setAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION, reclamoprestacional);
 		}
+	        }
 	}
 	
 	
@@ -174,6 +194,7 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 			RenderResponse renderResponse) throws Exception {
 		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+        synchronized (session) {
 		
 		PortletSession portletSession = renderRequest.getPortletSession();
 
@@ -181,43 +202,6 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 		String cmd = ParamUtil.getString(renderRequest, Constants.CMD);
 		String cmdAction = ParamUtil.getString(renderRequest, Constants.ACTION);
 
-		//limieza automatica al cambiar entre pestañas
-		String tabActual = ParamUtil.getString(renderRequest, "tab", "");
-		_log.info("TAB ACTUAL = " + tabActual);
-		_log.info("CMD = " + cmd);
-
-		//no se limpia si estoy guardando la cuenta
-		if (cmd.equals(WebKeysAutorizaciones.CUENTA)) {
-		    _log.info("No se limpia nada porque estoy guardando la cuenta");
-		} 
-		else {
-
-		    //entra a CTA Bancaria sin seleccionar cuenta, se limpia
-		    if ("cta_bancaria".equalsIgnoreCase(tabActual) &&
-		        !WebKeysAutorizaciones.CUENTA_SELECT.equals(cmd)) {
-
-		        _log.info("Entro a CTA BANCARIA sin seleccionar cuenta");
-
-		        renderRequest.getPortletSession().removeAttribute(
-		            "ID_CUENTA_BANCARIA_SELECCIONADA",
-		            PortletSession.PORTLET_SCOPE
-		        );
-		        session.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_CUENTA_SELECT);
-		    }
-
-		    //sale de CTA Bancaria, limpio
-		    if (!"cta_bancaria".equalsIgnoreCase(tabActual)) {
-
-		        _log.info("Salgo de CTA BANCARIA");
-
-		        renderRequest.getPortletSession().removeAttribute(
-		            "ID_CUENTA_BANCARIA_SELECCIONADA", 
-		            PortletSession.PORTLET_SCOPE
-		        );
-		        session.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_CUENTA_SELECT);
-		    }
-		}
-		
 		User user = PortalUtil.getUser(renderRequest);
 		ReclamoPrestacionalCompraContexto contextoCompra = null;
 		ReclamoPrestacionalCompraPrecargaHelper.RecuperacionEdicion
@@ -304,6 +288,7 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 						contextoError.getMessage()
 				);
 				renderRequest.setAttribute(Constants.CMD, Constants.VIEW);
+                renderRequest.setAttribute("rp.contextoInvalido", Boolean.TRUE);
 
 				return mapping.findForward(getForward(
 						renderRequest,
@@ -311,6 +296,43 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 								+ "editar_reclamos_entry"
 				));
 			}
+		}
+
+		//limieza automatica al cambiar entre pestañas
+		String tabActual = ParamUtil.getString(renderRequest, "tab", "");
+		_log.info("TAB ACTUAL = " + tabActual);
+		_log.info("CMD = " + cmd);
+
+		//no se limpia si estoy guardando la cuenta
+		if (cmd.equals(WebKeysAutorizaciones.CUENTA)) {
+		    _log.info("No se limpia nada porque estoy guardando la cuenta");
+		}
+		else {
+
+		    //entra a CTA Bancaria sin seleccionar cuenta, se limpia
+		    if ("cta_bancaria".equalsIgnoreCase(tabActual) &&
+		        !WebKeysAutorizaciones.CUENTA_SELECT.equals(cmd)) {
+
+		        _log.info("Entro a CTA BANCARIA sin seleccionar cuenta");
+
+		        renderRequest.getPortletSession().removeAttribute(
+		            "ID_CUENTA_BANCARIA_SELECCIONADA",
+		            PortletSession.PORTLET_SCOPE
+		        );
+		        session.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_CUENTA_SELECT);
+		    }
+
+		    //sale de CTA Bancaria, limpio
+		    if (!"cta_bancaria".equalsIgnoreCase(tabActual)) {
+
+		        _log.info("Salgo de CTA BANCARIA");
+
+		        renderRequest.getPortletSession().removeAttribute(
+		            "ID_CUENTA_BANCARIA_SELECCIONADA",
+		            PortletSession.PORTLET_SCOPE
+		        );
+		        session.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_CUENTA_SELECT);
+		    }
 		}
 
 		String seccionalDefecto=user.getExpandoBridge().getAttribute("id_seccional").toString();
@@ -1220,6 +1242,7 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 			return mapping.findForward(getForward(renderRequest,
 					"portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry"));
 		}
+	        }
 	}	
 
 	private void prepararRecuperacionEdicion(
@@ -1330,53 +1353,9 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 			PortletRequest request,
 			User user) throws Exception {
 
-		String nonceRequest = ParamUtil.getString(
-				request,
-				WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
-				""
-		);
-		Object contextoObj = session.getAttribute(
-				WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA
-		);
-
-		/*
-		 * Sin nonce y sin contexto se conserva el flujo ordinario de Reclamos.
-		 * Si hay un handoff de Compras, la ausencia del nonce debe fallar
-		 * cerrada: nunca puede degradarse a un alta generica.
-		 */
-		if (StringUtils.checkEmpty(nonceRequest)) {
-			if (contextoObj != null) {
-				throw new Exception(
-						"El contexto de Compras requiere un nonce valido. "
-								+ "Vuelva al requerimiento e inicie nuevamente "
-								+ "el Reclamo Prestacional."
-				);
-			}
-			return null;
-		}
-
-		if (!(contextoObj instanceof ReclamoPrestacionalCompraContexto)) {
-			throw new Exception(
-					"El contexto de Compras expiro o ya no esta disponible."
-			);
-		}
-
-		ReclamoPrestacionalCompraContexto contexto =
-				(ReclamoPrestacionalCompraContexto) contextoObj;
-		String usuario = user != null ? user.getScreenName() : "";
-
-		if (!contexto.coincideNonce(nonceRequest)
-				|| !contexto.perteneceAUsuario(usuario)
-				|| !contexto.estaVigente(System.currentTimeMillis())) {
-
-			throw new Exception(
-					"El contexto de Compras no es valido o vencio. "
-							+ "Vuelva al requerimiento e inicie nuevamente "
-							+ "el Reclamo Prestacional."
-			);
-		}
-
-		return contexto;
+        String cmd = ParamUtil.getString(request, Constants.CMD, "");
+        return validarContextoEditorCompras(request, request instanceof RenderRequest
+                && (Constants.VIEW.equals(cmd) || Constants.EDIT.equals(cmd)));
 	}
 
 	private RequerimientoCompra validarContextoCompraParaGuardar(

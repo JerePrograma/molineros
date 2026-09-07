@@ -29,6 +29,8 @@ public class BorrarRevisionReclamoAction extends PortletAction  {
 		throws Exception {
 		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+        synchronized (session) {
+            ReclamosBaseAction.validarContextoEditorCompras(renderRequest);
 		
 		int idRevision= ParamUtil.getInteger(renderRequest, "idRevision");
 		RevisionesReclamo revision = new RevisionesReclamo();
@@ -55,6 +57,7 @@ public class BorrarRevisionReclamoAction extends PortletAction  {
 		return mapping.findForward(getForward(renderRequest,
 				"portlet.autorizaciones.reclamosprestacionales.revision.reclamo"));
 			                            	                            
+	        }
 	}
 	
 }

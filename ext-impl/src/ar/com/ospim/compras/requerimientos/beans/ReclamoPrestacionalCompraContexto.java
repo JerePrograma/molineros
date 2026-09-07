@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.beans;
 
 import java.io.Serializable;
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 
 /**
  * Contexto temporal utilizado para transferir desde Compras hacia
@@ -36,6 +37,7 @@ public class ReclamoPrestacionalCompraContexto
     private final String usuarioInicio;
     private final long fechaInicio;
     private final String nonce;
+    private ReclamoPrestacional reclamoEnEdicion;
 
     /*
      * En Compras estos valores son porcentajes.
@@ -127,6 +129,16 @@ public class ReclamoPrestacionalCompraContexto
 
         this.surge =
                 surge;
+    }
+
+    /** Conserva la identidad del borrador, como la compensacion de la precarga. */
+    public void setReclamoEnEdicion(ReclamoPrestacional reclamo) {
+        reclamoEnEdicion = reclamo;
+    }
+
+    public boolean esBorradorEnEdicion(Object reclamo) {
+        return reclamoEnEdicion != null && reclamoEnEdicion == reclamo
+                && reclamoEnEdicion.getId_reclamo() <= 0;
     }
 
     public int getIdRequerimientoCompra() {
