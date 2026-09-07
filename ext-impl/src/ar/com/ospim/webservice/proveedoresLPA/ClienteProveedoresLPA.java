@@ -39,6 +39,7 @@ import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
@@ -193,27 +194,38 @@ public class ClienteProveedoresLPA {
 						    	fop.flush();
 						    	fop.close();
 						    	
-						    	DLFileEntry dl=null;
-						    	Integer qIntentos=0;
-						      	do {
-						      		qIntentos++;
-						      		title=idFacturaImg +"-" + ("archivo".equals(opcion)?0:(int)(rnd.nextDouble()*100));
-						      		try{
-						      		   dl=null;
-						      		   dl=	DLFileEntryLocalServiceUtil.getFileEntryByTitle(folderId, title + (extension.length()>0?".":"") + extension);
-						      		} catch(Exception e2){}   
-						      	} while (dl!=null && qIntentos<=10);  
-						    		
-						      	DLFileEntry entry = DLFileEntryLocalServiceUtil.addOrOverwriteFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
-						      			j.getString("nombre"), title, j.getString("nombre"), "", file, serviceContext);
+							DLFileEntry dl=null;
+							boolean esArchivo = "archivo".equals(opcion);
+							Integer qIntentos=0;
+							do {
+							    qIntentos++;
+							    title=idFacturaImg +"-" + (esArchivo?0:1+(int)(rnd.nextDouble()*100));
+							    try {
+							        dl=DLFileEntryLocalServiceUtil.getFileEntryByTitle(folderId, title + (extension.length()>0?".":"") + extension);
+							    } catch(NoSuchFileEntryException e2) {
+							        dl=null;
+							    }
+							} while (dl!=null && !esArchivo && qIntentos<=10);
+
+							if(dl!=null) {
+							    if(!esArchivo || !j.getString("nombre").equals(dl.getDescription())) {
+							        throw new Exception("El titulo del documento LPA se encuentra ocupado por otro archivo.");
+							    }
+							    DLFileEntryLocalServiceUtil.updateFileEntry(serviceContext.getUserId(), folderId, folderId, dl.getName(),
+							            j.getString("nombre"), title, j.getString("nombre"), "", file, serviceContext);
+							} else {
+							    DLFileEntryLocalServiceUtil.addFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
+							            title, j.getString("nombre"), "", file, serviceContext);
+							}
 						    }catch(Exception e1) {
-						    	logger.debug("Error WS LPA "+e1);
+							throw e1;
 						    }
 						}    
 					}
 				}
 			}catch(Exception e) {
-				logger.debug("Error WS LPA "+e);
+				logger.error("Error al obtener documentos WS LPA", e);
+				throw e;
 			}
 		}
 	}
