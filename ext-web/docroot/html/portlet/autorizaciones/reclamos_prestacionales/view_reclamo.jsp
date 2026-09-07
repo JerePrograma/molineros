@@ -4920,17 +4920,7 @@ jQuery("#<portlet:namespace />fechaPrestacionAnioFarmacia").blur(function(){
     <portlet:namespace />actualizarFechaPrestacionFarmaciaAfiliado();
 });
 
-jQuery(document).on("change", "#<portlet:namespace />fechaPrestacionDiaEdicion", function(){
-	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
-});
 
-jQuery(document).on("change", "#<portlet:namespace />fechaPrestacionMesEdicion", function(){
-	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
-});
-
-jQuery(document).on("blur", "#<portlet:namespace />fechaPrestacionAnioEdicion", function(){
-    <portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
-});
 
 
 </script>

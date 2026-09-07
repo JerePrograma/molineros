@@ -44,7 +44,6 @@
 -- Si la sesión está abortada, ejecutar ROLLBACK antes de este archivo.
 -- =====================================================================
 
-\encoding LATIN1
 
 BEGIN;
 

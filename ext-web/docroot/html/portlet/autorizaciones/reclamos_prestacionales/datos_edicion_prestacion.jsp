@@ -498,4 +498,16 @@ function completarConCeros(value, longitud) {
 }
 
 
+jQuery("#<portlet:namespace />fechaPrestacionDiaEdicion").change(function(){
+	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+});
+
+jQuery("#<portlet:namespace />fechaPrestacionMesEdicion").change(function(){
+	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+});
+
+jQuery("#<portlet:namespace />fechaPrestacionAnioEdicion").blur(function(){
+    <portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+});
+
 </script>	    
