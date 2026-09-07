@@ -94,6 +94,7 @@ public class ClienteProveedoresLPA {
 			getComprobanteArchivos(cpbtes,"archivo");
 		} catch (UnsupportedEncodingException e) {
 			logger.debug("Error WS LPA" + e);
+			throw e;
 		}
 	}
 	
@@ -103,6 +104,7 @@ public class ClienteProveedoresLPA {
 			getComprobanteArchivos(cpbtes,"adjuntos");
 		} catch (UnsupportedEncodingException e) {
 			logger.debug("Error WS LPA" + e);
+			throw e;
 		}
 	}
 	
@@ -170,12 +172,10 @@ public class ClienteProveedoresLPA {
 				int statusCode = httpGet.getStatusLine().getStatusCode();
 				if(statusCode==200) {
 					JSONObject results = new JSONObject(responseBodyAsString);
-					try {
-					  Integer code =results.getInt("code");
-					  logger.debug("Bajada de Archivos WS LPA" + responseBodyAsString);
-					}catch(Exception e21) {
-						
-						JSONArray items = results.getJSONArray("comprobante");
+					if(results.has("code")) {
+						throw new Exception("LPA devolvio una respuesta con codigo que no permite confirmar la descarga.");
+					}
+					JSONArray items = results.getJSONArray("comprobante");
 						for (int i = 0; i < items.length(); i++) {
 						    try {
 						    	String title="";
@@ -217,7 +217,8 @@ public class ClienteProveedoresLPA {
 							throw e1;
 						    }
 						}    
-					}
+				} else {
+					throw new Exception("Error HTTP al obtener documentos WS LPA: " + statusCode);
 				}
 			}catch(Exception e) {
 				logger.error("Error al obtener documentos WS LPA", e);
@@ -247,10 +248,10 @@ public class ClienteProveedoresLPA {
 			int statusCode = httpGet.getStatusLine().getStatusCode();
 			if(statusCode==200) {
 				JSONObject results = new JSONObject(responseBodyAsString);
-				try {
-				  Integer code =results.getInt("code");
-				}catch(Exception e) {
-					JSONArray items = results.getJSONArray("comprobantes");
+				if(results.has("code")) {
+					throw new Exception("LPA devolvio una respuesta con codigo que no permite confirmar el listado.");
+				}
+				JSONArray items = results.getJSONArray("comprobantes");
 					for (int i = 0; i < items.length(); i++) {
 					    try {
 					    	Comprobante c = new Comprobante();
@@ -369,15 +370,16 @@ public class ClienteProveedoresLPA {
 					        
 					        cs.add(c);
 					    } catch (JSONException e1) {
-					    	logger.debug("Error WS LPA" + e1);
+						throw e1;
 					    }
 					}
-				}
 			}else {
+				throw new Exception("Error HTTP al obtener el listado WS LPA: " + statusCode);
 			}
 			
 		} catch (Exception e) {
-			logger.debug("Error WS LPA" + e);
+			logger.error("Error al obtener el listado WS LPA", e);
+			throw new RuntimeException("No se pudo obtener la lista completa de comprobantes WS LPA", e);
 		}
 		return cs;
 	}
@@ -620,12 +622,10 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 			int statusCode = httpGet.getStatusLine().getStatusCode();
 			if(statusCode==200) {
 				JSONObject results = new JSONObject(responseBodyAsString);
-				try {
-				  Integer code =results.getInt("code");
-				  logger.debug("Bajada de Archivos WS LPA" + responseBodyAsString);
-				}catch(Exception e21) {
-					
-					JSONArray items = results.getJSONArray("recibo");
+				if(results.has("code")) {
+					throw new Exception("LPA devolvio una respuesta con codigo que no permite confirmar la descarga.");
+				}
+				JSONArray items = results.getJSONArray("recibo");
 					for (int i = 0; i < items.length(); i++) {
 					    try {
 					    	String title="";
@@ -649,20 +649,26 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 					      	title=idFacturaImg +"-Recibo" ;
 					      	try{
 					      	   dl=	DLFileEntryLocalServiceUtil.getFileEntryByTitle(folderId, title + (extension.length()>0?".":"") + extension);
-					      	} catch(Exception e2){}   
+						} catch(NoSuchFileEntryException e2){
+						   dl=null;
+						}
 					      	  
-					    	if(dl==null) {	
-					      	   DLFileEntry entry = DLFileEntryLocalServiceUtil.addOrOverwriteFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
-					      			j.getString("nombre"), title, j.getString("nombre"), "", file, serviceContext);
+						if(dl!=null) {
+						    throw new Exception("El recibo LPA ya existe y no se puede verificar su identidad para reemplazarlo.");
+						} else {
+						   DLFileEntryLocalServiceUtil.addFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
+								title, j.getString("nombre"), "", file, serviceContext);
 					    	}
 					    }catch(Exception e1) {
-					    	logger.debug("Error WS LPA "+e1);
+						throw e1;
 					    }
 					}    
-				}
+			} else {
+				throw new Exception("Error HTTP al obtener recibos WS LPA: " + statusCode);
 			}
 		}catch(Exception e) {
-			logger.debug("Error WS LPA "+e);
+			logger.error("Error al obtener recibos WS LPA", e);
+			throw e;
 		}
 	}
   }
