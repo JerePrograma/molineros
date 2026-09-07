@@ -18,8 +18,13 @@ import com.liferay.portal.util.PortalUtil;
 import com.mchange.v2.c3p0.PooledDataSource;
 import java.io.*;
 import java.lang.reflect.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.ServletOutputStream;
@@ -42,6 +47,7 @@ public final class ExportarRequerimientosCompraTest {
     private static final Locale ES = new Locale("es", "AR");
 
     public static void main(String[] args) throws Exception {
+        sqlAdjudicacion();
         // Instalar todos los dobles ANTES de ejecutar codigo que pueda consultar persistencia.
         Field dataSource = ConnectionHelper.class.getDeclaredField("datasource");
         dataSource.setAccessible(true);
@@ -83,6 +89,43 @@ public final class ExportarRequerimientosCompraTest {
         descarga(args.length == 0 ? ".codex/artifacts/exportar-requerimientos/muestra.xlsx" : args[0]);
         System.out.println("EXPORTAR_REQUERIMIENTOS_OK checks=" + checks
                 + " (dobles JDBC/HTTP, POI real; no prueba SQL instalada ni UI real)");
+    }
+
+    /** Contrato estatico contra el DDL local; no ejecuta ni valida PostgreSQL instalado. */
+    private static void sqlAdjudicacion() throws Exception {
+        Charset encoding = Charset.forName("ISO-8859-1");
+        String esquema = new String(Files.readAllBytes(Paths.get(
+                "ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql")), encoding);
+        String migracion = new String(Files.readAllBytes(Paths.get(
+                "docs/sql/20260907_exportar_requerimientos_compras.sql")), encoding);
+        int inicio = esquema.indexOf("CREATE OR REPLACE FUNCTION compras.listar_prestadores_adjudicados_batch(");
+        check(inicio >= 0, "SQL: funcion batch presente en esquema");
+        int fin = esquema.indexOf("\nSTABLE;", inicio);
+        check(fin > inicio, "SQL: funcion batch completa");
+        String funcion = esquema.substring(inicio, fin + "\nSTABLE;".length());
+        check(migracion.indexOf(funcion) >= 0, "SQL: migracion identica a funcion canonica");
+
+        // Los alias de resultados JDBC no son nombres de columnas de las tablas fisicas.
+        String[][] tablas = {
+            {"r", "compras.requerimiento"}, {"d", "compras.requerimiento_detalle"}
+        };
+        for (int i = 0; i < tablas.length; i++) {
+            Matcher tabla = Pattern.compile("(?ms)^CREATE TABLE "
+                    + Pattern.quote(tablas[i][1]) + "\\s*\\((.*?)^\\s*\\);").matcher(esquema);
+            check(tabla.find(), "SQL: DDL presente para " + tablas[i][1]);
+            String columnas = tabla.group(1);
+            Matcher referencias = Pattern.compile("\\b" + tablas[i][0]
+                    + "\\.([a-z_][a-z_0-9]*)\\b").matcher(funcion);
+            int cantidad = 0;
+            while (referencias.find()) {
+                String columna = referencias.group(1);
+                check(Pattern.compile("(?m)^\\s*" + Pattern.quote(columna)
+                        + "\\s+\\w").matcher(columnas).find(),
+                        "SQL: columna " + tablas[i][1] + "." + columna + " no declarada en DDL");
+                cantidad++;
+            }
+            check(cantidad > 0, "SQL: referencias verificadas para " + tablas[i][1]);
+        }
     }
 
     private static void filtros() throws Exception {

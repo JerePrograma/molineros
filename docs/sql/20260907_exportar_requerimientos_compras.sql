@@ -29,7 +29,7 @@ AS $func$
            d.id_prestador::INTEGER,
            p.descripcion::VARCHAR
       FROM compras.requerimiento_detalle d
-      JOIN compras.requerimiento r ON r.id = d.id_requerimiento
+      JOIN compras.requerimiento r ON r.id_requerimiento = d.id_requerimiento
       LEFT JOIN public.prestador p ON p.id_prestador = d.id_prestador
      WHERE d.id_requerimiento = ANY(p_ids_requerimientos::INTEGER[])
        AND d.baja_fecha IS NULL
