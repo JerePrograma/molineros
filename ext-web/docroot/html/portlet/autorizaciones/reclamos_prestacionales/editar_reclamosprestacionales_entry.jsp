@@ -181,7 +181,7 @@ boolean recuperacionContextoVencido = recuperacionReclamoActiva
 
     <% if (recuperacionContextoVencido) { %>
         <p>
-            El contexto de Compras del borrador venció. Puede revisar la
+            El contexto de Compras del borrador no puede validarse o venció. Puede revisar la
             edición actual, pero deberá descartarla y reiniciar el flujo
             desde el requerimiento para crear un nuevo reclamo.
         </p>

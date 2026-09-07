@@ -38,6 +38,8 @@ public class ReclamoPrestacionalCompraContexto
     private final long fechaInicio;
     private final String nonce;
     private ReclamoPrestacional reclamoEnEdicion;
+    // En un stream anterior el campo ausente toma false, conservando UID 1L.
+    private boolean formatoConIdentidadEditor = true;
 
     /*
      * En Compras estos valores son porcentajes.
@@ -134,6 +136,11 @@ public class ReclamoPrestacionalCompraContexto
     /** Conserva la identidad del borrador, como la compensacion de la precarga. */
     public void setReclamoEnEdicion(ReclamoPrestacional reclamo) {
         reclamoEnEdicion = reclamo;
+        formatoConIdentidadEditor = true;
+    }
+
+    public boolean tieneIdentidadEditorDesconocida() {
+        return !formatoConIdentidadEditor && reclamoEnEdicion == null;
     }
 
     public boolean esBorradorEnEdicion(Object reclamo) {

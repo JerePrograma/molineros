@@ -93,6 +93,13 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             throw new Exception("El formulario pertenece a otro Reclamo Prestacional. "
                     + "Vuelva a abrir la edicion antes de continuar.");
         }
+        if (contextoObj instanceof ReclamoPrestacionalCompraContexto
+                && ((ReclamoPrestacionalCompraContexto) contextoObj).tieneIdentidadEditorDesconocida()
+                && reclamo != null && reclamo.getId_reclamo() <= 0) {
+            throw new Exception("No se puede verificar el contexto de Compras de esta sesion anterior. "
+                    + "El borrador se conserva; vuelva al requerimiento para revisarlo "
+                    + "o descartarlo explicitamente antes de reiniciar.");
+        }
         boolean borradorActivo = contextoObj instanceof ReclamoPrestacionalCompraContexto
                 && ((ReclamoPrestacionalCompraContexto) contextoObj).esBorradorEnEdicion(reclamo);
         if (WebKeysCompras.isEmpty(nonce)) {
@@ -2431,8 +2438,15 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         public boolean tieneContextoCompraNoVigente(
                 String usuarioActual) {
 
-            return contextoCompraEsperado instanceof ReclamoPrestacionalCompraContexto
-                    && ((ReclamoPrestacionalCompraContexto) contextoCompraEsperado).esBorradorEnEdicion(reclamoEsperado)
+            if (!(contextoCompraEsperado instanceof ReclamoPrestacionalCompraContexto)) {
+                return false;
+            }
+            ReclamoPrestacionalCompraContexto contexto =
+                    (ReclamoPrestacionalCompraContexto) contextoCompraEsperado;
+            return (contexto.esBorradorEnEdicion(reclamoEsperado)
+                    || (contexto.tieneIdentidadEditorDesconocida()
+                            && reclamoEsperado instanceof ReclamoPrestacional
+                            && getIdReclamoActual() <= 0))
                     && getContextoCompraVigente(usuarioActual) == null;
         }
     }
