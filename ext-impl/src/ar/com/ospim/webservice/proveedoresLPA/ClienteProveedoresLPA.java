@@ -208,11 +208,7 @@ public class ClienteProveedoresLPA {
 							} while (dl!=null && !esArchivo && qIntentos<=10);
 
 							if(dl!=null) {
-							    if(!esArchivo || !j.getString("nombre").equals(dl.getDescription())) {
-							        throw new Exception("El titulo del documento LPA se encuentra ocupado por otro archivo.");
-							    }
-							    DLFileEntryLocalServiceUtil.updateFileEntry(serviceContext.getUserId(), folderId, folderId, dl.getName(),
-							            j.getString("nombre"), title, j.getString("nombre"), "", file, serviceContext);
+							    throw new Exception("El documento LPA ya existe y no se puede verificar su identidad para reemplazarlo.");
 							} else {
 							    DLFileEntryLocalServiceUtil.addFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
 							            title, j.getString("nombre"), "", file, serviceContext);
