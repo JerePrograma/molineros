@@ -22,6 +22,7 @@ import ar.com.ospim.autorizaciones.beans.FirmaAutorizante;
 import ar.com.ospim.autorizaciones.beans.PrestacionesEquipoInterdisciplinario;
 import ar.com.ospim.autorizaciones.exceptions.ImposibleBorrarEquipoInterdisiciplinarioException;
 import ar.com.ospim.util.ConnectionHelper;
+import ar.com.ospim.autorizaciones.exceptions.DictamenConcurrenteException;
 
 
 	
@@ -365,31 +366,38 @@ public EquipoInterdisciplinario    getEquipoInterdisciplinario (int id) throws S
 
 
 public String [] getDictamenesDelEquipoInterdisciplinario(int idEquipoInterDisciplinario ) {
-	
-	String dictamenes[] = new String[6]; // soporta 6 tipos de dictamenes
 	Connection con = null;
+	try {
+		con = ConnectionHelper.getConnection();
+		return getDictamenesDelEquipoInterdisciplinario(con, idEquipoInterDisciplinario);
+	} catch (Exception e) {
+		_log.error("Error al buscar los dictamenes del equipo interdisciplinario", e);
+		throw new RuntimeException("No se pudieron recargar los dictamenes del equipo interdisciplinario", e);
+	} finally {
+		ConnectionHelper.cerrar(con);
+	}
+}
+
+private String[] getDictamenesDelEquipoInterdisciplinario(Connection con,
+		int idEquipoInterDisciplinario) throws SQLException {
+	String dictamenes[] = new String[6];
 	CallableStatement stmt = null;
 	try {
 		String sql = "{call autorizaciones.equipo_interdisciplinario_dictamenes_by_id(?)}";
-		con = ConnectionHelper.getConnection();
-		stmt = con.prepareCall(sql.toString());	
-		stmt.setInt(1, idEquipoInterDisciplinario );
+		stmt = con.prepareCall(sql);
+		stmt.setInt(1, idEquipoInterDisciplinario);
 		ResultSet rs = stmt.executeQuery();
-		for(int i=1;i<6;i++){
-			dictamenes[i]="";
+		for (int i = 0; i < 6; i++) {
+			dictamenes[i] = "";
 		}
 		while (rs.next()) {
-			dictamenes[rs.getInt("dic_tipo_dictamen")]=rs.getString("dic_dictamen");
+			dictamenes[rs.getInt("dic_tipo_dictamen")] = rs.getString("dic_dictamen");
 		}
-	} catch (Exception e) {
-		_log.error("Error al buscar los dictamenes del equipo interdisciplinario", e);
 	} finally {
-		ConnectionHelper.cerrar(stmt, con);
+		ConnectionHelper.cerrar(stmt);
 	}
 	return dictamenes;
 }
-
-
 
 public List<PrestacionesEquipoInterdisciplinario> getPrestacionesDelEquipoInterdisciplinario(int idEquipoInterDisciplinario ) {
 	
@@ -469,7 +477,32 @@ public int actualizar(EquipoInterdisciplinario equipoInterDisciplinario , String
 	    stmt.setInt(7 , idRegIdTelefono );	    
 	    stmt.setString(8 , equipoInterDisciplinario.getMotivoCierreEquipoInter() );
 		stmt.executeUpdate();
-		
+
+		// La funcion anterior bloquea la cabecera hasta commit/rollback.
+		// Releer en esta misma conexion cierra la ventana desde la lectura del Action.
+		String[] actuales = getDictamenesDelEquipoInterdisciplinario(con, idRegEquiInter);
+		String[] originales = equipoInterDisciplinario.getDictamenOriginales();
+        String[] nombresDictamen = new String[] {"Psicología", "Médico Auditor",
+                "Trabajadora Social", "Kinesiología", "Legales", "Equipo Interdisciplinario"};
+		for (EquipoInterdisciplinario.DICTAMENES dictamen : EquipoInterdisciplinario.DICTAMENES.values()) {
+			int tipo = dictamen.ordinal();
+			String original = originales[tipo] != null ? originales[tipo] : "";
+			String actual = actuales[tipo] != null ? actuales[tipo] : "";
+			String ingresado = equipoInterDisciplinario.getDictamen(dictamen);
+			String originalComparable = original.replace("\r\n", "\n").replace("\r", "\n");
+			String actualComparable = actual.replace("\r\n", "\n").replace("\r", "\n");
+			String ingresadoComparable = ingresado.replace("\r\n", "\n").replace("\r", "\n");
+			if (!ingresadoComparable.equals(originalComparable)
+					&& !actualComparable.equals(originalComparable)
+					&& !ingresadoComparable.equals(actualComparable)) {
+				throw new DictamenConcurrenteException(nombresDictamen[tipo], tipo, actual, ingresado);
+			}
+			if (ingresadoComparable.equals(originalComparable) || ingresadoComparable.equals(actualComparable)) {
+				equipoInterDisciplinario.setDictamen(dictamen, actual);
+			}
+		}
+		equipoInterDisciplinario.setDictamenesOrigianles(actuales);
+
 		// actualiza el diagnostico si cambio pisa el existente 
 		if (equipoInterDisciplinario.isCambioDiagnosticoCie10() ) {
 		stmt1 = con.prepareCall(sql2.toString()); 
@@ -578,12 +611,15 @@ public int actualizar(EquipoInterdisciplinario equipoInterDisciplinario , String
 				
 		con.commit();
 		
-	} catch (SQLException e) {
+	} catch (Exception e) {
 		_log.error("Error al actualizar equipo insterdisciplinario y sus componentes", e);
 		try {
 			con.rollback();
 		} catch (SQLException e1) {
 			throw new SystemException(e1);
+		}
+		if (e instanceof DictamenConcurrenteException) {
+			throw (DictamenConcurrenteException) e;
 		}
 		throw new SystemException(e);
 	} finally {

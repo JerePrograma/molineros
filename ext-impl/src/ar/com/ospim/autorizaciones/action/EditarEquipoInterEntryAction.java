@@ -201,8 +201,38 @@ import com.liferay.portal.util.PortalUtil;
 					    equipoInterdisciplinario =
 					        getEquipoInterdisciplinarioFromRequest(renderRequest, equipoActualBD, user);
 
-					} catch (DictamenConcurrenteException e) {
+					// aca david
+					equipoInterdisciplinario.setDictamenesOrigianles(dictamenesOriginales);
+					// carga del id del contacto de la base
+					equipoInterdisciplinario.setIdEmail(idContactoE);
+					// carga prestaciones de la lista
+					List<PrestacionesEquipoInterdisciplinario> prestaciones= (List<PrestacionesEquipoInterdisciplinario>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_EQUIPO_EN_SESION );
+					equipoInterdisciplinario.setPrestaciones(prestaciones);
 
+					telefonoIngresado =equipoInterdisciplinario.getTelefonoContacto();
+					domicilioIngresado=equipoInterdisciplinario.getAfiliado().getDomicilioDefault();
+					telefonoIngresado.setId(telefonoOriginal.getId()  );
+					//comparacion datos
+					if (!emailOriginal.equals(equipoInterdisciplinario.getAfiliado().getEmail() )  ){
+						equipoInterdisciplinario.setCambioEmailAfiliado(true);
+					}
+					if ( ! codigoCie10Original.equals(equipoInterdisciplinario.getCodigoCie10())   || ! diagnosticoOriginal.equals(equipoInterdisciplinario.getDiagnosticoAfiliado()) ){
+						equipoInterdisciplinario.setCambioDiagnosticoCie10(true);
+					}
+					if (!(telefonoIngresado.compareTo(telefonoOriginal) )){
+						equipoInterdisciplinario.setCambioCambioTelefono(true);
+					}
+
+					if (!(domicilioIngresado.compareTo(domicilioOriginal) )){
+						equipoInterdisciplinario.setCambioDomicilio(true);
+					}
+
+					equipoInterdisciplinario.setId(idRegEquipoInterdisciplinario );
+					//Actualiza Dictamen
+					EquipoInterdisciplinarioServiceUtil.update(equipoInterdisciplinario   , user);
+					} catch (ar.com.ospim.autorizaciones.exceptions.DictamenConcurrenteException e) {
+
+					    equipoActualBD = EquipoInterdisciplinarioServiceUtil.getEquipoInterdisciplinario(idRegEquipoInterdisciplinario);
 					    String usuarioModificacion =
 					        EquipoInterdisciplinarioServiceUtil
 					            .getUsuarioUltimaModificacionDictamen(
@@ -240,35 +270,6 @@ import com.liferay.portal.util.PortalUtil;
 					        )
 					    );
 					}
-					// aca david
-					equipoInterdisciplinario.setDictamenesOrigianles(dictamenesOriginales);
-					// carga del id del contacto de la base 
-					equipoInterdisciplinario.setIdEmail(idContactoE); 
-					// carga prestaciones de la lista 
-					List<PrestacionesEquipoInterdisciplinario> prestaciones= (List<PrestacionesEquipoInterdisciplinario>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_EQUIPO_EN_SESION );
-					equipoInterdisciplinario.setPrestaciones(prestaciones);
-					
-					telefonoIngresado =equipoInterdisciplinario.getTelefonoContacto();
-					domicilioIngresado=equipoInterdisciplinario.getAfiliado().getDomicilioDefault();					
-					telefonoIngresado.setId(telefonoOriginal.getId()  ); 
-					//comparacion datos 
-					if (!emailOriginal.equals(equipoInterdisciplinario.getAfiliado().getEmail() )  ){
-						equipoInterdisciplinario.setCambioEmailAfiliado(true);
-					}
-					if ( ! codigoCie10Original.equals(equipoInterdisciplinario.getCodigoCie10())   || ! diagnosticoOriginal.equals(equipoInterdisciplinario.getDiagnosticoAfiliado()) ){
-						equipoInterdisciplinario.setCambioDiagnosticoCie10(true);
-					}
-					if (!(telefonoIngresado.compareTo(telefonoOriginal) )){
-						equipoInterdisciplinario.setCambioCambioTelefono(true);
-					}
-					
-					if (!(domicilioIngresado.compareTo(domicilioOriginal) )){
-						equipoInterdisciplinario.setCambioDomicilio(true);
-					}
-					
-					equipoInterdisciplinario.setId(idRegEquipoInterdisciplinario );					
-					//Actualiza Dictamen
-					EquipoInterdisciplinarioServiceUtil.update(equipoInterdisciplinario   , user);
 					equipoInterdisciplinario = EquipoInterdisciplinarioServiceUtil.getEquipoInterdisciplinario(idRegEquipoInterdisciplinario ) ;
 					
 					session.removeAttribute(WebKeysAutorizaciones.EQUIPO_DISCIPLINARIO_EN_EDICION);
