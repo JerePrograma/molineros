@@ -34,6 +34,12 @@ public final class ComprasSurgeSelectContractTest {
                 "ext-web/docroot/html/portlet/compras/requerimientos/"
                         + "requerimiento_compra_busqueda_resultado.jsp"
         );
+        String valoresListado = leer(
+                "ext-impl/src/ar/com/ospim/compras/requerimientos/helper/"
+                        + "ExportarRequerimientosCompraHelper.java"
+        );
+        contiene(resultados, "grilla delega encabezados", ".titulosListado(mostrarIdRpListado)");
+        contiene(resultados, "grilla delega valores", ".valoresListado(");
         String requerimiento = leer(
                 "ext-impl/src/ar/com/ospim/compras/requerimientos/beans/"
                         + "RequerimientoCompra.java"
@@ -129,22 +135,22 @@ public final class ComprasSurgeSelectContractTest {
         );
 
         contiene(
-                resultados,
+                valoresListado,
                 "encabezado de búsqueda SURGE",
-                "headerNames.add(\"SURGE\")"
+                "\"SURGE\""
         );
         noContiene(
-                resultados,
+                valoresListado,
                 "la columna ya no se titula Recupero",
-                "headerNames.add(\"recupero\")"
+                "\"recupero\""
         );
         contiene(
-                resultados,
+                valoresListado,
                 "la columna usa el dato Surge",
                 "req.getSurgeDescripcion()"
         );
         noContiene(
-                resultados,
+                valoresListado,
                 "la columna no usa el dato Recupero",
                 "req.getRecuperoDescripcion()"
         );

@@ -11,6 +11,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Capa de persistencia de Requerimientos de Compra.
@@ -741,6 +743,48 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 resultado.add(mapPresupuesto(rs));
             }
 
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public Map<Integer, List<PrestadorCotizacion>> listarPrestadoresAdjudicadosBatch(
+            List<Integer> ids) throws Exception {
+        Map<Integer, List<PrestadorCotizacion>> resultado =
+                new HashMap<Integer, List<PrestadorCotizacion>>();
+        if (ids.isEmpty()) {
+            return resultado;
+        }
+        StringBuilder array = new StringBuilder("{");
+        for (int i = 0; i < ids.size(); i++) {
+            if (i > 0) {
+                array.append(',');
+            }
+            array.append(ids.get(i).intValue());
+        }
+        array.append('}');
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall("{call compras.listar_prestadores_adjudicados_batch(?)}");
+            stmt.setString(1, array.toString());
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                Integer id = Integer.valueOf(rs.getInt("id_requerimiento"));
+                List<PrestadorCotizacion> prestadores = resultado.get(id);
+                if (prestadores == null) {
+                    prestadores = new ArrayList<PrestadorCotizacion>();
+                    resultado.put(id, prestadores);
+                }
+                PrestadorCotizacion prestador = new PrestadorCotizacion();
+                prestador.setIdPrestador(rs.getInt("id_prestador"));
+                prestador.setDescripcion(rs.getString("descripcion"));
+                prestadores.add(prestador);
+            }
             return resultado;
         } finally {
             closeQuietly(rs);

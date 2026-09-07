@@ -313,6 +313,12 @@ public class XLSServlet extends HttpServlet {
 	}
 
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+        if (ar.com.ospim.compras.requerimientos.helper.ExportarRequerimientosCompraHelper
+                .REPORTE.equals(ParamUtil.getString(req, "reporte"))) {
+            ar.com.ospim.compras.requerimientos.reportes.ReporteRequerimientosCompraExcel
+                    .descargar(req, res);
+            return;
+        }
 		_log.debug("Generando reporte XLS");
 		Workbook wb = generarReporte(req, res);
 		res.setHeader("Cache-Control", "no-cache");

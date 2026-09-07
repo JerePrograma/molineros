@@ -21,23 +21,8 @@ Efectos secundarios:
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.helper.ExportarRequerimientosCompraHelper" %>
 
-
-<%!
-private String normalizarDocumentoAfiliado(String value) {
-    if (value == null) {
-        return "";
-    }
-
-    value = value.trim();
-
-    if (value.length() == 0) {
-        return "";
-    }
-
-    return value.replaceAll("[^0-9]", "");
-}
-%>
 
 <%
 List<RequerimientoCompra> requerimientos =
@@ -71,18 +56,9 @@ portletURL.setWindowState(WindowState.MAXIMIZED);
 portletURL.setParameter("struts_action", "/compras/buscar_requerimientos");
 
 List<String> headerNames = new ArrayList<String>();
-headerNames.add("Id");
-headerNames.add("estado");
-headerNames.add("sector");
-headerNames.add("afiliado-nombre");
-headerNames.add("afiliado-dni");
-headerNames.add("tercerizadora");
-headerNames.add("cargo-ospim");
-headerNames.add("cargo-tercerizadora");
-headerNames.add("SURGE");
-headerNames.add("alta-fecha");
-if (mostrarIdRpListado) {
-    headerNames.add("Id RP");
+String[] titulos = ExportarRequerimientosCompraHelper.titulosListado(mostrarIdRpListado);
+for (int h = 0; h < titulos.length; h++) {
+    headerNames.add(titulos[h]);
 }
 headerNames.add("acciones");
 
@@ -108,64 +84,13 @@ for (int i = 0; i < requerimientos.size(); i++) {
     verURL.setParameter("struts_action", "/compras/ver_requerimiento");
     verURL.setParameter("id_requerimiento_compra", req.getIdRequerimientoCompraString());
 
-    String afiliadoNombreApellido = req.getAfiliadoNombreApellidoVisible();
-
-    if (WebKeysCompras.isEmpty(afiliadoNombreApellido)) {
-        afiliadoNombreApellido = req.getAfiliadoCuilTitularVisible();
-
-        if (!WebKeysCompras.isEmpty(req.getAfiliadoIntString())) {
-            afiliadoNombreApellido += " / " + req.getAfiliadoIntString();
-        }
-    }
-
-    String afiliadoDocumento = req.getAfiliadoDocumentoNroVisible();
-
-    if (WebKeysCompras.isEmpty(afiliadoDocumento)) {
-        afiliadoDocumento = req.getAfiliadoDocumentoVisible();
-    }
-
-    afiliadoDocumento = normalizarDocumentoAfiliado(afiliadoDocumento);
-
-    RequerimientoCompraReclamoPrestacional relacionRp =
-            relacionesRp.get(
-                    Integer.valueOf(
-                            req.getIdRequerimientoCompra()
-                    )
-            );
-
-    String idRpVisible = "";
-
-    if (relacionRp != null
-            && relacionRp.isVinculado()
-            && relacionRp.getIdReclamoPrestacionalInt() > 0) {
-
-        idRpVisible =
-                String.valueOf(
-                        relacionRp.getIdReclamoPrestacionalInt()
-                );
-    }
+    String[] valores = ExportarRequerimientosCompraHelper.valoresListado(
+            req, relacionesRp.get(Integer.valueOf(req.getIdRequerimientoCompra())),
+            mostrarIdRpListado);
 
     ResultRow row = new ResultRow(req, req.getIdRequerimientoCompraString(), i);
-
-    row.addText(HtmlUtil.escape(req.getIdString()), verURL);
-
-    row.addText(HtmlUtil.escape(req.getEstadoDescripcionVisible()), verURL);
-    row.addText(HtmlUtil.escape(req.getSectorDescripcionVisible()), verURL);
-    row.addText(HtmlUtil.escape(afiliadoNombreApellido), verURL);
-    row.addText(HtmlUtil.escape(afiliadoDocumento), verURL);
-    row.addText(HtmlUtil.escape(req.getIdTercerizadora() != null ? req.getIdTercerizadora() : ""), verURL);
-    row.addText(HtmlUtil.escape(req.getCargoOspimString()) + "%", verURL);
-    row.addText(HtmlUtil.escape(req.getCargoTercerizadoraString()) + "%", verURL);
-    row.addText(HtmlUtil.escape(req.getSurgeDescripcion()), verURL);
-    row.addText(HtmlUtil.escape(req.getAltaFechaAsString()), verURL);
-
-    if (mostrarIdRpListado) {
-        row.addText(
-                HtmlUtil.escape(
-                        idRpVisible
-                ),
-                verURL
-        );
+    for (int c = 0; c < valores.length; c++) {
+        row.addText(HtmlUtil.escape(valores[c]), verURL);
     }
 
     row.addJSP("right", SearchEntry.DEFAULT_VALIGN, "/html/portlet/compras/requerimientos/requerimiento_compra_acciones.jsp");
@@ -175,3 +100,13 @@ for (int i = 0; i < requerimientos.size(); i++) {
 %>
 
 <liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+
+<%
+String exportacionToken = (String) renderRequest.getAttribute(
+        ExportarRequerimientosCompraHelper.TOKEN);
+if (exportacionToken != null
+        && renderRequest.getAttribute(WebKeysCompras.ERROR_PARA_ALERT) == null) {
+%>
+<input type="hidden" class="compras-exportacion-token"
+       value="<%= HtmlUtil.escape(exportacionToken) %>" />
+<% } %>

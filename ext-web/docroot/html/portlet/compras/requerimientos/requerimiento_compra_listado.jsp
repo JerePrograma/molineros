@@ -19,6 +19,8 @@ Efectos secundarios:
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 
+<%@ page import="ar.com.ospim.compras.requerimientos.helper.ExportarRequerimientosCompraHelper" %>
+
 <%
 String estadoForzado =
         (String) request.getAttribute(
@@ -493,6 +495,18 @@ if (tercerizadoras == null) {
                            value="Nuevo requerimiento"
                            onClick="<portlet:namespace />altaRequerimiento();" />
                 </c:if>
+                <c:if test="<%= !estadoForzadoActivo
+                        && ExportarRequerimientosCompraHelper.puedeConsultar(user) %>">
+                    <input type="button" id="<portlet:namespace />exportar"
+                           value="Exportar" disabled="disabled"
+                           onClick="<portlet:namespace />exportarRequerimientos();" />
+                    <span id="<portlet:namespace />estadoExportacion">
+                        Ejecute una busqueda para exportar.
+                    </span>
+                    <iframe id="<portlet:namespace />descargaRequerimientos"
+                            title="Descarga de requerimientos" style="display:none"
+                            onload="<portlet:namespace />verificarDescargaRequerimientos();"></iframe>
+                </c:if>
             </td>
         </tr>
     </table>
@@ -522,6 +536,46 @@ if (tercerizadoras == null) {
 </fieldset>
 
 <script type="text/javascript">
+    var <portlet:namespace />busquedasPendientesExportacion = 0;
+    var <portlet:namespace />tokenExportacion = null;
+
+    function <portlet:namespace />actualizarExportacion(mensaje) {
+        jQuery('#<portlet:namespace />estadoExportacion').text(mensaje);
+        if (<portlet:namespace />busquedasPendientesExportacion > 0
+                || !<portlet:namespace />tokenExportacion) {
+            jQuery('#<portlet:namespace />exportar').attr('disabled', 'disabled');
+        } else {
+            jQuery('#<portlet:namespace />exportar').removeAttr('disabled');
+        }
+    }
+
+    function <portlet:namespace />exportarRequerimientos() {
+        if (<portlet:namespace />busquedasPendientesExportacion > 0
+                || !<portlet:namespace />tokenExportacion) {
+            return false;
+        }
+        var url = '<%= themeDisplay.getPathContext() %>/xlsservlet/'
+                + '?reporte=COMPRAS_REQUERIMIENTOS&compras_exportacion_token='
+                + encodeURIComponent(<portlet:namespace />tokenExportacion);
+        jQuery('#<portlet:namespace />descargaRequerimientos').attr('src', url);
+        <portlet:namespace />actualizarExportacion('Descarga solicitada.');
+        return false;
+    }
+
+    function <portlet:namespace />verificarDescargaRequerimientos() {
+        var marco = document.getElementById('<portlet:namespace />descargaRequerimientos');
+        try {
+            var doc = marco.contentDocument || marco.contentWindow.document;
+            var mensaje = doc && doc.body ? jQuery(doc.body).text() : '';
+            if (jQuery.trim(mensaje) != '') {
+                <portlet:namespace />actualizarExportacion(mensaje);
+            }
+        } catch (e) {
+            <portlet:namespace />actualizarExportacion(
+                    'No se pudo verificar la descarga. Vuelva a buscar e intente nuevamente.');
+        }
+    }
+
     var popupAfill = null;
     var popup = null;
 
@@ -1446,12 +1500,26 @@ if (tercerizadoras == null) {
                                     : "false" %>'
                     );
 
+        <portlet:namespace />busquedasPendientesExportacion++;
+        <portlet:namespace />actualizarExportacion('Busqueda en curso.');
         jQuery(
                 '#<portlet:namespace />busquedaRequerimientosDiv'
         ).load(
                 url,
-                function() {
+                function(responseText, status) {
                     jQuery('#<portlet:namespace />buscando').hide();
+                    <portlet:namespace />busquedasPendientesExportacion--;
+                    <portlet:namespace />tokenExportacion =
+                            status == 'success' || status == 'notmodified'
+                            ? jQuery('#<portlet:namespace />busquedaRequerimientosDiv'
+                                    + ' .compras-exportacion-token').val()
+                            : null;
+                    <portlet:namespace />actualizarExportacion(
+                            <portlet:namespace />busquedasPendientesExportacion > 0
+                            ? 'Busqueda en curso.'
+                            : (<portlet:namespace />tokenExportacion
+                                    ? 'Se exportara la busqueda mostrada.'
+                                    : 'La busqueda no es valida para exportar. Vuelva a buscar.'));
                 }
         );
 

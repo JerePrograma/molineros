@@ -6,7 +6,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.util.PermissionUtil;
+import ar.com.ospim.compras.requerimientos.helper.ExportarRequerimientosCompraHelper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -130,6 +130,13 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             setResultadoBusqueda(renderRequest, filtro, requerimientos);
 
             renderRequest.setAttribute(
+                    ExportarRequerimientosCompraHelper.TOKEN,
+                    ExportarRequerimientosCompraHelper.publicar(
+                            PortalUtil.getHttpServletRequest(renderRequest).getSession(),
+                            user.getUserId(), filtro, incluirReclamoRpEnCotizados,
+                            mostrarIdRpListado, renderRequest.getLocale()));
+
+            renderRequest.setAttribute(
                     WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
                     Boolean.valueOf(
                             mostrarIdRpListado
@@ -206,17 +213,7 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
     }
 
     private void validarPermisoView(User user) throws Exception {
-        if (user == null) {
-            throw new Exception("No se pudo determinar el usuario actual.");
-        }
-
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
-
-            throw new Exception("No posee permisos para consultar requerimientos de compras.");
-        }
+        ExportarRequerimientosCompraHelper.validarPermiso(user);
     }
 
     private void cargarCatalogos(RenderRequest request) {
@@ -312,6 +309,8 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
         filtro.setFechaAltaDesde(fechaAltaDesde);
         filtro.setFechaAltaHasta(fechaAltaHasta);
 
+        validarParametrosFiltro(request);
+
         int idEstado = ParamUtil.getInteger(request, "id_estado", 0);
 
         if (idEstado <= 0) {
@@ -375,6 +374,33 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
         }
 
         return filtro;
+    }
+
+    private void validarParametrosFiltro(RenderRequest request) {
+        String[] enteros = {"id_estado", "estado", "id_sector", "sector_id", "afiliado_int"};
+        for (int i = 0; i < enteros.length; i++) {
+            String value = getParametro(request, enteros[i]);
+            if (!WebKeysCompras.isEmpty(value)) {
+                try {
+                    if (!value.trim().matches("^[0-9]+$")
+                            || Integer.parseInt(value.trim()) < 0) {
+                        throw new NumberFormatException();
+                    }
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("El filtro " + enteros[i] + " no es valido.");
+                }
+            }
+        }
+        String surge = getParametro(request, "surge");
+        if (!WebKeysCompras.isEmpty(surge)
+                && !"true".equalsIgnoreCase(surge) && !"false".equalsIgnoreCase(surge)
+                && !"1".equals(surge) && !"0".equals(surge)) {
+            throw new IllegalArgumentException("El filtro SURGE no es valido.");
+        }
+        String cuil = getParametro(request, "afiliado_cuil_titular");
+        if (!WebKeysCompras.isEmpty(cuil) && !cuil.matches("^[0-9 .-]*[0-9][0-9 .-]*$")) {
+            throw new IllegalArgumentException("El filtro CUIL no es valido.");
+        }
     }
 
     private Date getFechaFromRequest(

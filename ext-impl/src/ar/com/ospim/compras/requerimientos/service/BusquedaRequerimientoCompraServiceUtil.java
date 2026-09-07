@@ -7,6 +7,7 @@ import ar.com.ospim.global.beans.Empresa;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Fachada estática legacy con las reglas de consulta y normalización.
@@ -491,6 +492,20 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return presupuestos.isEmpty()
                 ? null
                 : presupuestos.get(0);
+    }
+
+    public static Map<Integer, List<PrestadorCotizacion>> listarPrestadoresAdjudicadosBatch(
+            List<Integer> ids) throws Exception {
+        if (ids == null) {
+            throw new IllegalArgumentException("Debe informar los requerimientos a exportar.");
+        }
+        for (int i = 0; i < ids.size(); i++) {
+            if (ids.get(i) == null) {
+                throw new IllegalArgumentException("El requerimiento no es valido.");
+            }
+            validarIdRequerimiento(ids.get(i).intValue());
+        }
+        return getInstance().listarPrestadoresAdjudicadosBatch(ids);
     }
 
     private static void validarFiltroBusqueda(
