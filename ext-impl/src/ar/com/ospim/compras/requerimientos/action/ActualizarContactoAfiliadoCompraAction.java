@@ -58,8 +58,7 @@ public class ActualizarContactoAfiliadoCompraAction
             Afiliado afiliado =
                     EditarAfiliadoServiceUtil.getAfiliadoEntry(
                             cuilTitular,
-                            integrante,
-                            false
+                            integrante
                     );
 
             if (afiliado == null) {

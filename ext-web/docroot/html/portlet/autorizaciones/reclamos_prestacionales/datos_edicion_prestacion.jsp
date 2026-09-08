@@ -420,37 +420,20 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 filtrarLetraComprobanteEdicion();
 cambiorecuperableEdicion();
 
-function calculatotalEdicion() {
-    var importe = jQuery('#<portlet:namespace />importeEdicion').val().replace(',', '.');
-    var cantidad = jQuery('#<portlet:namespace />cantidadEdicion').val().replace(',', '.');
-    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(importe)
-            || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(cantidad)
-            || !isFinite(Number(importe) * Number(cantidad))) {
-        jQuery('#<portlet:namespace />totalEdicion').val('');
-        return false;
-    }
-    var total = Number(importe) * Number(cantidad);
-    jQuery('#<portlet:namespace />totalEdicion').val(total.toFixed(2));
-    return true;
+function calculatotalEdicion(){
+	importe=jQuery("#<portlet:namespace />importeEdicion").val();
+	importe1 = importe.replace(",",".");
+	cantidad=jQuery("#<portlet:namespace />cantidadEdicion").val();
+	total= importe1 * cantidad  ;
+	jQuery("#<portlet:namespace />totalEdicion").val(total.toFixed(2));
 }  	
 
-function calculatotalFCEdicion() {
-    var importe = jQuery('#<portlet:namespace />importeUnitarioFC_edicion').val().replace(',', '.');
-    var cantidad = jQuery('#<portlet:namespace />cantidadFC_edicion').val().replace(',', '.');
-    if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(importe)
-            || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(cantidad)
-            || !isFinite(Number(importe) * Number(cantidad))) {
-        jQuery('#<portlet:namespace />importeFC_edicion').val('');
-        return false;
-    }
-    var total = Number(importe) * Number(cantidad);
-    var redondeado = Math.round(total.toFixed(2) * 100) / 100;
-    if (!isFinite(redondeado)) {
-        jQuery('#<portlet:namespace />importeFC_edicion').val('');
-        return false;
-    }
-    jQuery('#<portlet:namespace />importeFC_edicion').val(redondeado);
-    return true;
+function calculatotalFCEdicion(){
+	importe=jQuery("#<portlet:namespace />importeUnitarioFC_edicion").val();
+	cantidad=jQuery("#<portlet:namespace />cantidadFC_edicion").val();
+	total= importe * cantidad  ;
+	jQuery("#<portlet:namespace />importeFC_edicion").val(Math.round(total.toFixed(2) * 100)/100);
+
 }
 
 function filtrarLetraComprobanteEdicion() {
@@ -498,6 +481,7 @@ function completarConCeros(value, longitud) {
 }
 
 
+<% if (restringirRecuperableCompras) { %>
 jQuery("#<portlet:namespace />fechaPrestacionDiaEdicion").change(function(){
 	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
 });
@@ -509,5 +493,6 @@ jQuery("#<portlet:namespace />fechaPrestacionMesEdicion").change(function(){
 jQuery("#<portlet:namespace />fechaPrestacionAnioEdicion").blur(function(){
     <portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
 });
+<% } %>
 
 </script>	    

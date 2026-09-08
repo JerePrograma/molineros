@@ -1714,28 +1714,6 @@ function <portlet:namespace />cancelarReclamo() {
     formulario.<portlet:namespace />cmd.value = '<%=Constants.CANCEL%>';
     submitForm(formulario, '<portlet:actionURL><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>');
 }
-function <portlet:namespace />numeroReclamo(valor) {
-    var texto = String(valor == null ? '' : valor).replace(/^\s+|\s+$/g, '');
-    if (!/^[+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(texto)) { return null; }
-    var numero = Number(texto.replace(',', '.'));
-    return isFinite(numero) ? numero : null;
-}
-function <portlet:namespace />validarNumerosReclamo(campos) {
-    for (var i = 0; i < campos.length; i++) {
-        var control = jQuery('#<portlet:namespace />' + campos[i]);
-        var texto = String(control.val() || '').replace(/^\s+|\s+$/g, '');
-        if (texto != '') {
-            var numero = <portlet:namespace />numeroReclamo(texto);
-            if (numero === null) {
-                alert('Ingrese un valor numerico valido en ' + campos[i]);
-                control.focus();
-                return false;
-            }
-            control.val(texto.replace(',', '.'));
-        }
-    }
-    return true;
-}
 </script>
 <script type="text/javascript">
 
@@ -3005,18 +2983,18 @@ function <portlet:namespace />agregarRevision() {
 	    
 	   
 	    
-		var params = {"usr_resolucion":resolucion,
-							   "usr_presente":presentes,
-							   "usr_responsable_resolucion":respresolucion,
-							   "fechaRevisionDay":revisionFechaVtoDia,
-							   "fechaRevisionMonth":revisionFechaVtoMes,
-							   "fechaRevisionYear":revisionFechaVtoAnio,
-							   "observacion":reclamoobservacion,
+		var params = {"resolucion":resolucion,
+							   "presentes":presentes,
+							   "respresolucion":respresolucion,
+							   "revisionFechaVtoDia":revisionFechaVtoDia,
+							   "revisionFechaVtoMes":revisionFechaVtoMes,
+							   "revisionFechaVtoAnio":revisionFechaVtoAnio,
+							   "reclamoobservacion":reclamoobservacion,
 							   "observacionMedica":observacionMedica					   
 							   };
 			
 		
-		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" /></portlet:actionURL>';
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" /></portlet:renderURL>';
     url = <portlet:namespace />urlContextoReclamo(url);
 		
 		
@@ -3235,8 +3213,7 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 	//tipoAccion=2 Autorizacion prestacion 
 	//tipoAccion=3 Rechazo de  prestacion	
 		
-	if (!<portlet:namespace />validarNumerosReclamo(['importeEdicion', 'cantidadEdicion', 'totalEdicion', 'cargoospimEdicion', 'cargopsEdicion', 'cargoimesaEdicion', 'reconocidoSSSEdicion', 'cantidadFC_edicion', 'importeUnitarioFC_edicion', 'importeFC_edicion'])) { return false; }
-    var frecuencia= jQuery('#<portlet:namespace />frecuenciaEdicion').val();
+	var frecuencia= jQuery('#<portlet:namespace />frecuenciaEdicion').val();
 	var cantidad =  jQuery('#<portlet:namespace />cantidadEdicion').val();
 	var importe = jQuery('#<portlet:namespace />importeEdicion').val();
 	var cargoospim= jQuery('#<portlet:namespace />cargoospimEdicion').val();
@@ -3565,8 +3542,7 @@ function <portlet:namespace />cancelaEdicionPrestacion() {
 function <portlet:namespace />agregarPrestacion() {	
 	
 	var frecuencia= jQuery('#<portlet:namespace />frecuencia').val();		
-	if (!<portlet:namespace />validarNumerosReclamo(['importe', 'cantidad', 'total', 'cargoospim', 'cargops', 'cargoimesa', 'reconocidoSSS', 'cantidadFC', 'importeUnitarioFC', 'importeFC'])) { return false; }
-    var importe = jQuery('#<portlet:namespace />importe').val();
+	var importe = jQuery('#<portlet:namespace />importe').val();
 	var cantidad  = jQuery('#<portlet:namespace />cantidad').val();
 	var cargoospim= jQuery('#<portlet:namespace />cargoospim').val();
 	var cargops= jQuery('#<portlet:namespace />cargops').val();
@@ -4220,8 +4196,7 @@ function verCrmContacto(idContSerial) {
 	
 
 
-function validaMontosEdicion(){
-    if (!<portlet:namespace />validarNumerosReclamo(['importeEdicion', 'cantidadEdicion', 'totalEdicion', 'cargoospimEdicion', 'cargopsEdicion', 'cargoimesaEdicion', 'reconocidoSSSEdicion', 'cantidadFC_edicion', 'importeUnitarioFC_edicion', 'importeFC_edicion'])) { return false; }
+function validaMontosEdicion(){	
 	
 	/* var strimporte =   jQuery('#<portlet:namespace />totalEdicion').val();
 
@@ -4504,21 +4479,14 @@ function aplicaEstiloBordeRojoDatosObligatorio() {
 
 }
 
-function calculatotal() {
-    var importe = <portlet:namespace />numeroReclamo(jQuery('#<portlet:namespace />importe').val());
-    var cantidad = <portlet:namespace />numeroReclamo(jQuery('#<portlet:namespace />cantidad').val());
-    if (importe === null || cantidad === null) {
-        jQuery('#<portlet:namespace />total').val('');
-        return false;
-    }
-    var total = importe * cantidad;
-    var redondeado = Math.round(total.toFixed(2) * 100) / 100;
-    if (!isFinite(total) || !isFinite(redondeado)) {
-        jQuery('#<portlet:namespace />total').val('');
-        return false;
-    }
-    jQuery('#<portlet:namespace />total').val(redondeado);
-    return true;
+function calculatotal(){
+
+	importe=jQuery("#<portlet:namespace />importe").val();
+	cantidad=jQuery("#<portlet:namespace />cantidad").val()
+	total= importe * cantidad  ;
+	jQuery("#<portlet:namespace />total").val(Math.round(total.toFixed(2) * 100)/100);
+	//jQuery("#<portlet:namespace />total").val(total.toFixed(2));
+
 }
 
 function seleccionaCamposCieDiez(codigo,descripcion ){
@@ -4587,21 +4555,18 @@ function abreAutorizacion(){
 	         'Autorizaciones', 'height=800, menubar=no, resizable=yes,scrollbars=yes, status=no, toolbar=no, width=1200');  
 }
 
-function calculatotalFC() {
-    var importe = <portlet:namespace />numeroReclamo(jQuery('#<portlet:namespace />importeUnitarioFC').val());
-    var cantidad = <portlet:namespace />numeroReclamo(jQuery('#<portlet:namespace />cantidadFC').val());
-    if (importe === null || cantidad === null) {
-        jQuery('#<portlet:namespace />importeFC').val('');
-        return false;
-    }
-    var total = importe * cantidad;
-    var redondeado = Math.round(total.toFixed(2) * 100) / 100;
-    if (!isFinite(total) || !isFinite(redondeado)) {
-        jQuery('#<portlet:namespace />importeFC').val('');
-        return false;
-    }
-    jQuery('#<portlet:namespace />importeFC').val(redondeado);
-    return true;
+function calculatotalFC(){
+
+	importe=jQuery("#<portlet:namespace />importeUnitarioFC").val();
+	cantidad=jQuery("#<portlet:namespace />cantidadFC").val();
+	total= importe * cantidad  ;
+	jQuery("#<portlet:namespace />importeFC").val(Math.round(total.toFixed(2) * 100)/100);
+/*	
+	jQuery("#<portlet:namespace />cantidad").val(cantidad);
+	jQuery("#<portlet:namespace />importe").val(importe);
+	calculatotal();
+	jQuery('#<portlet:namespace />cargoospim').val(Math.round(total.toFixed(2) * 100)/100);
+*/	
 }
 
 
@@ -4918,6 +4883,20 @@ jQuery("#<portlet:namespace />fechaPrestacionMesFarmacia").change(function(){
 jQuery("#<portlet:namespace />fechaPrestacionAnioFarmacia").blur(function(){
     <portlet:namespace />actualizarFechaPrestacionFarmaciaAfiliado();
 });
+
+<% if (!restringirRecuperableCompras) { %>
+jQuery(document).on("change", "#<portlet:namespace />fechaPrestacionDiaEdicion", function(){
+	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+});
+
+jQuery(document).on("change", "#<portlet:namespace />fechaPrestacionMesEdicion", function(){
+	<portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+});
+
+jQuery(document).on("blur", "#<portlet:namespace />fechaPrestacionAnioEdicion", function(){
+    <portlet:namespace />actualizarAfiliadoPorFechaPrestacionEdicion();
+});
+<% } %>
 
 
 

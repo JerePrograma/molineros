@@ -46,6 +46,7 @@ import ar.com.ospim.afiliados.services.PlanServiceUtil;
 import ar.com.ospim.autorizaciones.beans.ItemReclamoPrestacionalesTotal;
 import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacionalCuenta;
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
@@ -692,39 +693,53 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 			}  
 			
 			String ErrorMsg = "";
-            if ((Constants.SAVE.equals(cmd)
-                    || Constants.UPDATE.equals(cmd))
-                    && prestacionesAux != null
-                    && estado != 4) {
-
-                for (PrestacionesReclamo prestacion : prestacionesAux) {
-                    if (PrestacionesReclamo.ESTADOS.BAJA.equals(
-                            prestacion.getEstado()
-                    )) {
-                        continue;
-                    }
-
-                    ErrorMsg =
-                            validarReclamoPrestacionesIncompletas(
-                                    prestacion
-                            );
-
-                    if (!StringUtils.checkEmpty(ErrorMsg)) {
-                        SessionErrors.add(
-                                renderRequest,
-                                "errorPrestacionComprobante"
-                        );
-
-                        renderRequest.setAttribute(
-                                "msgErrorPrestacionComprobante",
-                                ErrorMsg
-                        );
-
-                        validaOk = false;
-                        break;
-                    }
-                }
-            }
+			if ((cmd.equals(Constants.UPDATE) || (cmd.equals(Constants.SAVE) && contextoCompra != null))
+					&& prestacionesAux != null && estado != 4){
+				for( PrestacionesReclamo r : prestacionesAux) {
+					if ((contextoCompra != null && r == null)
+							|| !PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado())) {
+						ErrorMsg = this.validarReclamoPrestacionesIncompletas(r, contextoCompra != null);
+						if (!StringUtils.checkEmpty(ErrorMsg)){
+							SessionErrors.add(renderRequest, "errorPrestacionComprobante");
+							renderRequest.setAttribute("msgErrorPrestacionComprobante",ErrorMsg);
+							validaOk = false;
+							break;
+						}
+					}
+				}
+			}
+			
+		
+			
+			
+			if (estado==3 // si estado reclamo es CERRADO
+					&& prestacionesAux != null
+					&& validaOk 
+					&& reclamoPrestacional.getEstadoResolucionAutorizada().compareTo(ESTADOSEVALUACIONRECLAMO.RECHAZADA)!=0
+					&& reclamoPrestacional.getTipo_gestion_cierre_reclamo() != 5 ){ 
+				for( PrestacionesReclamo r : prestacionesAux) {
+					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado()) 
+							&&  ((r.getCargo_ospim()==0 && r.getCargo_ps()==0 && r.getCargo_imesa()==0 && r.getReconocidoSSS()==0) ||
+								  ( Math.abs((r.getCantidad()*r.getImporte()) -r.getCargo_ospim()-r.getCargo_ps()-r.getCargo_imesa() - 
+										  (r.getRecuperable()==1?0:r.getReconocidoSSS())   )>0.01D  )	
+								)
+							&& !(r.getEstadoRechazoAprobado() == 2) // debería ser rechazado, pero se actualiza recíen en la bd ?
+//							&&  !(reclamoPrestacional.getTipo_gestion_cierre_reclamo() == 2) //RECHAZADO
+							){ 
+						SessionErrors.add(renderRequest, "error-cargos-reclamo");
+						validaOk=false;
+						break;
+					}
+					
+//					//Aborta si tipo comprobante es AUTorizacion
+//					if(!PrestacionesReclamo.ESTADOS.BAJA.equals(r.getEstado())  && "AUT".equalsIgnoreCase(r.getComprobanteTipo())) {
+//						SessionErrors.add(renderRequest, "error-comprobante-invalido");
+//						validaOk=false;
+//						break;
+//					}
+					
+				}	
+			}
 			
 			
 			List<PrestacionesReclamo> prestaciones= (List<PrestacionesReclamo>) session.getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);
@@ -1673,154 +1688,104 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 		 }
 	}
 
-        private String validarReclamoPrestacionesIncompletas(
-                PrestacionesReclamo prestacion) {
+	private String validarReclamoPrestacionesIncompletas(PrestacionesReclamo reclamoPrestacional, boolean esCompra){
+		if (esCompra) {
+			if (reclamoPrestacional == null) {
+				return "La prestacion informada es inexistente.";
+			}
+			if (reclamoPrestacional.getFechaPrestacion() == null) {
+				return "Debe confirmar la fecha de la prestacion antes de grabar.";
+			}
+			if (reclamoPrestacional.getId_prestacion() <= 0 && reclamoPrestacional.getId_medicamento() <= 0) {
+				String codigo = StringUtils.checkEmpty(reclamoPrestacional.getCodigoPrestacion())
+						? "sin codigo" : reclamoPrestacional.getCodigoPrestacion();
+				return "La prestacion " + codigo + " debe editarse y asociarse a una prestacion "
+						+ "o medicamento valido antes de grabar.";
+			}
+			if (reclamoPrestacional.getId_prestacion() > 0 && reclamoPrestacional.getId_medicamento() > 0) {
+				return "La prestacion tiene simultaneamente una prestacion y un medicamento asociados.";
+			}
+		}
+		String outMsg = "";
+		BigDecimal  comprobanteCUIT = new BigDecimal(0);
+		BigDecimal cpbteSucursal = new BigDecimal(0);
+		BigDecimal cpbteNro = new BigDecimal(0);
 
-            if (prestacion == null) {
-                return "La prestacion informada es inexistente.";
-            }
-
-            if (prestacion.getId_prestacion() <= 0
-                    && prestacion.getId_medicamento() <= 0) {
-
-                String codigo =
-                        StringUtils.checkEmpty(
-                                prestacion.getCodigoPrestacion()
-                        )
-                                ? "sin codigo"
-                                : prestacion.getCodigoPrestacion();
-
-                return "La prestacion "
-                        + codigo
-                        + " debe editarse y asociarse a una prestacion "
-                        + "o medicamento valido antes de grabar.";
-            }
-
-            if (prestacion.getId_prestacion() > 0
-                    && prestacion.getId_medicamento() > 0) {
-
-                return "La prestacion tiene simultaneamente una prestacion "
-                        + "y un medicamento asociados.";
-            }
-
-            BigDecimal comprobanteCUIT =
-                    BigDecimal.ZERO;
-
-            BigDecimal comprobanteSucursal =
-                    BigDecimal.ZERO;
-
-            BigDecimal comprobanteNumero =
-                    BigDecimal.ZERO;
-
-            try {
-                if (!StringUtils.checkEmpty(
-                        prestacion.getComprobanteCUIT()
-                )) {
-                    comprobanteCUIT =
-                            new BigDecimal(
-                                    prestacion.getComprobanteCUIT()
-                            );
-                }
-
-                if (!StringUtils.checkEmpty(
-                        prestacion.getComprobanteSucursal()
-                )) {
-                    comprobanteSucursal =
-                            new BigDecimal(
-                                    prestacion.getComprobanteSucursal()
-                            );
-                }
-
-                if (!StringUtils.checkEmpty(
-                        prestacion.getComprobanteNro()
-                )) {
-                    comprobanteNumero =
-                            new BigDecimal(
-                                    prestacion.getComprobanteNro()
-                            );
-                }
-
-            } catch (NumberFormatException e) {
-                return "Los datos numericos del comprobante "
-                        + "poseen un formato invalido.";
-            }
-
-            if (prestacion.getComprobanteFecha() == null) {
-                return "Debe ingresar la fecha del Comprobante";
-            }
-
-            if (StringUtils.checkEmpty(
-                    prestacion.getFrecuencia()
-            )) {
-                return "Debe seleccionar la frecuencia "
-                        + "correspondiente del Comprobante";
-            }
-
-            if (StringUtils.checkEmpty(
-                    prestacion.getComprobanteTipo()
-            )) {
-                return "Debe seleccionar el tipo "
-                        + "correspondiente del Comprobante";
-            }
-
-            boolean comprobanteFlexible =
-                    "OTR".equalsIgnoreCase(
-                            prestacion.getComprobanteTipo()
-                    )
-                            || "AUT".equalsIgnoreCase(
-                            prestacion.getComprobanteTipo()
-                    );
-
-            if (!comprobanteFlexible
-                    && StringUtils.checkEmpty(
-                    prestacion.getComprobanteLetra()
-            )) {
-
-                return "Debe seleccionar la letra del Comprobante";
-            }
-
-            if (!comprobanteFlexible
-                    && StringUtils.checkEmpty(
-                    prestacion.getComprobanteCUITSucursal()
-            )) {
-
-                return "Debe ingresar el CUIT sucursal "
-                        + "del Comprobante";
-            }
-
-            if (!comprobanteFlexible
-                    && comprobanteCUIT.compareTo(
-                    BigDecimal.ZERO
-            ) == 0) {
-
-                return "Debe ingresar el CUIT del Comprobante";
-            }
-
-            if (prestacion.getComprobanteImporte() == null
-                    || prestacion.getComprobanteImporte() <= 0) {
-
-                return "Debe ingresar el importe de la Factura "
-                        + "del Comprobante";
-            }
-
-            if (!comprobanteFlexible
-                    && comprobanteSucursal.compareTo(
-                    BigDecimal.ZERO
-            ) == 0) {
-
-                return "Debe ingresar la Sucursal del Comprobante";
-            }
-
-            if (!comprobanteFlexible
-                    && comprobanteNumero.compareTo(
-                    BigDecimal.ZERO
-            ) == 0) {
-
-                return "Debe ingresar el Nro del Comprobante";
-            }
-
-            return "";
-        }
+		
+		
+		try {
+			if (!esCompra || !StringUtils.checkEmpty(reclamoPrestacional.getComprobanteCUIT())) {
+				comprobanteCUIT = new BigDecimal(reclamoPrestacional.getComprobanteCUIT());
+			}
+			if (!esCompra || !StringUtils.checkEmpty(reclamoPrestacional.getComprobanteSucursal())) {
+				cpbteSucursal  =  new BigDecimal(reclamoPrestacional.getComprobanteSucursal());
+			}
+			if (!esCompra || !StringUtils.checkEmpty(reclamoPrestacional.getComprobanteNro())) {
+				cpbteNro  =  new BigDecimal(reclamoPrestacional.getComprobanteNro());
+			}
+		} catch (Exception e) {
+			if (esCompra && e instanceof NumberFormatException) {
+				return "Los datos numericos del comprobante poseen un formato invalido.";
+			}
+			comprobanteCUIT =  new BigDecimal("0");
+			cpbteSucursal = new BigDecimal(0);
+			cpbteNro =  new BigDecimal(0);
+		}
+		
+		
+		
+		if (reclamoPrestacional.getComprobanteFecha() == null){
+			return "Debe ingresar la fecha del Comprobante";
+		}
+		if (StringUtils.checkEmpty(reclamoPrestacional.getFrecuencia())){
+			return "Debe seleccionar la frecuencia correspondiente del Comprobante";
+		}
+		if (StringUtils.checkEmpty(reclamoPrestacional.getComprobanteTipo())){
+			return "Debe seleccionar el tipo correspondiente del Comprobante";
+		}
+		if (StringUtils.checkEmpty(reclamoPrestacional.getComprobanteLetra()) 
+				&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+			return "Debe seleccionar la letra del Comprobante";
+		}
+		 
+		if ( StringUtils.checkEmpty(reclamoPrestacional.getComprobanteCUITSucursal()) 
+				&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+			return "Debe ingresar el CUIT sucursal del Comprobante";
+		}
+	
+		if ( comprobanteCUIT.compareTo(BigDecimal.ZERO) == 0 
+				&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+			return "Debe ingresar la sucursal del CUIT del Comprobante";
+		}
+		
+		if ((esCompra && reclamoPrestacional.getComprobanteImporte() == null)
+				|| reclamoPrestacional.getComprobanteImporte() <= 0){
+			return "Debe ingresar el importe de la Factura del Comprobante";
+		}
+		
+		if ((esCompra ? cpbteSucursal.compareTo(BigDecimal.ZERO) == 0 : cpbteSucursal == null)
+				&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+			return "Debe ingresar la Sucursal del Comprobante";
+		}
+		
+	    if(cpbteNro.compareTo(BigDecimal.ZERO) == 0 
+	    		&& ((!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("OTR")) &&
+						(!reclamoPrestacional.getComprobanteTipo().equalsIgnoreCase("AUT")))
+		){
+	    	return "Debe ingresar el Nro del Comprobante";
+	    }
+		
+		return outMsg;
+		
+	}
 	
 	
 	private boolean  validarReclamoSeccional(ReclamoPrestacional reclamo, RenderRequest renderRequest){

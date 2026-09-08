@@ -2,340 +2,121 @@ package ar.com.ospim.autorizaciones.action;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import javax.portlet.ActionRequest;
-import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.servlet.http.HttpSession;
 
-import ar.com.ospim.autorizaciones.exceptions.RevisionesReclamosException;
-import com.liferay.portal.kernel.servlet.SessionErrors;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
+import ar.com.ospim.global.beans.Provincia;
+import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
+import ar.com.ospim.prestadores.action.ListaMatriculasAction;
+import ar.com.ospim.prestadores.exception.MatriculaNacionalPrestadorException;
+import ar.com.ospim.prestadores.exception.MatriculaProvincialPrestadorException;
+import ar.com.ospim.liquidaciones.beans.MatriculaPrestador;
 
+import com.liferay.portal.SystemException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
-public class ListaRevisionesAction extends PortletAction {
 
-    public void processAction(
-            ActionMapping mapping,
-            ActionForm form,
-            PortletConfig portletConfig,
-            ActionRequest actionRequest,
-            ActionResponse actionResponse) throws Exception {
+public class ListaRevisionesAction extends PortletAction {	
+	
+	private static Log _log = LogFactoryUtil.getLog(ListaRevisionesAction.class);
 
-        HttpSession session =
-                PortalUtil
-                        .getHttpServletRequest(
-                                actionRequest
-                        )
-                        .getSession();
+	public ActionForward render(ActionMapping mapping, ActionForm form, PortletConfig portletConfig,
+			RenderRequest renderRequest, RenderResponse renderResponse) throws Exception {
+		
+		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
+		synchronized (session) {
+			ReclamosBaseAction.validarContextoEditorCompras(renderRequest);
+		
+		String resolucion = ParamUtil.getString(renderRequest, "resolucion");		
+		String presentes = ParamUtil.getString(renderRequest, "presentes");
+		String respresolucion = ParamUtil.getString(renderRequest, "respresolucion");		
+		
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(System.currentTimeMillis());
+		SimpleDateFormat formatoDePeriodo = new SimpleDateFormat("dd/MM/yyyy");
 
-        try {
-            RevisionesReclamo revision =
-                    construirRevision(
-                            actionRequest
-                    );
+		String revisionFechaVtoDia = ParamUtil.getString(renderRequest,"revisionFechaVtoDia");
+		String revisionFechaVtoMes = ParamUtil.getString(renderRequest,"revisionFechaVtoMes");
+		String revisionFechaVtoAnio = ParamUtil.getString(renderRequest,"revisionFechaVtoAnio");
+		int idObservacionMedica = ParamUtil.getInteger(renderRequest,"observacionMedica",0);
 
-            synchronized (session) {
-                validarContextoComprasSiCorresponde(
-                        session,
-                        actionRequest
-                );
+		
+		Date fechaRevision = null;		
+		
+		/*
+		  boolean superintendencia= ParamUtil.getBoolean(renderRequest,"reclamosuperintendencia");
+		 
+		boolean  recuperable= ParamUtil.getBoolean(renderRequest,"reclamorecuperable");
+		boolean  amparo= ParamUtil.getBoolean(renderRequest,"reclamoamparo");			   		   
+		 */  
+		String observacion=ParamUtil.getString(renderRequest,"reclamoobservacion");
+		
+		
+			try {
+				fechaRevision = formatoDePeriodo.parse(revisionFechaVtoDia + "/"
+						+ (Integer.parseInt(revisionFechaVtoMes) + 1) + "/"
+						+ revisionFechaVtoAnio);
+			} catch (Exception e) {
+				fechaRevision = null;
+			}
+				
+		   
+		
+//		me aseguro sea un numero negativo para no confundir con IDs de BD
+		Random r = new Random(System.currentTimeMillis());
+		int idAux = r.nextInt(); // sale neg o pos, si es pos, lo pasamos con (-1)
+		if(idAux > 0){
+			idAux = (-1)*idAux;
+		}
+		
+		RevisionesReclamo revreclamo = new RevisionesReclamo(fechaRevision ,presentes ,resolucion ,respresolucion , observacion);
+				 
+		
+		revreclamo.setEstado(RevisionesReclamo.ESTADOS.NUEVO); 
+		
+		revreclamo.setId(idAux);
+		
+		_log.debug("Agrega revision : " + revreclamo.toString());
+		
+		
+		@SuppressWarnings("unchecked")
+		List<RevisionesReclamo > revisionesreclamo  = (ArrayList<RevisionesReclamo >) session.getAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION);
 
-                @SuppressWarnings("unchecked")
-                List<RevisionesReclamo> revisiones =
-                        (List<RevisionesReclamo>)
-                                session.getAttribute(
-                                        WebKeysAutorizaciones
-                                                .LISTADO_REVISIONES_RECLAMOS_EN_SESION
-                                );
-
-                if (revisiones == null) {
-                    revisiones =
-                            new ArrayList<RevisionesReclamo>();
-                }
-
-                if (tieneRevisionActiva(
-                        revisiones
-                )) {
-                    throw new RevisionesReclamosException(
-                            "El reclamo ya posee "
-                                    + "una revision activa."
-                    );
-                }
-
-                revision.setId(
-                        obtenerIdTemporal(
-                                revisiones
-                        )
-                );
-
-                revision.setEstado(
-                        RevisionesReclamo.ESTADOS.NUEVO
-                );
-
-                revisiones.add(
-                        revision
-                );
-
-                session.setAttribute(
-                        WebKeysAutorizaciones
-                                .LISTADO_REVISIONES_RECLAMOS_EN_SESION,
-                        revisiones
-                );
-            }
-
-            actionResponse.setRenderParameter(
-                    "revisionOperacionOk",
-                    "1"
-            );
-
-        } catch (RevisionesReclamosException e) {
-            SessionErrors.add(
-                    actionRequest,
-                    e.getClass().getName()
-            );
-
-            actionResponse.setRenderParameter(
-                    "revisionOperacionOk",
-                    "0"
-            );
-        }
-    }
-
-    public ActionForward render(
-            ActionMapping mapping,
-            ActionForm form,
-            PortletConfig portletConfig,
-            RenderRequest renderRequest,
-            RenderResponse renderResponse) throws Exception {
-
-        return mapping.findForward(
-                getForward(
-                        renderRequest,
-                        "portlet.autorizaciones."
-                                + "reclamosprestacionales."
-                                + "revision.reclamo"
-                )
-        );
-    }
-
-    private RevisionesReclamo construirRevision(
-            ActionRequest actionRequest) throws Exception {
-
-        RevisionesReclamo revision =
-                new RevisionesReclamo();
-
-        String dia =
-                ParamUtil.getString(
-                        actionRequest,
-                        "fechaRevisionDay"
-                );
-
-        String mes =
-                ParamUtil.getString(
-                        actionRequest,
-                        "fechaRevisionMonth"
-                );
-
-        String anio =
-                ParamUtil.getString(
-                        actionRequest,
-                        "fechaRevisionYear"
-                );
-
-        if (!esVacio(dia)
-                && !esVacio(mes)
-                && !esVacio(anio)) {
-
-            revision.setFecha_revision(
-                    parsearFecha(
-                            dia,
-                            mes,
-                            anio
-                    )
-            );
-        }
-
-        revision.setUsr_presente(
-                normalizar(
-                        ParamUtil.getString(
-                                actionRequest,
-                                "usr_presente"
-                        )
-                )
-        );
-
-        revision.setUsr_resolucion(
-                normalizar(
-                        ParamUtil.getString(
-                                actionRequest,
-                                "usr_resolucion"
-                        )
-                )
-        );
-
-        revision.setUsr_responsable_resolucion(
-                normalizar(
-                        ParamUtil.getString(
-                                actionRequest,
-                                "usr_responsable_resolucion"
-                        )
-                )
-        );
-
-        revision.setObservacion(
-                normalizar(
-                        ParamUtil.getString(
-                                actionRequest,
-                                "observacion"
-                        )
-                )
-        );
-
-        validarRevision(
-                revision
-        );
-
-        revision.setDescObservacionMedica(ParamUtil.getString(actionRequest, "observacionMedica", ""));
-
-        return revision;
-    }
-
-    private void validarRevision(
-            RevisionesReclamo revision)
-            throws Exception {
-
-        if (revision == null
-                || revision.getFecha_revision() == null
-                || esVacio(
-                revision.getUsr_presente()
-        )
-                || esVacio(
-                revision.getUsr_resolucion()
-        )
-                || esVacio(
-                revision
-                        .getUsr_responsable_resolucion()
-        )) {
-
-            throw new RevisionesReclamosException(
-                    "Debe informar fecha, presentes, resolucion "
-                            + "y responsable de resolucion."
-            );
-        }
-    }
-
-    private boolean tieneRevisionActiva(
-            List<RevisionesReclamo> revisiones) {
-
-        if (revisiones == null) {
-            return false;
-        }
-
-        for (RevisionesReclamo revision : revisiones) {
-            if (revision == null) {
-                continue;
-            }
-
-            if (!RevisionesReclamo.ESTADOS.BAJA.equals(
-                    revision.getEstado()
-            )) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private int obtenerIdTemporal(
-            List<RevisionesReclamo> revisiones) {
-
-        int idTemporal =
-                -1;
-
-        if (revisiones == null) {
-            return idTemporal;
-        }
-
-        for (RevisionesReclamo revision : revisiones) {
-            if (revision != null
-                    && revision.getId() <= idTemporal) {
-
-                idTemporal =
-                        revision.getId() - 1;
-            }
-        }
-
-        return idTemporal;
-    }
-
-    private Date parsearFecha(
-            String dia,
-            String mes,
-            String anio) throws Exception {
-
-        SimpleDateFormat formato =
-                new SimpleDateFormat(
-                        "dd/MM/yyyy"
-                );
-
-        formato.setLenient(
-                false
-        );
-
-        return formato.parse(
-                dia
-                        + "/"
-                        + (Integer.parseInt(mes) + 1)
-                        + "/"
-                        + anio
-        );
-    }
-
-    private String normalizar(
-            String valor) {
-
-        if (valor == null) {
-            return null;
-        }
-
-        valor =
-                valor.trim();
-
-        return valor.length() == 0
-                ? null
-                : valor;
-    }
-
-    private boolean esVacio(
-            String valor) {
-
-        return valor == null
-                || valor.trim().length() == 0;
-    }
-
-    private void validarContextoComprasSiCorresponde(
-            HttpSession session,
-            ActionRequest actionRequest)
-            throws RevisionesReclamosException {
-
-        try {
-            ReclamosBaseAction.validarContextoEditorCompras(actionRequest);
-        } catch (Exception e) {
-            throw new RevisionesReclamosException(e.getMessage(), e);
-        }
-    }
+		session.removeAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION);
+		
+		if(revisionesreclamo   == null){
+			revisionesreclamo  = new ArrayList<RevisionesReclamo>();
+		}				
+		
+		revisionesreclamo.add(revreclamo);		
+		
+		//pongo la lista en session		
+		session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION, revisionesreclamo );	
+		
+//		return mapping.findForward("portlet.liquidaciones.matricula.prestador");
+		renderRequest.setAttribute("revisionOperacionOk", "1");
+		return mapping.findForward(getForward(renderRequest,
+				"portlet.autorizaciones.reclamosprestacionales.revision.reclamo"));
+		}
+	}
+	
+			
 }

@@ -600,22 +600,6 @@ if (tercerizadoras == null) {
         return jQuery.trim(value).toUpperCase();
     }
 
-    function <portlet:namespace />hayAfiliadoSeleccionado() {
-        var cuil = jQuery.trim(
-                jQuery(
-                        '#<portlet:namespace />cuil'
-                ).val()
-        );
-
-        var inte = jQuery.trim(
-                jQuery(
-                        '#<portlet:namespace />inte'
-                ).val()
-        );
-
-        return cuil != '' || inte != '';
-    }
-
     function <portlet:namespace />sincronizarTercerizadoraFiltro() {
         var idTercerizadora =
                 <portlet:namespace />normalizarTercerizadora(
@@ -633,16 +617,6 @@ if (tercerizadoras == null) {
         ).val(idTercerizadora);
 
         return idTercerizadora;
-    }
-
-    function <portlet:namespace />bloquearTercerizadoraPorAfiliado(
-            idTercerizadora) {
-
-        jQuery(
-                '#<portlet:namespace />id_tercerizadora_combo'
-        ).removeAttr('disabled');
-
-        return <portlet:namespace />sincronizarTercerizadoraFiltro();
     }
 
     function <portlet:namespace />desbloquearTercerizadoraFiltro(
@@ -949,10 +923,6 @@ if (tercerizadoras == null) {
         <portlet:namespace />sincronizarTercerizadoraFiltro();
 
         return false;
-    }
-
-    function <portlet:namespace />limpiarAfiliadoFiltro() {
-        return <portlet:namespace />limpiarTodosCamposFiltro();
     }
 
     function <portlet:namespace />validarFiltroBusqueda() {

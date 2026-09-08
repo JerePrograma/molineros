@@ -16,6 +16,7 @@ import java.util.Map;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.global.beans.Banco;
 import ar.com.ospim.global.beans.Cheque;
+import ar.com.ospim.global.beans.Concepto;
 import ar.com.ospim.global.beans.Efectivo;
 import ar.com.ospim.global.beans.ItemSubdiarioEgreso;
 import ar.com.ospim.global.beans.PlanCuentas;
@@ -676,6 +677,11 @@ public class MovimientoBancarioServiceImpl {
 				tipo.setId_tipo_mov(rs.getInt("TIPO__id_tipo_mov"));
 				mov.setNroChequeRechazado(rs
 						.getBigDecimal("nro_cheque_rechazado"));
+				
+				try {
+					Concepto c = new Concepto(rs.getInt("concepto_id"),rs.getString("concepto_descripcion"));
+					tipo.setConcepto(c);
+				}catch(Exception e1) {}
 
 				mov.setTipo_mov(tipo);
 

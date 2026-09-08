@@ -257,7 +257,7 @@ public class ImportarCartillaSOPServiceImpl {
             valor = normalizarTexto(valor);
 
             if (!COLUMNAS_ESPERADAS[columna].equals(valor)) {
-
+            	
                 throw new IllegalArgumentException(
                     "Formato incorrecto en la solapa " +
                     nombreSolapa +

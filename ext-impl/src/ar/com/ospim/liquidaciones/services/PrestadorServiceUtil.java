@@ -72,7 +72,7 @@ public class PrestadorServiceUtil {
 		getInstance().actualizar(prestador, user.getScreenName());
 	}
 
-	public static int actualizarSolicitarCotizacionPrestador(int idPrestador, boolean solicitarCotizacion, User user)
+	public static int actualizarSolicitarCotizacionPrestador(int idPrestador, boolean solicitarCotizacion, User user) 
 			throws Exception {
 
 	    return getInstance().actualizarSolicitarCotizacionPrestador(
@@ -82,8 +82,8 @@ public class PrestadorServiceUtil {
 	    );
 	}
 	
-	public static void actualizarRubrosPrestador(int idPrestador, List<String> rubros, User user)
-			throws Exception {
+	public static void actualizarRubrosPrestador(int idPrestador, List<String> rubros, User user) 
+	        		throws Exception {
 
 	    getInstance().actualizarRubrosPrestador(
 	            idPrestador,

@@ -927,24 +927,6 @@ Efectos secundarios:
         return false;
     }
 
-    function <portlet:namespace />seleccionarMedicamentoDetalle(
-            idMedicamento,
-            troquel,
-            nombreCompleto,
-            presentacion) {
-
-        jQuery('#<portlet:namespace />detalle_id_medicamento').val(idMedicamento);
-        jQuery('#<portlet:namespace />detalle_nombre_medicamento').val(nombreCompleto);
-        jQuery('#<portlet:namespace />detalle_presentacion_medicamento').val(
-                presentacion == null ? '' : presentacion
-        );
-        jQuery('#<portlet:namespace />id_medicamento').val(idMedicamento);
-        jQuery('#<portlet:namespace />troquel').val(troquel);
-        jQuery('#<portlet:namespace />nombre_medicamento').val(nombreCompleto);
-        jQuery('#<portlet:namespace />med_seleccionado').val('1');
-        jQuery('#<portlet:namespace />divBtnBuscaMedicamento').hide();
-    }
-
     function <portlet:namespace />seleccionarNomencladorDetalle(
             idPrestacion,
             idTipoNomenclador,

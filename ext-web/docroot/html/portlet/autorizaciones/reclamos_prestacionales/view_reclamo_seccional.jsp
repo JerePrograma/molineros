@@ -312,7 +312,7 @@ span-fixed-size {
 										<option value="DISCAPACIDAD"
 										    <%=Validator.isNotNull(reclamoprestacional) && "DISCAPACIDAD".equals(reclamoprestacional.getSector()) ? "selected" : ""  %>>DISCAPACIDAD</option>
 										<option value="PRESTACIONES MEDICAS"
-										    <%=Validator.isNotNull(reclamoprestacional) && "PRESTACIONES MEDICAS".equals(reclamoprestacional.getSector()) ? "selected" : ""  %>>PRESTACIONES MEDICAS</option>
+										    <%=Validator.isNotNull(reclamoprestacional) && "PRESTACIONES MEDICAS".equals(reclamoprestacional.getSector()) ? "selected" : ""  %>>PRESTACIONES MÉDICAS</option>
 										<option value="FARMACIA"
 										    <%=Validator.isNotNull(reclamoprestacional) && "FARMACIA".equals(reclamoprestacional.getSector()) ? "selected" : ""  %>>FARMACIA</option>
 										<option value="ODONTOLOGIA"
@@ -1250,11 +1250,11 @@ function DatosRevisionOk(){
 	 
 	  
 	if (dia || mes || anio){
-	   alert("Debe ingresar la fecha de Revisión");
+	   alert("Debe ingresar la fecha de Revisi\u00F3n");
 		return false ;
 	}
 	if (dia || mes || anio ||  jQuery('#<portlet:namespace />resolucion').val()=='' ){
-		   alert("Debe ingresar la resolución");
+		   alert("Debe ingresar la resoluci\u00F3n");
 			return false ;
 		}
 		
@@ -1608,24 +1608,19 @@ function <portlet:namespace />agregarRevision() {
 	    	jQuery('#<portlet:namespace />auditoriaadministrativa').val('Ok');
 	    }
 	    
-		var params = {
-            "resolucion": resolucion,
-            "presentes": presentes,
-            "respresolucion": respresolucion,
-            "revisionFechaVtoDia": revisionFechaVtoDia,
-            "revisionFechaVtoMes": revisionFechaVtoMes,
-            "revisionFechaVtoAnio": revisionFechaVtoAnio,
-            "reclamoobservacion": reclamoobservacion,
-            "observacionMedica": observacionMedica,
-            "<%= WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE %>":
-                "<%= handoffReclamoComprasValido
-                        ? contextoReclamoCompras.getNonce()
-                        : "" %>"
-        };
+		var params = {"resolucion":resolucion,
+							   "presentes":presentes,
+							   "respresolucion":respresolucion,
+							   "revisionFechaVtoDia":revisionFechaVtoDia,
+							   "revisionFechaVtoMes":revisionFechaVtoMes,
+							   "revisionFechaVtoAnio":revisionFechaVtoAnio,						   
+							   "reclamoobservacion":reclamoobservacion
+							   						   
+							   };
 			
 		
-		var url =
-            '<portlet:actionURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" /></portlet:actionURL>';
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/lista_revisiones_reclamo" /></portlet:renderURL>';
+		
 		
 		if (resolucion.toUpperCase()!="AUTORIZADO"){
 			if(confirm("Confirma el Cierre del Caso con el Rechazo en la revision ?")){
@@ -1769,15 +1764,8 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 
 	var codigoSeguimiento_filtro_edit = jQuery('#<portlet:namespace />codigoSeguimiento_filtro_edit').val();
 	var descripcionSeguimiento_filtro_edit = jQuery("#<portlet:namespace />descripcionSeguimiento_filtro_edit").val();
-	var nom_seleccionado_edit =
-        jQuery(
-            "#<%= reclamoPortletNamespace %>nom_seleccionado_edit"
-        ).val();
-
-    var tipoNomenclador_edit =
-        jQuery(
-            "#<%= reclamoPortletNamespace %>tipoNomenclador_edit"
-        ).val();
+	var nom_seleccionado_edit = jQuery("#<portlet:namespace />nom_seleccionado").val(); 
+	var tipoNomenclador_edit = jQuery('#<portlet:namespace />tipoNomenclador').val();
    
 	
 	

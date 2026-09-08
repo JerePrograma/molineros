@@ -52,7 +52,7 @@ public class ReclamoPrestacionalEmailSeccional {
 			sector = "Farmacia";
 		}else if ("PRESTACIONES MEDICAS".equals(reclamoPrestacional.getSector())){
 			to=TraeListasServiceUtil.getSystemConfig("AVISO_SECCIONAL_EMAIL_PRESTACIONES_MEDICAS");
-			sector = "Prestaciones Medica";
+			sector = "Prestaciones Médicas";
 		}else if("DISCAPACIDAD".equals(reclamoPrestacional.getSector())){
 			to=TraeListasServiceUtil.getSystemConfig("AVISO_SECCIONAL_EMAIL_DISCAPACIDAD");
 			sector = "Discapacidad";

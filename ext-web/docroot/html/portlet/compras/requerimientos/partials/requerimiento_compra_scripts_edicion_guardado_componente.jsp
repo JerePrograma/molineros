@@ -497,10 +497,6 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         panel.show();
     }
 
-    function <portlet:namespace />cargarDatosAfiliadoInicial() {
-        return false;
-    }
-
     function <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste() {
         if (typeof <portlet:namespace />limpiarCamposAfiliado == 'function') {
             <portlet:namespace />limpiarCamposAfiliado();

@@ -6,15 +6,15 @@
 <%@ page import="ar.com.ospim.prestadores.services.ImportarCartillaSOPServiceUtil" %>
 <%
 
-	List<Object[]> importaciones =
-		(List<Object[]>) request.getAttribute("importacionesCartillaSOP");
+List<Object[]> importaciones = Collections.emptyList();
 
-	if (importaciones == null) {
-		try {
-			importaciones = ImportarCartillaSOPServiceUtil.getImportacionesCartillaSOP();
-		} catch (Exception e) {
-			importaciones = Collections.emptyList();
-		}
+	try {
+
+	importaciones = ImportarCartillaSOPServiceUtil.getImportacionesCartillaSOP();
+
+	} catch (Exception e) {
+
+	importaciones = Collections.emptyList();
 	}
 
 	SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
@@ -65,7 +65,7 @@
                                     accept=".xlsx"/>
                             </td>
                             <td>
-                                <a href="javascript:void(0)" onclick="help(event, 'helpCartillaSOP')">
+                                <a href="javascript:void(0)" onclick="help(event, 'helpCartillaSOP')">								
 								    <img
 								        style="height: 16px; width: 16px"
 								        src="/html/images/help.png"
@@ -101,53 +101,53 @@
 				                </label>
 				            </td>
 				        </tr>
-
+				
 				        <tr>
 				            <td>&nbsp;</td>
 				        </tr>
-
+				
 				        <% if (importaciones.isEmpty()) { %>
-
+				
 				            <tr>
 				                <td>
 				                    No hay archivos subidos.
 				                </td>
 				            </tr>
-
+				
 				        <% } else { %>
-
+				
 				            <tr>
 				                <td>
 				                    Mostrando <%= importaciones.size() %> resultados.
 				                </td>
 				            </tr>
-
+				
 				            <tr>
 				                <td>&nbsp;</td>
 				            </tr>
-
+				
 				            <tr>
 				                <td>
-
+				
 				                    <table class="cartilla-sop-tabla">
-
+				
 				                        <thead>
 				                            <tr>
 				                                <th>
 				                                    Fecha Importación
 				                                </th>
-
+				
 				                                <th>
 				                                    Cantidad de registros
 				                                </th>
 				                            </tr>
 				                        </thead>
-
+				
 				                        <tbody>
-
+				
 				                            <%
 				                                int numeroFila = 0;
-
+				
 				                                for (
 				                                    Object[] importacion :
 				                                    importaciones
@@ -156,62 +156,62 @@
 				                                        numeroFila % 2 == 0
 				                                            ? "cartilla-sop-fila-par"
 				                                            : "cartilla-sop-fila-impar";
-
+				
 				                                    java.sql.Timestamp fechaImportacion =
 				                                        (java.sql.Timestamp)
 				                                            importacion[1];
-
+				
 				                                    Integer cantidadRegistros =
 				                                        (Integer)
 				                                            importacion[2];
 				                            %>
-
+				
 				                                <tr class="<%= claseFila %>">
-
+				
 				                                    <td>
 				                                        <%
 				                                            if (
 				                                                fechaImportacion != null
 				                                            ) {
 				                                        %>
-
+				
 				                                            <%= formatoFecha.format(
 				                                                fechaImportacion
 				                                            ) %>
-
+				
 				                                        <%
 				                                            } else {
 				                                        %>
-
+				
 				                                            -
-
+				
 				                                        <%
 				                                            }
 				                                        %>
 				                                    </td>
-
+				
 				                                    <td>
 				                                        <%= cantidadRegistros %>
 				                                    </td>
-
+				
 				                                </tr>
-
+				
 				                            <%
 				                                    numeroFila++;
 				                                }
 				                            %>
-
+				
 				                        </tbody>
-
+				
 				                    </table>
-
+				
 				                </td>
 				            </tr>
-
+				
 				        <% } %>
-
+				
 				    </table>
-
+				
 				</td>
 
             </tr>
@@ -230,27 +230,27 @@
     El diseño del archivo Cartilla SOP es:
 
 	<br/><br/>
-
+	
 	1. nombre<br/>
 	2. direccion<br/>
 	3. telefono<br/>
 	4. localidad<br/>
 	5. provincia
-
+	
 	<hr/>
-
+	
 	El archivo informado debe llamarse
 	<b>cartilla_sop.xlsx</b>.
-
+	
 	<hr/>
-
+	
 	El sistema valida que:
-
+	
 	<ul>
 	    <li>
 	        El nombre del archivo cumpla con el formato requerido.
 	    </li>
-
+	
 	    <li>
 	        El archivo incluya la primera fila con los nombres de
 	        las columnas (encabezado).

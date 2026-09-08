@@ -54,7 +54,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 	
 	private static final String SESSION_SOLICITAR_COTIZACION =
 	        "SOLICITAR_COTIZACION_PRESTADOR";
-
+	
 	public void processAction(ActionMapping mapping, ActionForm form,
 			PortletConfig portletConfig, ActionRequest actionRequest,
 			ActionResponse actionResponse) throws Exception {
@@ -71,11 +71,11 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		        user,
 		        WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR
 		    );
-
+		
 		if (cmd.equals(Constants.MOVE) && esDatosTab){  // cambio a solapa Lugar Atencion.
 			
 			Prestador prestadorAnterior = (Prestador) session.getAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION);
-
+			 
 			Prestador prestador = null;
 			// Datos del Prestador (solapa datos) 
 			prestador = getPrestadorFromRequest(PortalUtil.getHttpServletRequest(actionRequest), prestador);
@@ -90,47 +90,47 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		        prestador.setBaja_usr(prestadorAnterior.getBaja_usr());
 		        prestador.setBaja_fecha(prestadorAnterior.getBaja_fecha());
 		    }
-
+		    
 			// NUEVO
-		    if (puedeSolicitarCotizacion) {
-
+		    if (puedeSolicitarCotizacion) {	
+			    	
 		        boolean solicitarCotizacion = ParamUtil.getBoolean(actionRequest, "solicitar_cotizacion");
 		        session.setAttribute(SESSION_SOLICITAR_COTIZACION, solicitarCotizacion);
-
+		        
 		        List<String> rubros = new ArrayList<String>();
-
+	
 		        if (solicitarCotizacion) {
+	
+		        	if (ParamUtil.getBoolean(actionRequest, "prov_insumos")) {
+		        	    rubros.add("INSUMOS");
+		        	}
 
-			if (ParamUtil.getBoolean(actionRequest, "prov_insumos")) {
-			    rubros.add("INSUMOS");
-			}
+		        	if (ParamUtil.getBoolean(actionRequest, "prov_leches")) {
+		        	    rubros.add("ALIMENTACION");
+		        	}
 
-			if (ParamUtil.getBoolean(actionRequest, "prov_leches")) {
-			    rubros.add("ALIMENTACION");
-			}
+		        	if (ParamUtil.getBoolean(actionRequest, "prov_paniales")) {
+		        	    rubros.add("PAÑALES");
+		        	}
 
-			if (ParamUtil.getBoolean(actionRequest, "prov_paniales")) {
-			    rubros.add("PAÑALES");
-			}
+		        	if (ParamUtil.getBoolean(actionRequest, "prov_medicamentos")) {
+		        	    rubros.add("MEDICAMENTOS");
+		        	}
 
-			if (ParamUtil.getBoolean(actionRequest, "prov_medicamentos")) {
-			    rubros.add("MEDICAMENTOS");
-			}
+		        	if (ParamUtil.getBoolean(actionRequest, "protesis_cardiologia")) {
+		        	    rubros.add("PROTESIS_CARDIOLOGIA");
+		        	}
 
-			if (ParamUtil.getBoolean(actionRequest, "protesis_cardiologia")) {
-			    rubros.add("PROTESIS_CARDIOLOGIA");
-			}
+		        	if (ParamUtil.getBoolean(actionRequest, "protesis_general")) {
+		        	    rubros.add("PROTESIS_GENERAL");
+		        	}
 
-			if (ParamUtil.getBoolean(actionRequest, "protesis_general")) {
-			    rubros.add("PROTESIS_GENERAL");
-			}
-
-			if (ParamUtil.getBoolean(actionRequest, "protesis_traumatologia")) {
-			    rubros.add("PROTESIS_TRAUMATOLOGIA");
-			}
+		        	if (ParamUtil.getBoolean(actionRequest, "protesis_traumatologia")) {
+		        	    rubros.add("PROTESIS_TRAUMATOLOGIA");
+		        	}
 		        }
-		        session.setAttribute("RUBROS_PRESTADOR", rubros);
-			 }
+		        session.setAttribute("RUBROS_PRESTADOR", rubros);	        		
+			 }		   
 			    session.setAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION, prestador);
 		}
 	}
@@ -143,13 +143,13 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		
 		String cmd = ParamUtil.getString(renderRequest, Constants.CMD);
 		User user = PortalUtil.getUser(renderRequest);
-
+		
 		boolean puedeSolicitarCotizacion =
 			    PermissionUtil.userContainsRole(
 			        user,
 			        WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR
 			    );
-
+		
 		boolean validaOk = true;
 		String tabSel = ParamUtil.get(renderRequest, "tab_seleccionada", "datos");
 		int idPrestador = 0;
@@ -218,7 +218,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 				List<PrestadorPlan> planes =  (List<PrestadorPlan>) session.getAttribute(WebKeysLiquidaciones.PLANES_PRESTADOR_EN_SESSION);
 				
 				Boolean solicitarCotizacion = (Boolean) session.getAttribute(SESSION_SOLICITAR_COTIZACION);
-
+				
 //				List<Telefono> telefonos = (List<Telefono>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION);
 				List<ContactoElectronico> contactElec = (List<ContactoElectronico>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_CONTACTOES_EN_SESSION);
 				
@@ -275,21 +275,21 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 				}else if(lugares.size()>0) {
 					Integer qCorreosValidos=0;
 					Integer qCorreosElectronicos = 0;
-
+															
 					for(PrestadorLugarAtencion la:lugares) {
 						if(la.getContactosElectronicos()!=null) {
 						  if(!inexistenteMailFacturacion(la.getContactosElectronicos())) {
 							qCorreosValidos++;
 						  }	
-
-							// Solo buscamos EMAIL si solicita cotización
+						  
+						  	// Solo buscamos EMAIL si solicita cotización
 				            if(Boolean.TRUE.equals(solicitarCotizacion)) {
 				                if(!inexistenteMailElectronico(la.getContactosElectronicos())) {
 				                    qCorreosElectronicos++;
 				                }
 				            }
 						}
-
+						
 				        if(qCorreosValidos > 0 && (!Boolean.TRUE.equals(solicitarCotizacion) || qCorreosElectronicos > 0)) {
 				            break;
 				        }
@@ -300,7 +300,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 						validaOk = false;
 						tabSel = "lugar_atencion";
 					}
-
+					
 					if (puedeSolicitarCotizacion && Boolean.TRUE.equals(solicitarCotizacion) && qCorreosElectronicos == 0) {
 					    SessionErrors.add(renderRequest, "error-prestador-contacto-email");
 					    validaOk = false;
@@ -333,7 +333,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 					
 					idPrestador = PrestadorServiceUtil.insertar(prestador, user);
 
-					if (puedeSolicitarCotizacion) {
+					if (puedeSolicitarCotizacion) {										
 						if (solicitarCotizacion != null) {
 						    PrestadorServiceUtil.actualizarSolicitarCotizacionPrestador(
 						            idPrestador,
@@ -341,10 +341,10 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 						            user
 						    );
 						}
-
+						
 						List<String> rubros =
 						        (List<String>) session.getAttribute("RUBROS_PRESTADOR");
-
+	
 						if (rubros != null) {
 						    PrestadorServiceUtil.actualizarRubrosPrestador(
 						            idPrestador,
@@ -353,7 +353,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 						    );
 						}
 					}
-
+						
 					prestador = PrestadorServiceUtil.getPrestador(idPrestador);
 					
 					session.removeAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION);
@@ -430,7 +430,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 				List<PrestadorLugarAtencion> lugares = (List<PrestadorLugarAtencion>) session.getAttribute(WebKeysLiquidaciones.LUGARES_ATENCION_PRESTADOR_EN_SESSION);
 				List<PrestadorPlan> planes =  (List<PrestadorPlan>) session.getAttribute(WebKeysLiquidaciones.PLANES_PRESTADOR_EN_SESSION);
 //				List<Telefono> telefonos = (List<Telefono>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION);
-				List<ContactoElectronico> contactElec = (List<ContactoElectronico>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_CONTACTOES_EN_SESSION);
+				List<ContactoElectronico> contactElec = (List<ContactoElectronico>) session.getAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_CONTACTOES_EN_SESSION);				
 				
 				Boolean solicitarCotizacion = (Boolean) session.getAttribute(SESSION_SOLICITAR_COTIZACION);
 
@@ -473,13 +473,13 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 				}else if(lugares.size()>0) {
 					Integer qCorreosValidos=0;
 					Integer qCorreosElectronicos = 0;
-
+										
 					for(PrestadorLugarAtencion la:lugares) {
 						if(la.getContactosElectronicos()!=null) {
 						  if(!inexistenteMailFacturacion(la.getContactosElectronicos())) {
 							qCorreosValidos++;
 						  }
-
+						  
 						// Solo buscamos EMAIL si solicita cotización
 				            if(Boolean.TRUE.equals(solicitarCotizacion)) {
 				                if(!inexistenteMailElectronico(la.getContactosElectronicos())) {
@@ -487,7 +487,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 				                }
 				            }
 						}
-
+						
 						if(qCorreosValidos > 0 &&  (!Boolean.TRUE.equals(solicitarCotizacion) || qCorreosElectronicos > 0)) {
 				            break;
 				        }
@@ -498,7 +498,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 						validaOk = false;
 						tabSel = "lugar_atencion";
 					}
-
+					
 					if(puedeSolicitarCotizacion && Boolean.TRUE.equals(solicitarCotizacion) && qCorreosElectronicos == 0) {
 
 				        SessionErrors.add(renderRequest,"error-prestador-contacto-email");
@@ -530,19 +530,19 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 					
 					PrestadorServiceUtil.update(prestador, user);
 
-					if (puedeSolicitarCotizacion) {
+					if (puedeSolicitarCotizacion) {					
 					
 						if (solicitarCotizacion != null) {
 						    PrestadorServiceUtil.actualizarSolicitarCotizacionPrestador(
-								prestador.getId_prestador(),
+						    		prestador.getId_prestador(),
 						            solicitarCotizacion.booleanValue(),
 						            user
 						    );
 						}
-
+						
 						List<String> rubros =
 						        (List<String>) session.getAttribute("RUBROS_PRESTADOR");
-
+	
 						if (rubros != null) {
 						    PrestadorServiceUtil.actualizarRubrosPrestador(
 						            prestador.getId_prestador(),
@@ -550,7 +550,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 						            user
 						    );
 						}
-					}
+					}	
 					prestador = PrestadorServiceUtil.getPrestador(prestador.getId_prestador());
 					
 					session.removeAttribute(WebKeysLiquidaciones.LUGAR_ATENCION_TELEFONOS_EN_SESSION);
@@ -749,18 +749,18 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 	
      private boolean inexistenteMailElectronico(List<ContactoElectronicoPrestador> ce) {
 
-	    boolean result = true;
+    	    boolean result = true;
 
-	    for (Iterator<ContactoElectronicoPrestador> iterator = ce.iterator(); iterator.hasNext();) {
+    	    for (Iterator<ContactoElectronicoPrestador> iterator = ce.iterator(); iterator.hasNext();) {
 
-	        ContactoElectronico c = iterator.next();
+    	        ContactoElectronico c = iterator.next();
 
-	        if (c.getTipo().getId().equals(ContactoElectronico.Tipo.EMAIL.getId())) {
-	            result = false;
-	            break;
-	        }
-	    }
+    	        if (c.getTipo().getId().equals(ContactoElectronico.Tipo.EMAIL.getId())) {
+    	            result = false;
+    	            break;
+    	        }
+    	    }
 
-	    return result;
-	}
+    	    return result;
+    	}
 }

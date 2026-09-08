@@ -267,6 +267,358 @@ public class ReclamoPrestacionServiceImpl {
 		return listaReclamosTotales  ;
 	}
 
+
+
+	public int insertar(ReclamoPrestacional reclamoPrestacional, User user) throws SystemException {
+		Connection con = null;
+		try {
+			con = ConnectionHelper.getConnectionForTransaction();
+			int idReclamo = insertarInterno(con, reclamoPrestacional, user);
+			con.commit();
+			return idReclamo;
+		} catch (Exception e) {
+			if (con != null) {
+				ConnectionHelper.rollback(con);
+			}
+			if (e instanceof SystemException) {
+				throw (SystemException) e;
+			}
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(con);
+		}
+	}
+
+	public int insertar(Connection con, ReclamoPrestacional reclamoPrestacional, User user) throws SystemException {
+		return insertarInterno(con, reclamoPrestacional, user);
+	}
+
+	private int insertarInterno(Connection con, ReclamoPrestacional reclamoPrestacional, User user) throws SystemException {
+			if (con == null) {
+				throw new SystemException("No se informo la conexion transaccional.");
+			}
+
+			CallableStatement stmt = null, stmt2 = null, stmt3 = null, stmt4 = null, stmt5 = null, stmt6 = null ;
+
+			String screenName = user.getScreenName();
+			int idReclamo=0;
+
+			String sql  = "{call autorizaciones.inserta_reclamoprestacional(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql2 = "{call autorizaciones.inserta_reclamo_estado(?,?,?)}";
+			String sql3 ="{call autorizaciones.inserta_reclamo_prestaciones(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql4 ="{call autorizaciones.inserta_reclamo_revisiones (?,?,?,?,?,?,?)}";
+			String sql5 ="{call autorizaciones.inserta_reclamo_cierre (?,?,?,?,?,?,?,?,?, ?,?)}";
+			String sql6 ="{call autorizaciones.inserta_reclamo_contacto  (?,?,?)}";
+
+			try {
+
+
+	//			*** RECLAMO PRESTACIONAL***
+				stmt = con.prepareCall(sql.toString());
+				stmt.registerOutParameter(1, Types.INTEGER);
+
+				if (null != reclamoPrestacional.getOspim_fecha()) {
+					stmt.setDate(1, new java.sql.Date(reclamoPrestacional.getOspim_fecha().getTime()));
+				} else {
+					stmt.setNull(1, Types.DATE);
+				}
+
+				if (null != reclamoPrestacional.getSeccional_fecha()) {
+					stmt.setDate(2, new java.sql.Date(reclamoPrestacional.getSeccional_fecha().getTime()));
+				} else {
+					stmt.setNull(2, Types.DATE);
+				}
+				stmt.setString(3, reclamoPrestacional.getSector());
+				stmt.setString(4, reclamoPrestacional.getCuit_titular() );
+				stmt.setInt(5, reclamoPrestacional.getInte());
+				stmt.setString(6, screenName);
+				stmt.setBoolean(7,reclamoPrestacional.isAmparo()  );
+				stmt.setBoolean(8, reclamoPrestacional.isEntramite() );
+				stmt.setBoolean(9, reclamoPrestacional.isRecuperable() );
+				stmt.setBoolean(10, reclamoPrestacional.isSuperintendencia() );
+				stmt.setInt(11, reclamoPrestacional.getCaso_vinculado()  );
+				stmt.setString(12, reclamoPrestacional.getJustificaconMedica()   );
+				stmt.setString(13, reclamoPrestacional.getDictamenComision()  );
+				stmt.setString(14, reclamoPrestacional.getDiagnosticoAfiliado()  );
+				stmt.setString(15, reclamoPrestacional.getCodigoCie10()  );
+				stmt.setString(16, reclamoPrestacional.getTipoPedido()   );
+
+				if (null != reclamoPrestacional.getNroLote() && reclamoPrestacional.getNroLote()>0  ) {
+					stmt.setInt(17, reclamoPrestacional.getNroLote());
+				} else {
+					stmt.setNull(17, Types.INTEGER);
+				}
+
+
+				if(reclamoPrestacional.getIdSeccional()!=null) {
+				   stmt.setInt(18, reclamoPrestacional.getIdSeccional());
+				} else {
+					stmt.setNull(18, Types.INTEGER);
+				}
+
+				if(reclamoPrestacional.getCodigoIntegracion()!=0) {
+					   stmt.setInt(19, reclamoPrestacional.getCodigoIntegracion());
+				} else {
+						stmt.setNull(19, Types.INTEGER);
+				}
+
+
+				idReclamo = stmt.executeUpdate();
+				if(stmt.getInt(1) > 0){
+					idReclamo =stmt.getInt(1);
+				}
+	//			*** GRABAR REGISTRO DE ESTADO SI ES DISTINTO AL PREEXISTENTE***
+				stmt2 = con.prepareCall(sql2.toString());
+				if(reclamoPrestacional.getEstado()>=0 ){
+					    stmt2.setInt(1, idReclamo   );
+						stmt2.setInt(2, reclamoPrestacional.getEstado());
+						stmt2.setString(3, screenName);
+						stmt2.executeUpdate();
+				}
+	//			*** GRABAR REGISTRO DE PRESTACIONES ***
+				stmt3 = con.prepareCall(sql3.toString());
+
+				if(reclamoPrestacional.getPrestaciones()!=null && reclamoPrestacional.getPrestaciones().size() > 0){
+					for (PrestacionesReclamo prestrecla  : reclamoPrestacional.getPrestaciones() ) {
+						stmt3 = con.prepareCall(sql3.toString());
+						stmt3.setInt(1, idReclamo);
+
+						if (prestrecla.getId_medicamento() > 0) {
+							stmt3.setInt(2, prestrecla.getId_medicamento());
+							stmt3.setNull(3, Types.INTEGER);
+						} else if (prestrecla.getId_prestacion() > 0) {
+							stmt3.setNull(2, Types.INTEGER);
+							stmt3.setInt(3, prestrecla.getId_prestacion());
+						} else {
+							stmt3.setNull(2, Types.INTEGER);
+							stmt3.setNull(3, Types.INTEGER);
+						}
+
+						stmt3.setDouble(4, prestrecla.getImporte() );
+						stmt3.setString(5, prestrecla.getFrecuencia()  );
+						stmt3.setDouble(6, prestrecla.getCargo_ospim()  );
+						stmt3.setDouble(7, prestrecla.getCargo_ps()  );
+						stmt3.setString(8, prestrecla.getObservaciones() );
+						stmt3.setString(9, screenName);
+
+						if(reclamoPrestacional.getMarcaSeccional() != null &&
+								WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.endsWith(reclamoPrestacional.getMarcaSeccional() )){
+							//stmt3.setNull(10, Types.BOOLEAN);
+							stmt3.setNull(10, Types.INTEGER);
+
+						}else{
+							/*
+							boolean recuperoSur =  Boolean.TRUE.equals(prestrecla.isRecuperableSur());
+							stmt3.setBoolean(10,  recuperoSur   );
+							*/
+							stmt3.setInt(10, prestrecla.getRecuperable());
+						}
+
+
+
+	/*					0 cargado
+						1 autorizado
+						2 rechazado */
+						if (reclamoPrestacional.getEstado()==3 ){ // RECLAMO CERRADO
+							if (reclamoPrestacional.getTipo_gestion_cierre_reclamo() ==5){ // solo si es rechazada en la gestion no se autoriza masivamente
+								stmt3.setInt(11, 2 ); // LA PRESTACION FUE RECHAZADA
+							}else {
+								if (prestrecla.getEstadoRechazoAprobado()!=2){ // no fue rechazado por el usuario
+									stmt3.setInt(11, 1); //  SE AUTORIZADALA PRESTACION
+								}else{
+									stmt3.setInt(11, 2); //  SE RECHAZO LA PRESTACION POR EL USUARIO
+								}
+							}
+						}else if (!PrestacionesReclamo.ESTADOS.BAJA.equals(prestrecla.getEstado())) { // se graba lo que definio el usuario
+							stmt3.setInt(11, prestrecla.getEstadoRechazoAprobado()  );
+						}
+
+						stmt3.setDouble(12, prestrecla.getCantidad()  );
+						if(prestrecla.getComprobanteTipo()!=null) {
+						   stmt3.setString(13,prestrecla.getComprobanteTipo());
+						} else {
+							stmt3.setNull(13, Types.VARCHAR);
+						}
+
+						if(prestrecla.getComprobanteNro()!=null) {
+							   stmt3.setString(14,prestrecla.getComprobanteNro());
+						} else {
+								stmt3.setNull(14, Types.VARCHAR);
+						}
+
+
+						if (null != prestrecla.getComprobanteFecha()) {
+							stmt3.setDate(15, new java.sql.Date(prestrecla.getComprobanteFecha().getTime()));
+						} else {
+							stmt3.setNull(15, Types.DATE);
+						}
+
+						if (null != prestrecla.getComprobanteCantidad()) {
+						   stmt3.setDouble(16, prestrecla.getComprobanteCantidad());
+						} else {
+						   stmt3.setNull(16,Types.DOUBLE);
+						}
+
+
+						if (null != prestrecla.getComprobanteImporte()) {
+							   stmt3.setDouble(17, prestrecla.getComprobanteImporte());
+						} else {
+							   stmt3.setNull(17,Types.DOUBLE);
+						}
+
+						if (null != prestrecla.getComprobanteTotal()) {
+							   stmt3.setDouble(18, prestrecla.getComprobanteTotal());
+						} else {
+							   stmt3.setNull(18,Types.DOUBLE);
+						}
+
+						if(prestrecla.getComprobanteCUIT()!=null) {
+							   stmt3.setString(19,prestrecla.getComprobanteCUIT());
+						} else {
+								stmt3.setNull(19, Types.VARCHAR);
+						}
+
+						if(prestrecla.getComprobanteSucursal()!=null) {
+								   stmt3.setString(20,prestrecla.getComprobanteSucursal());
+						} else {
+									stmt3.setNull(20, Types.VARCHAR);
+						}
+
+						if(prestrecla.getComprobanteCUITSucursal()!=null) {
+							stmt3.setString(21, prestrecla.getComprobanteCUITSucursal());
+						}else {
+							stmt3.setNull(21, Types.VARCHAR);
+						}
+
+						if(prestrecla.getComprobanteLetra()!=null){
+							stmt3.setString(22, prestrecla.getComprobanteLetra());
+						}else{
+							stmt3.setNull(22, Types.VARCHAR);
+						}
+
+						if(prestrecla.getFechaPrestacion()!=null){
+							stmt3.setDate(23, new java.sql.Date(prestrecla.getFechaPrestacion().getTime()));
+
+						}else{
+							stmt3.setNull(23, Types.DATE);
+						}
+
+						stmt3.setDouble(24, prestrecla.getReconocidoSSS() );
+
+						stmt3.setDouble(25, prestrecla.getCargo_imesa()  );
+
+						if (!StringUtils.checkEmpty(prestrecla.getIdTercerizadora())) {
+						    stmt3.setString(26, prestrecla.getIdTercerizadora());
+						} else {
+						    stmt3.setNull(26, Types.VARCHAR);
+						}
+						stmt3.executeUpdate();
+					}
+				}
+
+	//  GRABAR REGISTROS  DE CONTACTOS DE RECLAMO PRESTACIONAL
+
+				if(reclamoPrestacional.getContactosCRM()  !=null && reclamoPrestacional.getContactosCRM().size() > 0){
+					stmt6 = con.prepareCall(sql6.toString());
+					for (ContactoCRM contactocrm  : reclamoPrestacional.getContactosCRM() ) {
+						if (contactocrm.getIdCrmReclamoPrestacional()>0 ){
+							stmt6 = con.prepareCall(sql6.toString());
+							stmt6.setInt(1, idReclamo);
+							stmt6.setInt(2, contactocrm.getIdContacto()  );
+							stmt6.setString(3, screenName);
+							stmt6.executeUpdate();
+						}
+					}
+				}
+	//			*** GRABAR REGISTROS DE REVISIONES ***
+
+				if(reclamoPrestacional.getRevisiones() !=null && reclamoPrestacional.getRevisiones().size() > 0){
+					stmt4 = con.prepareCall(sql4.toString());
+					for (RevisionesReclamo revisionrecla : reclamoPrestacional.getRevisiones() ) {
+						stmt4 = con.prepareCall(sql4.toString());
+						stmt4.setInt(1, idReclamo);
+						if (null != revisionrecla.getFecha_revision()) {
+							stmt4.setDate(2, new java.sql.Date(revisionrecla.getFecha_revision().getTime()));
+						} else {
+							stmt4.setNull(2, Types.DATE);
+						}
+
+						if (null != revisionrecla.getUsr_presente() && ! revisionrecla.getUsr_presente().trim().equals("")) {
+							stmt4.setString(3, revisionrecla.getUsr_presente() );
+						} else {
+							stmt4.setNull(3, Types.VARCHAR);
+						}
+
+						if (null != revisionrecla.getUsr_resolucion() && ! revisionrecla.getUsr_resolucion().trim().equals("")) {
+							stmt4.setString(4, revisionrecla.getUsr_resolucion() );
+							// Definir tipo de Resolucion Aprbado o Rechazado
+							if (revisionrecla.getUsr_resolucion().trim().equals("AUTORIZADO")){
+								reclamoPrestacional.setEstadoResolucionAutorizada(ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.AUTORIZADA);
+							}else{
+								reclamoPrestacional.setEstadoResolucionAutorizada(ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.RECHAZADA );
+							}
+
+						} else {
+							stmt4.setNull(4, Types.VARCHAR);
+						}
+
+						if (null != revisionrecla.getUsr_responsable_resolucion() && ! revisionrecla.getUsr_responsable_resolucion().trim().equals("")) {
+							stmt4.setString(5, revisionrecla.getUsr_responsable_resolucion() );
+						} else {
+							stmt4.setNull(5, Types.VARCHAR);
+						}
+						stmt4.setString(6, screenName  );
+
+						if (null != revisionrecla.getObservacion() && ! revisionrecla.getObservacion().trim().equals("")) {
+							stmt4.setString(7, revisionrecla.getObservacion());
+						} else {
+							stmt4.setNull(7, Types.VARCHAR);
+						}
+						//stmt4.setInt(8, revisionrecla.getIdObservacionMedica());
+
+
+						stmt4.executeUpdate();
+					}
+				}
+	//			*** GRABAR REGISTROS DE CIERRE***
+				if (reclamoPrestacional.getEstado()==3 ){
+
+						stmt5 = con.prepareCall(sql5.toString());
+					    stmt5.setInt(1, idReclamo   );
+						stmt5.setInt(2, reclamoPrestacional.getTipo_gestion_cierre_reclamo());
+
+						if (null != reclamoPrestacional.getFecha_cierre()) {
+							stmt5.setDate(3, new java.sql.Date(reclamoPrestacional.getFecha_cierre().getTime()));
+						} else {
+							stmt5.setNull(3, Types.DATE);
+						}
+
+						stmt5.setBoolean(4, reclamoPrestacional.isReclamo_ps_factura_ospim()  );
+						stmt5.setBoolean(5, reclamoPrestacional.isReclamo_a_negociar() );
+						stmt5.setString(6, reclamoPrestacional.getReclamo_observacion_cierre() );
+						stmt5.setString(7, screenName);
+						stmt5.setBoolean(8, reclamoPrestacional.isReclamo_convenio_gerenciadora()  );
+						stmt5.setBoolean(9, reclamoPrestacional.isDosPorciento()   );
+						stmt5.setBoolean(10, reclamoPrestacional.isDebitoPrestadora()    );
+						stmt5.setInt(11, reclamoPrestacional.getIdObservacionMedica());
+						stmt5.executeUpdate();
+				}
+
+
+			} catch (SQLException e) {
+				_log.error("Error al insertar reclamo prestacional y sus componentes", e);
+				throw new SystemException(e);
+			} finally {
+				ConnectionHelper.cerrar(stmt);
+				ConnectionHelper.cerrar(stmt2);
+				ConnectionHelper.cerrar(stmt3);
+				ConnectionHelper.cerrar(stmt4);
+				ConnectionHelper.cerrar(stmt5);
+				ConnectionHelper.cerrar(stmt6);
+			}
+			return idReclamo ;
+		}
+
 	public List<ContactoCRM> getContactosDelReclamo(String cuilTitular, int inte) throws SystemException {	
 		return CrmServiceUtil.buscarUltimosContactosCRMconDataReclamo(cuilTitular, inte );	
 	}
@@ -438,10 +790,9 @@ public class ReclamoPrestacionServiceImpl {
 			ConnectionHelper.cerrar(stmt, con);
 		}
 
-        if (rp == null) {
-            return null;
-        }
-
+		if (rp == null) {
+			return null;
+		}
 		rp.setPrestaciones(this.getPrestacionesDelReclamo(id));
 		rp.setPrestacionesAsociadas(this.getPrestacionesAsociadasDelReclamo( rp.getCaso_vinculado() ));	
 		rp.setRevisiones(this.getRevisionesDelReclamo(id));
@@ -1168,201 +1519,61 @@ public class ReclamoPrestacionServiceImpl {
 	}
 
 
-    public String validarExisteComprobante(PrestacionesReclamo reclamo) {
-        Connection con = null;
-        CallableStatement stmt = null;
-        ResultSet rs = null;
-        String result = null;
-
-        final String mensajeDatosInvalidos =
-                "No se puede validar el comprobante porque sus datos están incompletos.";
-
-        final String mensajeErrorTecnico =
-                "No se pudo validar el comprobante. Intente nuevamente.";
-
-        try {
-            if (reclamo == null) {
-                _log.error(
-                        "No se puede validar el comprobante: el reclamo es null"
-                );
-                return mensajeDatosInvalidos;
-            }
-
-            if (StringUtils.checkEmpty(reclamo.getComprobanteTipo())) {
-                _log.error(
-                        "No se puede validar el comprobante: el tipo es null o vacío. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return mensajeDatosInvalidos;
-            }
-
-            if (StringUtils.checkEmpty(reclamo.getComprobanteNro())) {
-                _log.error(
-                        "No se puede validar el comprobante: el número es null o vacío. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return mensajeDatosInvalidos;
-            }
-
-            if (StringUtils.checkEmpty(reclamo.getComprobanteCUIT())) {
-                _log.error(
-                        "No se puede validar el comprobante: el CUIT es null o vacío. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return mensajeDatosInvalidos;
-            }
-
-            if (StringUtils.checkEmpty(reclamo.getComprobanteLetra())) {
-                _log.error(
-                        "No se puede validar el comprobante: la letra es null o vacía. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return mensajeDatosInvalidos;
-            }
-
-            if (StringUtils.checkEmpty(reclamo.getComprobanteSucursal())) {
-                _log.error(
-                        "No se puede validar el comprobante: la sucursal es null o vacía. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return mensajeDatosInvalidos;
-            }
-
-            if (reclamo.getFechaPrestacion() == null) {
-                _log.error(
-                        "No se puede validar el comprobante: la fecha de prestación es null. " +
-                                "Id reclamo: " + reclamo.getIdprestacionReclamo()
-                );
-                return mensajeDatosInvalidos;
-            }
-
-            String sql =
-                    "{call autorizaciones." +
-                            "validar_reclamos_prestacionales_prestaciones_compro" +
-                            "(?,?,?,?,?,?,?,?,?,?,?)}";
-
-            con = ConnectionHelper.getConnection();
-
-            if (con == null) {
-                throw new SQLException(
-                        "ConnectionHelper.getConnection() devolvió null"
-                );
-            }
-
-            stmt = con.prepareCall(sql);
-
-            stmt.setString(
-                    1,
-                    reclamo.getComprobanteTipo()
-            );
-
-            stmt.setString(
-                    2,
-                    reclamo.getComprobanteNro()
-            );
-
-            stmt.setString(
-                    3,
-                    reclamo.getComprobanteCUIT()
-            );
-
-            stmt.setString(
-                    4,
-                    reclamo.getComprobanteLetra()
-            );
-
-            stmt.setString(
-                    5,
-                    reclamo.getComprobanteSucursal()
-            );
-
-            stmt.setDate(
-                    6,
-                    new java.sql.Date(
-                            reclamo.getFechaPrestacion().getTime()
-                    )
-            );
-
-            /*
-             * Se conserva el contrato original del procedimiento almacenado.
-             * El valor 0 continúa representando que no existe prestación o
-             * medicamento seleccionado según el tipo de registro.
-             */
-            stmt.setInt(
-                    7,
-                    reclamo.getId_prestacion()
-            );
-
-            stmt.setInt(
-                    8,
-                    reclamo.getId_medicamento()
-            );
-
-            stmt.setInt(
-                    9,
-                    reclamo.getIdRegistro()
-            );
-
-            stmt.setString(
-                    10,
-                    reclamo.getCuilTitular()
-            );
-
-            stmt.setInt(
-                    11,
-                    reclamo.getInte()
-            );
-
-            rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                result = rs.getString(1);
-            }
-
-        } catch (SQLException e) {
-            _log.error(
-                    "Error SQL al validar la existencia del comprobante. " +
-                            "Id reclamo: " +
-                            (reclamo != null
-                                    ? reclamo.getIdprestacionReclamo()
-                                    : "null"),
-                    e
-            );
-
-            return mensajeErrorTecnico;
-
-        } catch (RuntimeException e) {
-            _log.error(
-                    "Error inesperado al validar la existencia del comprobante. " +
-                            "Id reclamo: " +
-                            (reclamo != null
-                                    ? reclamo.getIdprestacionReclamo()
-                                    : "null"),
-                    e
-            );
-
-            return mensajeErrorTecnico;
-
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    _log.warn(
-                            "No se pudo cerrar el ResultSet de validarExisteComprobante",
-                            e
-                    );
-                }
-            }
-
-            ConnectionHelper.cerrar(
-                    stmt,
-                    con
-            );
-        }
-
-        return result;
-    }
+	public String validarExisteComprobante(PrestacionesReclamo reclamo) {
+		Connection con = null;
+		CallableStatement stmt = null;
+		ResultSet rs = null;
+		String result = null;
+		String mensajeErrorTecnico = "No se pudo validar el comprobante. Intente nuevamente.";
+		try {
+			if (reclamo == null || StringUtils.checkEmpty(reclamo.getComprobanteTipo())
+					|| StringUtils.checkEmpty(reclamo.getComprobanteNro())
+					|| StringUtils.checkEmpty(reclamo.getComprobanteCUIT())
+					|| StringUtils.checkEmpty(reclamo.getComprobanteLetra())
+					|| StringUtils.checkEmpty(reclamo.getComprobanteSucursal())
+					|| reclamo.getFechaPrestacion() == null) {
+				_log.error("No se puede validar el comprobante: datos incompletos");
+				return "No se puede validar el comprobante porque sus datos están incompletos.";
+			}
+			String sql = "{call autorizaciones.validar_reclamos_prestacionales_prestaciones_compro(?,?,?,?,?,?,?,?,?,?,?)}";
+			con = ConnectionHelper.getConnection();
+			if (con == null) {
+				throw new SQLException("No se obtuvo conexion para validar el comprobante");
+			}
+			stmt = con.prepareCall(sql);
+			stmt.setString(1, reclamo.getComprobanteTipo());
+			stmt.setString(2, reclamo.getComprobanteNro());
+			stmt.setString(3, reclamo.getComprobanteCUIT());
+			stmt.setString(4, reclamo.getComprobanteLetra());
+			stmt.setString(5, reclamo.getComprobanteSucursal());
+			stmt.setDate(6, new java.sql.Date(reclamo.getFechaPrestacion().getTime()));
+			stmt.setInt(7, reclamo.getId_prestacion());
+			stmt.setInt(8, reclamo.getId_medicamento());
+			stmt.setInt(9, reclamo.getIdRegistro());
+			stmt.setString(10, reclamo.getCuilTitular());
+			stmt.setInt(11, reclamo.getInte());
+			rs = stmt.executeQuery();
+			while (rs.next()) {
+				result = rs.getString(1);
+			}
+		} catch (SQLException e) {
+			_log.error("Error SQL al validar la existencia del comprobante", e);
+			return mensajeErrorTecnico;
+		} catch (RuntimeException e) {
+			_log.error("Error inesperado al validar la existencia del comprobante", e);
+			return mensajeErrorTecnico;
+		} finally {
+			if (rs != null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					_log.warn("No se pudo cerrar el ResultSet de validarExisteComprobante", e);
+				}
+			}
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return result;
+	}
 
 
 	
@@ -1945,420 +2156,5 @@ public class ReclamoPrestacionServiceImpl {
 	        ConnectionHelper.cerrar(stmt);
 	    }
 	}
-
-    public int insertar(
-            Connection con,
-            ReclamoPrestacional reclamoPrestacional,
-            User user) throws SystemException {
-
-        if (con == null) {
-            throw new SystemException(
-                    "No se informo la conexion transaccional."
-            );
-        }
-
-        return insertarInterno(
-                con,
-                reclamoPrestacional,
-                user
-        );
-    }
-
-    public int insertar(
-            ReclamoPrestacional reclamoPrestacional,
-            User user) throws SystemException {
-
-        Connection con = null;
-
-        try {
-            con =
-                    ConnectionHelper
-                            .getConnectionForTransaction();
-
-            int idReclamo =
-                    insertarInterno(
-                            con,
-                            reclamoPrestacional,
-                            user
-                    );
-
-            con.commit();
-
-            return idReclamo;
-
-        } catch (Exception e) {
-            if (con != null) {
-                ConnectionHelper.rollback(
-                        con
-                );
-            }
-
-            if (e instanceof SystemException) {
-                throw (SystemException) e;
-            }
-
-            throw new SystemException(
-                    e
-            );
-
-        } finally {
-            ConnectionHelper.cerrar(
-                    con
-            );
-        }
-    }
-
-    private int insertarInterno(
-            Connection con,
-            ReclamoPrestacional reclamoPrestacional,
-            User user) throws SystemException {
-
-        if (con == null) {
-            throw new SystemException(
-                    "No se informo la conexion transaccional."
-            );
-        }
-
-        CallableStatement stmt = null;
-        CallableStatement stmt2 = null;
-        CallableStatement stmt3 = null;
-        CallableStatement stmt4 = null;
-        CallableStatement stmt5 = null;
-        CallableStatement stmt6 = null;
-
-        String screenName =
-                user.getScreenName();
-
-        int idReclamo = 0;
-
-        String sql =
-                "{call autorizaciones.inserta_reclamoprestacional("
-                        + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-
-        String sql2 =
-                "{call autorizaciones.inserta_reclamo_estado(?,?,?)}";
-
-        String sql3 =
-                "{call autorizaciones.inserta_reclamo_prestaciones("
-                        + "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-
-        String sql4 =
-                "{call autorizaciones.inserta_reclamo_revisiones("
-                        + "?,?,?,?,?,?,?)}";
-
-        String sql5 =
-                "{call autorizaciones.inserta_reclamo_cierre("
-                        + "?,?,?,?,?,?,?,?,?,?,?)}";
-
-        String sql6 =
-                "{call autorizaciones.inserta_reclamo_contacto(?,?,?)}";
-
-        try {
-            //			*** RECLAMO PRESTACIONAL***
-            stmt = con.prepareCall(sql.toString());
-            stmt.registerOutParameter(1, Types.INTEGER);
-
-            if (null != reclamoPrestacional.getOspim_fecha()) {
-                stmt.setDate(1, new java.sql.Date(reclamoPrestacional.getOspim_fecha().getTime()));
-            } else {
-                stmt.setNull(1, Types.DATE);
-            }
-
-            if (null != reclamoPrestacional.getSeccional_fecha()) {
-                stmt.setDate(2, new java.sql.Date(reclamoPrestacional.getSeccional_fecha().getTime()));
-            } else {
-                stmt.setNull(2, Types.DATE);
-            }
-            stmt.setString(3, reclamoPrestacional.getSector());
-            stmt.setString(4, reclamoPrestacional.getCuit_titular() );
-            stmt.setInt(5, reclamoPrestacional.getInte());
-            stmt.setString(6, screenName);
-            stmt.setBoolean(7,reclamoPrestacional.isAmparo()  );
-            stmt.setBoolean(8, reclamoPrestacional.isEntramite() );
-            stmt.setBoolean(9, reclamoPrestacional.isRecuperable() );
-            stmt.setBoolean(10, reclamoPrestacional.isSuperintendencia() );
-            stmt.setInt(11, reclamoPrestacional.getCaso_vinculado()  );
-            stmt.setString(12, reclamoPrestacional.getJustificaconMedica()   );
-            stmt.setString(13, reclamoPrestacional.getDictamenComision()  );
-            stmt.setString(14, reclamoPrestacional.getDiagnosticoAfiliado()  );
-            stmt.setString(15, reclamoPrestacional.getCodigoCie10()  );
-            stmt.setString(16, reclamoPrestacional.getTipoPedido()   );
-
-            if (null != reclamoPrestacional.getNroLote() && reclamoPrestacional.getNroLote()>0  ) {
-                stmt.setInt(17, reclamoPrestacional.getNroLote());
-            } else {
-                stmt.setNull(17, Types.INTEGER);
-            }
-
-
-            if(reclamoPrestacional.getIdSeccional()!=null) {
-                stmt.setInt(18, reclamoPrestacional.getIdSeccional());
-            } else {
-                stmt.setNull(18, Types.INTEGER);
-            }
-
-            if(reclamoPrestacional.getCodigoIntegracion()!=0) {
-                stmt.setInt(19, reclamoPrestacional.getCodigoIntegracion());
-            } else {
-                stmt.setNull(19, Types.INTEGER);
-            }
-
-
-            idReclamo = stmt.executeUpdate();
-            if(stmt.getInt(1) > 0){
-                idReclamo =stmt.getInt(1);
-            }
-            //			*** GRABAR REGISTRO DE ESTADO SI ES DISTINTO AL PREEXISTENTE***
-            stmt2 = con.prepareCall(sql2.toString());
-            if(reclamoPrestacional.getEstado()>=0 ){
-                stmt2.setInt(1, idReclamo   );
-                stmt2.setInt(2, reclamoPrestacional.getEstado());
-                stmt2.setString(3, screenName);
-                stmt2.executeUpdate();
-            }
-            //			*** GRABAR REGISTRO DE PRESTACIONES ***
-            stmt3 = con.prepareCall(sql3.toString());
-
-            if(reclamoPrestacional.getPrestaciones()!=null && reclamoPrestacional.getPrestaciones().size() > 0){
-                for (PrestacionesReclamo prestrecla  : reclamoPrestacional.getPrestaciones() ) {
-                    stmt3 = con.prepareCall(sql3.toString());
-                    stmt3.setInt(1, idReclamo);
-
-                    if (prestrecla.getId_medicamento() > 0) {
-                        stmt3.setInt(2, prestrecla.getId_medicamento());
-                        stmt3.setNull(3, Types.INTEGER);
-                    } else if (prestrecla.getId_prestacion() > 0) {
-                        stmt3.setNull(2, Types.INTEGER);
-                        stmt3.setInt(3, prestrecla.getId_prestacion());
-                    } else {
-                        stmt3.setNull(2, Types.INTEGER);
-                        stmt3.setNull(3, Types.INTEGER);
-                    }
-
-                    stmt3.setDouble(4, prestrecla.getImporte() );
-                    stmt3.setString(5, prestrecla.getFrecuencia()  );
-                    stmt3.setDouble(6, prestrecla.getCargo_ospim()  );
-                    stmt3.setDouble(7, prestrecla.getCargo_ps()  );
-                    stmt3.setString(8, prestrecla.getObservaciones() );
-                    stmt3.setString(9, screenName);
-
-                    if(reclamoPrestacional.getMarcaSeccional() != null &&
-                            WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.endsWith(reclamoPrestacional.getMarcaSeccional() )){
-                        //stmt3.setNull(10, Types.BOOLEAN);
-                        stmt3.setNull(10, Types.INTEGER);
-
-                    }else{
-							/*
-							boolean recuperoSur =  Boolean.TRUE.equals(prestrecla.isRecuperableSur());
-							stmt3.setBoolean(10,  recuperoSur   );
-							*/
-                        stmt3.setInt(10, prestrecla.getRecuperable());
-                    }
-
-
-
-	/*					0 cargado
-						1 autorizado
-						2 rechazado */
-                    if (reclamoPrestacional.getEstado()==3 ){ // RECLAMO CERRADO
-                        if (reclamoPrestacional.getTipo_gestion_cierre_reclamo() ==5){ // solo si es rechazada en la gestion no se autoriza masivamente
-                            stmt3.setInt(11, 2 ); // LA PRESTACION FUE RECHAZADA
-                        }else {
-                            if (prestrecla.getEstadoRechazoAprobado()!=2){ // no fue rechazado por el usuario
-                                stmt3.setInt(11, 1); //  SE AUTORIZADALA PRESTACION
-                            }else{
-                                stmt3.setInt(11, 2); //  SE RECHAZO LA PRESTACION POR EL USUARIO
-                            }
-                        }
-                    }else if (!PrestacionesReclamo.ESTADOS.BAJA.equals(prestrecla.getEstado())) { // se graba lo que definio el usuario
-                        stmt3.setInt(11, prestrecla.getEstadoRechazoAprobado()  );
-                    }
-
-                    stmt3.setDouble(12, prestrecla.getCantidad()  );
-                    if(prestrecla.getComprobanteTipo()!=null) {
-                        stmt3.setString(13,prestrecla.getComprobanteTipo());
-                    } else {
-                        stmt3.setNull(13, Types.VARCHAR);
-                    }
-
-                    if(prestrecla.getComprobanteNro()!=null) {
-                        stmt3.setString(14,prestrecla.getComprobanteNro());
-                    } else {
-                        stmt3.setNull(14, Types.VARCHAR);
-                    }
-
-
-                    if (null != prestrecla.getComprobanteFecha()) {
-                        stmt3.setDate(15, new java.sql.Date(prestrecla.getComprobanteFecha().getTime()));
-                    } else {
-                        stmt3.setNull(15, Types.DATE);
-                    }
-
-                    if (null != prestrecla.getComprobanteCantidad()) {
-                        stmt3.setDouble(16, prestrecla.getComprobanteCantidad());
-                    } else {
-                        stmt3.setNull(16,Types.DOUBLE);
-                    }
-
-
-                    if (null != prestrecla.getComprobanteImporte()) {
-                        stmt3.setDouble(17, prestrecla.getComprobanteImporte());
-                    } else {
-                        stmt3.setNull(17,Types.DOUBLE);
-                    }
-
-                    if (null != prestrecla.getComprobanteTotal()) {
-                        stmt3.setDouble(18, prestrecla.getComprobanteTotal());
-                    } else {
-                        stmt3.setNull(18,Types.DOUBLE);
-                    }
-
-                    if(prestrecla.getComprobanteCUIT()!=null) {
-                        stmt3.setString(19,prestrecla.getComprobanteCUIT());
-                    } else {
-                        stmt3.setNull(19, Types.VARCHAR);
-                    }
-
-                    if(prestrecla.getComprobanteSucursal()!=null) {
-                        stmt3.setString(20,prestrecla.getComprobanteSucursal());
-                    } else {
-                        stmt3.setNull(20, Types.VARCHAR);
-                    }
-
-                    if(prestrecla.getComprobanteCUITSucursal()!=null) {
-                        stmt3.setString(21, prestrecla.getComprobanteCUITSucursal());
-                    }else {
-                        stmt3.setNull(21, Types.VARCHAR);
-                    }
-
-                    if(prestrecla.getComprobanteLetra()!=null){
-                        stmt3.setString(22, prestrecla.getComprobanteLetra());
-                    }else{
-                        stmt3.setNull(22, Types.VARCHAR);
-                    }
-
-                    if(prestrecla.getFechaPrestacion()!=null){
-                        stmt3.setDate(23, new java.sql.Date(prestrecla.getFechaPrestacion().getTime()));
-
-                    }else{
-                        stmt3.setNull(23, Types.DATE);
-                    }
-
-                    stmt3.setDouble(24, prestrecla.getReconocidoSSS() );
-
-                    stmt3.setDouble(25, prestrecla.getCargo_imesa()  );
-
-                    if (!StringUtils.checkEmpty(prestrecla.getIdTercerizadora())) {
-                        stmt3.setString(26, prestrecla.getIdTercerizadora());
-                    } else {
-                        stmt3.setNull(26, Types.VARCHAR);
-                    }
-                    stmt3.executeUpdate();
-                }
-            }
-
-            //  GRABAR REGISTROS  DE CONTACTOS DE RECLAMO PRESTACIONAL
-
-            if(reclamoPrestacional.getContactosCRM()  !=null && reclamoPrestacional.getContactosCRM().size() > 0){
-                stmt6 = con.prepareCall(sql6.toString());
-                for (ContactoCRM contactocrm  : reclamoPrestacional.getContactosCRM() ) {
-                    if (contactocrm.getIdCrmReclamoPrestacional()>0 ){
-                        stmt6 = con.prepareCall(sql6.toString());
-                        stmt6.setInt(1, idReclamo);
-                        stmt6.setInt(2, contactocrm.getIdContacto()  );
-                        stmt6.setString(3, screenName);
-                        stmt6.executeUpdate();
-                    }
-                }
-            }
-            //			*** GRABAR REGISTROS DE REVISIONES ***
-
-            if(reclamoPrestacional.getRevisiones() !=null && reclamoPrestacional.getRevisiones().size() > 0){
-                stmt4 = con.prepareCall(sql4.toString());
-                for (RevisionesReclamo revisionrecla : reclamoPrestacional.getRevisiones() ) {
-                    stmt4 = con.prepareCall(sql4.toString());
-                    stmt4.setInt(1, idReclamo);
-                    if (null != revisionrecla.getFecha_revision()) {
-                        stmt4.setDate(2, new java.sql.Date(revisionrecla.getFecha_revision().getTime()));
-                    } else {
-                        stmt4.setNull(2, Types.DATE);
-                    }
-
-                    if (null != revisionrecla.getUsr_presente() && ! revisionrecla.getUsr_presente().trim().equals("")) {
-                        stmt4.setString(3, revisionrecla.getUsr_presente() );
-                    } else {
-                        stmt4.setNull(3, Types.VARCHAR);
-                    }
-
-                    if (null != revisionrecla.getUsr_resolucion() && ! revisionrecla.getUsr_resolucion().trim().equals("")) {
-                        stmt4.setString(4, revisionrecla.getUsr_resolucion() );
-                        // Definir tipo de Resolucion Aprbado o Rechazado
-                        if (revisionrecla.getUsr_resolucion().trim().equals("AUTORIZADO")){
-                            reclamoPrestacional.setEstadoResolucionAutorizada(ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.AUTORIZADA);
-                        }else{
-                            reclamoPrestacional.setEstadoResolucionAutorizada(ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO.RECHAZADA );
-                        }
-
-                    } else {
-                        stmt4.setNull(4, Types.VARCHAR);
-                    }
-
-                    if (null != revisionrecla.getUsr_responsable_resolucion() && ! revisionrecla.getUsr_responsable_resolucion().trim().equals("")) {
-                        stmt4.setString(5, revisionrecla.getUsr_responsable_resolucion() );
-                    } else {
-                        stmt4.setNull(5, Types.VARCHAR);
-                    }
-                    stmt4.setString(6, screenName  );
-
-                    if (null != revisionrecla.getObservacion() && ! revisionrecla.getObservacion().trim().equals("")) {
-                        stmt4.setString(7, revisionrecla.getObservacion());
-                    } else {
-                        stmt4.setNull(7, Types.VARCHAR);
-                    }
-                    //stmt4.setInt(8, revisionrecla.getIdObservacionMedica());
-
-
-                    stmt4.executeUpdate();
-                }
-            }
-            //			*** GRABAR REGISTROS DE CIERRE***
-            if (reclamoPrestacional.getEstado()==3 ){
-
-                stmt5 = con.prepareCall(sql5.toString());
-                stmt5.setInt(1, idReclamo   );
-                stmt5.setInt(2, reclamoPrestacional.getTipo_gestion_cierre_reclamo());
-
-                if (null != reclamoPrestacional.getFecha_cierre()) {
-                    stmt5.setDate(3, new java.sql.Date(reclamoPrestacional.getFecha_cierre().getTime()));
-                } else {
-                    stmt5.setNull(3, Types.DATE);
-                }
-
-                stmt5.setBoolean(4, reclamoPrestacional.isReclamo_ps_factura_ospim()  );
-                stmt5.setBoolean(5, reclamoPrestacional.isReclamo_a_negociar() );
-                stmt5.setString(6, reclamoPrestacional.getReclamo_observacion_cierre() );
-                stmt5.setString(7, screenName);
-                stmt5.setBoolean(8, reclamoPrestacional.isReclamo_convenio_gerenciadora()  );
-                stmt5.setBoolean(9, reclamoPrestacional.isDosPorciento()   );
-                stmt5.setBoolean(10, reclamoPrestacional.isDebitoPrestadora()    );
-                stmt5.setInt(11, reclamoPrestacional.getIdObservacionMedica());
-                stmt5.executeUpdate();
-            }
-
-        } catch (SQLException e) {
-            _log.error("Error al insertar reclamo prestacional y sus componentes", e);
-            throw new SystemException(e);
-        } finally {
-            ConnectionHelper.cerrar(stmt);
-            ConnectionHelper.cerrar(stmt2);
-            ConnectionHelper.cerrar(stmt3);
-            ConnectionHelper.cerrar(stmt4);
-            ConnectionHelper.cerrar(stmt5);
-            ConnectionHelper.cerrar(
-                    stmt6
-            );
-        }
-        return idReclamo ;
-    }
 
 }

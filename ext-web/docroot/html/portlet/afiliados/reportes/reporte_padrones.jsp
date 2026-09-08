@@ -263,14 +263,14 @@ if (seccionales == null) {
 				<liferay-ui:message key="vista-tercerizadora" />:
 				<input type="checkbox" id="<portlet:namespace />vista_tercerizadora" name="<portlet:namespace />vista_tercerizadora" value=""  />
 			</td> 
-
+			
 			<td  colspan="6">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
-
+				
 			<td style="background-color:#AEB6BF">
 				<liferay-ui:message key="Vista Admifarm" />:
 				<input type="checkbox" id="<portlet:namespace />vista_admifarm" name="<portlet:namespace />vista_admifarm" value=""  />
-			</td>
+			</td> 
 			<td>&nbsp;</td>
 		</tr>
 	</table>

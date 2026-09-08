@@ -20,12 +20,12 @@ if (tabs1 == null) {
  * Permisos migrados desde Liquidaciones.
  *
  * En el JSP original de Liquidaciones, el acceso al tab "prestador"
- * dependía exclusivamente de:
+ * dependï¿½a exclusivamente de:
  *
  * - ABM_PRESTADOR
  * - VIEW_PRESTADOR
  *
- * Como no había roles específicos para convenios en ese JSP,
+ * Como no habï¿½a roles especï¿½ficos para convenios en ese JSP,
  * se usa el mismo permiso base para Prestadores, Convenios y Cartilla.
  */
 boolean showPrestador =
@@ -170,8 +170,8 @@ currentURL = PortalUtil.getCurrentURL(request);
 
 <liferay-ui:success
     key="cartilla-sop-importada"
-    message="La Cartilla SOP fue importada correctamente."/>
-
+    message="La Cartilla SOP fue importada correctamente."/>   
+    
 <liferay-portlet:renderURLParams varImpl="portletURL" />
 
 <c:choose>
@@ -205,7 +205,7 @@ currentURL = PortalUtil.getCurrentURL(request);
 			<c:when test='<%= "aumento-prestaciones".equals(tabs1) %>'>
 				<liferay-util:include page="/html/portlet/prestadores/convenios_prest/aumento_prestaciones.jsp" />
 			</c:when>
-
+			
 			<c:when test='<%= "cartilla-sop".equals(tabs1) %>'>
 				<liferay-util:include page="/html/portlet/prestadores/convenios_prest/cartilla_sop.jsp" />
 			</c:when>

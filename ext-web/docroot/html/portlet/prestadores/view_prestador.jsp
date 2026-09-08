@@ -191,10 +191,10 @@ SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 			<td>CBU:</td>
 			<td>
 			   <input id="<portlet:namespace />cbu"
-				name="<portlet:namespace />cbu" size="22" maxlength="22"
+				name="<portlet:namespace />cbu" size="22" maxlength="22" 
 				type="text" value="<%= prestador != null && prestador.getCbu() != null? prestador.getCbu(): "" %>" <% if (!esEdicion) { %><%="disabled='disabled'" %> <%}%> />
 			</td>
-
+			
 		</tr>
 	</table>
 </fieldset>
@@ -479,14 +479,14 @@ SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 				        <input type="checkbox"
 				               id="<portlet:namespace />prov_medicamentos"
 				               name="<portlet:namespace />prov_medicamentos"
-
+				
 				               <% if (rubrosSession.contains("MEDICAMENTOS")) { %>
 				                   checked="checked"
 				               <% } %>
-
+				
 				               <% if (!esEdicion) { %>
 				                   disabled="disabled"
-				               <% } %> />
+				               <% } %> />		
 				        Medicamentos
 				    </label>
 				</td>
@@ -642,7 +642,7 @@ SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 								<td>
 								|
 								</td>
-
+								
                                 <td>
                                     <label>Modi Usuario:</label>
                                 </td>
@@ -664,7 +664,7 @@ SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 								<td>
 								|
 								</td>
-
+								
                                 <td>
                                     <label>Baja Usuario:</label>
                                 </td>
@@ -823,7 +823,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 		} catch (err) {
 			return false;
 		}
-
+		
 		var tipoSelectPrestador =
 		    document.getElementById("tipo_prestador");
 
@@ -833,7 +833,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 		            tipoSelectPrestador.selectedIndex
 		        ].innerHTML
 		    );
-
+		
 		var solicitarCotizacion =
 		    jQuery('#<portlet:namespace />solicitar_cotizacion').is(':checked');
 
@@ -880,7 +880,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	}
 
 	function manejarTipo(){
-
+		
 		var tipoSelect = document.getElementById("tipo_prestador");
 
 	    if (!tipoSelect) {
@@ -903,14 +903,14 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	        jQuery('#<portlet:namespace />separador_profesion').show();
 	        jQuery('#<portlet:namespace />separador_matricula').show();
 	    }
-
+	    
 	    if (tipo == "PROVEEDOR" || tipo == "FARMACIA" || tipo == "ORTOPEDIA E INSUMOS") {
 	        jQuery('#<portlet:namespace />bloque_rubros').show();
 	    } else {
 	        jQuery('#<portlet:namespace />bloque_rubros').hide();
 	    }
-
-		// SOLICITAR COTIZACIÓN
+	    
+	 	// SOLICITAR COTIZACIÓN
 	    if (tipo == "PROVEEDOR" || tipo == "FARMACIA" || tipo == "ORTOPEDIA E INSUMOS") {
 	        jQuery('#<portlet:namespace />bloque_cotizacion').show();
 	    } else {
@@ -923,7 +923,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	            chkSolicitar.checked = false;
 	        }
 	    }
-
+	 
 		if ("<%=esEdicion%>" == "true"){
 			if (trim(tipoSelect.options[tipoSelect.selectedIndex].innerHTML) == "PROFESIONAL"){
  				document.getElementById("<portlet:namespace/>profesion").disabled = "";
@@ -968,7 +968,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	        document.getElementById("<portlet:namespace />protesis_traumatologia").checked = false;
 	    }
 	}
-
+	
 	function <portlet:namespace />seleccionarTodasProtesis(){
 
 	    var marcar = jQuery('#<portlet:namespace />protesis_todas').is(':checked');
@@ -977,7 +977,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	    document.getElementById("<portlet:namespace />protesis_general").checked = marcar;
 	    document.getElementById("<portlet:namespace />protesis_traumatologia").checked = marcar;
 	}
-
+	
 	function <portlet:namespace />actualizarTodasProtesis(){
 
 	    var cardiologia = jQuery('#<portlet:namespace />protesis_cardiologia').is(':checked');
@@ -986,7 +986,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 
 	    document.getElementById("<portlet:namespace />protesis_todas").checked = cardiologia && general && traumatologia;
 	}
-
+	
 	function manejarCertificacion(){
 		if ("<%=esEdicion%>" == "true"){
 		var tipoSelect  =document.getElementById("<portlet:namespace />certificacion");
@@ -1162,7 +1162,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 
 
 	}
-
+	
 	function <portlet:namespace />manejarCotizacion(){
 
 		var chkSolicitar = document.getElementById("<portlet:namespace />solicitar_cotizacion");
@@ -1170,13 +1170,13 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	    if (!chkSolicitar) {
 	        return;
 	    }
-
+	    
 	    var tipoSelect = document.getElementById("tipo_prestador");
 
 	    var tipo = trim(tipoSelect.options[tipoSelect.selectedIndex].innerHTML);
 
 	    var solicitarCotizacion = chkSolicitar.checked;
-
+	    
 	    var editable = "<%=esEdicion%>" == "true";
 
 	    var rubrosCotizacion = [
@@ -1214,7 +1214,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	        <portlet:namespace />manejarProtesis();
 	    }
 	}
-
+	
 	function manejarTipoMatricula(){
 		if ("<%=esEdicion%>" == "true"){
 			var tipoSelect  =document.getElementById("<portlet:namespace />mat_tipo");
@@ -1244,6 +1244,6 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	<portlet:namespace />manejarProtesis();
 	<portlet:namespace />manejarCotizacion();
 	manejarCertificacion();
-	manejarTipoMatricula();
-
+	manejarTipoMatricula();	
+	
 </script>

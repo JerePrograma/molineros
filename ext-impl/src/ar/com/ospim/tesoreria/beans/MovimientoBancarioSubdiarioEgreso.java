@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import ar.com.ospim.global.beans.Comprobante.ComprobanteConcepto;
+import ar.com.ospim.global.beans.Concepto;
 import ar.com.ospim.global.beans.ItemSubdiarioEgreso;
 import ar.com.ospim.global.beans.SubdiarioComprobante;
 import ar.com.ospim.global.beans.SubdiarioEgresoColumna;
@@ -62,6 +63,8 @@ public class MovimientoBancarioSubdiarioEgreso extends MovimientoBancario
 		comp.setDescripcion("Mov. Bcrio. "
 				+ (getId_movimiento() != 0 ? String.valueOf(getId_movimiento())
 						: "") + desc);
+		
+		
 		list.add(comp);
 		return list;
 	}
@@ -181,6 +184,11 @@ public class MovimientoBancarioSubdiarioEgreso extends MovimientoBancario
 			// TODO Auto-generated method stub
 			return null;
 		}
+		
+		public  Concepto getConcepto() {
+            // Sintaxis correcta para llamar al método del padre
+			return MovimientoBancarioSubdiarioEgreso.this.getTipo_mov().getConcepto(); 
+        }
 	}
 
 	private class ColumnaSubdiario implements SubdiarioEgresoColumna {

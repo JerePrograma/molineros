@@ -395,6 +395,29 @@ for(EmpresaLiferay empSecUsu : empresasSectoresUsuarios){ %>
 <script type="text/javascript">
 
 function addEvent(obj, evType, fn, useCapture) {
+// General function for adding an event listener
+	if (obj.addEventListener) {
+		obj.addEventListener(evType, fn, useCapture);
+		return true;} else if (obj.attachEvent) {
+	var r = obj.attachEvent("on" + evType, fn);
+		return r;
+	} else {
+		alert(evType+" handler could not be attached");
+	}
+}
+
+function addKeyEvent() {
+// Specific function for this particular browser
+	var e = (document.addEventListener) ? 'keypress' : 'keydown';
+	addEvent(document,e,keyEventHandler,false);
+}
+
+addKeyEvent();
+//To disable the right mouse button
+document.oncontextmenu=new Function("return false");
+
+
+function addEvent(obj, evType, fn, useCapture) {
 
     if (obj.addEventListener) {
 

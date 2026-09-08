@@ -11,7 +11,6 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 import ar.com.ospim.prestadores.services.ImportarCartillaSOPServiceUtil;
-import ar.com.ospim.util.PermissionUtil;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -23,8 +22,6 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.model.User;
-import com.liferay.portal.security.auth.PrincipalException;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
@@ -41,8 +38,6 @@ public class ImportarCartillaSOPAction
             RenderRequest renderRequest,
             RenderResponse renderResponse)
         throws Exception {
-
-        validarPermiso(PortalUtil.getUser(renderRequest));
 
         List<Object[]> importaciones = Collections.emptyList();
 
@@ -70,8 +65,6 @@ public class ImportarCartillaSOPAction
             ActionRequest actionRequest,
             ActionResponse actionResponse)
         throws Exception {
-
-        validarPermiso(PortalUtil.getUser(actionRequest));
 
         UploadPortletRequest uploadRequest =PortalUtil.getUploadPortletRequest(actionRequest);
 
@@ -151,17 +144,6 @@ public class ImportarCartillaSOPAction
 
         actionResponse.setRenderParameter("struts_action","/prestadores/view");
         actionResponse.setRenderParameter("tabs1","cartilla-sop");
-    }
-
-    private void validarPermiso(User user)
-        throws PrincipalException {
-
-        if (user == null ||
-            (!PermissionUtil.userContainsRole(user,"ABM_PRESTADOR") &&
-             !PermissionUtil.userContainsRole(user,"VIEW_PRESTADOR"))) {
-
-            throw new PrincipalException();
-        }
     }
 
     private static final Log _log = LogFactoryUtil.getLog(ImportarCartillaSOPAction.class);

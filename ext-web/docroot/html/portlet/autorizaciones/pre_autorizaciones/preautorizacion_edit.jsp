@@ -980,7 +980,7 @@
 	   <table>
 	      <tr>
 	       <td>
-<!-- Se comenta la condición subyacente para que aparezca el botón Enviar Mail para los estados CARGADO,OBSERVADO,GESTION OSPIM -- DS 27/02/2020  -->	       
+<!-- Se comenta la condición subyacente para que aparezca el botï¿½n Enviar Mail para los estados CARGADO,OBSERVADO,GESTION OSPIM -- DS 27/02/2020  -->	       
 	            <%/*if (preautorizacion != null && preautorizacion.getId() != null 
 	            	      && preautorizacion.getFechaEmail() == null){*/%>
 	          
@@ -1541,7 +1541,7 @@ function <portlet:namespace />limpiarNomencladorAutocompletar(){
 }
 
 <c:if test='<%="N".equalsIgnoreCase((String)request.getSession().getAttribute("esPopUp"))%>'>
-//	window.onbeforeunload = function(){return "Esta seguro de abandonar la página?";};
+//	window.onbeforeunload = function(){return "Esta seguro de abandonar la pï¿½gina?";};
 </c:if>
 
 function <portlet:namespace />configuraCarga(){
@@ -2331,7 +2331,7 @@ function editarPreautorizacionMedicamento(idMod,idModAux,idMedicamento,descripci
 
 function <portlet:namespace />reintentarCaso() {
     
-    var respuesta=confirm ('Está seguro que desea generar una nueva preautorización copiando los datos de ésta misma '+'\nDesea continuar?');
+    var respuesta=confirm ('Está seguro que desea generar una nueva preautorizaciï¿½n copiando los datos de ï¿½sta misma '+'\nDesea continuar?');
 		   
 	if (respuesta) {
 		

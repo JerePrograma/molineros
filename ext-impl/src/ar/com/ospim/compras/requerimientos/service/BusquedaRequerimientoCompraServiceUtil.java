@@ -303,25 +303,6 @@ public class BusquedaRequerimientoCompraServiceUtil {
                 );
     }
 
-    public static List<PrestadorCotizacion> buscarPrestadoresEnviados(
-            int idRequerimientoCompra,
-            String texto,
-            int limite) throws Exception {
-
-        validarIdRequerimiento(idRequerimientoCompra);
-
-        int limiteNormalizado =
-                limite > 0 && limite <= 50
-                        ? limite
-                        : 20;
-
-        return getInstance().buscarPrestadoresEnviados(
-                idRequerimientoCompra,
-                WebKeysCompras.trimToNull(texto),
-                limiteNormalizado
-        );
-    }
-
     public static List<PrestadorCotizacion> listarPrestadoresEnviados(
             int idRequerimientoCompra) throws Exception {
 

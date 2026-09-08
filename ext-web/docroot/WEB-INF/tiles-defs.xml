@@ -188,11 +188,6 @@
 		<put name="portlet_content" value="/portlet/afiliados/afiliados_search_result_popup.jsp" />
 	</definition>
 
-	<definition name="portlet.afiliados.result.search.auto_select"
-		extends="portlet.afiliados">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_afiliado_busqueda_resultado.jsp" />
-	</definition>
-
 	<definition name="portlet.afiliados.opciones.result.search"
 		extends="portlet.afiliados">
 		<put name="portlet_content"
@@ -4525,6 +4520,49 @@
 	</definition>
 
 	<!-- FIN PRESTADORES / PRE_1 -->
+	
+	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias.jsp" />
+	</definition>
+	
+	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias_resultado.jsp" />
+	</definition>
+	
+
+	
+	<definition name="portlet.afiliados.pre_afiliados_pendientes"
+    extends="portlet.afiliados">
+    <put name="portlet_content" value="/portlet/novedades/pre_afiliados_pendientes.jsp" />
+</definition>
+
+<definition
+    name="portlet.afiliados.familiares_comerciales_pendientes"
+    extends="portlet.afiliados">
+
+    <put
+        name="portlet_content"
+        value="/portlet/novedades/familiares_comerciales_pendientes.jsp" />
+
+</definition>
+
+
+	<definition name="portlet.liquidaciones.comprobantes.interbanking.search.result"
+		extends="portlet.liquidaciones">
+		<put name="portlet_content"
+			value="/portlet/liquidaciones/comprobantes/comprobantes_interbanking_search_result.jsp" />
+	</definition>
+	
+	<definition
+    name="portlet.prestadores.cartilla_sop"
+    extends="portlet.prestadores">
+
+    <put
+        name="portlet_content"
+        value="/portlet/prestadores/convenios_prest/cartilla_sop.jsp"/>
+
+</definition>
+
 
 	<!-- COMPRAS -->
 
@@ -4551,10 +4589,6 @@
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_edicion.jsp" />
 	</definition>
 
-	<definition name="portlet.compras.buscar_medicamentos" extends="portlet.compras">
-		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_medicamento_busqueda_resultado.jsp" />
-	</definition>
-
 	<definition name="portlet.compras.buscar_item_tecnico" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_prestacion_busqueda_resultado.jsp" />
 	</definition>
@@ -4569,18 +4603,6 @@
 
 	<definition name="portlet.compras.error" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/error.jsp" />
-	</definition>
-
-	<definition name="portlet.compras.prestadores_enviados"
-	            extends="portlet.compras">
-		<put name="portlet_content"
-		     value="/portlet/compras/requerimientos/requerimiento_compra_prestadores_enviados.jsp" />
-	</definition>
-
-	<definition name="portlet.compras.prestadores_habilitados_cotizacion"
-	            extends="portlet.compras">
-		<put name="portlet_content"
-		     value="/portlet/compras/requerimientos/requerimiento_compra_prestadores_habilitados.jsp" />
 	</definition>
 
 	<definition name="portlet.compras.afiliados.result.search"
@@ -4624,41 +4646,5 @@
     </definition>
 
     <!-- COMPRAS -->
-
-    <definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" extends="portlet.tesoreria">
-		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias.jsp" />
-	</definition>
-	
-	<definition name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" extends="portlet.tesoreria">
-		<put name="portlet_content" value="/portlet/tesoreria/bancos/busqueda_saldo_diario_cuentas_bancarias_resultado.jsp" />
-	</definition>
-
-	<definition name="portlet.afiliados.pre_afiliados_pendientes"
-	            extends="portlet.afiliados">
-
-		<put name="portlet_content"
-		     value="/portlet/novedades/pre_afiliados_pendientes.jsp" />
-	</definition>
-
-	<definition name="portlet.afiliados.familiares_comerciales_pendientes"
-	            extends="portlet.afiliados">
-
-		<put name="portlet_content"
-		     value="/portlet/novedades/familiares_comerciales_pendientes.jsp" />
-	</definition>
-
-	<definition name="portlet.liquidaciones.comprobantes.interbanking.search.result"
-	            extends="portlet.liquidaciones">
-
-		<put name="portlet_content"
-		     value="/portlet/liquidaciones/comprobantes/comprobantes_interbanking_search_result.jsp" />
-	</definition>
-
-	<definition name="portlet.prestadores.cartilla_sop"
-	            extends="portlet.prestadores">
-
-		<put name="portlet_content"
-		     value="/portlet/prestadores/convenios_prest/cartilla_sop.jsp" />
-	</definition>
 
 </tiles-definitions>

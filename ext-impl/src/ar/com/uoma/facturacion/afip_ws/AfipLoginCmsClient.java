@@ -112,12 +112,7 @@ public class AfipLoginCmsClient {//extends AgendadoJava {
 				
 		p12file = props.getProperty("keystore","test-keystore.p12");
 		signer  = props.getProperty("keystore-signer","coqui");
-		p12pass = props.getProperty("keystore-password");
-		if (p12pass == null || p12pass.trim().length() == 0) {
-			throw new IllegalStateException(
-					"Debe configurarse keystore-password en liferay_schedulers.properties"
-			);
-		}
+		p12pass = props.getProperty("keystore-password","miclaveprivada");
 		
 		// Set the keystore used by SSL
 		System.setProperty("javax.net.ssl.trustStore", props.getProperty("trustStore",""));
@@ -185,4 +180,4 @@ public class AfipLoginCmsClient {//extends AgendadoJava {
 		
 		return respo;
 	}
-}
+} 

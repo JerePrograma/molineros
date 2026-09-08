@@ -39,7 +39,6 @@ import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.model.DLFolder;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
@@ -48,41 +47,25 @@ import com.liferay.portlet.documentlibrary.service.DLFolderServiceUtil;
 import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.global.beans.Comprobante;
 import ar.com.ospim.global.beans.Empresa;
-import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.servlets.PdfServlet;
 import sun.misc.BASE64Decoder;
 
 
 public class ClienteProveedoresLPA {
 
-	private static final String CONFIG_HOST = "PROVEEDORES_LPA_HOST";
-	private static final String CONFIG_USER = "PROVEEDORES_LPA_USER";
-	private static final String CONFIG_PASSWORD = "PROVEEDORES_LPA_PASSWORD";
+	private static final String DEFAULT_USER = "OSPIM_API";
+	private static final String DEFAULT_PASS = "aRmcAIxyz";
 	private static Log logger = LogFactoryUtil.getLog(ClienteProveedoresLPA.class);
 	private String error;
-
-	private static String getRequiredSystemConfig(String key) {
-		String value = TraeListasServiceUtil.getSystemConfig(key);
-
-		if (value == null || value.trim().length() == 0) {
-			throw new IllegalStateException("Falta configuracion requerida: " + key);
-		}
-
-		return value;
-	}
-
-	private static String getHost() {
-		return getRequiredSystemConfig(CONFIG_HOST);
-	}
-
-	private static String getAuthHeader() {
-		String auth = getRequiredSystemConfig(CONFIG_USER) + ":"
-				+ getRequiredSystemConfig(CONFIG_PASSWORD);
-		byte[] encodedAuth = Base64.getEncoder().encode(
-				auth.getBytes(StandardCharsets.ISO_8859_1));
-
-		return "Basic " + new String(encodedAuth, StandardCharsets.ISO_8859_1);
-	}
+	private static String auth = DEFAULT_USER + ":" + DEFAULT_PASS;
+	private static byte[] encodedAuth =Base64.getEncoder().encode( auth.getBytes(StandardCharsets.ISO_8859_1)) ;
+	private static String authHeader = "Basic " + new String(encodedAuth);		
+	
+	//Producción
+	private static String host="https://portalproveedores.ospim.org.ar/";
+	
+	//QA
+	//private static String host="https://portalproveedoresqa.digitrack.com.ar/";
 	
 	private static SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMdd");
 	private static SimpleDateFormat sdf1=new SimpleDateFormat("yyyy-MM-dd");
@@ -94,7 +77,6 @@ public class ClienteProveedoresLPA {
 			getComprobanteArchivos(cpbtes,"archivo");
 		} catch (UnsupportedEncodingException e) {
 			logger.debug("Error WS LPA" + e);
-			throw e;
 		}
 	}
 	
@@ -104,7 +86,6 @@ public class ClienteProveedoresLPA {
 			getComprobanteArchivos(cpbtes,"adjuntos");
 		} catch (UnsupportedEncodingException e) {
 			logger.debug("Error WS LPA" + e);
-			throw e;
 		}
 	}
 	
@@ -159,9 +140,9 @@ public class ClienteProveedoresLPA {
 			
 			HttpClient httpclient = new HttpClient();
 			String responseBodyAsString;
-			String url =getHost() +endPoint+p;
+			String url =host+endPoint+p;
 			GetMethod httpGet = new GetMethod(url);
-			httpGet.addRequestHeader("Authorization", getAuthHeader());
+			httpGet.addRequestHeader("Authorization", authHeader);
 			httpGet.addRequestHeader("accept", "application/json");
 			httpGet.addRequestHeader("content-type", "application/json");
 			httpGet.addRequestHeader("User-Agent","telnet");
@@ -172,10 +153,12 @@ public class ClienteProveedoresLPA {
 				int statusCode = httpGet.getStatusLine().getStatusCode();
 				if(statusCode==200) {
 					JSONObject results = new JSONObject(responseBodyAsString);
-					if(results.has("code")) {
-						throw new Exception("LPA devolvio una respuesta con codigo que no permite confirmar la descarga.");
-					}
-					JSONArray items = results.getJSONArray("comprobante");
+					try {
+					  Integer code =results.getInt("code");
+					  logger.debug("Bajada de Archivos WS LPA" + responseBodyAsString);
+					}catch(Exception e21) {
+						
+						JSONArray items = results.getJSONArray("comprobante");
 						for (int i = 0; i < items.length(); i++) {
 						    try {
 						    	String title="";
@@ -194,35 +177,27 @@ public class ClienteProveedoresLPA {
 						    	fop.flush();
 						    	fop.close();
 						    	
-							DLFileEntry dl=null;
-							boolean esArchivo = "archivo".equals(opcion);
-							Integer qIntentos=0;
-							do {
-							    qIntentos++;
-							    title=idFacturaImg +"-" + (esArchivo?0:1+(int)(rnd.nextDouble()*100));
-							    try {
-							        dl=DLFileEntryLocalServiceUtil.getFileEntryByTitle(folderId, title + (extension.length()>0?".":"") + extension);
-							    } catch(NoSuchFileEntryException e2) {
-							        dl=null;
-							    }
-							} while (dl!=null && !esArchivo && qIntentos<=10);
-
-							if(dl!=null) {
-							    throw new Exception("El documento LPA ya existe y no se puede verificar su identidad para reemplazarlo.");
-							} else {
-							    DLFileEntryLocalServiceUtil.addFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
-							            title, j.getString("nombre"), "", file, serviceContext);
-							}
+						    	DLFileEntry dl=null;
+						    	Integer qIntentos=0;
+						      	do {
+						      		qIntentos++;
+						      		title=idFacturaImg +"-" + ("archivo".equals(opcion)?0:(int)(rnd.nextDouble()*100));
+						      		try{
+						      		   dl=null;
+						      		   dl=	DLFileEntryLocalServiceUtil.getFileEntryByTitle(folderId, title + (extension.length()>0?".":"") + extension);
+						      		} catch(Exception e2){}   
+						      	} while (dl!=null && qIntentos<=10);  
+						    		
+						      	DLFileEntry entry = DLFileEntryLocalServiceUtil.addOrOverwriteFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
+						      			j.getString("nombre"), title, j.getString("nombre"), "", file, serviceContext);
 						    }catch(Exception e1) {
-							throw e1;
+						    	logger.debug("Error WS LPA "+e1);
 						    }
 						}    
-				} else {
-					throw new Exception("Error HTTP al obtener documentos WS LPA: " + statusCode);
+					}
 				}
 			}catch(Exception e) {
-				logger.error("Error al obtener documentos WS LPA", e);
-				throw e;
+				logger.debug("Error WS LPA "+e);
 			}
 		}
 	}
@@ -235,9 +210,9 @@ public class ClienteProveedoresLPA {
 		String params= HttpUtil.encodeURL(status,true) +"/range/"+sdf.format(fechaIni)+"/"+sdf.format(fechaFin);
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
-		GetMethod httpGet = new GetMethod( getHost() +endPoint+params);
+		GetMethod httpGet = new GetMethod( host+endPoint+params);
 		
-		httpGet.addRequestHeader("Authorization", getAuthHeader());
+		httpGet.addRequestHeader("Authorization", authHeader);
 		httpGet.addRequestHeader("accept", "application/json");
 		httpGet.addRequestHeader("content-type", "application/json");
 		httpGet.addRequestHeader("User-Agent","telnet");
@@ -248,10 +223,10 @@ public class ClienteProveedoresLPA {
 			int statusCode = httpGet.getStatusLine().getStatusCode();
 			if(statusCode==200) {
 				JSONObject results = new JSONObject(responseBodyAsString);
-				if(results.has("code")) {
-					throw new Exception("LPA devolvio una respuesta con codigo que no permite confirmar el listado.");
-				}
-				JSONArray items = results.getJSONArray("comprobantes");
+				try {
+				  Integer code =results.getInt("code");
+				}catch(Exception e) {
+					JSONArray items = results.getJSONArray("comprobantes");
 					for (int i = 0; i < items.length(); i++) {
 					    try {
 					    	Comprobante c = new Comprobante();
@@ -318,10 +293,10 @@ public class ClienteProveedoresLPA {
 					        	tipo="FCP";
 					        	letra="A";	
 					        }else if("Nota de Crédito B".equalsIgnoreCase(tipoComprobante)) {
-						tipo="NCR";
+					        	tipo="NCR";
 					        	letra="B";
 					        }else if("Nota de Crédito C".equalsIgnoreCase(tipoComprobante)) {
-						tipo="NCR";
+					        	tipo="NCR";
 					        	letra="C";
 					        }else if("Nota de Débito B".equalsIgnoreCase(tipoComprobante)) {
 					        	tipo="NDB";
@@ -370,16 +345,15 @@ public class ClienteProveedoresLPA {
 					        
 					        cs.add(c);
 					    } catch (JSONException e1) {
-						throw e1;
+					    	logger.debug("Error WS LPA" + e1);
 					    }
 					}
+				}
 			}else {
-				throw new Exception("Error HTTP al obtener el listado WS LPA: " + statusCode);
 			}
 			
 		} catch (Exception e) {
-			logger.error("Error al obtener el listado WS LPA", e);
-			throw new RuntimeException("No se pudo obtener la lista completa de comprobantes WS LPA", e);
+			logger.debug("Error WS LPA" + e);
 		}
 		return cs;
 	}
@@ -392,9 +366,9 @@ public class ClienteProveedoresLPA {
 		
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
-		GetMethod httpGet = new GetMethod(getHost() +endPoint+params);
+		GetMethod httpGet = new GetMethod(host+endPoint+params);
 		
-		httpGet.addRequestHeader("Authorization", getAuthHeader());
+		httpGet.addRequestHeader("Authorization", authHeader);
 		httpGet.addRequestHeader("accept", "application/json");
 		httpGet.addRequestHeader("content-type", "application/json");
 		httpGet.addRequestHeader("User-Agent","telnet");
@@ -441,11 +415,12 @@ public class ClienteProveedoresLPA {
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
 		//Produccion
-		PostMethod httpPost = new PostMethod(getHost() +endPoint);
+		PostMethod httpPost = new PostMethod(host+endPoint);
 		
 		//QA
+//		PostMethod httpPost = new PostMethod("https://portalproveedoresqa.digitrack.com.ar/api/v1/comprobante/UploadOP");
 		
-		httpPost.addRequestHeader("Authorization", getAuthHeader());
+		httpPost.addRequestHeader("Authorization", authHeader);
 		httpPost.addRequestHeader("accept", "application/json");
 		httpPost.addRequestHeader("content-type", "application/json");
 		httpPost.addRequestHeader("User-Agent","telnet");
@@ -495,11 +470,12 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
 		//Produccion
-		PostMethod httpPost = new PostMethod(getHost() +endPoint);
+		PostMethod httpPost = new PostMethod(host+endPoint);
 		
 		//QA
+		//PostMethod httpPost = new PostMethod("https://portalproveedoresqa.digitrack.com.ar/api/v1/comprobante/UploadOPWithFile");
 		
-		httpPost.addRequestHeader("Authorization", getAuthHeader());
+		httpPost.addRequestHeader("Authorization", authHeader);
 		httpPost.addRequestHeader("accept", "application/json");
 		httpPost.addRequestHeader("content-type", "multipart/form-data");
 		httpPost.addRequestHeader("User-Agent","telnet");
@@ -609,9 +585,9 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 		
 		HttpClient httpclient = new HttpClient();
 		String responseBodyAsString;
-		String url =getHost() +endPoint+p;
+		String url =host+endPoint+p;
 		GetMethod httpGet = new GetMethod(url);
-		httpGet.addRequestHeader("Authorization", getAuthHeader());
+		httpGet.addRequestHeader("Authorization", authHeader);
 		httpGet.addRequestHeader("accept", "application/json");
 		httpGet.addRequestHeader("content-type", "application/json");
 		httpGet.addRequestHeader("User-Agent","telnet");
@@ -622,10 +598,12 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 			int statusCode = httpGet.getStatusLine().getStatusCode();
 			if(statusCode==200) {
 				JSONObject results = new JSONObject(responseBodyAsString);
-				if(results.has("code")) {
-					throw new Exception("LPA devolvio una respuesta con codigo que no permite confirmar la descarga.");
-				}
-				JSONArray items = results.getJSONArray("recibo");
+				try {
+				  Integer code =results.getInt("code");
+				  logger.debug("Bajada de Archivos WS LPA" + responseBodyAsString);
+				}catch(Exception e21) {
+					
+					JSONArray items = results.getJSONArray("recibo");
 					for (int i = 0; i < items.length(); i++) {
 					    try {
 					    	String title="";
@@ -649,26 +627,20 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 					      	title=idFacturaImg +"-Recibo" ;
 					      	try{
 					      	   dl=	DLFileEntryLocalServiceUtil.getFileEntryByTitle(folderId, title + (extension.length()>0?".":"") + extension);
-						} catch(NoSuchFileEntryException e2){
-						   dl=null;
-						}
+					      	} catch(Exception e2){}   
 					      	  
-						if(dl!=null) {
-						    throw new Exception("El recibo LPA ya existe y no se puede verificar su identidad para reemplazarlo.");
-						} else {
-						   DLFileEntryLocalServiceUtil.addFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
-								title, j.getString("nombre"), "", file, serviceContext);
+					    	if(dl==null) {	
+					      	   DLFileEntry entry = DLFileEntryLocalServiceUtil.addOrOverwriteFileEntry(serviceContext.getUserId(), folderId, j.getString("nombre"),
+					      			j.getString("nombre"), title, j.getString("nombre"), "", file, serviceContext);
 					    	}
 					    }catch(Exception e1) {
-						throw e1;
+					    	logger.debug("Error WS LPA "+e1);
 					    }
 					}    
-			} else {
-				throw new Exception("Error HTTP al obtener recibos WS LPA: " + statusCode);
+				}
 			}
 		}catch(Exception e) {
-			logger.error("Error al obtener recibos WS LPA", e);
-			throw e;
+			logger.debug("Error WS LPA "+e);
 		}
 	}
   }
@@ -676,6 +648,40 @@ public static String setOrdenPagoWithPDF(Integer id,Integer idOP,Calendar fechaO
 
 
     
-
+   /*
+    public static void main(String[] args) throws Exception {
+		Calendar c1 = Calendar.getInstance();
+        c1.set(2023, Calendar.AUGUST, 2);
+        c1.set(Calendar.HOUR_OF_DAY, 15);
+        c1.set(Calendar.MINUTE, 30);
+        c1.set(Calendar.SECOND, 24);
+		//Date fechaIni=  c1.getTime();
+		//Date fechaFin= new Date(); //c1.getTime();
+		
+		//List<Comprobante>cc=getComprobantesByEstado("Verificado",fechaIni,fechaFin);
+		
+		// Id real PROD 320889  3075829963 FCP B 5406
+        //String rta=setOrdenPago(3451, 176132, c1);
+		
+		//String rta=setOrdenPago(3423, 777, c1);
+		//String rta=setOrdenPago(3453, 176132, c1);
+		
+		
+		//Calendar c2 = Calendar.getInstance();
+        //c2.set(2022, Calendar.NOVEMBER, 3);
+        //fechaFin=c2.getTime();
+		
+		//List <Empresa> cs = getUsuariosRegistrados();
+		//for(Comprobante c:cs) {
+		//	System.out.println(c.getPtoVenta()+ " - " +  c.getNroComprobante());
+		//}
+		
+        //String rta=setOrdenPago(9000, 176178, c1);
+        String rta=setOrdenPago(3451, 176132, c1);
+        
+		System.out.println("RTA: " + rta);
+		System.out.println("Salio");
+	}
+  */
   
 }

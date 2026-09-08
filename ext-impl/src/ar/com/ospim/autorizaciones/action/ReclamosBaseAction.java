@@ -42,6 +42,9 @@ public class ReclamosBaseAction  extends PortletAction {
 
     public static double getImportePrestacionFromRequest(PortletRequest request, String nombre)
             throws Exception {
+        if (!Boolean.TRUE.equals(request.getAttribute("rp.view.restringirRecuperableCompras"))) {
+            return ParamUtil.getDouble(request, nombre);
+        }
         String texto = ParamUtil.getString(request, nombre, "").trim();
         if (texto.length() == 0) {
             return 0D;

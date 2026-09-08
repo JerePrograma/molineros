@@ -25,7 +25,7 @@ public class BuscarAfiliadoFechaVtoDiscapacidad extends JSONAction {
 		String inte  = req.getParameter("inte");
 		SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
 		
-		Afiliado afiliado =EditarAfiliadoServiceUtil.getAfiliadoEntryInclusoDadoBaja(cuilTitular, Integer.parseInt(inte), false) ;
+		Afiliado afiliado =EditarAfiliadoServiceUtil.getAfiliadoEntryInclusoDadoBaja(cuilTitular, Integer.parseInt(inte)) ;
 		String resultado = "";
 		try{
 		  resultado =sdf.format(afiliado.getFechaVtoDocDiscap());

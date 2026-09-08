@@ -353,7 +353,7 @@ function validarTipoNomenclador(){
 	var tipoNomenclador = jQuery('#<portlet:namespace />tipoNomenclador').val();
 
 	if (tipoNomenclador == null || tipoNomenclador == '' || tipoNomenclador == '0') {
-		alert('Debe seleccionar un nomenclador v·lido');
+		alert('Debe seleccionar un nomenclador v√°lido');
 		jQuery('#<portlet:namespace />tipoNomenclador').focus();
 		return false;
 	}

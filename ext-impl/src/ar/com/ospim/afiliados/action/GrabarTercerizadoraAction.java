@@ -96,7 +96,7 @@ public class GrabarTercerizadoraAction extends PortletAction {
 		Date fechaHastaNuevoPlan = this.getFechaHastaPlanNuevo(renderRequest);
 //
 //		deshacemos cambios nuevos, porque puede ser que se arrepientan de bajas cascadas o seleccionan otro plan nuevo, etc...
-
+		
 		//NUEVO 27/08/2026 - Mauro
 		// Se reemplaza el manejo de la lista en sesión por una recarga desde BD,
 		// para evitar conservar modificaciones temporales al cambiar varias veces de plan.
@@ -111,7 +111,7 @@ public class GrabarTercerizadoraAction extends PortletAction {
 				}
 			}
 		}
-*/
+*/	
 		//se agrega 27/08/2026
 		try {
 		    afiliadoTercerizadoras =
@@ -119,7 +119,7 @@ public class GrabarTercerizadoraAction extends PortletAction {
 		} catch (Exception e) {
 		    _log.error("Error recargando tercerizadoras del afiliado", e);
 		}
-
+		
 //		try {
 //			tercerizadorasPlanNuevo=(ArrayList<TercerizadoraServicio>) TercerizadoraServiceUtil.getInstance().getTercerizadoraPlan(idPlan);
 //			

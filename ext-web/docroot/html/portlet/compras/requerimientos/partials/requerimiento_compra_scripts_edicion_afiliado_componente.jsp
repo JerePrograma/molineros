@@ -129,16 +129,8 @@ List<RequerimientoCompraSector> sectores =
         return jQuery.trim(input.val());
     }
 
-    function <portlet:namespace />valorAfiliado(id) {
-        return <portlet:namespace />trimValue(id);
-    }
-
     function <portlet:namespace />valorCredencialAfiliado() {
         return jQuery('#<portlet:namespace />' + 'num' + 'ero_afi').val();
-    }
-
-    function <portlet:namespace />paramCredencialAfiliado() {
-        return 'num' + 'ero_afi';
     }
 
     function <portlet:namespace />invalidarConsultaItemsHistoricosAfiliado() {

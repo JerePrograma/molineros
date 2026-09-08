@@ -15,8 +15,7 @@ public class ContactoElectronico implements Serializable {
 	//Estos ids se corresponden con los ids de la base de datos.
 	//Si este conjunto crece, se deberian obtener de la base y sacar este hardcode
 	 public enum Tipo { 
-		 EMAIL ("E"), SITIOWEB ("S"), FAX ("F"), PERSONAL ("P"),EMAILCBU ("EC"),
-        DESCONOCIDO(null);
+		 EMAIL ("E"), SITIOWEB ("S"), FAX ("F"), PERSONAL ("P"),EMAILCBU ("EC");
 		 
 		 private String id;
 		 Tipo (String id){
@@ -26,30 +25,15 @@ public class ContactoElectronico implements Serializable {
 		 public String getId(){
 			 return this.id;
 		 }
-
-        public static Tipo getTipoById(
-                String id) {
-
-            String idNormalizado =
-                    id != null
-                            ? id.trim()
-                            : null;
-
-            if (idNormalizado != null
-                    && idNormalizado.length() > 0) {
-
-                for (Tipo tipo : Tipo.values()) {
-                    if (tipo.getId() != null
-                            && tipo.getId().equalsIgnoreCase(
-                            idNormalizado
-                    )) {
-                        return tipo;
-                    }
-                }
-            }
-
-            return Tipo.DESCONOCIDO;
-        }
+		 
+		 public static Tipo getTipoById(String id){
+			 for (Tipo tipo: Tipo.values()){
+				 if (tipo.getId().equals(id)){
+					 return tipo;
+				 }				 
+			 }			 
+			 return Tipo.EMAIL;
+		 }
 		 
 	}
 

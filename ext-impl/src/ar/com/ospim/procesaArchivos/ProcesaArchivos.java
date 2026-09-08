@@ -1680,7 +1680,7 @@ public final class ProcesaArchivos {
 	String importe="";
 	String nroMovimiento="";
 	
-
+	
 	Factura f=null;
 	String line = "";
 
@@ -1845,11 +1845,11 @@ public final class ProcesaArchivos {
 		
   }else if("CHQ".equals(codigo)) {
 	    CuentaBancaria cb = null;
-		String nroCheque=line.substring(87,96).trim();
+		String nroCheque=line.substring(87,96).trim(); 
 		String idBanco=TraeListasServiceUtil.getSystemConfig("HOTELES_BCO_CHEQUE_CTA_CTE");
 		String idCtaBcria=TraeListasServiceUtil.getSystemConfig("HOTELES_BCO_CTA_BCRIA_CTA_CTE");
 		String idCuit=TraeListasServiceUtil.getSystemConfig("HOTELES_CUIT_CHEQUES_CTA_CTE");
-
+		
 		Cheque cheque = new Cheque(new BigDecimal(nro+nroCheque), Integer.parseInt(idBanco));
 		cheque.setImporte(new BigDecimal(importe));
 		Estado estado= new Estado(Cheque.Estado.RECIBIDO);
@@ -1857,12 +1857,12 @@ public final class ProcesaArchivos {
 		cheque.setFecha(sdf.parse(fechaVto));
 		cheque.setDebitoCredito(Cheque.Tipo.CREDITO);
 		cheque.setCuit(idCuit);
-
+		
 		Banco b = new Banco(Integer.parseInt(idBanco));
 		cb = new CuentaBancaria(Integer.parseInt(idCtaBcria));
 		cb.setBanco(b);
 		cheque.setCuentaBancaria(cb);
-		fi.setIngreso(cheque);
+		fi.setIngreso(cheque);	
   }else {
 	  Efectivo e = new Efectivo();
 	  e.setImporte(new BigDecimal(importe));

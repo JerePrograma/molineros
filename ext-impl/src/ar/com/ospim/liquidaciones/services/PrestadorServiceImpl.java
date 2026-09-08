@@ -1192,8 +1192,8 @@ public class PrestadorServiceImpl {
 		return listaPrestadores;
 	}
 
-	public int actualizarSolicitarCotizacionPrestador(int idPrestador, boolean solicitarCotizacion, String screenName)
-			throws SystemException {
+	public int actualizarSolicitarCotizacionPrestador(int idPrestador, boolean solicitarCotizacion, String screenName) 
+	        		throws SystemException {
 
 	    Connection con = null;
 	    CallableStatement stmt = null;
@@ -1220,7 +1220,6 @@ public class PrestadorServiceImpl {
 
 	    } catch (Exception e) {
 
-	        _log.error("Error al actualizar solicitar cotizacion del prestador", e);
 	        throw new SystemException(e);
 
 	    } finally {
@@ -1228,8 +1227,8 @@ public class PrestadorServiceImpl {
 	        ConnectionHelper.cerrar(stmt, con);
 	    }
 	}
-
-	public void actualizarRubrosPrestador(int idPrestador, List<String> rubros, String screenName)
+	
+	public void actualizarRubrosPrestador(int idPrestador, List<String> rubros, String screenName) 
 			throws SystemException {
 
 	    Connection con = null;
@@ -1268,13 +1267,11 @@ public class PrestadorServiceImpl {
 
 	    } catch (Exception e) {
 
-	        _log.error("Error al actualizar rubros del prestador", e);
 	        try {
 	            if (con != null) {
 	                con.rollback();
 	            }
 	        } catch (Exception ignored) {
-	            _log.error("Error al revertir rubros del prestador", ignored);
 	        }
 
 	        throw new SystemException(e);
@@ -1286,3 +1283,4 @@ public class PrestadorServiceImpl {
 	    }
 	}
 }
+

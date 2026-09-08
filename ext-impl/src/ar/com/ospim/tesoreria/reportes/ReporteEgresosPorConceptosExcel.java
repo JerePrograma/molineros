@@ -33,6 +33,7 @@ import ar.com.ospim.global.services.OrdenPagoServiceUtil;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.ordenespago.reportes.ReporteXLS;
 import ar.com.ospim.tesoreria.beans.MovimientoBancarioSubdiarioEgreso;
+import ar.com.ospim.tesoreria.beans.TipoMovBcrio;
 import ar.com.ospim.tesoreria.services.MovimientoBancarioServiceUtil;
 import ar.com.ospim.util.DateUtils;
 
@@ -305,10 +306,9 @@ public class ReporteEgresosPorConceptosExcel extends ReporteXLS {
 				if (c instanceof MovimientoBancarioSubdiarioEgreso.ColumnaComprobante) {
 					if (conceptosList != null && conceptosList.size() != 0
 							&& !conceptosList.get(0).equals("null")
-							&& !conceptosList.contains(c.getDescripcion())) {
-						// &&
-						// !conceptosList.contains(String.valueOf(cc.getConceptoComprobante().getId())))
-						// {
+							&& !conceptosList.contains( ((MovimientoBancarioSubdiarioEgreso.ColumnaComprobante) c).getConcepto())){
+//						&& !conceptosList.contains(c.getDescripcion())) { 
+						
 						continue;
 					}
 					BigDecimal importeConcepto = c.getImporte();
@@ -416,7 +416,8 @@ public class ReporteEgresosPorConceptosExcel extends ReporteXLS {
 					HSSFCell cellCompro = rowComp.createCell(cont++);
 					cellCompro
 							.setCellValue(new HSSFRichTextString(c
-									.getTipoComprobante()
+									.getTipoComprobante()!=null?c
+											.getTipoComprobante():""
 									+ "-"
 									+ c.getNroComprobante()));
 					cellCompro.setCellStyle(styleAll);

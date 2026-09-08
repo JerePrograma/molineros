@@ -48,9 +48,6 @@ public class BusquedaRequerimientoCompraServiceImpl {
     private static final String SQL_GET_SECTOR =
             "{call compras.get_sector_requerimiento(?)}";
 
-    private static final String SQL_BUSCAR_PRESTADORES_ENVIADOS =
-            "{call compras.buscar_prestadores_enviados(?,?,?)}";
-
     private static final String SQL_LISTAR_PRESTADORES_ENVIADOS =
             "{call compras.listar_prestadores_enviados(?,?)}";
 
@@ -443,36 +440,6 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     stmt,
                     con
             );
-        }
-    }
-
-    public List<PrestadorCotizacion> buscarPrestadoresEnviados(
-            int idRequerimientoCompra,
-            String texto,
-            int limite) throws Exception {
-
-        Connection con = null;
-        CallableStatement stmt = null;
-        ResultSet rs = null;
-        List<PrestadorCotizacion> resultado =
-                new ArrayList<PrestadorCotizacion>();
-
-        try {
-            con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_BUSCAR_PRESTADORES_ENVIADOS);
-            stmt.setInt(1, idRequerimientoCompra);
-            stmt.setString(2, texto);
-            stmt.setInt(3, limite);
-            rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                resultado.add(mapPrestadorCotizacion(rs));
-            }
-
-            return resultado;
-        } finally {
-            closeQuietly(rs);
-            ConnectionHelper.cerrar(stmt, con);
         }
     }
 

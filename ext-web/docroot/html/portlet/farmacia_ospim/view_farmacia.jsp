@@ -465,7 +465,7 @@ function validaDatos(){
         alert("Se está validando el CUIT. Aguarde un momento y vuelva a grabar.");
         return false;
     }
-
+	
 	if (resp=="1" ){
 		alert('El Cuit corresponde a otra Farmacia ya cargada.');
 		return false;

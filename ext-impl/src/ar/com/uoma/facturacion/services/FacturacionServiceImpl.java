@@ -173,7 +173,7 @@ public class FacturacionServiceImpl {
 		
 		Connection con = null;
 		CallableStatement stmt = null, stmt1 = null, stmt2 = null, stmt3 = null, stmt4 = null,stmtCheque = null;
-
+		
 		String sqlCheque = null;
 		
 		int idClienteNuevo = -1, idFacturaNueva = 0;
@@ -305,8 +305,8 @@ public class FacturacionServiceImpl {
 			
 			sqlCheque = "{call uoma.insertar_cheques_uoma(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 			stmtCheque = con.prepareCall(sqlCheque.toString());
-
-
+			
+			
 			for (Iterator<FacturaIngreso> iterator = factura.getIngresos().iterator(); iterator.hasNext();) {
 				FacturaIngreso fi =  iterator.next();
 				Ingreso i =  fi.getIngreso();
@@ -465,10 +465,10 @@ public class FacturacionServiceImpl {
 					stmtCheque.setString(10,"C");
 					stmtCheque.setInt(11, ((Cheque)i).getBanco().getId_banco());
 					stmtCheque.setInt(12,  ((Cheque)i).getEstado().getId());
-
+					
 					stmtCheque.executeUpdate();
 				}
-
+				
 				String sql4 = "{call uoma.inserta_factura_recibo(?,?,?,?,?) }";
 				
 				stmt4 = con.prepareCall(sql4.toString());
@@ -499,7 +499,6 @@ public class FacturacionServiceImpl {
 			throw new SystemException(e);
 			
 		} finally {
-			ConnectionHelper.cerrar(stmtCheque);
 			ConnectionHelper.cerrar(stmt4);
 			ConnectionHelper.cerrar(stmt3);
 			ConnectionHelper.cerrar(stmt2);
@@ -1154,3 +1153,4 @@ public Cliente getClienteById(Integer idCliente) throws SystemException {
 }
 	
 }
+

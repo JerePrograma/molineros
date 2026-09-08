@@ -88,7 +88,6 @@
 		
 		<action path="/afiliados/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosAction">
 			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
-			<forward name="portlet.afiliados.result.search.auto_select" path="portlet.afiliados.result.search.auto_select" />
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.opciones.result.search" path="portlet.afiliados.opciones.result.search" />
 			<forward name="portlet.afiliados.editar_afiliado_entry" path="portlet.afiliados.editar_afiliado_entry" />
@@ -97,7 +96,6 @@
 		
 		<action path="/afiliados/buscar_afiliados_cred" type="ar.com.ospim.afiliados.action.BuscarAfiliadosAction">
 			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
-			<forward name="portlet.afiliados.result.search.auto_select" path="portlet.afiliados.result.search.auto_select" />
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.opciones.result.search" path="portlet.afiliados.opciones.result.search" />
 			<forward name="portlet.afiliados.editar_afiliado_entry" path="portlet.afiliados.editar_afiliado_entry" />
@@ -5204,7 +5202,6 @@
 	  <action path="/cai/buscar_afiliados_sesion" forward="portlet.afiliados.result.search" />
 	  <action path="/cai/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosAction">
 			<forward name="portlet.afiliados.result.search" path="portlet.afiliados.result.search" />
-			<forward name="portlet.afiliados.result.search.auto_select" path="portlet.afiliados.result.search.auto_select" />
 			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
 			<forward name="portlet.afiliados.opciones.result.search" path="portlet.afiliados.opciones.result.search" />
 			<forward name="portlet.afiliados.editar_afiliado_entry" path="portlet.cai.editar_afiliado_entry" />
@@ -6218,6 +6215,25 @@
 		    <forward name="portlet.comprobantes.comprobantes_search_result_gerenciadoras" path="portlet.comprobantes.comprobantes_search_result_gerenciadoras"/>
 		    <forward name="portlet.comprobantes.comprobante_gerenciadoras_editar" path="portlet.comprobantes.comprobante_gerenciadoras_editar" />
 	</action>
+	
+	<action path="/comprobantes/traer_conceptos_liquidacion_para_fecha"
+			type="ar.com.ospim.global.actions.TraeConceptosLiquidacionParaFechaAction" />
+			
+	<action path="/comprobantes/lista_prestaciones_reclamos_reintegros" type="ar.com.ospim.liquidaciones.action.ListaPrestacionesreclamosreintegrosAction">
+		 	<forward name="portlet.liquidaciones.prestaciones_reclamos_reintegro_entry" path="portlet.liquidaciones.prestaciones_reclamos_reintegro_entry" />
+		 	<forward name="portlet.liquidaciones.prestaciones_reclamos_reintegro_por_lote_entry" path="portlet.liquidaciones.prestaciones_reclamos_reintegro_por_lote_entry" />
+		 	<forward name="portlet.liquidaciones.prestaciones_reclamos_reintegro_cuotas_entry" path="portlet.liquidaciones.prestaciones_reclamos_reintegro_cuotas_entry" />
+		 	
+		 	<forward name="portlet.farmacia.prestaciones_reclamos_reintegro_entry" path="portlet.farmacia.prestaciones_reclamos_reintegro_entry" />
+		 		
+	</action>    
+	
+	<action path="/comprobantes/buscar_afiliados" type="ar.com.ospim.afiliados.action.BuscarAfiliadosComponenteAction">
+			<forward name="portlet.afiliados.result.search.popup" path="portlet.afiliados.result.search.popup" />
+			<forward name="portlet.afiliados.error" path="portlet.afiliados.error" />
+	</action>
+	<action path="/comprobantes/buscar_afiliado_fecha_vto_documentacion" type="ar.com.ospim.autorizaciones.action.BuscarAfiliadoFechaVtoDiscapacidad"/>
+	<action path="/comprobantes/buscar_topes_discapacidad_afiliado" forward="portlet.liquidaciones.buscar_topes_discapacidad_afiliado" />		
 <!-- Fin Comprobantes -->  
 
 <!-- Centros de Costos Contabilidad -->
@@ -6249,7 +6265,7 @@
 <!-- Fin Centros de Costos Contabilidad -->  
      
      
- <!-- Gestión de Demandas Judiciales -->
+<!-- Gestión de Demandas Judiciales -->
 <action path="/estudio_isidro/demandas_editar" type="ar.com.ospim.estudioisidro.action.DemandaJudicialAction">
 		    <forward name="portlet.estudio_isidro.demanda_editar" path="portlet.estudio_isidro.demanda_editar" />
 		    <forward name="portlet.estudio_isidro.demandas.result.search" path="portlet.estudio_isidro.demandas.result.search"/>
@@ -6978,6 +6994,64 @@
             <forward name="portlet.prestadores.error" path="portlet.prestadores.error" />
         </action>
 
+		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">
+			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" />
+			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" />
+		</action>
+
+        <action path="/autorizaciones/upload_imagenes_situacionmedica"
+               type="ar.com.ospim.autorizaciones.action.UploadImagenesSituacionMedicaAction">
+           <forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
+                  path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
+        </action>
+
+        <action path="/liquidaciones/comprobantes_consulta_interbanking"
+			type="ar.com.ospim.liquidaciones.comprobantes.action.ComprobantesConsultaInterbankingAction">
+			<forward name="portlet.liquidaciones.comprobantes.interbanking.search.result"
+				path="portlet.liquidaciones.comprobantes.interbanking.search.result" />
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+		</action>
+
+<action
+    path="/afiliados/pre_afiliados_pendientes"
+    type="ar.com.ospim.novedades.action.PreAfiliadosPendientesAction">
+
+    <forward
+        name="portlet.afiliados.pre_afiliados_pendientes"
+        path="portlet.afiliados.pre_afiliados_pendientes" />
+
+</action>
+
+<action
+    path="/afiliados/importar_documentacion_comercial"
+    type="ar.com.ospim.afiliados.action.ImportarDocumentacionComercialAction" />
+
+<action
+    path="/afiliados/familiares_comerciales_pendientes"
+    type="ar.com.ospim.afiliados.action.FamiliaresComercialesPendientesAction">
+
+    <forward
+        name="portlet.afiliados.familiares_comerciales_pendientes"
+        path="portlet.afiliados.familiares_comerciales_pendientes" />
+
+</action>
+
+<action
+    path="/afiliados/generar_pre_afiliado_integrante_comercial"
+    type="ar.com.ospim.afiliados.action.GenerarPreAfiliadoIntegranteComercialAction" />
+
+ <action path="/farmaciaospim/upload_admifarm_general"                  
+        type="ar.com.ospim.farmaciaOspim.action.UploadAdmifarmOspimGeneralAction">
+
+		<forward name="portlet.farmaciaospim.view" path="portlet.farmaciaospim.view" />
+		<forward name="portlet.farmaciaospim.error" path="portlet.farmaciaospim.error" />
+</action>	
+		
+		<action path="/prestadores/cartilla_sop" type="ar.com.ospim.prestadores.action.ImportarCartillaSOPAction">
+    		<forward name="portlet.prestadores.cartilla_sop" path="portlet.prestadores.cartilla_sop"/>
+		</action>
+
+
 		<!-- COMPRAS -->
 
 		<action
@@ -7067,15 +7141,6 @@
 					name="portlet.compras.error"
 					path="portlet.compras.error" />
 		</action>
-
-        <action
-                path="/compras/buscar_medicamentos"
-                type="ar.com.ospim.compras.requerimientos.action.BuscarMedicamentosComprasAction">
-
-            <forward
-                    name="portlet.compras.buscar_medicamentos"
-                    path="portlet.compras.buscar_medicamentos" />
-        </action>
 
 		<action
 				path="/compras/buscar_item_tecnico"
@@ -7192,24 +7257,6 @@
 				forward="portlet.seccional.view" />
 
 		<action
-				path="/compras/buscar_prestadores_enviados"
-				type="ar.com.ospim.compras.requerimientos.action.BuscarPrestadoresEnviadosComprasAction">
-
-			<forward
-					name="portlet.compras.prestadores_enviados"
-					path="portlet.compras.prestadores_enviados" />
-		</action>
-
-		<action
-				path="/compras/ver_prestadores_habilitados_cotizacion"
-				type="ar.com.ospim.compras.requerimientos.action.VerPrestadoresHabilitadosCotizacionCompraAction">
-
-			<forward
-					name="portlet.compras.prestadores_habilitados_cotizacion"
-					path="portlet.compras.prestadores_habilitados_cotizacion" />
-		</action>
-
-		<action
 				path="/compras/upload_presupuestos_requerimiento"
 				type="ar.com.ospim.compras.requerimientos.action.UploadPresupuestosComprasAction">
 
@@ -7251,59 +7298,7 @@
 
         <!-- COMPRAS -->
 
-		<action path="/tesoreria/buscar_saldo_diario_cuentas_bancarias" type="ar.com.ospim.tesoreria.action.BuscarSaldoDiarioCuentasBancariasAction">
-			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.inicial" />
-			<forward name="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" path="portlet.tesoreria.buscar.saldo.diario.cuentas.bancarias.resultado" />
-		</action>
-
-        <action path="/autorizaciones/upload_imagenes_situacionmedica"
-                type="ar.com.ospim.autorizaciones.action.UploadImagenesSituacionMedicaAction">
-            <forward name="portlet.autorizaciones.patologias.editar_registro_situacionmedica_entry_imagen"
-                     path="portlet.autorizaciones.situacionmedica.editar_situacionmedica_entry" />
-        </action>
-
-        <action
-                path="/afiliados/pre_afiliados_pendientes"
-                type="ar.com.ospim.novedades.action.PreAfiliadosPendientesAction">
-
-            <forward
-                    name="portlet.afiliados.pre_afiliados_pendientes"
-                    path="portlet.afiliados.pre_afiliados_pendientes" />
-
-        </action>
-
-        <action
-                path="/afiliados/importar_documentacion_comercial"
-                type="ar.com.ospim.afiliados.action.ImportarDocumentacionComercialAction" />
-
-        <action
-                path="/afiliados/familiares_comerciales_pendientes"
-                type="ar.com.ospim.afiliados.action.FamiliaresComercialesPendientesAction">
-
-            <forward
-                    name="portlet.afiliados.familiares_comerciales_pendientes"
-                    path="portlet.afiliados.familiares_comerciales_pendientes" />
-
-        </action>
-
-        <action
-                path="/afiliados/generar_pre_afiliado_integrante_comercial"
-                type="ar.com.ospim.afiliados.action.GenerarPreAfiliadoIntegranteComercialAction" />
-
-		<action path="/farmaciaospim/upload_admifarm_general"
-		        type="ar.com.ospim.farmaciaOspim.action.UploadAdmifarmOspimGeneralAction">
-
-            <forward name="portlet.farmaciaospim.view" path="portlet.farmaciaospim.view" />
-			<forward name="portlet.farmaciaospim.error" path="portlet.farmaciaospim.error" />
-		</action>
-
-		<action path="/prestadores/cartilla_sop"
-		        type="ar.com.ospim.prestadores.action.ImportarCartillaSOPAction">
-
-			<forward name="portlet.prestadores.cartilla_sop"
-			         path="portlet.prestadores.cartilla_sop" />
-		</action>
-	</action-mappings>
+ </action-mappings>
   
 </struts-config>
-	  
+

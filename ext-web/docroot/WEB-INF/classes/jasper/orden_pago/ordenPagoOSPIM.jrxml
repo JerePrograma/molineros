@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ordenPagoUoma" pageWidth="596" pageHeight="842" columnWidth="556" leftMargin="20" rightMargin="20" topMargin="30" bottomMargin="30" isSummaryWithPageHeaderAndFooter="true">
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
@@ -227,7 +227,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement>
 						<font fontName="SansSerif" isBold="true"/>
 					</textElement>
-					<text><![CDATA[N° LOTE]]></text>
+					<text><![CDATA[NÂ° LOTE]]></text>
 				</staticText>
 				<staticText>
 					<reportElement x="367" y="70" width="21" height="13"/>
@@ -341,7 +341,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement>
 						<font size="8" isBold="true"/>
 					</textElement>
-					<text><![CDATA[Emisión]]></text>
+					<text><![CDATA[EmisiÃ³n]]></text>
 				</staticText>
 				<staticText>
 					<reportElement style="Column header" x="239" y="0" width="88" height="12" forecolor="#000000"/>
@@ -355,7 +355,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement>
 						<font size="8" isBold="true"/>
 					</textElement>
-					<text><![CDATA[Recepción]]></text>
+					<text><![CDATA[RecepciÃ³n]]></text>
 				</staticText>
 				<staticText>
 					<reportElement style="Column header" x="434" y="0" width="93" height="12" forecolor="#000000"/>
@@ -433,7 +433,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 				<textElement textAlignment="Right">
 					<font size="8" isBold="true"/>
 				</textElement>
-				<text><![CDATA[Total comprobantes hasta página]]></text>
+				<text><![CDATA[Total comprobantes hasta pÃ¡gina]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="286" y="3" width="27" height="12"/>
@@ -486,7 +486,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement>
 						<font size="8"/>
 					</textElement>
-					<text><![CDATA[Observación Interna:]]></text>
+					<text><![CDATA[ObservaciÃ³n Interna:]]></text>
 				</staticText>
 			</frame>
 			<frame>
@@ -503,7 +503,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 					<textElement textAlignment="Center">
 						<font size="10"/>
 					</textElement>
-					<textFieldExpression class="java.lang.String"><![CDATA["Confeccionó: " +($F{username}==null?"Roch, Fabiana     ":$F{username}) +"                        Autorizó: Doumerc, Carolina"]]></textFieldExpression>
+					<textFieldExpression class="java.lang.String"><![CDATA["ConfeccionÃ³: " +($F{username}==null?"Roch, Fabiana     ":$F{username}) +"                        AutorizÃ³: Doumerc, Carolina"]]></textFieldExpression>
 				</textField>
 			</frame>
 			<frame>
@@ -523,12 +523,12 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 				<staticText>
 					<reportElement x="2" y="110" width="91" height="14"/>
 					<textElement/>
-					<text><![CDATA[Recibí Conforme:]]></text>
+					<text><![CDATA[RecibÃ­ Conforme:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement x="280" y="127" width="111" height="14"/>
 					<textElement/>
-					<text><![CDATA[Aclaración de Firma:]]></text>
+					<text><![CDATA[AclaraciÃ³n de Firma:]]></text>
 				</staticText>
 			</frame>
 		</band>
@@ -621,7 +621,7 @@ left join orden_pago_ospim o on a.id_orden_pago=o.id_orden_pago;]]>
 								<textElement textAlignment="Center">
 									<font size="8" isBold="true"/>
 								</textElement>
-								<text><![CDATA[Descripción]]></text>
+								<text><![CDATA[DescripciÃ³n]]></text>
 							</staticText>
 						</jr:columnHeader>
 						<jr:detailCell style="table_TD" height="30" rowSpan="1">

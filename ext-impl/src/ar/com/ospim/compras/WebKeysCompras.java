@@ -261,13 +261,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String FORWARD_COMPRAS_IMPRIMIR_REQUERIMIENTO =
             "portlet.compras.imprimir_requerimiento";
 
-    public static final String FORWARD_COMPRAS_PRESTADORES_ENVIADOS =
-            "portlet.compras.prestadores_enviados";
-
-    public static final String
-            FORWARD_COMPRAS_PRESTADORES_HABILITADOS_COTIZACION =
-            "portlet.compras.prestadores_habilitados_cotizacion";
-
     /*
      * Compatibilidad legacy con JSP existentes.
      *
