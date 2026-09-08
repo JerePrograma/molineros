@@ -292,9 +292,6 @@ span-fixed-size {
         value="<%=handoffReclamoComprasValido ? "compras" : ""%>" />
 	
 	
-<% if (!Boolean.TRUE.equals(request.getAttribute("rp.contextoInvalido"))) { %>
-<%@ include file="/html/portlet/autorizaciones/reclamos_prestacionales/documentacion_compras.jsp" %>
-<% } %>
 <div id="<portlet:namespace />global"
 		align="left"
 		style="width:75%;">	
