@@ -2190,7 +2190,9 @@ jQuery("#<portlet:namespace />idreclamoprestacion").val("0");
 <% if(reclamoprestacional != null) {%>
 jQuery("#<portlet:namespace />idreclamoprestacion").val(<%=reclamoprestacional.getId_reclamo() %>);
 /* jQuery("#<portlet:namespace />botoneditareclamo").show(); */
+<% if (reclamoPersistido) { %>
 jQuery("#<portlet:namespace />botonsavereclamo").hide();
+<% } %>
       <% if(reclamoprestacional.getEstado()==3 ) {%>            
             jQuery("#<portlet:namespace />Cierre_Reclamo_Div").show();
             jQuery("#<portlet:namespace />botonrevision").hide();
