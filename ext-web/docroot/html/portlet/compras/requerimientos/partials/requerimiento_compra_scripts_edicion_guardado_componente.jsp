@@ -649,20 +649,14 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         }
 
         try {
-            form.submit();
+            jQuery(form).submit();
             return true;
         } catch (e) {
-            try {
-                jQuery(form).submit();
-                return true;
-            } catch (e2) {
-                alert(
-                    'No se pudo enviar el formulario de Compras. ' +
-                    'Error: ' + (e2 && e2.message ? e2.message : e2)
-                );
-
-                return false;
-            }
+            alert(
+                'No se pudo enviar el formulario de Compras. ' +
+                'Error: ' + (e && e.message ? e.message : e)
+            );
+            return false;
         }
     }
 
@@ -1190,6 +1184,11 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
+        if (typeof jQuery.fn.ajaxForm != 'function') {
+            alert('No se pudo preparar el envío. Los datos cargados se conservan.');
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
         var cmdInput = document.getElementById('<portlet:namespace />compras_cmd');
 
         if (cmdInput) {
@@ -1386,6 +1385,74 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             }
 
         </c:if>
+
+        /* Liquidaciones: editar_orden_pago_ospim.jsp, submitFormNotSavePOP.
+         * El iframe multipart conserva la pantalla y los archivos seleccionados.
+         * Sólo una respuesta de guardado confirmado permite navegar.
+         */
+        var idAntesGuardado = jQuery('#<portlet:namespace />id_requerimiento_compra').val();
+        jQuery(form).ajaxForm({
+            type: 'POST',
+            iframe: true,
+            dataType: 'html',
+            timeout: 120000,
+            complete: function(xhr, status) {
+                <c:if test="<%= modoEditableScriptsCompra
+                && puedeEditarEstructuraScriptsCompra %>">
+                    <portlet:namespace />restaurarOrdenesMedicas(contextosOrdenesMedicas);
+                </c:if>
+
+                jQuery(form).ajaxFormUnbind();
+                <portlet:namespace />cancelarGuardadoCompra();
+
+                var token = jQuery('#<portlet:namespace />compras_save_token');
+                token.val('');
+                var respuesta = jQuery(xhr && xhr.responseXML ? xhr.responseXML : []);
+                var formularioRespuesta = respuesta.find('#<portlet:namespace />fmCompras');
+                var idRespuesta = respuesta.find('#<portlet:namespace />id_requerimiento_compra').val();
+                var tokenRespuesta = respuesta.find('#<portlet:namespace />compras_save_token').val();
+                var errorServidor = formularioRespuesta.attr('data-compras-error') == 'true';
+                var urlEdicion = formularioRespuesta.attr('data-compras-editar-url');
+                var mensaje = 'No se pudo confirmar el resultado del guardado. ' +
+                        'Los datos cargados se conservan. Verifique el estado del requerimiento antes de reintentar.';
+
+                if (status == 'success' && formularioRespuesta.length == 1) {
+                    if (!errorServidor
+                            && formularioRespuesta.attr('data-compras-guardado') == 'true'
+                            && parseInt(idRespuesta, 10) > 0 && urlEdicion) {
+                        window.location.href = urlEdicion
+                                + '&<portlet:namespace />compras_guardado=true'
+                                + '&<portlet:namespace />compras_operacion=saveAll';
+                        return;
+                    }
+
+                    if (errorServidor) {
+                        var mensajeServidor = jQuery.trim(respuesta.find('.portlet-msg-error').text());
+                        if (mensajeServidor != '') {
+                            mensaje = mensajeServidor;
+                        }
+
+                        /* Un alta parcialmente persistida no debe reenviarse como nueva. */
+                        if (idRespuesta == idAntesGuardado
+                                && tokenRespuesta && tokenRespuesta != 'null') {
+                            token.val(tokenRespuesta);
+                        } else {
+                            mensaje += ' Los datos cargados se conservan. ' +
+                                    'Revise el requerimiento antes de volver a guardar.';
+                        }
+                    }
+                }
+
+                var aviso = jQuery('#<portlet:namespace />resultado_guardado');
+                if (aviso.length == 0) {
+                    aviso = jQuery('<div class="portlet-msg-error" role="alert"></div>');
+                    aviso.attr('id', '<portlet:namespace />resultado_guardado');
+                    aviso.insertBefore('#<portlet:namespace />compras_layout');
+                }
+                aviso.text(mensaje).attr('tabindex', '-1').show();
+                <portlet:namespace />focusSeguroCompra('#<portlet:namespace />resultado_guardado');
+            }
+        });
 
         if (!<portlet:namespace />submitFormularioCompra(form)) {
 

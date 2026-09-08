@@ -21,7 +21,10 @@ Efectos secundarios:
       enctype="multipart/form-data"
       name="<portlet:namespace />fmCompras"
       id="<portlet:namespace />fmCompras"
-      class="compras-form-colector">
+      class="compras-form-colector"
+      data-compras-error="<%= ParamUtil.getBoolean(renderRequest, "compras_error", false) %>"
+      data-compras-guardado="<%= ParamUtil.getBoolean(renderRequest, "compras_guardado", false) %>"
+      data-compras-editar-url="<%= HtmlUtil.escape(editarURL.toString()) %>">
 
     <input type="hidden"
            name="<portlet:namespace />compras_save_token"
