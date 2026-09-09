@@ -344,6 +344,33 @@ List<RequerimientoCompraSector> sectores =
                 : '';
     }
 
+    function <portlet:namespace />descripcionTipoPrestacionHistoricoAfiliado(
+            idTipoPrestacion) {
+
+        var idTipo = idTipoPrestacion == null
+                ? '' : jQuery.trim(String(idTipoPrestacion));
+
+        var idSector =
+                <portlet:namespace />getIdSectorTipoPrestacionDetalle();
+
+        var tipos =
+                <portlet:namespace />tiposPrestacionDetalleCache;
+
+        for (var i = 0; i < tipos.length; i++) {
+            var tipo = tipos[i];
+
+            if (tipo
+                    && String(tipo.id) == idTipo
+                    && String(tipo.idSector) == idSector) {
+
+                return tipo.descripcion == null
+                        ? '' : jQuery.trim(String(tipo.descripcion));
+            }
+        }
+
+        return '';
+    }
+
     function <portlet:namespace />actualizarSeleccionItemsHistoricosAfiliado() {
 
         var body =
@@ -445,199 +472,106 @@ List<RequerimientoCompraSector> sectores =
             return null;
         }
 
-        var idPrestacion =
-                item.idPrestacion != null
-                        ? jQuery.trim(
-                                String(
-                                        item.idPrestacion
-                                )
-                        )
-                        : '';
+        var idPrestacion = item.idPrestacion == null
+                ? '' : jQuery.trim(String(item.idPrestacion));
 
-        var idTipoNomenclador =
-                item.idTipoNomenclador != null
-                        ? jQuery.trim(
-                                String(
-                                        item.idTipoNomenclador
-                                )
-                        )
-                        : '';
+        var idTipoNomenclador = item.idTipoNomenclador == null
+                ? '' : jQuery.trim(String(item.idTipoNomenclador));
 
-        var codigo =
-                item.codigo != null
-                        ? jQuery.trim(
-                                String(
-                                        item.codigo
-                                )
-                        )
-                        : '';
+        var codigo = item.codigo == null
+                ? '' : jQuery.trim(String(item.codigo));
 
-        var descripcion =
-                item.descripcion != null
-                        ? jQuery.trim(
-                                String(
-                                        item.descripcion
-                                )
-                        )
-                        : '';
+        var descripcion = item.descripcion == null
+                ? '' : jQuery.trim(String(item.descripcion));
 
-        var idTipoPrestacion = jQuery.trim(
-                String(
-                        jQuery(
-                                '#<portlet:namespace />detalle_id_tipo_prestacion'
-                        ).val() || ''
-                )
-        );
+        var idTipoPrestacion = item.idTipoPrestacion == null
+                ? '' : jQuery.trim(String(item.idTipoPrestacion));
 
-        var tipoPrestacion = jQuery.trim(
-                String(
-                        jQuery(
-                                '#<portlet:namespace />detalle_id_tipo_prestacion option:selected'
-                        ).text() || ''
-                )
-        );
-
-        if (!/^[0-9]+$/.test(
-                idPrestacion
-        )
-                || parseInt(
-                        idPrestacion,
-                        10
-                ) <= 0) {
-
-            return null;
-        }
-
-        if (!/^[0-9]+$/.test(
-                idTipoNomenclador
-        )
-                || parseInt(
-                        idTipoNomenclador,
-                        10
-                ) <= 0) {
-
-            return null;
-        }
-
-        if (codigo == ''
+        if (!/^[0-9]+$/.test(idPrestacion)
+                || parseInt(idPrestacion, 10) <= 0
+                || !/^[0-9]+$/.test(idTipoNomenclador)
+                || parseInt(idTipoNomenclador, 10) <= 0
+                || codigo == ''
                 || descripcion == '') {
 
             return null;
         }
 
         return {
-            id:
-                    '',
+            id: '',
 
-            tipoItem:
-                    'NOMENCLADOR',
+            tipoItem: 'NOMENCLADOR',
 
-            idTipoPrestacion:
-                    idTipoPrestacion,
+            idTipoPrestacion: idTipoPrestacion,
 
             tipoPrestacion:
-                    tipoPrestacion,
+                    <portlet:namespace />descripcionTipoPrestacionHistoricoAfiliado(
+                            idTipoPrestacion
+                    ),
 
-            codigoItem:
-                    codigo,
+            codigoItem: codigo,
+            descripcionItem: descripcion,
 
-            descripcionItem:
-                    descripcion,
+            idPrestacion: idPrestacion,
+            idTipoNomenclador: idTipoNomenclador,
+            codigoNomenclador: codigo,
+            descripcionNomenclador: descripcion,
 
-            idPrestacion:
-                    idPrestacion,
+            idMedicamento: '',
+            troquel: '',
+            nombreMedicamento: '',
 
-            idTipoNomenclador:
-                    idTipoNomenclador,
+            cantidad: '1',
 
-            codigoNomenclador:
-                    codigo,
+            precioUnitario: '',
+            precioTotal: '',
+            idPrestador: '',
+            prestador: '',
 
-            descripcionNomenclador:
-                    descripcion,
-
-            idMedicamento:
-                    '',
-
-            troquel:
-                    '',
-
-            nombreMedicamento:
-                    '',
-
-            cantidad:
-                    '1',
-
-            precioUnitario:
-                    '',
-
-            precioTotal:
-                    '',
-
-            idPrestador:
-                    '',
-
-            prestador:
-                    '',
-
-            observaciones:
-                    ''
+            observaciones: ''
         };
     }
 
-
     function <portlet:namespace />obtenerDetallesHistoricosSeleccionados() {
-
-        var detallesSeleccionados =
-                [];
+        var detallesSeleccionados = [];
 
         var clavesActuales =
                 <portlet:namespace />clavesDetallesActuales();
 
-        var clavesSeleccionadas =
-                {};
+        var clavesSeleccionadas = {};
+        var error = '';
 
-        var body =
-                jQuery(
-                        '#<portlet:namespace />items_historicos_afiliado_body'
-                );
-
-        var checks =
-                body.find(
-                        'input.compras-item-historico-check'
-                );
+        var checks = jQuery(
+                '#<portlet:namespace />items_historicos_afiliado_body'
+        ).find('input.compras-item-historico-check');
 
         checks.each(function() {
-
-            if (this.disabled
-                    || !this.checked) {
-
+            if (this.disabled || !this.checked) {
                 return;
             }
 
-            var index =
-                    parseInt(
-                            this.value,
-                            10
-                    );
+            var index = parseInt(this.value, 10);
 
             if (isNaN(index)
                     || index < 0
                     || index >= <portlet:namespace />itemsHistoricosAfiliado.length) {
 
-                return;
+                error = 'No se pudo identificar un ítem histórico seleccionado.';
+                return false;
             }
 
             var item =
                     <portlet:namespace />itemsHistoricosAfiliado[index];
 
             var clave =
-                    <portlet:namespace />claveItemHistoricoAfiliado(
-                            item
-                    );
+                    <portlet:namespace />claveItemHistoricoAfiliado(item);
 
-            if (clave == ''
-                    || clavesActuales[clave] === true
+            if (clave == '') {
+                error = 'Un ítem histórico seleccionado tiene identificadores inválidos.';
+                return false;
+            }
+
+            if (clavesActuales[clave] === true
                     || clavesSeleccionadas[clave] === true) {
 
                 return;
@@ -649,20 +583,22 @@ List<RequerimientoCompraSector> sectores =
                     );
 
             if (!detalle) {
-                return;
+                error = 'El ítem histórico ' + clave
+                        + ' no conserva los datos técnicos necesarios.';
+                return false;
             }
 
-            detallesSeleccionados.push(
-                    detalle
-            );
-
-            clavesSeleccionadas[clave] =
-                    true;
+            detallesSeleccionados.push(detalle);
+            clavesSeleccionadas[clave] = true;
         });
+
+        if (error != '') {
+            alert(error + ' No se agregó ningún ítem.');
+            return null;
+        }
 
         return detallesSeleccionados;
     }
-
 
     function <portlet:namespace />postItemsHistoricosAfiliadoServidor(
             detalles) {
@@ -923,31 +859,13 @@ List<RequerimientoCompraSector> sectores =
 
 
     function <portlet:namespace />agregarItemsHistoricosSeleccionados() {
-
-        var selectorTipo = jQuery(
-                '#<portlet:namespace />detalle_id_tipo_prestacion'
-        );
-
-        if (selectorTipo.length > 0
-                && !selectorTipo.attr('disabled')
-                && !<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
-                        selectorTipo.val()
-                )) {
-
-            alert('Debe seleccionar el Tipo para los detalles a agregar.');
-            selectorTipo.focus();
-            return false;
-        }
-
-        if (typeof <portlet:namespace />detalleAccionEnCurso
-                != 'undefined'
+        if (typeof <portlet:namespace />detalleAccionEnCurso != 'undefined'
                 && <portlet:namespace />detalleAccionEnCurso) {
 
             return false;
         }
 
-        if (typeof <portlet:namespace />guardandoCompra
-                != 'undefined'
+        if (typeof <portlet:namespace />guardandoCompra != 'undefined'
                 && <portlet:namespace />guardandoCompra) {
 
             return false;
@@ -956,33 +874,65 @@ List<RequerimientoCompraSector> sectores =
         var detalles =
                 <portlet:namespace />obtenerDetallesHistoricosSeleccionados();
 
-        if (!detalles
-                || detalles.length <= 0) {
-
-            alert(
-                    'Seleccione al menos un ítem para agregar.'
-            );
-
+        if (detalles === null) {
             return false;
         }
 
-        if (typeof <portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador
-                == 'function'
-                && <portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador()
-                && typeof <portlet:namespace />validarTipoNomencladorResultadoDetalle
-                == 'function') {
+        if (!detalles || detalles.length <= 0) {
+            alert('Seleccione al menos un ítem para agregar.');
+            return false;
+        }
 
-            for (var j = 0; j < detalles.length; j++) {
-                if (!<portlet:namespace />validarTipoNomencladorResultadoDetalle(
-                        detalles[j].idTipoNomenclador
-                )) {
-                    return false;
-                }
+        var idSector =
+                <portlet:namespace />getIdSectorTipoPrestacionDetalle();
+
+        var tipos =
+                <portlet:namespace />tiposPrestacionDetalleCache;
+
+        var tieneTiposSector = false;
+
+        for (var t = 0; t < tipos.length; t++) {
+            if (tipos[t] && String(tipos[t].idSector) == idSector) {
+                tieneTiposSector = true;
+                break;
             }
         }
 
-        if (typeof <portlet:namespace />requerimientoPersistidoDetalle
-                != 'undefined'
+        /*
+         * Validar todo el lote antes de modificar la pantalla
+         * o enviarlo al servidor.
+         */
+        for (var j = 0; j < detalles.length; j++) {
+            var detalle = detalles[j];
+
+            /*
+             * Conservar tipo vacío únicamente cuando el sector
+             * no tiene tipos configurados.
+             */
+            if ((tieneTiposSector || detalle.idTipoPrestacion != '')
+                    && !<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
+                            detalle.idTipoPrestacion
+                    )) {
+
+                alert(
+                        'El ítem histórico ' + detalle.codigoItem
+                        + ' no tiene un Tipo de cotización histórico válido'
+                        + ' para el sector actual. Cárguelo desde el editor manual'
+                        + ' con un Tipo válido. No se agregó ningún ítem.'
+                );
+
+                return false;
+            }
+
+            if (!<portlet:namespace />validarTipoNomencladorResultadoDetalle(
+                    detalle.idTipoNomenclador,
+                    detalle.idTipoPrestacion
+            )) {
+                return false;
+            }
+        }
+
+        if (typeof <portlet:namespace />requerimientoPersistidoDetalle != 'undefined'
                 && <portlet:namespace />requerimientoPersistidoDetalle) {
 
             return <portlet:namespace />postItemsHistoricosAfiliadoServidor(
@@ -990,8 +940,7 @@ List<RequerimientoCompraSector> sectores =
             );
         }
 
-        if (typeof <portlet:namespace />detallesCompra
-                == 'undefined'
+        if (typeof <portlet:namespace />detallesCompra == 'undefined'
                 || !<portlet:namespace />detallesCompra) {
 
             alert(
@@ -1001,44 +950,27 @@ List<RequerimientoCompraSector> sectores =
             return false;
         }
 
-        if (typeof <portlet:namespace />renderDetallesCompra
-                != 'function') {
-
+        if (typeof <portlet:namespace />renderDetallesCompra != 'function') {
             alert(
-                    'No se encontró la función que actualiza '
-                            + 'el listado de detalles.'
+                    'No se encontró la función que actualiza el listado de detalles.'
             );
 
             return false;
         }
 
-        for (var i = 0;
-                i < detalles.length;
-                i++) {
-
-            <portlet:namespace />detallesCompra.push(
-                    detalles[i]
-            );
+        for (var i = 0; i < detalles.length; i++) {
+            <portlet:namespace />detallesCompra.push(detalles[i]);
         }
 
         /*
-         * Se actualiza el listado final una sola vez.
-         *
-         * No se utiliza agregarOActualizarDetalle()
-         * y no se modifican los valores del editor manual.
+         * Actualizar los listados sin alterar los valores
+         * del editor manual.
          */
         <portlet:namespace />renderDetallesCompra();
-
-        /*
-         * Los ítems recién incorporados quedan visibles
-         * en el histórico, pero deshabilitados y marcados
-         * como "Ya agregado".
-         */
         <portlet:namespace />renderItemsHistoricosAfiliado();
 
         return false;
     }
-
 
     function <portlet:namespace />renderItemsHistoricosAfiliado() {
 

@@ -586,17 +586,19 @@ Efectos secundarios:
 
                 <% if (puedeEliminarDetalle) { %>
 
-                    if (<%= puedeCotizarDetalle ? "true" : "false" %>
+                    if (<%= !requerimientoPersistidoDetalle ? "true" : "false" %>
+                            || <%= puedeCotizarDetalle ? "true" : "false" %>
                             || <portlet:namespace />detallesCompra.length > 1) {
 
                         html += '<a href="#" title="Quitar" '
                                 + 'onclick="<portlet:namespace />quitarDetalleEnPantalla('
                                 + i
                                 + '); return false;">';
+
                         html += '<img alt="Quitar" '
                                 + 'src="<%= themeDisplay.getPathThemeImages() %>/common/delete.png" />';
-                        html += '</a>';
 
+                        html += '</a>';
                     }
 
                 <% } %>

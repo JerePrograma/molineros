@@ -286,6 +286,16 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
                 );
 
                 json.append(
+                        ",\"idTipoPrestacion\":"
+                );
+
+                json.append(
+                        jsonString(
+                                detalle.getIdTipoPrestacionString()
+                        )
+                );
+
+                json.append(
                         '}'
                 );
 

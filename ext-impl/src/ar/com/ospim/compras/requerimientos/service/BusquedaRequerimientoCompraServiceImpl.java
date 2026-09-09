@@ -79,7 +79,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.listar_ordenes_medicas_requerimiento(?)}";
 
     private static final String SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO =
-            "{call compras.buscar_items_historicos_afiliado(?,?,?,?,?)}";
+            "{call compras.buscar_items_historicos_afiliado_clasificado(?,?,?,?,?)}";
 
     private static final String SQL_TIENE_SITUACION_MEDICA_VIGENTE =
             "{call compras.tiene_situacion_medica_vigente(?,?)}";
@@ -220,18 +220,27 @@ public class BusquedaRequerimientoCompraServiceImpl {
             while (rs.next()) {
                 RequerimientoCompraDetalle detalle =
                         new RequerimientoCompraDetalle();
+
                 detalle.setIdPrestacion(
                         getInteger(rs, "id_prestacion")
                 );
+
                 detalle.setIdTipoNomenclador(
                         getInteger(rs, "id_tipo_nomenclador")
                 );
+
                 detalle.setCodigoNomenclador(
                         getString(rs, "codigo")
                 );
+
                 detalle.setDescripcionNomenclador(
                         getString(rs, "descripcion")
                 );
+
+                detalle.setIdTipoPrestacion(
+                        getInteger(rs, "id_tipo_prestacion")
+                );
+
                 resultado.add(detalle);
             }
 
