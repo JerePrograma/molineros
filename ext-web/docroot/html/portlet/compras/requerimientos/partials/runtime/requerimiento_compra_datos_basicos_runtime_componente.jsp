@@ -1,8 +1,9 @@
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%--
 Responsabilidad:
     Recupera atributos request e incluye datos básicos en contexto runtime.
 Incluido desde:
-    requerimiento_compra_consulta_ensamblado.jsp, requerimiento_compra_edicion_ensamblado.jsp
+    requerimiento_compra_ensamblado.jsp, requerimiento_compra_ensamblado.jsp
 Pantallas o estados de uso:
     Alta, edición o consulta según el caller indicado.
 Entradas requeridas:
@@ -24,68 +25,68 @@ Requiere el requerimiento, sectores, permisos y valores visibles de cabecera.
 <%
 RequerimientoCompra req =
         (RequerimientoCompra) request.getAttribute(
-                "compras.requerimiento.req"
+                WebKeysCompras.ATTR_REQUERIMIENTO_MODELO
         );
 
 boolean esNuevo =
         Boolean.TRUE.equals(
                 request.getAttribute(
-                        "compras.requerimiento.esNuevo"
+                        WebKeysCompras.ATTR_REQUERIMIENTO_ES_NUEVO
                 )
         );
 
 String tituloPantalla =
         (String) request.getAttribute(
-                "compras.requerimiento.titulo"
+                WebKeysCompras.ATTR_REQUERIMIENTO_TITULO
         );
 
 boolean puedeEditarEstructuraPantalla =
         Boolean.TRUE.equals(
                 request.getAttribute(
-                        "compras.requerimiento.puedeEditarEstructura"
+                        WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_EDITAR_ESTRUCTURA
                 )
         );
 
 boolean puedeEditarSurgePantalla =
         Boolean.TRUE.equals(
                 request.getAttribute(
-                        "compras.requerimiento.puedeEditarSurge"
+                        WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_EDITAR_SURGE
                 )
         );
 
 List<RequerimientoCompraSector> sectores =
         (List<RequerimientoCompraSector>) request.getAttribute(
-                "compras.requerimiento.sectores"
+                WebKeysCompras.ATTR_REQUERIMIENTO_SECTORES
         );
 
 String reqSectorId =
         (String) request.getAttribute(
-                "compras.requerimiento.reqSectorId"
+                WebKeysCompras.ATTR_REQUERIMIENTO_SECTOR_ID
         );
 
 String sectorDescripcionSoloLectura =
         (String) request.getAttribute(
-                "compras.requerimiento.sectorDescripcion"
+                WebKeysCompras.ATTR_REQUERIMIENTO_SECTOR_DESCRIPCION
         );
 
 String cargoOspimVisible =
         (String) request.getAttribute(
-                "compras.requerimiento.cargoOspim"
+                WebKeysCompras.ATTR_REQUERIMIENTO_CARGO_OSPIM
         );
 
 String cargoTercerizadoraVisible =
         (String) request.getAttribute(
-                "compras.requerimiento.cargoTercerizadora"
+                WebKeysCompras.ATTR_REQUERIMIENTO_CARGO_TERCERIZADORA
         );
 
 String surgeSeleccionadoCompra =
         (String) request.getAttribute(
-                "compras.requerimiento.surgeSeleccionado"
+                WebKeysCompras.ATTR_REQUERIMIENTO_SURGE_SELECCIONADO
         );
 
 String idTercerizadora =
         (String) request.getAttribute(
-                "compras.requerimiento.idTercerizadora"
+                WebKeysCompras.ATTR_REQUERIMIENTO_ID_TERCERIZADORA
         );
 %>
 

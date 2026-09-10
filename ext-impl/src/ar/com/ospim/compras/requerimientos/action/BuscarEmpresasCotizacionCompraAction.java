@@ -33,10 +33,6 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
                     BuscarEmpresasCotizacionCompraAction.class
             );
 
-    private static final int MAX_RESULTADOS = 100;
-    private static final int LIMITE_CON_MARCA = MAX_RESULTADOS + 1;
-    private static final int MIN_CARACTERES_RAZON_SOCIAL = 3;
-
     public ActionForward render(
             ActionMapping mapping,
             ActionForm form,
@@ -115,7 +111,7 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
             } else if (cuit == null
                     && descripcion != null
                     && descripcion.length()
-                    < MIN_CARACTERES_RAZON_SOCIAL) {
+                    < WebKeysCompras.MIN_CARACTERES_RAZON_SOCIAL_EMPRESA) {
 
                 error =
                         "La raz\u00f3n social debe contener al menos tres "
@@ -135,7 +131,7 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
                                     cuit,
                                     descripcion,
                                     sucursal,
-                                    LIMITE_CON_MARCA
+                                    WebKeysCompras.LIMITE_EMPRESAS_COTIZACION_CON_MARCA
                             );
 
                     if (empresas == null) {
@@ -145,14 +141,14 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
                     } else {
                         int cantidadVisible = Math.min(
                                 empresas.size(),
-                                MAX_RESULTADOS
+                                WebKeysCompras.MAX_RESULTADOS_EMPRESAS_COTIZACION
                         );
 
                         for (int i = 0; i < cantidadVisible; i++) {
                             resultados.add(empresas.get(i));
                         }
 
-                        limitada = empresas.size() > MAX_RESULTADOS;
+                        limitada = empresas.size() > WebKeysCompras.MAX_RESULTADOS_EMPRESAS_COTIZACION;
                     }
 
                 } catch (Exception e) {
@@ -174,22 +170,22 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
         );
 
         renderRequest.setAttribute(
-                "compras.empresas.busqueda.realizada",
+                WebKeysCompras.ATTR_EMPRESAS_BUSQUEDA_REALIZADA,
                 Boolean.valueOf(buscar)
         );
 
         renderRequest.setAttribute(
-                "compras.empresas.busqueda.limitada",
+                WebKeysCompras.ATTR_EMPRESAS_BUSQUEDA_LIMITADA,
                 Boolean.valueOf(limitada)
         );
 
         renderRequest.setAttribute(
-                "compras.empresas.busqueda.error",
+                WebKeysCompras.ATTR_EMPRESAS_BUSQUEDA_ERROR,
                 error
         );
 
         return mapping.findForward(
-                "portlet.compras.empresas.result.search"
+                WebKeysCompras.FORWARD_COMPRAS_EMPRESAS_RESULT_SEARCH
         );
     }
 

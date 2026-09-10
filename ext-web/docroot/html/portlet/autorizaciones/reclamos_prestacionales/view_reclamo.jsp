@@ -1598,9 +1598,6 @@ span-fixed-size {
 		</table>
 
 		<br />
-        <% if (esEdicion) { %>
-        <input type="button" value="Cancelar edicion" onclick="<portlet:namespace />cancelarReclamo();" />
-        <% } %>
 		<%if(cmd!=null && cmd.equalsIgnoreCase(Constants.ADD)){ %>
 		<div id="<portlet:namespace />botonsavereclamo" align="center"
 			style="height: 80px; overflow-x: hidden;">
@@ -1707,12 +1704,6 @@ function <portlet:namespace />urlContextoReclamo(url) {
     return url + '&<%=WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE%>=' + encodeURIComponent(nonce)
         + '&origen=' + (nonce ? 'compras' : '')
         + '&id_reclamosel=' + encodeURIComponent(jQuery('#<portlet:namespace />id_reclamosel').val() || '0');
-}
-function <portlet:namespace />cancelarReclamo() {
-    if (!confirm('Confirma descartar los cambios de esta edicion?')) { return; }
-    var formulario = document.<portlet:namespace />reclamo_fm;
-    formulario.<portlet:namespace />cmd.value = '<%=Constants.CANCEL%>';
-    submitForm(formulario, '<portlet:actionURL><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:actionURL>');
 }
 </script>
 <script type="text/javascript">

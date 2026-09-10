@@ -1,12 +1,22 @@
 package ar.com.ospim.compras.requerimientos.beans;
+import ar.com.ospim.compras.WebKeysCompras;
 
 import java.util.Date;
 
 public class RequerimientoCompraPresupuesto {
 
-    public static final int TIPO_DOCUMENTO_PRESUPUESTO = 1;
-    public static final int TIPO_DOCUMENTO_ORDEN_MEDICA = 2;
-    public static final int TIPO_DOCUMENTO_COTIZACION_EMPRESA = 3;
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
+    public static final int TIPO_DOCUMENTO_PRESUPUESTO =
+            WebKeysCompras.TIPO_DOCUMENTO_PRESUPUESTO;
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
+    public static final int TIPO_DOCUMENTO_ORDEN_MEDICA =
+            WebKeysCompras.TIPO_DOCUMENTO_ORDEN_MEDICA;
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
+    public static final int TIPO_DOCUMENTO_COTIZACION_EMPRESA =
+            WebKeysCompras.TIPO_DOCUMENTO_COTIZACION_EMPRESA;
 
     private Integer idRequerimientoPresupuesto;
     private Integer idRequerimiento;

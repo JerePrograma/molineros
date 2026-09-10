@@ -32,11 +32,6 @@ public class RequerimientoCompraDetalleHelper {
                     RequerimientoCompraDetalleHelper.class
             );
 
-    private static final boolean EXIGIR_DETALLES_EN_SAVE_ALL = true;
-
-    private static final String STRUTS_ACTION_EDITAR_REQUERIMIENTO =
-            "/compras/editar_requerimiento";
-
     private final EditarRequerimientoCompraHelper requerimientoHelper =
             new EditarRequerimientoCompraHelper();
 
@@ -143,7 +138,7 @@ public class RequerimientoCompraDetalleHelper {
                         0
                 );
 
-        if (EXIGIR_DETALLES_EN_SAVE_ALL
+        if (WebKeysCompras.EXIGIR_DETALLES_EN_SAVE_ALL
                 && count <= 0) {
 
             errorCampo(
@@ -217,7 +212,7 @@ public class RequerimientoCompraDetalleHelper {
             guardados++;
         }
 
-        if (EXIGIR_DETALLES_EN_SAVE_ALL
+        if (WebKeysCompras.EXIGIR_DETALLES_EN_SAVE_ALL
                 && guardados == 0
                 && borrados.size() == 0) {
 
@@ -658,7 +653,7 @@ public class RequerimientoCompraDetalleHelper {
 
         response.setRenderParameter(
                 "struts_action",
-                STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                WebKeysCompras.STRUTS_ACTION_EDITAR_REQUERIMIENTO
         );
     }
 

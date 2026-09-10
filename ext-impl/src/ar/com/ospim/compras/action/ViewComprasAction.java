@@ -31,9 +31,6 @@ import javax.portlet.RenderResponse;
 
 public class ViewComprasAction extends PortletAction {
 
-    private static final String TAB_CONFIGURACION_CORREOS =
-            "configuracion-de-correos";
-
     private static final Log _log =
             LogFactoryUtil.getLog(
                     ViewComprasAction.class
@@ -118,7 +115,7 @@ public class ViewComprasAction extends PortletAction {
     private void cargarConfiguracionCorreos(
             RenderRequest request) throws Exception {
 
-        if (!TAB_CONFIGURACION_CORREOS.equals(
+        if (!WebKeysCompras.TAB_CONFIGURACION_CORREOS.equals(
                 obtenerTabActiva(request)
         )) {
             return;

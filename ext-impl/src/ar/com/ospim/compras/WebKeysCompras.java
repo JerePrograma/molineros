@@ -18,6 +18,268 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     private static final Pattern ESPACIOS_TEXTO_COMPRAS =
             Pattern.compile("\\s+");
 
+    // RC0-A - VOCABULARIO COMUN DE COMPRAS.
+    public static final String SECTOR_FARMACIA = "FARMACIA";
+    public static final String SECTOR_DISCAPACIDAD = "DISCAPACIDAD";
+    public static final String SECTOR_ODONTOLOGIA = "ODONTOLOGIA";
+    public static final String SECTOR_PRESTACIONES_MEDICAS =
+            "PRESTACIONES MEDICAS";
+    public static final String SECTOR_RRHH = "RRHH";
+    public static final String SECTOR_LEGALES = "LEGALES";
+    public static final String SECTOR_SISTEMAS = "SISTEMAS";
+    public static final String SECTOR_OTROS = "OTROS";
+
+    public static final String PARAM_STRUTS_ACTION = "struts_action";
+    public static final String PARAM_MODO = "modo";
+    public static final String PARAM_TABS1 = "tabs1";
+    public static final String PARAM_COMPRAS_OPERACION = "compras_operacion";
+    public static final String PARAM_COMPRAS_ERROR = "compras_error";
+    public static final String PARAM_COMPRAS_GUARDADO = "compras_guardado";
+
+    public static final String MODO_REQUERIMIENTO_COMPRA_ATTR =
+            "MODO_REQUERIMIENTO_COMPRA";
+    public static final String MODO_REQUERIMIENTO_ALTA = "ALTA";
+    public static final String MODO_REQUERIMIENTO_EDICION = "EDICION";
+    public static final String MODO_REQUERIMIENTO_VISTA = "VISTA";
+    public static final String MODO_ALTA = "alta";
+    public static final String MODO_EDITAR = "editar";
+    public static final String MODO_VER = "ver";
+
+    public static final String TAB_REQUERIMIENTOS = "requerimientos";
+    public static final String TAB_COTIZADOS = "cotizados";
+    public static final String TAB_CONFIGURACION_CORREOS =
+            "configuracion-de-correos";
+
+    public static final String STRUTS_ACTION_COMPRAS_VIEW =
+            "/compras/view";
+    public static final String STRUTS_ACTION_NUEVO_REQUERIMIENTO =
+            "/compras/nuevo_requerimiento";
+    public static final String STRUTS_ACTION_EDITAR_REQUERIMIENTO =
+            "/compras/editar_requerimiento";
+    public static final String STRUTS_ACTION_VER_REQUERIMIENTO =
+            "/compras/ver_requerimiento";
+    public static final String STRUTS_ACTION_IMPRIMIR_REQUERIMIENTO =
+            "/compras/imprimir_requerimiento";
+
+    public static final String CMD_SAVE_ALL = "saveAll";
+    public static final String CMD_SAVE_COTIZACION = "saveCotizacion";
+    public static final String CMD_CERRAR_COTIZACION = "cerrarCotizacion";
+    public static final String CMD_ADD_ITEM = "addItem";
+    public static final String CMD_ADD_ITEMS = "addItems";
+    public static final String CMD_UPDATE_ITEM = "updateItem";
+    public static final String CMD_DELETE_ITEM = "deleteItem";
+
+    public static final String PARAM_COMPRAS_SAVE_TOKEN =
+            "compras_save_token";
+    public static final String ATTR_COMPRAS_SAVE_TOKEN =
+            "COMPRAS_SAVE_TOKEN";
+    public static final String SESSION_COMPRAS_SAVE_TOKENS =
+            "COMPRAS_SAVE_TOKENS";
+    public static final int MAX_TOKENS_GUARDADO_COMPRA = 20;
+    public static final int MAX_DETALLES_COTIZACION_RETORNO = 1000;
+    public static final String PARAM_ORDEN_MEDICA_COUNT =
+            "orden_medica_count";
+    public static final int MAX_ORDENES_MEDICAS_POR_CARGA = 20;
+    public static final int MAX_ITEMS_HISTORICOS_AFILIADO = 20;
+    public static final boolean EXIGIR_DETALLES_EN_SAVE_ALL = true;
+
+    public static final String OPERACION_PRESUPUESTO_AGREGAR =
+            "presupuestoAgregar";
+    public static final String OPERACION_PRESUPUESTO_BORRAR =
+            "presupuestoBorrar";
+    public static final String OPERACION_PRESUPUESTO_ERROR =
+            "presupuestoError";
+
+    public static final int MAX_RESULTADOS_EMPRESAS_COTIZACION = 100;
+    public static final int LIMITE_EMPRESAS_COTIZACION_CON_MARCA =
+            MAX_RESULTADOS_EMPRESAS_COTIZACION + 1;
+    public static final int MIN_CARACTERES_RAZON_SOCIAL_EMPRESA = 3;
+
+    public static final String ATTR_EMPRESAS_BUSQUEDA_REALIZADA =
+            "compras.empresas.busqueda.realizada";
+    public static final String ATTR_EMPRESAS_BUSQUEDA_LIMITADA =
+            "compras.empresas.busqueda.limitada";
+    public static final String ATTR_EMPRESAS_BUSQUEDA_ERROR =
+            "compras.empresas.busqueda.error";
+    public static final String FORWARD_COMPRAS_EMPRESAS_RESULT_SEARCH =
+            "portlet.compras.empresas.result.search";
+
+    public static final String ATTR_CALLBACK_BUSQUEDA_NOMENCLADOR =
+            "COMPRAS_CALLBACK_BUSQUEDA";
+    public static final String ATTR_SECTOR_NOMENCLADOR =
+            "COMPRAS_SECTOR_NOMENCLADOR";
+    public static final String ATTR_MARCA_REIN_LIQ =
+            "COMPRAS_MARCA_REIN_LIQ";
+    public static final String ATTR_ES_PRESTACIONES_MEDICAS =
+            "COMPRAS_ES_PREST_MED";
+    public static final String ATTR_CODIGO_NOMENCLADOR =
+            "COMPRAS_CODIGO_NOMENCLADOR";
+    public static final String ATTR_DESCRIPCION_NOMENCLADOR =
+            "COMPRAS_DESCRIPCION_NOMENCLADOR";
+    public static final String ATTR_ID_TIPO_NOMENCLADOR =
+            "COMPRAS_ID_TIPO_NOMENCLADOR";
+    public static final String ATTR_RESULTADOS_NOMENCLADOR =
+            "COMPRAS_RESULTADOS_NOMENCLADOR";
+    public static final String ATTR_ERROR_BUSQUEDA_NOMENCLADOR =
+            "COMPRAS_ERROR_BUSQUEDA";
+    public static final String FORWARD_COMPRAS_BUSCAR_ITEM_TECNICO =
+            "portlet.compras.buscar_item_tecnico";
+
+    public static final String ATTR_ID_REQUERIMIENTO_COMPRA_PDF =
+            "ID_REQUERIMIENTO_COMPRA_PDF";
+
+    public static final String REPORTE_EXPORTACION_REQUERIMIENTOS =
+            "COMPRAS_REQUERIMIENTOS";
+    public static final String PARAM_EXPORTACION_TOKEN =
+            "compras_exportacion_token";
+    public static final String SESSION_EXPORTACIONES_REQUERIMIENTOS =
+            "COMPRAS_EXPORTACIONES";
+    public static final int MAX_CONTEXTOS_EXPORTACION = 20;
+
+    public static final String PARAM_CONTACTO_AFILIADO_TOKEN =
+            "contacto_afiliado_token";
+    public static final String ATTR_CONTACTO_AFILIADO_TOKEN =
+            "COMPRAS_CONTACTO_AFILIADO_TOKEN";
+    public static final String SESSION_CONTACTO_AFILIADO_CONTEXTOS =
+            "COMPRAS_CONTACTO_AFILIADO_CONTEXTOS";
+    public static final int MAX_CONTEXTOS_CONTACTO_AFILIADO = 20;
+
+    public static final String ATTR_PRESTADORES_ENVIADOS_REQUERIMIENTO =
+            "compras.requerimiento.prestadoresEnviados";
+    public static final String ATTR_ERROR_PRESTADORES_ENVIADOS_REQUERIMIENTO =
+            "compras.requerimiento.errorPrestadoresEnviados";
+    public static final String ATTR_PRESTADORES_DISPONIBLES_PRESUPUESTO =
+            "compras.requerimiento.prestadoresDisponiblesPresupuesto";
+    public static final String ATTR_PRESUPUESTOS_REQUERIMIENTO =
+            "compras.requerimiento.presupuestos";
+    public static final String ATTR_IDS_PRESTADORES_CON_PRESUPUESTO =
+            "compras.requerimiento.idsPrestadoresConPresupuesto";
+    public static final String ATTR_ERROR_PRESUPUESTOS_REQUERIMIENTO =
+            "compras.requerimiento.errorPresupuestos";
+    public static final String ATTR_PRESUPUESTO_DOCUMENTO_VALIDO =
+            "compras.requerimiento.presupuestoDocumentoValido";
+    public static final String ATTR_PRESUPUESTO_DOWNLOAD_URL =
+            "compras.requerimiento.presupuestoDownloadURL";
+    public static final String ATTR_ORDENES_MEDICAS_REQUERIMIENTO =
+            "compras.requerimiento.ordenesMedicas";
+    public static final String ATTR_ERROR_ORDENES_MEDICAS_REQUERIMIENTO =
+            "compras.requerimiento.errorOrdenesMedicas";
+
+    // RC0-B - CONTRATO JSP RUNTIME.
+    public static final String ATTR_REQUERIMIENTO_MODELO =
+            "compras.requerimiento.req";
+    public static final String ATTR_REQUERIMIENTO_ES_NUEVO =
+            "compras.requerimiento.esNuevo";
+    public static final String ATTR_REQUERIMIENTO_SURGE_SELECCIONADO =
+            "compras.requerimiento.surgeSeleccionado";
+    public static final String ATTR_REQUERIMIENTO_PUEDE_ABM =
+            "compras.requerimiento.puedeABM";
+    public static final String ATTR_REQUERIMIENTO_PUEDE_COTIZAR =
+            "compras.requerimiento.puedeCotizar";
+    public static final String ATTR_REQUERIMIENTO_SOLO_LECTURA_SOLICITADA =
+            "compras.requerimiento.soloLecturaSolicitada";
+    public static final String ATTR_REQUERIMIENTO_PUEDE_EDITAR_ESTRUCTURA =
+            "compras.requerimiento.puedeEditarEstructura";
+    public static final String ATTR_REQUERIMIENTO_PUEDE_EDITAR_SURGE =
+            "compras.requerimiento.puedeEditarSurge";
+    public static final String ATTR_REQUERIMIENTO_PUEDE_EDITAR_COTIZACION =
+            "compras.requerimiento.puedeEditarCotizacion";
+    public static final String ATTR_REQUERIMIENTO_MODO_EDITABLE =
+            "compras.requerimiento.modoEditable";
+    public static final String ATTR_REQUERIMIENTO_SECTORES =
+            "compras.requerimiento.sectores";
+    public static final String ATTR_REQUERIMIENTO_VOLVER_URL =
+            "compras.requerimiento.volverURL";
+    public static final String ATTR_REQUERIMIENTO_IMPRIMIR_URL =
+            "compras.requerimiento.imprimirURL";
+    public static final String ATTR_REQUERIMIENTO_SECTOR_ID =
+            "compras.requerimiento.reqSectorId";
+    public static final String ATTR_REQUERIMIENTO_SECTOR_DESCRIPCION =
+            "compras.requerimiento.sectorDescripcion";
+    public static final String ATTR_REQUERIMIENTO_ID_TERCERIZADORA =
+            "compras.requerimiento.idTercerizadora";
+    public static final String ATTR_REQUERIMIENTO_CARGO_OSPIM =
+            "compras.requerimiento.cargoOspim";
+    public static final String ATTR_REQUERIMIENTO_CARGO_TERCERIZADORA =
+            "compras.requerimiento.cargoTercerizadora";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_CUIL =
+            "compras.requerimiento.afiliadoCuil";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_INT =
+            "compras.requerimiento.afiliadoInt";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_TIPO_DOCUMENTO =
+            "compras.requerimiento.afiliadoTipoDocumento";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_NUMERO_DOCUMENTO =
+            "compras.requerimiento.afiliadoNumeroDocumento";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_APELLIDO =
+            "compras.requerimiento.afiliadoApellido";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_NOMBRE =
+            "compras.requerimiento.afiliadoNombre";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_SECCIONAL =
+            "compras.requerimiento.afiliadoSeccional";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_BAJA_FECHA =
+            "compras.requerimiento.afiliadoBajaFecha";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_FECHA_ALTA =
+            "compras.requerimiento.afiliadoFechaAlta";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_ID_TERCERIZADORA =
+            "compras.requerimiento.afiliadoIdTercerizadora";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_INCAPACIDAD =
+            "compras.requerimiento.afiliadoIncapacidad";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_ANTECEDENTES =
+            "compras.requerimiento.afiliadoAntecedentes";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_ID_SECCIONAL =
+            "compras.requerimiento.afiliadoIdSeccional";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_NUMERO_OSPIM =
+            "compras.requerimiento.afiliadoNumeroOspim";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_NUMERO_UOMA =
+            "compras.requerimiento.afiliadoNumeroUoma";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_NUMERO_AMTIMA =
+            "compras.requerimiento.afiliadoNumeroAmtima";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_NUMERO =
+            "compras.requerimiento.afiliadoNumero";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_NOMBRE_PLAN =
+            "compras.requerimiento.afiliadoNombrePlan";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_ID_PLAN =
+            "compras.requerimiento.afiliadoIdPlan";
+    public static final String ATTR_REQUERIMIENTO_AFILIADO_TERCERIZADORA =
+            "compras.requerimiento.afiliadoTercerizadora";
+    public static final String ATTR_REQUERIMIENTO_MOSTRAR_PANEL_AFILIADO =
+            "compras.requerimiento.mostrarPanelAfiliado";
+    public static final String ATTR_REQUERIMIENTO_ERROR_ALERT =
+            "compras.requerimiento.errorParaAlert";
+    public static final String ATTR_REQUERIMIENTO_ERROR_CAMPO =
+            "compras.requerimiento.errorCampo";
+    public static final String ATTR_REQUERIMIENTO_MSG_DETALLE_GUARDADO =
+            "compras.requerimiento.msgDetalleGuardado";
+    public static final String ATTR_REQUERIMIENTO_MSG_DETALLE_BORRADO =
+            "compras.requerimiento.msgDetalleBorrado";
+    public static final String ATTR_REQUERIMIENTO_MSG_ANULADO =
+            "compras.requerimiento.msgAnulado";
+    public static final String ATTR_REQUERIMIENTO_OPERACION =
+            "compras.requerimiento.operacion";
+    public static final String ATTR_REQUERIMIENTO_MOSTRAR_MENSAJE_GUARDADO =
+            "compras.requerimiento.mostrarMensajeGuardado";
+    public static final String ATTR_REQUERIMIENTO_MOSTRAR_ERROR_GENERICO =
+            "compras.requerimiento.mostrarErrorGenerico";
+    public static final String ATTR_REQUERIMIENTO_ID_MENSAJE =
+            "compras.requerimiento.idMensaje";
+    public static final String ATTR_REQUERIMIENTO_TITULO =
+            "compras.requerimiento.titulo";
+
+    // RC0-C - CODIGOS DE DOMINIO.
+    public static final String TIPO_ITEM_NOMENCLADOR = "NOMENCLADOR";
+    public static final String TIPO_ITEM_MEDICAMENTO = "MEDICAMENTO";
+    public static final String TIPO_ITEM_OBSERVACION = "OBSERVACION";
+
+    public static final int TIPO_DOCUMENTO_PRESUPUESTO = 1;
+    public static final int TIPO_DOCUMENTO_ORDEN_MEDICA = 2;
+    public static final int TIPO_DOCUMENTO_COTIZACION_EMPRESA = 3;
+
+    public static final String RESULTADO_NOTIFICACION_ENVIADO = "ENVIADO";
+    public static final String RESULTADO_NOTIFICACION_OMITIDO = "OMITIDO";
+    public static final String RESULTADO_NOTIFICACION_EMAIL_INVALIDO =
+            "EMAIL_INVALIDO";
+    public static final String RESULTADO_NOTIFICACION_ERROR = "ERROR";
+
     public static final String TITULO_ORDEN_MEDICA =
             "Orden médica";
 
@@ -507,13 +769,13 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         sectorDescripcion
                 );
 
-        if ("FARMACIA".equals(sector)) {
+        if (SECTOR_FARMACIA.equals(sector)) {
             return Integer.valueOf(
                     FILTRO_NOMENCLADOR_FARMACIA
             );
         }
 
-        if ("DISCAPACIDAD".equals(sector)) {
+        if (SECTOR_DISCAPACIDAD.equals(sector)) {
             /*
              * Reclamos Prestacionales parte del tipo 8,
              * pero la consulta efectiva utiliza marca ReinLiq 6.
@@ -523,13 +785,13 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             );
         }
 
-        if ("ODONTOLOGIA".equals(sector)) {
+        if (SECTOR_ODONTOLOGIA.equals(sector)) {
             return Integer.valueOf(
                     FILTRO_NOMENCLADOR_ODONTOLOGIA
             );
         }
 
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
+        if (SECTOR_PRESTACIONES_MEDICAS.equals(sector)) {
             return Integer.valueOf(
                     FILTRO_NOMENCLADOR_GENERAL
             );
@@ -558,24 +820,24 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         ? ""
                         : codigoNomenclador.trim();
 
-        if ("FARMACIA".equals(sector)) {
+        if (SECTOR_FARMACIA.equals(sector)) {
             return idTipoNomenclador
                     == FILTRO_NOMENCLADOR_FARMACIA;
         }
 
-        if ("DISCAPACIDAD".equals(sector)) {
+        if (SECTOR_DISCAPACIDAD.equals(sector)) {
             return marcaReinLiq
                     == MARCA_REIN_LIQ_DISCAPACIDAD
                     || CODIGO_ESPECIAL_DISCAPACIDAD
                     .equals(codigo);
         }
 
-        if ("ODONTOLOGIA".equals(sector)) {
+        if (SECTOR_ODONTOLOGIA.equals(sector)) {
             return idTipoNomenclador
                     == FILTRO_NOMENCLADOR_ODONTOLOGIA;
         }
 
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
+        if (SECTOR_PRESTACIONES_MEDICAS.equals(sector)) {
             return esTipoNomencladorPrestacionesMedicas(
                     idTipoNomenclador
             );
@@ -605,7 +867,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         sectorDescripcion
                 );
 
-        if (!"PRESTACIONES MEDICAS".equals(sector)) {
+        if (!SECTOR_PRESTACIONES_MEDICAS.equals(sector)) {
             return true;
         }
 
@@ -630,10 +892,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         sectorDescripcion
                 );
 
-        return "RRHH".equals(sector)
-                || "LEGALES".equals(sector)
-                || "SISTEMAS".equals(sector)
-                || "OTROS".equals(sector);
+        return SECTOR_RRHH.equals(sector)
+                || SECTOR_LEGALES.equals(sector)
+                || SECTOR_SISTEMAS.equals(sector)
+                || SECTOR_OTROS.equals(sector);
     }
 
     public static boolean esSectorSinCotizacionPrestador(
@@ -644,8 +906,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         sectorDescripcion
                 );
 
-        return "RRHH".equals(sector)
-                || "SISTEMAS".equals(sector);
+        return SECTOR_RRHH.equals(sector)
+                || SECTOR_SISTEMAS.equals(sector);
     }
 
     public static String normalizarSectorCompra(
@@ -739,29 +1001,29 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                         sectorDescripcion
                 );
 
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
+        if (SECTOR_PRESTACIONES_MEDICAS.equals(sector)) {
             return "PRESTACIONES MEDICAS";
         }
 
-        if ("DISCAPACIDAD".equals(sector)
+        if (SECTOR_DISCAPACIDAD.equals(sector)
                 || sector.indexOf("DISCAPAC") >= 0) {
 
             return "DISCAPACIDAD";
         }
 
-        if ("FARMACIA".equals(sector)
+        if (SECTOR_FARMACIA.equals(sector)
                 || sector.indexOf("FARMAC") >= 0) {
 
             return "FARMACIA";
         }
 
-        if ("ODONTOLOGIA".equals(sector)
+        if (SECTOR_ODONTOLOGIA.equals(sector)
                 || sector.indexOf("ODONTO") >= 0) {
 
             return "ODONTOLOGIA";
         }
 
-        if ("LEGALES".equals(sector)
+        if (SECTOR_LEGALES.equals(sector)
                 || sector.indexOf("LEGAL") >= 0) {
 
             return "LEGALES";

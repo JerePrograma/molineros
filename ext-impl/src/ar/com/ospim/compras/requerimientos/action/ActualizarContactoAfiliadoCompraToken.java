@@ -15,16 +15,15 @@ import javax.portlet.RenderRequest;
 
 public final class ActualizarContactoAfiliadoCompraToken {
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String PARAM_TOKEN =
-            "contacto_afiliado_token";
+            WebKeysCompras.PARAM_CONTACTO_AFILIADO_TOKEN;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_TOKEN =
-            "COMPRAS_CONTACTO_AFILIADO_TOKEN";
-
-    private static final String SESSION_CONTEXTOS =
-            "COMPRAS_CONTACTO_AFILIADO_CONTEXTOS";
-
-    private static final int MAX_CONTEXTOS = 20;
+            WebKeysCompras.ATTR_CONTACTO_AFILIADO_TOKEN;
 
     public static void publicar(
             RenderRequest request,
@@ -45,7 +44,7 @@ public final class ActualizarContactoAfiliadoCompraToken {
         synchronized (session) {
             Contextos contextos = obtenerContextos(session);
 
-            if (contextos.valores.size() >= MAX_CONTEXTOS) {
+            if (contextos.valores.size() >= WebKeysCompras.MAX_CONTEXTOS_CONTACTO_AFILIADO) {
                 Iterator<String> tokens =
                         contextos.valores.keySet().iterator();
 
@@ -56,7 +55,7 @@ public final class ActualizarContactoAfiliadoCompraToken {
             }
 
             contextos.valores.put(token, contexto);
-            session.setAttribute(SESSION_CONTEXTOS, contextos);
+            session.setAttribute(WebKeysCompras.SESSION_CONTACTO_AFILIADO_CONTEXTOS, contextos);
         }
 
         request.setAttribute(ATTR_TOKEN, token);
@@ -147,14 +146,14 @@ public final class ActualizarContactoAfiliadoCompraToken {
                             Integer.valueOf(integrante)
                     )
             );
-            session.setAttribute(SESSION_CONTEXTOS, contextos);
+            session.setAttribute(WebKeysCompras.SESSION_CONTACTO_AFILIADO_CONTEXTOS, contextos);
         }
     }
 
     private static Contextos obtenerContextos(
             PortletSession session) {
 
-        Object value = session.getAttribute(SESSION_CONTEXTOS);
+        Object value = session.getAttribute(WebKeysCompras.SESSION_CONTACTO_AFILIADO_CONTEXTOS);
 
         if (value instanceof Contextos) {
             return (Contextos) value;

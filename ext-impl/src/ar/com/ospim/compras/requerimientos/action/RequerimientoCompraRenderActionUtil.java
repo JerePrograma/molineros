@@ -25,35 +25,55 @@ import javax.portlet.RenderRequest;
 /** Publica el contexto de presentación requerido por los JSP de Compras. */
 public final class RequerimientoCompraRenderActionUtil {
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_PRESTADORES_ENVIADOS =
-            "compras.requerimiento.prestadoresEnviados";
+            WebKeysCompras.ATTR_PRESTADORES_ENVIADOS_REQUERIMIENTO;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_ERROR_PRESTADORES_ENVIADOS =
-            "compras.requerimiento.errorPrestadoresEnviados";
+            WebKeysCompras.ATTR_ERROR_PRESTADORES_ENVIADOS_REQUERIMIENTO;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_PRESTADORES_DISPONIBLES_PRESUPUESTO =
-            "compras.requerimiento.prestadoresDisponiblesPresupuesto";
+            WebKeysCompras.ATTR_PRESTADORES_DISPONIBLES_PRESUPUESTO;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_PRESUPUESTOS =
-            "compras.requerimiento.presupuestos";
+            WebKeysCompras.ATTR_PRESUPUESTOS_REQUERIMIENTO;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_IDS_PRESTADORES_CON_PRESUPUESTO =
-            "compras.requerimiento.idsPrestadoresConPresupuesto";
+            WebKeysCompras.ATTR_IDS_PRESTADORES_CON_PRESUPUESTO;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_ERROR_PRESUPUESTOS =
-            "compras.requerimiento.errorPresupuestos";
+            WebKeysCompras.ATTR_ERROR_PRESUPUESTOS_REQUERIMIENTO;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_PRESUPUESTO_DOCUMENTO_VALIDO =
-            "compras.requerimiento.presupuestoDocumentoValido";
+            WebKeysCompras.ATTR_PRESUPUESTO_DOCUMENTO_VALIDO;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_PRESUPUESTO_DOWNLOAD_URL =
-            "compras.requerimiento.presupuestoDownloadURL";
+            WebKeysCompras.ATTR_PRESUPUESTO_DOWNLOAD_URL;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_ORDENES_MEDICAS =
-            "compras.requerimiento.ordenesMedicas";
+            WebKeysCompras.ATTR_ORDENES_MEDICAS_REQUERIMIENTO;
 
+    /** @deprecated Valor canonico en WebKeysCompras. */
+    @Deprecated
     public static final String ATTR_ERROR_ORDENES_MEDICAS =
-            "compras.requerimiento.errorOrdenesMedicas";
+            WebKeysCompras.ATTR_ERROR_ORDENES_MEDICAS_REQUERIMIENTO;
 
     private RequerimientoCompraRenderActionUtil() {
     }

@@ -59,29 +59,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
      * abiertas en múltiples tabs. Cada render agrega un token válido.
      * Cada save consume exactamente un token.
      */
-    private static final String PARAM_COMPRAS_SAVE_TOKEN =
-            "compras_save_token";
-
-    private static final String ATTR_COMPRAS_SAVE_TOKEN =
-            "COMPRAS_SAVE_TOKEN";
-
-    private static final String SESSION_COMPRAS_SAVE_TOKENS =
-            "COMPRAS_SAVE_TOKENS";
-
-    private static final int MAX_TOKENS_GUARDADO_COMPRA = 20;
-
-    private static final int MAX_DETALLES_COTIZACION_RETORNO = 1000;
-
-    private static final String STRUTS_ACTION_NUEVO_REQUERIMIENTO =
-            "/compras/nuevo_requerimiento";
-
-    private static final String STRUTS_ACTION_EDITAR_REQUERIMIENTO =
-            "/compras/editar_requerimiento";
-
-    private static final String PARAM_ORDEN_MEDICA_COUNT =
-            "orden_medica_count";
-
-
     /*
      * Adaptador HTTP de detalles. Reconstruye parámetros y delega las
      * reglas funcionales canónicas en EditarRequerimientoCompraHelper.
@@ -96,11 +73,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             new RequerimientoCompraReclamoPrestacionalHelper();
 
     private boolean esAltaRequerimiento(RenderRequest renderRequest) {
-        String strutsAction = ParamUtil.getString(renderRequest, "struts_action", "");
+        String strutsAction = ParamUtil.getString(renderRequest, WebKeysCompras.PARAM_STRUTS_ACTION, "");
         String modo = ParamUtil.getString(renderRequest, "modo", "");
 
         int idRequerimientoCompra =
-                ParamUtil.getInteger(renderRequest, "id_requerimiento_compra", 0);
+                ParamUtil.getInteger(renderRequest, WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA, 0);
 
         Object idAttr =
                 renderRequest.getAttribute(WebKeysCompras.ID_REQUERIMIENTO_COMPRA_EN_EDICION);
@@ -109,13 +86,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             idRequerimientoCompra = ((Integer) idAttr).intValue();
         }
 
-        return STRUTS_ACTION_NUEVO_REQUERIMIENTO.equals(strutsAction)
+        return WebKeysCompras.STRUTS_ACTION_NUEVO_REQUERIMIENTO.equals(strutsAction)
                 || "alta".equalsIgnoreCase(modo)
                 || idRequerimientoCompra <= 0;
     }
 
     private boolean vieneDeAlta(ActionRequest actionRequest) {
-        String strutsAction = getParametroTrim(actionRequest, "struts_action");
+        String strutsAction = getParametroTrim(actionRequest, WebKeysCompras.PARAM_STRUTS_ACTION);
         String modo = getParametroTrim(actionRequest, "modo");
 
         int idRequerimientoCompra = 0;
@@ -124,7 +101,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             idRequerimientoCompra =
                     parseEnteroConDefault(
                             actionRequest,
-                            "id_requerimiento_compra",
+                            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                             "ID del requerimiento",
                             0
                     );
@@ -132,7 +109,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             idRequerimientoCompra = 0;
         }
 
-        return STRUTS_ACTION_NUEVO_REQUERIMIENTO.equals(strutsAction)
+        return WebKeysCompras.STRUTS_ACTION_NUEVO_REQUERIMIENTO.equals(strutsAction)
                 || "alta".equalsIgnoreCase(modo)
                 || idRequerimientoCompra <= 0;
     }
@@ -160,7 +137,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         int idRequerimientoCompra =
                 parseEnteroConDefault(
                         actionRequest,
-                        "id_requerimiento_compra",
+                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                         "ID del requerimiento",
                         0
                 );
@@ -173,15 +150,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     ? user.getScreenName()
                     : "sistema";
 
-            if ("saveCotizacion".equals(cmd)
-                    || "cerrarCotizacion".equals(cmd)) {
+            if (WebKeysCompras.CMD_SAVE_COTIZACION.equals(cmd)
+                    || WebKeysCompras.CMD_CERRAR_COTIZACION.equals(cmd)) {
 
                 validarPermisoCotizar(user);
                 consumirTokenGuardadoCompra(actionRequest);
 
                 if (idRequerimientoCompra <= 0) {
                     errorCampo(
-                            "id_requerimiento_compra",
+                            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                             "Debe informar el requerimiento de compra."
                     );
                 }
@@ -212,7 +189,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             "requerimiento-compra-cotizacion-completa"
                     );
                     actionResponse.setRenderParameter(
-                            "struts_action",
+                            WebKeysCompras.PARAM_STRUTS_ACTION,
                             "/compras/ver_requerimiento"
                     );
                     setForward(
@@ -225,8 +202,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             "requerimiento-compra-cotizacion-guardada"
                     );
                     actionResponse.setRenderParameter(
-                            "struts_action",
-                            STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                            WebKeysCompras.PARAM_STRUTS_ACTION,
+                            WebKeysCompras.STRUTS_ACTION_EDITAR_REQUERIMIENTO
                     );
                     setForward(
                             actionRequest,
@@ -235,18 +212,18 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
 
                 actionResponse.setRenderParameter(
-                        "id_requerimiento_compra",
+                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                         String.valueOf(idRequerimientoCompra)
                 );
                 actionResponse.setRenderParameter(
-                        "compras_operacion",
+                        WebKeysCompras.PARAM_COMPRAS_OPERACION,
                         "saveCotizacion"
                 );
 
                 return;
             }
 
-            if ("saveAll".equals(cmd)) {
+            if (WebKeysCompras.CMD_SAVE_ALL.equals(cmd)) {
                 validarPermisoABM(user);
                 consumirTokenGuardadoCompra(actionRequest);
 
@@ -288,8 +265,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     );
                 }
 
-                actionResponse.setRenderParameter("compras_guardado", "true");
-                actionResponse.setRenderParameter("compras_operacion", "saveAll");
+                actionResponse.setRenderParameter(WebKeysCompras.PARAM_COMPRAS_GUARDADO, "true");
+                actionResponse.setRenderParameter(WebKeysCompras.PARAM_COMPRAS_OPERACION, "saveAll");
 
                 setIdRequerimientoEnRequest(
                         actionRequest,
@@ -298,8 +275,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
 
                 actionResponse.setRenderParameter(
-                        "struts_action",
-                        STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                        WebKeysCompras.PARAM_STRUTS_ACTION,
+                        WebKeysCompras.STRUTS_ACTION_EDITAR_REQUERIMIENTO
                 );
 
                 SessionMessages.add(
@@ -337,8 +314,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         usuario
                 );
 
-                actionResponse.setRenderParameter("compras_guardado", "true");
-                actionResponse.setRenderParameter("compras_operacion", cmd);
+                actionResponse.setRenderParameter(WebKeysCompras.PARAM_COMPRAS_GUARDADO, "true");
+                actionResponse.setRenderParameter(WebKeysCompras.PARAM_COMPRAS_OPERACION, cmd);
 
                 setIdRequerimientoEnRequest(
                         actionRequest,
@@ -347,8 +324,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
 
                 actionResponse.setRenderParameter(
-                        "struts_action",
-                        STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                        WebKeysCompras.PARAM_STRUTS_ACTION,
+                        WebKeysCompras.STRUTS_ACTION_EDITAR_REQUERIMIENTO
                 );
 
                 SessionMessages.add(
@@ -368,7 +345,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 if (idRequerimientoCompra <= 0) {
                     errorCampo(
-                            "id_requerimiento_compra",
+                            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                             "Debe informar el requerimiento de compra a anular."
                     );
                 }
@@ -389,7 +366,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             if (idRequerimientoCompra > 0) {
                 actionResponse.setRenderParameter(
-                        "id_requerimiento_compra",
+                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                         String.valueOf(idRequerimientoCompra)
                 );
             }
@@ -437,7 +414,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             if (idRequerimientoCompra > 0) {
                 actionResponse.setRenderParameter(
-                        "id_requerimiento_compra",
+                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                         String.valueOf(idRequerimientoCompra)
                 );
             }
@@ -459,8 +436,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
 
                 actionResponse.setRenderParameter(
-                        "struts_action",
-                        STRUTS_ACTION_NUEVO_REQUERIMIENTO
+                        WebKeysCompras.PARAM_STRUTS_ACTION,
+                        WebKeysCompras.STRUTS_ACTION_NUEVO_REQUERIMIENTO
                 );
                 actionResponse.setRenderParameter(
                         "modo",
@@ -472,8 +449,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
             } else {
                 actionResponse.setRenderParameter(
-                        "struts_action",
-                        STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                        WebKeysCompras.PARAM_STRUTS_ACTION,
+                        WebKeysCompras.STRUTS_ACTION_EDITAR_REQUERIMIENTO
                 );
                 setForward(
                         actionRequest,
@@ -482,12 +459,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             actionResponse.setRenderParameter(
-                    "compras_error",
+                    WebKeysCompras.PARAM_COMPRAS_ERROR,
                     "true"
             );
 
-            if ("saveCotizacion".equals(cmd)
-                    || "cerrarCotizacion".equals(cmd)) {
+            if (WebKeysCompras.CMD_SAVE_COTIZACION.equals(cmd)
+                    || WebKeysCompras.CMD_CERRAR_COTIZACION.equals(cmd)) {
 
                 copiarParametrosCotizacion(
                         actionRequest,
@@ -496,7 +473,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             }
 
             actionResponse.setRenderParameter(
-                    "compras_operacion",
+                    WebKeysCompras.PARAM_COMPRAS_OPERACION,
                     cmd != null ? cmd : ""
             );
         }
@@ -774,7 +751,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (cantidadOrdenesMedicas <= 0) {
             errorCampo(
-                    PARAM_ORDEN_MEDICA_COUNT,
+                    WebKeysCompras.PARAM_ORDEN_MEDICA_COUNT,
                     "Debe informar al menos un adjunto."
             );
 
@@ -786,7 +763,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 .MAX_ORDENES_MEDICAS_POR_CARGA) {
 
             errorCampo(
-                    PARAM_ORDEN_MEDICA_COUNT,
+                    WebKeysCompras.PARAM_ORDEN_MEDICA_COUNT,
                     "Se pueden cargar hasta "
                             + EditarRequerimientoCompraHelper
                             .MAX_ORDENES_MEDICAS_POR_CARGA
@@ -885,7 +862,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         int cantidad =
                 parseEnteroConDefault(
                         actionRequest,
-                        PARAM_ORDEN_MEDICA_COUNT,
+                        WebKeysCompras.PARAM_ORDEN_MEDICA_COUNT,
                         "Cantidad de adjuntos",
                         1
                 );
@@ -896,7 +873,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          */
         if (cantidad < 0) {
             errorCampo(
-                    PARAM_ORDEN_MEDICA_COUNT,
+                    WebKeysCompras.PARAM_ORDEN_MEDICA_COUNT,
                     "La cantidad de adjuntos no puede ser negativa."
             );
             return 0;
@@ -905,7 +882,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_CARGA) {
             errorCampo(
-                    PARAM_ORDEN_MEDICA_COUNT,
+                    WebKeysCompras.PARAM_ORDEN_MEDICA_COUNT,
                     "Se pueden cargar hasta "
                             + EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_CARGA
                             + " adjuntos por operación."
@@ -974,7 +951,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
 
         actionResponse.setRenderParameter(
-                PARAM_ORDEN_MEDICA_COUNT,
+                WebKeysCompras.PARAM_ORDEN_MEDICA_COUNT,
                 String.valueOf(cantidad)
         );
 
@@ -1059,7 +1036,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             int idRequerimientoCompra =
                     ParamUtil.getInteger(
                             renderRequest,
-                            "id_requerimiento_compra",
+                            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                             0
                     );
 
@@ -1174,7 +1151,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "render",
                     ParamUtil.getInteger(
                             renderRequest,
-                            "id_requerimiento_compra",
+                            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                             0
                     ),
                     mensaje,
@@ -1310,32 +1287,32 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         synchronized (session) {
             Set tokens = null;
-            Object tokensObj = session.getAttribute(SESSION_COMPRAS_SAVE_TOKENS);
+            Object tokensObj = session.getAttribute(WebKeysCompras.SESSION_COMPRAS_SAVE_TOKENS);
 
             if (tokensObj instanceof Set) {
                 tokens = (Set) tokensObj;
             }
 
-            if (tokens == null || tokens.size() >= MAX_TOKENS_GUARDADO_COMPRA) {
+            if (tokens == null || tokens.size() >= WebKeysCompras.MAX_TOKENS_GUARDADO_COMPRA) {
                 tokens = new HashSet();
             }
 
             tokens.add(token);
-            session.setAttribute(SESSION_COMPRAS_SAVE_TOKENS, tokens);
+            session.setAttribute(WebKeysCompras.SESSION_COMPRAS_SAVE_TOKENS, tokens);
         }
 
-        renderRequest.setAttribute(ATTR_COMPRAS_SAVE_TOKEN, token);
+        renderRequest.setAttribute(WebKeysCompras.ATTR_COMPRAS_SAVE_TOKEN, token);
     }
 
     private void consumirTokenGuardadoCompra(ActionRequest actionRequest)
             throws ValidacionCompraException {
 
         String tokenRequest =
-                getParametroTrim(actionRequest, PARAM_COMPRAS_SAVE_TOKEN);
+                getParametroTrim(actionRequest, WebKeysCompras.PARAM_COMPRAS_SAVE_TOKEN);
         PortletSession session = actionRequest.getPortletSession();
 
         synchronized (session) {
-            Object tokensObj = session.getAttribute(SESSION_COMPRAS_SAVE_TOKENS);
+            Object tokensObj = session.getAttribute(WebKeysCompras.SESSION_COMPRAS_SAVE_TOKENS);
 
             if (!(tokensObj instanceof Set)) {
                 errorCampo(
@@ -1360,16 +1337,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             tokens.remove(tokenRequest);
 
             if (tokens.isEmpty()) {
-                session.removeAttribute(SESSION_COMPRAS_SAVE_TOKENS);
+                session.removeAttribute(WebKeysCompras.SESSION_COMPRAS_SAVE_TOKENS);
             } else {
-                session.setAttribute(SESSION_COMPRAS_SAVE_TOKENS, tokens);
+                session.setAttribute(WebKeysCompras.SESSION_COMPRAS_SAVE_TOKENS, tokens);
             }
         }
     }
 
     private boolean esModoSoloLectura(RenderRequest renderRequest) {
         String strutsAction =
-                ParamUtil.getString(renderRequest, "struts_action", "");
+                ParamUtil.getString(renderRequest, WebKeysCompras.PARAM_STRUTS_ACTION, "");
         String modo = ParamUtil.getString(renderRequest, "modo", "");
 
         return "/compras/ver_requerimiento".equals(strutsAction)
@@ -1448,7 +1425,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 Integer.valueOf(idRequerimientoCompra)
         );
         response.setRenderParameter(
-                "id_requerimiento_compra",
+                WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                 String.valueOf(idRequerimientoCompra)
         );
     }
@@ -1571,7 +1548,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         int idRequerimientoCompra = parseEnteroConDefault(
                 request,
-                "id_requerimiento_compra",
+                WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
                 "ID del requerimiento",
                 0
         );
@@ -1881,8 +1858,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (count < 0) {
             count = 0;
-        } else if (count > MAX_DETALLES_COTIZACION_RETORNO) {
-            count = MAX_DETALLES_COTIZACION_RETORNO;
+        } else if (count > WebKeysCompras.MAX_DETALLES_COTIZACION_RETORNO) {
+            count = WebKeysCompras.MAX_DETALLES_COTIZACION_RETORNO;
         }
 
         response.setRenderParameter("detalle_count", String.valueOf(count));

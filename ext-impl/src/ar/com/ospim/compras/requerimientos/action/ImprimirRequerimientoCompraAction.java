@@ -27,9 +27,6 @@ public class ImprimirRequerimientoCompraAction extends PortletAction {
     private static final Log _log =
             LogFactoryUtil.getLog(ImprimirRequerimientoCompraAction.class);
 
-    private static final String ATTR_ID_REQUERIMIENTO_COMPRA_PDF =
-            "ID_REQUERIMIENTO_COMPRA_PDF";
-
     public void processAction(ActionMapping mapping, ActionForm form,
                               PortletConfig portletConfig, ActionRequest actionRequest,
                               ActionResponse actionResponse) throws Exception {
@@ -122,7 +119,7 @@ public class ImprimirRequerimientoCompraAction extends PortletAction {
                 requerimiento.getDetalles()
         );
         request.setAttribute(
-                ATTR_ID_REQUERIMIENTO_COMPRA_PDF,
+                WebKeysCompras.ATTR_ID_REQUERIMIENTO_COMPRA_PDF,
                 String.valueOf(idRequerimientoCompra)
         );
     }

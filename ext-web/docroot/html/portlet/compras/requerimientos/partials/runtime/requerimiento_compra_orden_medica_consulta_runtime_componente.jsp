@@ -1,8 +1,9 @@
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%--
 Responsabilidad:
     Recupera atributos request e incluye la consulta de Órdenes Médicas.
 Incluido desde:
-    requerimiento_compra_consulta_ensamblado.jsp, requerimiento_compra_edicion_ensamblado.jsp
+    requerimiento_compra_ensamblado.jsp, requerimiento_compra_ensamblado.jsp
 Pantallas o estados de uso:
     Consulta y estados de solo lectura.
 Entradas requeridas:
@@ -20,7 +21,7 @@ Efectos secundarios:
 
 <%-- Requiere compras.requerimiento.req. --%>
 <%
-RequerimientoCompra req = (RequerimientoCompra) request.getAttribute("compras.requerimiento.req");
+RequerimientoCompra req = (RequerimientoCompra) request.getAttribute(WebKeysCompras.ATTR_REQUERIMIENTO_MODELO);
 %>
 
 <%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_orden_medica_consulta_componente.jsp" %>

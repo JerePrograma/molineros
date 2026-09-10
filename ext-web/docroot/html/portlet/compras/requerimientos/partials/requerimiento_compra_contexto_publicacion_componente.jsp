@@ -1,3 +1,4 @@
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%--
 Responsabilidad:
     Publica en request el modelo preparado para includes runtime.
@@ -23,247 +24,247 @@ propagan el contexto de cotización/documentos preparado por los Actions.
 --%>
 <%
 request.setAttribute(
-        "compras.requerimiento.req",
+        WebKeysCompras.ATTR_REQUERIMIENTO_MODELO,
         req
 );
 
 request.setAttribute(
-        "compras.requerimiento.esNuevo",
+        WebKeysCompras.ATTR_REQUERIMIENTO_ES_NUEVO,
         Boolean.valueOf(esNuevo)
 );
 
 request.setAttribute(
-        "compras.requerimiento.surgeSeleccionado",
+        WebKeysCompras.ATTR_REQUERIMIENTO_SURGE_SELECCIONADO,
         surgeSeleccionadoCompra
 );
 
 request.setAttribute(
-        "compras.requerimiento.puedeABM",
+        WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_ABM,
         Boolean.valueOf(puedeABM)
 );
 
 request.setAttribute(
-        "compras.requerimiento.puedeCotizar",
+        WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_COTIZAR,
         Boolean.valueOf(puedeCotizar)
 );
 
 request.setAttribute(
-        "compras.requerimiento.soloLecturaSolicitada",
+        WebKeysCompras.ATTR_REQUERIMIENTO_SOLO_LECTURA_SOLICITADA,
         Boolean.valueOf(soloLecturaSolicitada)
 );
 
 request.setAttribute(
-        "compras.requerimiento.puedeEditarEstructura",
+        WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_EDITAR_ESTRUCTURA,
         Boolean.valueOf(puedeEditarEstructuraPantalla)
 );
 
 request.setAttribute(
-        "compras.requerimiento.puedeEditarSurge",
+        WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_EDITAR_SURGE,
         Boolean.valueOf(puedeEditarSurgePantalla)
 );
 
 request.setAttribute(
-        "compras.requerimiento.puedeEditarCotizacion",
+        WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_EDITAR_COTIZACION,
         Boolean.valueOf(puedeEditarCotizacionPantalla)
 );
 
 request.setAttribute(
-        "compras.requerimiento.modoEditable",
+        WebKeysCompras.ATTR_REQUERIMIENTO_MODO_EDITABLE,
         Boolean.valueOf(modoEditable)
 );
 
 request.setAttribute(
-        "compras.requerimiento.sectores",
+        WebKeysCompras.ATTR_REQUERIMIENTO_SECTORES,
         sectores
 );
 
 request.setAttribute(
-        "compras.requerimiento.volverURL",
+        WebKeysCompras.ATTR_REQUERIMIENTO_VOLVER_URL,
         volverURL
 );
 
 request.setAttribute(
-        "compras.requerimiento.imprimirURL",
+        WebKeysCompras.ATTR_REQUERIMIENTO_IMPRIMIR_URL,
         imprimirURL
 );
 
 request.setAttribute(
-        "compras.requerimiento.reqSectorId",
+        WebKeysCompras.ATTR_REQUERIMIENTO_SECTOR_ID,
         reqSectorId
 );
 
 request.setAttribute(
-        "compras.requerimiento.sectorDescripcion",
+        WebKeysCompras.ATTR_REQUERIMIENTO_SECTOR_DESCRIPCION,
         sectorDescripcionSoloLectura
 );
 
 request.setAttribute(
-        "compras.requerimiento.idTercerizadora",
+        WebKeysCompras.ATTR_REQUERIMIENTO_ID_TERCERIZADORA,
         idTercerizadora
 );
 
 request.setAttribute(
-        "compras.requerimiento.cargoOspim",
+        WebKeysCompras.ATTR_REQUERIMIENTO_CARGO_OSPIM,
         cargoOspimVisible
 );
 
 request.setAttribute(
-        "compras.requerimiento.cargoTercerizadora",
+        WebKeysCompras.ATTR_REQUERIMIENTO_CARGO_TERCERIZADORA,
         cargoTercerizadoraVisible
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoCuil",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_CUIL,
         afiliadoCuilVisible
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoInt",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_INT,
         afiliadoIntVisible
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoTipoDocumento",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_TIPO_DOCUMENTO,
         afiliadoTipoDocumento
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoNumeroDocumento",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_NUMERO_DOCUMENTO,
         afiliadoNumeroDocumento
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoApellido",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_APELLIDO,
         afiliadoApellido
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoNombre",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_NOMBRE,
         afiliadoNombre
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoSeccional",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_SECCIONAL,
         afiliadoSeccional
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoBajaFecha",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_BAJA_FECHA,
         afiliadoBajaFecha
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoFechaAlta",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_FECHA_ALTA,
         afiliadoFechaAlta
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoIdTercerizadora",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_ID_TERCERIZADORA,
         afiliadoIdTercerizadora
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoIncapacidad",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_INCAPACIDAD,
         afiliadoIncapacidad
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoAntecedentes",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_ANTECEDENTES,
         afiliadoAntecedentes
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoIdSeccional",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_ID_SECCIONAL,
         afiliadoIdSeccional
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoNumeroOspim",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_NUMERO_OSPIM,
         afiliadoNumeroOspim
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoNumeroUoma",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_NUMERO_UOMA,
         afiliadoNumeroUoma
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoNumeroAmtima",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_NUMERO_AMTIMA,
         afiliadoNumeroAmtima
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoNumero",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_NUMERO,
         afiliadoNumeroAfiliado
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoNombrePlan",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_NOMBRE_PLAN,
         afiliadoNombrePlan
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoIdPlan",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_ID_PLAN,
         afiliadoIdPlan
 );
 
 request.setAttribute(
-        "compras.requerimiento.afiliadoTercerizadora",
+        WebKeysCompras.ATTR_REQUERIMIENTO_AFILIADO_TERCERIZADORA,
         afiliadoAfiTercerizadora
 );
 
 request.setAttribute(
-        "compras.requerimiento.mostrarPanelAfiliado",
+        WebKeysCompras.ATTR_REQUERIMIENTO_MOSTRAR_PANEL_AFILIADO,
         Boolean.valueOf(mostrarPanelAfiliadoEnVista)
 );
 
 request.setAttribute(
-        "compras.requerimiento.errorParaAlert",
+        WebKeysCompras.ATTR_REQUERIMIENTO_ERROR_ALERT,
         errorParaAlert
 );
 
 request.setAttribute(
-        "compras.requerimiento.errorCampo",
+        WebKeysCompras.ATTR_REQUERIMIENTO_ERROR_CAMPO,
         errorCampoCompra
 );
 
 request.setAttribute(
-        "compras.requerimiento.msgDetalleGuardado",
+        WebKeysCompras.ATTR_REQUERIMIENTO_MSG_DETALLE_GUARDADO,
         Boolean.valueOf(msgDetalleGuardado)
 );
 
 request.setAttribute(
-        "compras.requerimiento.msgDetalleBorrado",
+        WebKeysCompras.ATTR_REQUERIMIENTO_MSG_DETALLE_BORRADO,
         Boolean.valueOf(msgDetalleBorrado)
 );
 
 request.setAttribute(
-        "compras.requerimiento.msgAnulado",
+        WebKeysCompras.ATTR_REQUERIMIENTO_MSG_ANULADO,
         Boolean.valueOf(msgRequerimientoAnulado)
 );
 
 request.setAttribute(
-        "compras.requerimiento.operacion",
+        WebKeysCompras.ATTR_REQUERIMIENTO_OPERACION,
         comprasOperacion
 );
 
 request.setAttribute(
-        "compras.requerimiento.mostrarMensajeGuardado",
+        WebKeysCompras.ATTR_REQUERIMIENTO_MOSTRAR_MENSAJE_GUARDADO,
         Boolean.valueOf(mostrarMensajeRequerimientoGuardado)
 );
 
 request.setAttribute(
-        "compras.requerimiento.mostrarErrorGenerico",
+        WebKeysCompras.ATTR_REQUERIMIENTO_MOSTRAR_ERROR_GENERICO,
         Boolean.valueOf(mostrarErrorGenericoCompra)
 );
 
 request.setAttribute(
-        "compras.requerimiento.idMensaje",
+        WebKeysCompras.ATTR_REQUERIMIENTO_ID_MENSAJE,
         idRequerimientoMensaje
 );
 
 request.setAttribute(
-        "compras.requerimiento.titulo",
+        WebKeysCompras.ATTR_REQUERIMIENTO_TITULO,
         tituloPantalla
 );
 
@@ -274,16 +275,16 @@ request.setAttribute(
  */
 String[] atributosPresentacionCompra =
         new String[] {
-                "compras.requerimiento.prestadoresEnviados",
-                "compras.requerimiento.errorPrestadoresEnviados",
-                "compras.requerimiento.prestadoresDisponiblesPresupuesto",
-                "compras.requerimiento.presupuestos",
-                "compras.requerimiento.idsPrestadoresConPresupuesto",
-                "compras.requerimiento.errorPresupuestos",
-                "compras.requerimiento.presupuestoDocumentoValido",
-                "compras.requerimiento.presupuestoDownloadURL",
-                "compras.requerimiento.ordenesMedicas",
-                "compras.requerimiento.errorOrdenesMedicas"
+                WebKeysCompras.ATTR_PRESTADORES_ENVIADOS_REQUERIMIENTO,
+                WebKeysCompras.ATTR_ERROR_PRESTADORES_ENVIADOS_REQUERIMIENTO,
+                WebKeysCompras.ATTR_PRESTADORES_DISPONIBLES_PRESUPUESTO,
+                WebKeysCompras.ATTR_PRESUPUESTOS_REQUERIMIENTO,
+                WebKeysCompras.ATTR_IDS_PRESTADORES_CON_PRESUPUESTO,
+                WebKeysCompras.ATTR_ERROR_PRESUPUESTOS_REQUERIMIENTO,
+                WebKeysCompras.ATTR_PRESUPUESTO_DOCUMENTO_VALIDO,
+                WebKeysCompras.ATTR_PRESUPUESTO_DOWNLOAD_URL,
+                WebKeysCompras.ATTR_ORDENES_MEDICAS_REQUERIMIENTO,
+                WebKeysCompras.ATTR_ERROR_ORDENES_MEDICAS_REQUERIMIENTO
         };
 
 for (int i = 0;

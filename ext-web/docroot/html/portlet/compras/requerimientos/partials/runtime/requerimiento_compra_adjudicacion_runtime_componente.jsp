@@ -2,7 +2,7 @@
 Responsabilidad:
     Recupera atributos request e incluye la adjudicación en contexto runtime.
 Incluido desde:
-    requerimiento_compra_consulta_ensamblado.jsp, requerimiento_compra_edicion_ensamblado.jsp
+    requerimiento_compra_ensamblado.jsp, requerimiento_compra_ensamblado.jsp
 Pantallas o estados de uso:
     Alta, edición o consulta según el caller indicado.
 Entradas requeridas:
