@@ -50,7 +50,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     private static final String
             COMPROBANTE_CUIT_SUCURSAL_INICIAL =
             "000";
-    public static final String RECLAMOS_PROCESAR_IMAGENES =
+    private static final String RECLAMOS_PROCESAR_IMAGENES =
             "RECLAMOS_PROCESAR_IMAGENES";
 
     private static final int ESTADO_PRESTACION_CARGADA = 0;
@@ -925,8 +925,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 RECLAMO_PRESTACION_ESTADO_ORIGINAL
         );
         session.removeAttribute(
-                WebKeysAutorizaciones
-                        .RECLAMOS_PROCESAR_IMAGENES
+                RECLAMOS_PROCESAR_IMAGENES
         );
     }
 
