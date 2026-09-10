@@ -50,6 +50,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     private static final String
             COMPROBANTE_CUIT_SUCURSAL_INICIAL =
             "000";
+    public static final String RECLAMOS_PROCESAR_IMAGENES =
+            "RECLAMOS_PROCESAR_IMAGENES";
 
     private static final int ESTADO_PRESTACION_CARGADA = 0;
 
@@ -782,6 +784,95 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         }
     }
 
+    /**
+     * Inicia de forma autoritativa un nuevo handoff Compras -> RP.
+     *
+     * La operación es deliberadamente destructiva respecto del estado
+     * transitorio del editor existente en esta HttpSession:
+     *
+     * - descarta una cabecera RP en edición;
+     * - descarta prestaciones, revisiones y contactos temporales;
+     * - descarta una prestación en proceso de edición;
+     * - descarta selecciones y metadata auxiliar del editor;
+     * - descarta contextos y recuperaciones anteriores de Compras.
+     *
+     * No elimina ni modifica ningún Reclamo Prestacional persistido.
+     *
+     * La limpieza y la publicación del nuevo contexto ocurren bajo el mismo
+     * lock de sesión para impedir que otra petición se interponga entre ambas.
+     */
+    public static void reiniciarYRegistrarContextoDesdeCompras(
+            HttpSession session,
+            ReclamoPrestacionalCompraContexto nuevoContexto)
+            throws Exception {
+
+        if (session == null) {
+            throw new Exception(
+                    "No se pudo obtener la sesión del usuario."
+            );
+        }
+
+        if (nuevoContexto == null) {
+            throw new Exception(
+                    "No se pudo construir el contexto temporal "
+                            + "de Compras."
+            );
+        }
+
+        if (nuevoContexto.getIdRequerimientoCompra() <= 0) {
+            throw new Exception(
+                    "El contexto de Compras no contiene "
+                            + "un requerimiento válido."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                nuevoContexto.getNonce()
+        )) {
+
+            throw new Exception(
+                    "El contexto de Compras no contiene "
+                            + "un identificador válido."
+            );
+        }
+
+        if (WebKeysCompras.isEmpty(
+                nuevoContexto.getUsuarioInicio()
+        )) {
+
+            throw new Exception(
+                    "El contexto de Compras no contiene "
+                            + "un usuario válido."
+            );
+        }
+
+        if (!nuevoContexto.estaVigente(
+                System.currentTimeMillis()
+        )) {
+
+            throw new Exception(
+                    "El contexto de Compras no se encuentra vigente."
+            );
+        }
+
+        synchronized (session) {
+
+            /*
+             * El requerimiento seleccionado en Compras es autoritativo
+             * respecto de todo estado transitorio del editor de RP.
+             */
+            limpiarEstadoEditorSincronizado(
+                    session
+            );
+
+            session.setAttribute(
+                    WebKeysCompras
+                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA,
+                    nuevoContexto
+            );
+        }
+    }
+
     public static void limpiarEstadoEditorReclamoPrestacional(
             HttpSession session) {
 
@@ -832,6 +923,10 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         );
         session.removeAttribute(
                 RECLAMO_PRESTACION_ESTADO_ORIGINAL
+        );
+        session.removeAttribute(
+                WebKeysAutorizaciones
+                        .RECLAMOS_PROCESAR_IMAGENES
         );
     }
 
@@ -2170,14 +2265,34 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     private static void validarSinReclamoEnEdicion(
             HttpSession session) throws Exception {
 
-        if (session.getAttribute(
-                WebKeysAutorizaciones
-                        .RECLAMO_PRESTACION_EN_EDICION
-        ) != null) {
-
+        if (session == null) {
             throw new Exception(
-                    "Ya existe un Reclamo Prestacional en edición "
-                            + "en esta sesión."
+                    "No se pudo obtener la sesión del usuario."
+            );
+        }
+
+        Object reclamoEnEdicion =
+                session.getAttribute(
+                        WebKeysAutorizaciones
+                                .RECLAMO_PRESTACION_EN_EDICION
+                );
+
+        if (reclamoEnEdicion != null
+                || hayEstadoEdicionEnSesion(
+                session
+        )) {
+
+            /*
+             * Después del reinicio autoritativo desde Compras esto sólo puede
+             * ocurrir si otra petición modificó la sesión concurrentemente.
+             *
+             * No se debe borrar aquí ese estado: se aborta el handoff actual
+             * para no sobreescribir una modificación posterior.
+             */
+            throw new Exception(
+                    "La sesión del editor de Reclamo Prestacional "
+                            + "cambió mientras se iniciaba la precarga. "
+                            + "Vuelva al requerimiento e intente nuevamente."
             );
         }
     }

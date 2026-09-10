@@ -136,7 +136,9 @@ public class IniciarReclamoPrestacionalCompraAction
                     httpRequest.getSession();
 
             String usuario =
-                    user != null ? user.getScreenName() : "";
+                    user != null
+                            ? user.getScreenName()
+                            : "";
 
             String cmd =
                     ParamUtil.getString(
@@ -145,9 +147,15 @@ public class IniciarReclamoPrestacionalCompraAction
                             ""
                     );
 
-            if (WebKeysCompras.CMD_DESCARTAR_EDICION_RECLAMO.equals(
-                    cmd
-            )) {
+            /*
+             * Se conserva el descarte explícito porque todavía puede ser
+             * utilizado por el flujo legacy de recuperación correspondiente
+             * a navegaciones distintas del alta autoritativa desde Compras.
+             */
+            if (WebKeysCompras
+                    .CMD_DESCARTAR_EDICION_RECLAMO
+                    .equals(cmd)) {
+
                 try {
                     idRequerimientoCompra =
                             ReclamoPrestacionalCompraPrecargaHelper
@@ -169,7 +177,9 @@ public class IniciarReclamoPrestacionalCompraAction
                                     + "idRequerimiento="
                                     + idRequerimientoCompra
                     );
+
                 } catch (Exception descarteError) {
+
                     _log.warn(
                             "Se rechazo un descarte de edicion de Reclamo "
                                     + "Prestacional. idRequerimiento="
@@ -200,6 +210,13 @@ public class IniciarReclamoPrestacionalCompraAction
                                     idRequerimientoCompra
                             );
 
+            /*
+             * Si el requerimiento ya tiene un RP realmente persistido y
+             * vinculado, no se crea otro.
+             *
+             * Se conserva por ahora el comportamiento legacy de recuperación
+             * para esta navegación de consulta.
+             */
             if (relacion != null
                     && relacion.isVinculado()) {
 
@@ -227,23 +244,59 @@ public class IniciarReclamoPrestacionalCompraAction
                                 actionRequest
                         );
 
-                DestinoPortlet origenConsulta = resolverOrigenCompras(actionRequest, httpRequest);
+                DestinoPortlet origenConsulta =
+                        resolverOrigenCompras(
+                                actionRequest,
+                                httpRequest
+                        );
+
                 ReclamoPrestacionalCompraContexto contextoConsulta =
-                        new ReclamoPrestacionalCompraContexto(idRequerimientoCompra,
-                                requerimiento.getAfiliadoCuilTitular(), requerimiento.getAfiliadoInt(),
-                                usuario, System.currentTimeMillis(), UUID.randomUUID().toString());
-                ReclamoPrestacionalCompraPrecargaHelper.RegistroContextoBorrador registroConsulta =
-                        ReclamoPrestacionalCompraPrecargaHelper.registrarContextoBorrador(
-                                session, contextoConsulta, origenConsulta.getPortletId(),
-                                origenConsulta.getPlid(), false);
+                        new ReclamoPrestacionalCompraContexto(
+                                idRequerimientoCompra,
+                                requerimiento
+                                        .getAfiliadoCuilTitular(),
+                                requerimiento
+                                        .getAfiliadoInt(),
+                                usuario,
+                                System.currentTimeMillis(),
+                                UUID.randomUUID().toString()
+                        );
+
+                ReclamoPrestacionalCompraPrecargaHelper
+                        .RegistroContextoBorrador registroConsulta =
+                        ReclamoPrestacionalCompraPrecargaHelper
+                                .registrarContextoBorrador(
+                                        session,
+                                        contextoConsulta,
+                                        origenConsulta.getPortletId(),
+                                        origenConsulta.getPlid(),
+                                        false
+                                );
+
                 if (registroConsulta.isColision()) {
-                    actionResponse.sendRedirect(construirURLRecuperacionEdicion(
-                            httpRequest, destino, registroConsulta.getRecuperacion(), usuario));
+
+                    actionResponse.sendRedirect(
+                            construirURLRecuperacionEdicion(
+                                    httpRequest,
+                                    destino,
+                                    registroConsulta
+                                            .getRecuperacion(),
+                                    usuario
+                            )
+                    );
+
                     return;
                 }
+
                 if (!registroConsulta.isRegistrado()) {
-                    informarConflictoFuncional(actionRequest, actionResponse,
-                            idRequerimientoCompra, registroConsulta.getMensaje());
+
+                    informarConflictoFuncional(
+                            actionRequest,
+                            actionResponse,
+                            idRequerimientoCompra,
+                            registroConsulta.getMensaje()
+                    );
+
                     return;
                 }
 
@@ -260,9 +313,9 @@ public class IniciarReclamoPrestacionalCompraAction
                 ReclamoPrestacionalCompraPrecargaHelper
                         .prepararSesionParaConsulta(
                                 session,
-                        idRequerimientoCompra,
-                        idReclamo
-                );
+                                idRequerimientoCompra,
+                                idReclamo
+                        );
 
                 actionResponse.sendRedirect(
                         redirect
@@ -271,7 +324,13 @@ public class IniciarReclamoPrestacionalCompraAction
                 return;
             }
 
+            /*
+             * Una reserva o un ERROR persistente siguen siendo autoritativos.
+             * El hecho de descartar memoria de sesión no habilita duplicar
+             * Reclamos Prestacionales en base de datos.
+             */
             if (relacion != null) {
+
                 throw new Exception(
                         relacion.isError()
                                 ? "El Reclamo Prestacional fue creado, "
@@ -284,6 +343,9 @@ public class IniciarReclamoPrestacionalCompraAction
                 );
             }
 
+            /*
+             * A partir de aquí se trata inequívocamente de un ALTA NUEVA.
+             */
             validarRequerimientoParaCrearReclamo(
                     requerimiento
             );
@@ -293,12 +355,14 @@ public class IniciarReclamoPrestacionalCompraAction
             );
 
             /*
-             * Se transportan al contexto temporal los porcentajes y
-             * las marcas de recuperabilidad del requerimiento.
-             *
-             * Cargo tercerizadora de Compras equivale a
-             * Cargo Prestadora/cargo_ps del RP.
+             * Antes de destruir cualquier estado anterior se resuelve todo
+             * aquello que puede fallar sin necesidad de modificar la sesión.
              */
+            DestinoPortlet destino =
+                    resolverDestinoAutorizaciones(
+                            actionRequest
+                    );
+
             contextoHandoff =
                     new ReclamoPrestacionalCompraContexto(
                             requerimiento
@@ -320,22 +384,6 @@ public class IniciarReclamoPrestacionalCompraAction
                                     .isSurge()
                     );
 
-            /*
-             * La URL se resuelve antes de tocar la sesión. Si no existe una
-             * instancia válida de Autorizaciones, no se descarta ningún
-             * borrador anterior.
-             */
-            DestinoPortlet destino =
-                    resolverDestinoAutorizaciones(
-                            actionRequest
-                    );
-
-            DestinoPortlet origenCompras =
-                    resolverOrigenCompras(
-                            actionRequest,
-                            httpRequest
-                    );
-
             String redirect =
                     construirURLAutorizaciones(
                             httpRequest,
@@ -345,95 +393,40 @@ public class IniciarReclamoPrestacionalCompraAction
                     );
 
             /*
-             * Se registra únicamente metadata temporal del requerimiento
-             * origen. No se genera ID de RP, no se reserva una relación y no
-             * se reutiliza idRequerimientoCompra como idReclamo.
+             * Regla funcional obligatoria:
+             *
+             * CREAR RP desde Compras es autoritativo.
+             *
+             * Cualquier cabecera, borrador, lista parcial, selección,
+             * contexto anterior de Compras o metadata de recuperación
+             * perteneciente al editor de Reclamos Prestacionales se descarta.
+             *
+             * No se elimina ningún RP persistido de la base de datos.
+             *
+             * La limpieza y la instalación del nuevo contexto ocurren dentro
+             * del mismo synchronized(session), evitando ventanas de carrera.
              */
             ReclamoPrestacionalCompraPrecargaHelper
-                    .RegistroContextoBorrador registroContexto =
-                    ReclamoPrestacionalCompraPrecargaHelper
-                            .registrarContextoBorrador(
+                    .reiniciarYRegistrarContextoDesdeCompras(
                             session,
-                            contextoHandoff,
-                            origenCompras.getPortletId(),
-                            origenCompras.getPlid()
+                            contextoHandoff
                     );
 
-            if (registroContexto.isBloqueado()) {
-                _log.warn(
-                        "No se inicio el Reclamo Prestacional porque la "
-                                + "sesion contiene una edicion parcial. "
-                                + "idRequerimiento="
-                                + idRequerimientoCompra
-                );
-
-                informarConflictoFuncional(
-                        actionRequest,
-                        actionResponse,
-                        idRequerimientoCompra,
-                        registroContexto.getMensaje()
-                );
-
-                return;
-            }
-
-            if (registroContexto.isReutilizado()) {
-                _log.info(
-                        "Se reutilizo el borrador vigente del mismo "
-                                + "requerimiento. idRequerimiento="
-                                + idRequerimientoCompra
-                );
-
-                actionResponse.sendRedirect(
-                        construirURLAutorizaciones(
-                                httpRequest,
-                                destino,
-                                registroContexto.getNonceContextoActual(),
-                                null
-                        )
-                );
-
-                return;
-            }
-
-            if (registroContexto.isColision()) {
-                ReclamoPrestacionalCompraPrecargaHelper
-                        .RecuperacionEdicion recuperacion =
-                        registroContexto.getRecuperacion();
-
-                _log.warn(
-                        "Colision funcional al iniciar Reclamo Prestacional "
-                                + "desde Compras. idRequerimientoSolicitado="
-                                + idRequerimientoCompra
-                                + ", idReclamoActual="
-                                + recuperacion.getIdReclamoActual()
-                                + ", contextoCompraActual="
-                                + (recuperacion.getContextoCompraVigente(
-                                usuario
-                        ) != null)
-                );
-
-                actionResponse.sendRedirect(
-                        construirURLRecuperacionEdicion(
-                                httpRequest,
-                                destino,
-                                recuperacion,
-                                usuario
-                        )
-                );
-
-                return;
-            }
-
-            if (!registroContexto.isRegistrado()) {
-                throw new Exception(
-                        "No se pudo registrar el contexto temporal de Compras."
-                );
-            }
+            _log.info(
+                    "Se descarto el estado transitorio previo del editor de "
+                            + "Reclamo Prestacional y se inicio una nueva "
+                            + "precarga autoritativa desde Compras. "
+                            + "idRequerimiento="
+                            + idRequerimientoCompra
+                            + ", nonce="
+                            + contextoHandoff.getNonce()
+            );
 
             /*
-             * Construye en sesión la cabecera temporal y la lista temporal
-             * de prestaciones. No realiza persistencia en esta etapa.
+             * Construye la nueva cabecera temporal y sus prestaciones.
+             *
+             * precargar() vuelve a validar que ninguna petición concurrente
+             * haya contaminado la sesión entre el reinicio y esta escritura.
              */
             precargaHandoff =
                     ReclamoPrestacionalCompraPrecargaHelper
@@ -448,6 +441,12 @@ public class IniciarReclamoPrestacionalCompraAction
             );
 
         } catch (Exception e) {
+
+            /*
+             * Sólo compensa el handoff NUEVO que esta petición alcanzó a
+             * escribir. El estado anterior descartado deliberadamente no
+             * debe restaurarse.
+             */
             if (session != null
                     && contextoHandoff != null) {
 
@@ -485,6 +484,7 @@ public class IniciarReclamoPrestacionalCompraAction
             );
 
             if (idRequerimientoCompra > 0) {
+
                 actionResponse.setRenderParameter(
                         WebKeysCompras
                                 .PARAM_ID_REQUERIMIENTO_COMPRA,
@@ -987,13 +987,9 @@ public class IniciarReclamoPrestacionalCompraAction
     }
 
     /**
-     * Reemplaza exclusivamente un borrador anterior que también haya sido
-     * originado desde Compras.
-     *
-     * Si existe una edición normal iniciada desde Autorizaciones, se bloquea
-     * para no destruir trabajo del usuario.
+     * Recupera el requerimiento activo utilizado como origen de la
+     * navegación hacia Reclamos Prestacionales.
      */
-
     private RequerimientoCompra obtenerRequerimientoActivo(
             int idRequerimientoCompra) throws Exception {
 
@@ -1196,6 +1192,54 @@ public class IniciarReclamoPrestacionalCompraAction
                     && portletId != null
                     && portletId.equals(
                     otro.portletId
+            );
+        }
+    }
+
+    public static void reiniciarYRegistrarContextoDesdeCompras(
+            HttpSession session,
+            ReclamoPrestacionalCompraContexto nuevoContexto)
+            throws Exception {
+
+        if (session == null) {
+            throw new Exception(
+                    "No se pudo obtener la sesión del usuario."
+            );
+        }
+
+        if (nuevoContexto == null
+                || nuevoContexto.getIdRequerimientoCompra() <= 0
+                || WebKeysCompras.isEmpty(
+                nuevoContexto.getNonce()
+        )
+                || WebKeysCompras.isEmpty(
+                nuevoContexto.getUsuarioInicio()
+        )) {
+
+            throw new Exception(
+                    "No se pudo construir un contexto válido "
+                            + "para iniciar el Reclamo Prestacional "
+                            + "desde Compras."
+            );
+        }
+
+        synchronized (session) {
+
+            /*
+             * El requerimiento solicitado es autoritativo.
+             *
+             * Nunca se reutiliza ni se recupera un editor anterior:
+             * sólo se elimina estado transitorio de sesión.
+             * No se elimina ningún Reclamo Prestacional persistido.
+             */
+            limpiarEstadoEditorSincronizado(
+                    session
+            );
+
+            session.setAttribute(
+                    WebKeysCompras
+                            .CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA,
+                    nuevoContexto
             );
         }
     }
