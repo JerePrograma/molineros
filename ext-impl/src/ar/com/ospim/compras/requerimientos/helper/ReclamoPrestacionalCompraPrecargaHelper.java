@@ -966,6 +966,9 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         ) != null
                 || session.getAttribute(
                 RECLAMO_PRESTACION_ESTADO_ORIGINAL
+        ) != null
+                || session.getAttribute(
+                RECLAMOS_PROCESAR_IMAGENES
         ) != null;
     }
 
