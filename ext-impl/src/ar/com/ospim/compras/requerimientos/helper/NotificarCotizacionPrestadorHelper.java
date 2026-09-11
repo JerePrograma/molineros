@@ -6,6 +6,7 @@ import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.NotificarCotizacionPrestadorServiceImpl;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.servlets.PdfServlet;
 
 import com.liferay.portal.service.ServiceContext;
@@ -28,16 +29,19 @@ public class NotificarCotizacionPrestadorHelper {
             );
 
     private static final boolean REDIRECCION_QA_HABILITADA =
-            false;
+            true;
 
     private static final String EMAIL_DESTINO_QA =
             "acomas@ospim.org.ar";
 
-    private static final String EMAIL_CCO_MANUEL =
-            "manuel.rodriguez.iatros@gmail.com";
-
-    private static final String EMAIL_CCO_LEANDRO =
-            "leandro.medina.iatros@gmail.com";
+    /*
+     * El nombre histórico de la configuración se conserva por compatibilidad.
+     * Los destinatarios se envian actualmente como BCC.
+     */
+    private static final String EMAIL_COPIA_COTIZACION =
+            TraeListasServiceUtil.getSystemConfig(
+                    "REQUERIMIENTO_EMAIL_CC"
+            );
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile(
@@ -1678,11 +1682,23 @@ public class NotificarCotizacionPrestadorHelper {
 
     private String[] resolverEmailsCopiaCotizacion() {
 
+        String configuracion =
+                EMAIL_COPIA_COTIZACION != null
+                        ? EMAIL_COPIA_COTIZACION
+                        : "";
+
         String[] emails =
-                new String[] {
-                        EMAIL_CCO_MANUEL,
-                        EMAIL_CCO_LEANDRO
-                };
+                configuracion.split(
+                        ";",
+                        -1
+                );
+
+        for (int i = 0; i < emails.length; i++) {
+            emails[i] =
+                    emails[i] != null
+                            ? emails[i].trim()
+                            : "";
+        }
 
         if (_log.isDebugEnabled()) {
             _log.debug(
