@@ -759,7 +759,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     DocumentoLibraryComprasHelper
                             .PARAM_ARCHIVO_ORDEN_MEDICA,
                     "Adjunto: debe seleccionar "
-                            + "una imagen JPEG o PNG."
+                            + "un archivo JPG, JPEG, PNG o PDF."
             );
 
             return new ArrayList<OrdenMedicaValidada>();

@@ -759,7 +759,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     alert(
                             'Adjunto '
                                     + numeroOrden
-                                    + ': debe seleccionar una imagen JPEG o PNG.'
+                                    + ': debe seleccionar un archivo JPG, JPEG, PNG o PDF.'
                     );
 
                     if (archivo) {
@@ -777,11 +777,11 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                                         ''
                                 );
 
-                if (!/\.(jpe?g|png)$/i.test(nombreArchivo)) {
+                if (!/\.(jpe?g|png|pdf)$/i.test(nombreArchivo)) {
                     alert(
                             'Adjunto '
                                     + numeroOrden
-                                    + ': sólo se permiten archivos JPG, JPEG o PNG.'
+                                    + ': sólo se permiten archivos JPG, JPEG, PNG o PDF.'
                     );
 
                     archivo.focus();

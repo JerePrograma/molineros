@@ -301,10 +301,10 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     class="orden-medica-archivo"
                                     id="<portlet:namespace /><%= idCampoArchivo %>"
                                     name="<%= nombreCampoArchivo %>"
-                                    accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
+                                    accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" />
 
                             <div class="compras-ayuda-campo">
-                                Formatos permitidos: JPG, JPEG o PNG.
+                                Formatos permitidos: JPG, JPEG, PNG o PDF.
                             </div>
                         </td>
 

@@ -449,7 +449,7 @@ public class EditarRequerimientoCompraHelper {
             throw manejarErrorOperacion(
                     "guardar el requerimiento nuevo con adjuntos",
                     "No se pudo guardar el requerimiento con sus adjuntos. "
-                            + "Vuelva a seleccionar la imagen e intente nuevamente.",
+                            + "Vuelva a seleccionar los archivos e intente nuevamente.",
                     e,
                     "idRequerimiento="
                             + obtenerIdRequerimientoSeguro(requerimiento)
