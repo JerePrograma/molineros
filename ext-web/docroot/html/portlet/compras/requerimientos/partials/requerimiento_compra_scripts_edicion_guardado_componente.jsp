@@ -1535,8 +1535,6 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
                 jQuery(form).ajaxFormUnbind();
 
-                <portlet:namespace />cancelarGuardadoCompra();
-
                 var token =
                         jQuery(
                                 '#<portlet:namespace />compras_save_token'
@@ -1569,6 +1567,11 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                                 'data-compras-error'
                         ) == 'true';
 
+                var reintentoSeguro =
+                    formularioRespuesta.attr(
+                            'data-compras-reintento-seguro'
+                    ) == 'true';
+                
                 var urlEdicion =
                         formularioRespuesta.attr(
                                 'data-compras-editar-url'
@@ -1612,31 +1615,38 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                          * manera un alta que haya avanzado parcialmente no
                          * vuelve a enviarse accidentalmente como un alta nueva.
                          */
-                        if (String(idRespuesta) == String(idAntesGuardado)
-                                && tokenRespuesta
-                                && jQuery.trim(tokenRespuesta) != ''
-                                && jQuery.trim(tokenRespuesta) != 'null') {
+                         if (reintentoSeguro
+                        	        && String(idRespuesta) == String(idAntesGuardado)
+                        	        && tokenRespuesta
+                        	        && jQuery.trim(tokenRespuesta) != ''
+                        	        && jQuery.trim(tokenRespuesta) != 'null') {
 
-                            token.val(
-                                    jQuery.trim(
-                                            tokenRespuesta
-                                    )
-                            );
+                        	    token.val(
+                        	            jQuery.trim(
+                        	                    tokenRespuesta
+                        	            )
+                        	    );
 
-                            if (mensajeServidor != '') {
-                                alert(
-                                        mensajeServidor
-                                );
-                            } else {
-                                alert(
-                                        'No se pudo guardar el requerimiento. '
-                                                + 'Revise los datos e intente nuevamente.'
-                                );
-                            }
+                        	    /*
+                        	     * Recién ahora sabemos que existe un nuevo envío válido
+                        	     * y que el intento anterior no llegó a persistencia.
+                        	     */
+                        	    <portlet:namespace />cancelarGuardadoCompra();
 
-                            return;
-                        }
+                        	    if (mensajeServidor != '') {
+                        	        alert(
+                        	                mensajeServidor
+                        	        );
+                        	    } else {
+                        	        alert(
+                        	                'No se pudo guardar el requerimiento. '
+                        	                        + 'Revise los datos e intente nuevamente.'
+                        	        );
+                        	    }
 
+                        	    return;
+                        	}
+                        
                         /*
                          * Existe un error de servidor pero el contexto
                          * devuelto ya no coincide con el formulario original.
