@@ -1646,22 +1646,34 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
                         	    return;
                         	}
-                        
-                        /*
-                         * Existe un error de servidor pero el contexto
-                         * devuelto ya no coincide con el formulario original.
-                         *
-                         * No se reemplaza el ID ni se habilita un nuevo
-                         * envío silencioso desde esta misma carga.
-                         */
-                        if (mensajeServidor != '') {
-                            alert(
-                                    mensajeServidor
-                            );
-                        }
                     }
                 }
 
+                <portlet:namespace />guardandoCompra = false;
+
+                var botonGuardar =
+                        document.getElementById(
+                                '<portlet:namespace />btnGuardarCompras'
+                        );
+
+                if (botonGuardar) {
+                    botonGuardar.disabled = true;
+
+                    botonGuardar.setAttribute(
+                            'disabled',
+                            'disabled'
+                    );
+
+                    botonGuardar.value =
+                            'Guardar';
+
+                    jQuery(
+                            botonGuardar
+                    ).removeClass(
+                            'compras-btn-guardando'
+                    );
+                }
+                
                 /*
                  * Un resultado que no pudo interpretarse no se presenta
                  * como un error funcional del usuario.

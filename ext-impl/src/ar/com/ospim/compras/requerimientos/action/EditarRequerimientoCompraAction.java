@@ -146,7 +146,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
 
         boolean altaOriginal = vieneDeAlta(actionRequest);
-        boolean tokenGuardadoConsumido = false;
         boolean persistenciaGuardadoIniciada = false;
         
         try {
@@ -160,7 +159,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
             	validarPermisoCotizar(user);
             	consumirTokenGuardadoCompra(actionRequest);
-            	tokenGuardadoConsumido = true;
 
                 if (idRequerimientoCompra <= 0) {
                     errorCampo(
@@ -233,7 +231,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if ("saveAll".equals(cmd)) {
                 validarPermisoABM(user);
                 consumirTokenGuardadoCompra(actionRequest);
-                tokenGuardadoConsumido = true;
                 
                 RequerimientoCompra requerimiento =
                         getRequerimientoFromRequest(actionRequest);
@@ -305,7 +302,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 validarPermisoABM(user);
                 consumirTokenGuardadoCompra(actionRequest);
-                tokenGuardadoConsumido = true;
                 
                 RequerimientoCompra requerimiento =
                         getRequerimientoFromRequest(actionRequest);
