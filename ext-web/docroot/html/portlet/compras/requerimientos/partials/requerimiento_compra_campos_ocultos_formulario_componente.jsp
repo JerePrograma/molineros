@@ -16,6 +16,15 @@ IDs o funciones JavaScript expuestos:
 Efectos secundarios:
     Sólo renderiza o incluye presentación; no ejecuta persistencia.
 --%>
+<%
+Object tokenGuardadoCompraAttr =
+        renderRequest.getAttribute("COMPRAS_SAVE_TOKEN");
+
+String tokenGuardadoCompra =
+        tokenGuardadoCompraAttr instanceof String
+                ? (String) tokenGuardadoCompraAttr
+                : "";
+%>
 <form action="<%= actionURL.toString() %>"
       method="post"
       enctype="multipart/form-data"
@@ -29,7 +38,7 @@ Efectos secundarios:
     <input type="hidden"
            name="<portlet:namespace />compras_save_token"
            id="<portlet:namespace />compras_save_token"
-           value="<%= HtmlUtil.escape(String.valueOf(renderRequest.getAttribute("COMPRAS_SAVE_TOKEN"))) %>" />
+           value="<%= HtmlUtil.escape(tokenGuardadoCompra) %>" />
 
     <input type="hidden"
            name="<portlet:namespace /><%= Constants.CMD %>"

@@ -1112,10 +1112,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     Boolean.valueOf(soloLectura)
             );
 
-            if (!soloLectura) {
-                generarTokenGuardadoCompra(renderRequest);
-            }
-
             cargarCatalogos(renderRequest);
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
             ActualizarContactoAfiliadoCompraToken.publicar(
@@ -1162,6 +1158,17 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
                     requerimiento.getDetalles()
             );
+
+            boolean requiereRevision =
+                    "REVISAR".equals(
+                            renderRequest.getAttribute(
+                                    "COMPRAS_GUARDADO_RESULTADO"
+                            )
+                    );
+
+            if (!soloLectura && !requiereRevision) {
+                generarTokenGuardadoCompra(renderRequest);
+            }
         } catch (Exception e) {
             String mensaje =
                     obtenerMensajeUsuario(
@@ -1300,71 +1307,23 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         );
     }
 
-    private void generarTokenGuardadoCompra(RenderRequest renderRequest) {
-        if (renderRequest == null) {
-            return;
-        }
+    private void generarTokenGuardadoCompra(
+            RenderRequest renderRequest) {
 
-        String token = UUID.randomUUID().toString();
-        PortletSession session = renderRequest.getPortletSession();
-
-        synchronized (session) {
-            Set tokens = null;
-            Object tokensObj = session.getAttribute(SESSION_COMPRAS_SAVE_TOKENS);
-
-            if (tokensObj instanceof Set) {
-                tokens = (Set) tokensObj;
-            }
-
-            if (tokens == null || tokens.size() >= MAX_TOKENS_GUARDADO_COMPRA) {
-                tokens = new HashSet();
-            }
-
-            tokens.add(token);
-            session.setAttribute(SESSION_COMPRAS_SAVE_TOKENS, tokens);
-        }
-
-        renderRequest.setAttribute(ATTR_COMPRAS_SAVE_TOKEN, token);
+        RequerimientoCompraGuardadoToken.publicar(renderRequest);
     }
 
-    private void consumirTokenGuardadoCompra(ActionRequest actionRequest)
+    private void consumirTokenGuardadoCompra(
+            ActionRequest actionRequest)
             throws ValidacionCompraException {
 
-        String tokenRequest =
-                getParametroTrim(actionRequest, PARAM_COMPRAS_SAVE_TOKEN);
-        PortletSession session = actionRequest.getPortletSession();
-
-        synchronized (session) {
-            Object tokensObj = session.getAttribute(SESSION_COMPRAS_SAVE_TOKENS);
-
-            if (!(tokensObj instanceof Set)) {
-                errorCampo(
-                        "guardar",
-                        "El requerimiento ya fue enviado o la pantalla está desactualizada. "
-                                + "Vuelva a cargar la pantalla antes de guardar nuevamente."
-                );
-            }
-
-            Set tokens = (Set) tokensObj;
-
-            if (WebKeysCompras.isEmpty(tokenRequest)
-                    || !tokens.contains(tokenRequest)) {
-
-                errorCampo(
-                        "guardar",
-                        "El requerimiento ya fue enviado o la pantalla está desactualizada. "
-                                + "Vuelva a cargar la pantalla antes de guardar nuevamente."
-                );
-            }
-
-            tokens.remove(tokenRequest);
-
-            if (tokens.isEmpty()) {
-                session.removeAttribute(SESSION_COMPRAS_SAVE_TOKENS);
-            } else {
-                session.setAttribute(SESSION_COMPRAS_SAVE_TOKENS, tokens);
-            }
-        }
+        RequerimientoCompraGuardadoToken.consumir(
+                actionRequest,
+                getParametroTrim(
+                        actionRequest,
+                        RequerimientoCompraGuardadoToken.PARAMETRO
+                )
+        );
     }
 
     private boolean esModoSoloLectura(RenderRequest renderRequest) {

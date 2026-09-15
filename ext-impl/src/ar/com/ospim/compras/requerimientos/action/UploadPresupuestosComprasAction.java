@@ -712,52 +712,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
     private void generarTokenGuardadoCompra(
             RenderRequest renderRequest) {
 
-        if (renderRequest == null) {
-            return;
-        }
-
-        String token =
-                UUID.randomUUID()
-                        .toString();
-
-        PortletSession session =
-                renderRequest.getPortletSession();
-
-        synchronized (session) {
-            Set tokens = null;
-
-            Object tokensObj =
-                    session.getAttribute(
-                            SESSION_COMPRAS_SAVE_TOKENS
-                    );
-
-            if (tokensObj instanceof Set) {
-                tokens =
-                        (Set) tokensObj;
-            }
-
-            if (tokens == null
-                    || tokens.size()
-                    >= MAX_TOKENS_GUARDADO_COMPRA) {
-
-                tokens =
-                        new HashSet();
-            }
-
-            tokens.add(
-                    token
-            );
-
-            session.setAttribute(
-                    SESSION_COMPRAS_SAVE_TOKENS,
-                    tokens
-            );
-        }
-
-        renderRequest.setAttribute(
-                ATTR_COMPRAS_SAVE_TOKEN,
-                token
-        );
+        RequerimientoCompraGuardadoToken.publicar(renderRequest);
     }
 
     private void cargarCatalogos(

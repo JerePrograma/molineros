@@ -1402,7 +1402,6 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                 <portlet:namespace />cancelarGuardadoCompra();
 
                 var token = jQuery('#<portlet:namespace />compras_save_token');
-                token.val('');
                 var respuesta = jQuery(xhr && xhr.responseXML ? xhr.responseXML : []);
                 var formularioRespuesta = respuesta.find('#<portlet:namespace />fmCompras');
                 var idRespuesta = respuesta.find('#<portlet:namespace />id_requerimiento_compra').val();
