@@ -656,8 +656,18 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         }
     }
 
+    /*
+     * Control interno del formulario.
+     *
+     * El usuario no administra este dato ni necesita conocer
+     * su implementación. Ante una falla sólo se informa que
+     * el guardado no pudo prepararse.
+     */
     function <portlet:namespace />validarTokenGuardadoCompra() {
-        var tokenInput = document.getElementById('<portlet:namespace />compras_save_token');
+        var tokenInput =
+                document.getElementById(
+                        '<portlet:namespace />compras_save_token'
+                );
 
         if (!tokenInput
                 || tokenInput.value == null
@@ -665,8 +675,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                 || jQuery.trim(tokenInput.value) == 'null') {
 
             alert(
-                'No se pudo preparar el guardado seguro del requerimiento. ' +
-                'Falta el token de guardado. Vuelva a cargar la pantalla e intente nuevamente.'
+                'No se pudo preparar el guardado. ' +
+                'Actualice la pantalla e intente nuevamente.'
             );
 
             return false;
@@ -1021,6 +1031,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     '#<portlet:namespace />ordenes_medicas_body '
                             + 'tr.orden-medica-activa'
             );
+
             var cantidad = document.getElementById(
                     '<portlet:namespace />orden_medica_count'
             );
@@ -1061,6 +1072,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                 incorporarNodo(
                         fila.find('input.orden-medica-archivo').get(0)
                 );
+
                 incorporarNodo(
                         fila.find('input.orden-medica-fecha-valor').get(0)
                 );
@@ -1074,6 +1086,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                 <portlet:namespace />restaurarOrdenesMedicas(
                         contextos
                 );
+
                 return null;
             }
 
@@ -1088,7 +1101,10 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             for (var i = contextos.length - 1; i >= 0; i--) {
                 var contexto = contextos[i];
 
-                if (!contexto || !contexto.nodo || !contexto.padre) {
+                if (!contexto
+                        || !contexto.nodo
+                        || !contexto.padre) {
+
                     continue;
                 }
 
@@ -1100,7 +1116,9 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                             contexto.siguiente
                     );
                 } else {
-                    contexto.padre.appendChild(contexto.nodo);
+                    contexto.padre.appendChild(
+                            contexto.nodo
+                    );
                 }
             }
         }
@@ -1131,7 +1149,10 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                 );
 
         if (!form) {
-            alert('No se encontró el formulario de Compras.');
+            alert(
+                    'No se encontró el formulario de Compras.'
+            );
+
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
@@ -1139,7 +1160,9 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         jQuery(
                 '#<portlet:namespace />compras_cmd'
-        ).val('saveCotizacion');
+        ).val(
+                'saveCotizacion'
+        );
 
         if (!<portlet:namespace />validarTokenGuardadoCompra()) {
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -1173,36 +1196,46 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         <portlet:namespace />setGuardandoCompraActivo(true);
 
-        var form = document.getElementById('<portlet:namespace />fmCompras');
+        var form =
+                document.getElementById(
+                        '<portlet:namespace />fmCompras'
+                );
 
         if (!form) {
-            alert('No se pudo encontrar el formulario principal de Compras. No se puede guardar el requerimiento.');
+            alert(
+                    'No se pudo encontrar el formulario principal de Compras. '
+                            + 'No se puede guardar el requerimiento.'
+            );
+
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         if (typeof jQuery.fn.ajaxForm != 'function') {
-            alert('No se pudo preparar el envío. Los datos cargados se conservan.');
+            alert(
+                    'No se pudo preparar el envío. '
+                            + 'Los datos cargados se conservan.'
+            );
+
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        var cmdInput = document.getElementById('<portlet:namespace />compras_cmd');
+        var cmdInput =
+                document.getElementById(
+                        '<portlet:namespace />compras_cmd'
+                );
 
         if (cmdInput) {
-            cmdInput.value = 'saveAll';
+            cmdInput.value =
+                    'saveAll';
         }
 
-        var tokenInput = document.getElementById('<portlet:namespace />compras_save_token');
-
-        if (!tokenInput
-                || tokenInput.value == null
-                || jQuery.trim(tokenInput.value) == ''
-                || jQuery.trim(tokenInput.value) == 'null') {
-
-            alert(
-                'No se pudo preparar el guardado seguro del requerimiento. ' +
-                'Falta el token de guardado. Vuelva a cargar la pantalla e intente nuevamente.'
-            );
-
+        /*
+         * Una única validación para guardar y guardar cotización.
+         *
+         * La existencia del token es un detalle interno y no se
+         * expone al usuario.
+         */
+        if (!<portlet:namespace />validarTokenGuardadoCompra()) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
@@ -1242,11 +1275,22 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         </c:if>
 
-        var sectorId = <portlet:namespace />trimValue('sector_id');
+        var sectorId =
+                <portlet:namespace />trimValue(
+                        'sector_id'
+                );
 
-        if (sectorId == '' || sectorId == '0') {
-            alert('Sector: debe seleccionar un sector.');
-            <portlet:namespace />focusSeguroCompra('#<portlet:namespace />sector_id');
+        if (sectorId == ''
+                || sectorId == '0') {
+
+            alert(
+                    'Sector: debe seleccionar un sector.'
+            );
+
+            <portlet:namespace />focusSeguroCompra(
+                    '#<portlet:namespace />sector_id'
+            );
+
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
@@ -1254,81 +1298,140 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        var requiereAfiliado = <portlet:namespace />sectorRequiereAfiliado();
+        var requiereAfiliado =
+                <portlet:namespace />sectorRequiereAfiliado();
 
         if (!requiereAfiliado) {
             <portlet:namespace />limpiarAfiliadoRequerimientoSiExiste();
-            <portlet:namespace />aplicarReglaCargosPorSector(false);
+
+            <portlet:namespace />aplicarReglaCargosPorSector(
+                    false
+            );
         }
 
-        var cargoOspim = <portlet:namespace />parsePorcentaje('cargo_ospim', 'Cargo OSPIM');
+        var cargoOspim =
+                <portlet:namespace />parsePorcentaje(
+                        'cargo_ospim',
+                        'Cargo OSPIM'
+                );
 
         if (cargoOspim == null) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        var cargoTercerizadora = <portlet:namespace />parsePorcentaje('cargo_tercerizadora', 'Cargo tercerizadora');
+        var cargoTercerizadora =
+                <portlet:namespace />parsePorcentaje(
+                        'cargo_tercerizadora',
+                        'Cargo tercerizadora'
+                );
 
         if (cargoTercerizadora == null) {
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(cargoTercerizadora);
+        <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(
+                cargoTercerizadora
+        );
 
         if (cargoOspim + cargoTercerizadora != 100) {
             alert(
-                'Cargos: la suma de Cargo OSPIM (' + cargoOspim +
-                ') y Cargo tercerizadora (' + cargoTercerizadora +
-                ') es ' + (cargoOspim + cargoTercerizadora) +
-                '. Debe ser exactamente 100.'
+                    'Cargos: la suma de Cargo OSPIM ('
+                            + cargoOspim
+                            + ') y Cargo tercerizadora ('
+                            + cargoTercerizadora
+                            + ') es '
+                            + (cargoOspim + cargoTercerizadora)
+                            + '. Debe ser exactamente 100.'
             );
 
-            <portlet:namespace />focusSeguroCompra('#<portlet:namespace />cargo_tercerizadora');
+            <portlet:namespace />focusSeguroCompra(
+                    '#<portlet:namespace />cargo_tercerizadora'
+            );
+
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         if (requiereAfiliado) {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
 
-            var afiliadoCuilTitular = <portlet:namespace />trimValue('afiliado_cuil_titular');
-            var afiliadoInt = <portlet:namespace />trimValue('afiliado_int');
+            var afiliadoCuilTitular =
+                    <portlet:namespace />trimValue(
+                            'afiliado_cuil_titular'
+                    );
+
+            var afiliadoInt =
+                    <portlet:namespace />trimValue(
+                            'afiliado_int'
+                    );
 
             if (afiliadoCuilTitular == '') {
-                alert('Afiliado: debe seleccionar un afiliado. Falta CUIL titular.');
+                alert(
+                        'Afiliado: debe seleccionar un afiliado. '
+                                + 'Falta CUIL titular.'
+                );
+
                 return <portlet:namespace />cancelarGuardadoCompra();
             }
 
             if (afiliadoInt == '') {
-                alert('Afiliado: debe seleccionar un afiliado. Falta integrante.');
+                alert(
+                        'Afiliado: debe seleccionar un afiliado. '
+                                + 'Falta integrante.'
+                );
+
                 return <portlet:namespace />cancelarGuardadoCompra();
             }
         } else {
             <portlet:namespace />sincronizarAfiliadoRequerimiento();
         }
 
-        <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(cargoTercerizadora);
+        <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(
+                cargoTercerizadora
+        );
 
         if (requiereAfiliado
                 && cargoTercerizadora > 0
-                && <portlet:namespace />trimValue('requerimiento_id_tercerizadora') == '') {
-            alert('Tercerizadora: debe seleccionar un afiliado con tercerizadora porque Cargo tercerizadora es mayor a 0.');
+                && <portlet:namespace />trimValue(
+                        'requerimiento_id_tercerizadora'
+                ) == '') {
+
+            alert(
+                    'Tercerizadora: debe seleccionar un afiliado '
+                            + 'con tercerizadora porque Cargo tercerizadora '
+                            + 'es mayor a 0.'
+            );
+
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
         <portlet:namespace />sincronizarFormularioCompra();
 
-        var serializadorDetalles = null;
+        var serializadorDetalles =
+                null;
 
-        if (typeof <portlet:namespace />serializarDetallesCompras == 'function') {
-            serializadorDetalles = <portlet:namespace />serializarDetallesCompras;
-        } else if (typeof window['<portlet:namespace />serializarDetallesCompras'] == 'function') {
-            serializadorDetalles = window['<portlet:namespace />serializarDetallesCompras'];
+        if (typeof <portlet:namespace />serializarDetallesCompras
+                == 'function') {
+
+            serializadorDetalles =
+                    <portlet:namespace />serializarDetallesCompras;
+
+        } else if (typeof window[
+                '<portlet:namespace />serializarDetallesCompras'
+        ] == 'function') {
+
+            serializadorDetalles =
+                    window[
+                            '<portlet:namespace />serializarDetallesCompras'
+                    ];
         }
 
         if (serializadorDetalles == null) {
             alert(
-                'Detalles: no se encontró la función <portlet:namespace />serializarDetallesCompras(). ' +
-                'El JSP embebido no se está renderizando correctamente o Liferay está usando una versión vieja compilada.'
+                    'Detalles: no se encontró la función '
+                            + '<portlet:namespace />serializarDetallesCompras(). '
+                            + 'El JSP embebido no se está renderizando '
+                            + 'correctamente o Liferay está usando una '
+                            + 'versión vieja compilada.'
             );
 
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -1338,21 +1441,38 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        var detalleCountInput = jQuery(form).find('input[name$="detalle_count"]');
+        var detalleCountInput =
+                jQuery(form).find(
+                        'input[name$="detalle_count"]'
+                );
 
         if (detalleCountInput.length == 0) {
             alert(
-                'Detalles: serializarDetallesCompras() se ejecutó, pero no dejó detalle_count dentro del formulario principal. ' +
-                'Revisar que el JSP embebido agregue los hidden a #<portlet:namespace />fmCompras.'
+                    'Detalles: serializarDetallesCompras() se ejecutó, '
+                            + 'pero no dejó detalle_count dentro del '
+                            + 'formulario principal. Revisar que el JSP '
+                            + 'embebido agregue los hidden a '
+                            + '#<portlet:namespace />fmCompras.'
             );
 
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        var detalleCount = parseInt(detalleCountInput.val(), 10);
+        var detalleCount =
+                parseInt(
+                        detalleCountInput.val(),
+                        10
+                );
 
-        if (isNaN(detalleCount) || detalleCount <= 0) {
-            alert('Detalles: no hay detalles para guardar. detalle_count=' + detalleCountInput.val());
+        if (isNaN(detalleCount)
+                || detalleCount <= 0) {
+
+            alert(
+                    'Detalles: no hay detalles para guardar. '
+                            + 'detalle_count='
+                            + detalleCountInput.val()
+            );
+
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
@@ -1382,74 +1502,221 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         </c:if>
 
-        /* Liquidaciones: editar_orden_pago_ospim.jsp, submitFormNotSavePOP.
-         * El iframe multipart conserva la pantalla y los archivos seleccionados.
+        /*
+         * Liquidaciones: editar_orden_pago_ospim.jsp,
+         * submitFormNotSavePOP.
+         *
+         * El iframe multipart conserva la pantalla y los archivos
+         * seleccionados.
+         *
          * Sólo una respuesta de guardado confirmado permite navegar.
          */
-        var idAntesGuardado = jQuery('#<portlet:namespace />id_requerimiento_compra').val();
+        var idAntesGuardado =
+                jQuery(
+                        '#<portlet:namespace />id_requerimiento_compra'
+                ).val();
+
         jQuery(form).ajaxForm({
             type: 'POST',
             iframe: true,
             dataType: 'html',
             timeout: 120000,
+
             complete: function(xhr, status) {
+
                 <c:if test="<%= modoEditableScriptsCompra
                 && puedeEditarEstructuraScriptsCompra %>">
-                    <portlet:namespace />restaurarOrdenesMedicas(contextosOrdenesMedicas);
+
+                    <portlet:namespace />restaurarOrdenesMedicas(
+                            contextosOrdenesMedicas
+                    );
+
                 </c:if>
 
                 jQuery(form).ajaxFormUnbind();
+
                 <portlet:namespace />cancelarGuardadoCompra();
 
-                var token = jQuery('#<portlet:namespace />compras_save_token');
-                var respuesta = jQuery(xhr && xhr.responseXML ? xhr.responseXML : []);
-                var formularioRespuesta = respuesta.find('#<portlet:namespace />fmCompras');
-                var idRespuesta = respuesta.find('#<portlet:namespace />id_requerimiento_compra').val();
-                var tokenRespuesta = respuesta.find('#<portlet:namespace />compras_save_token').val();
-                var errorServidor = formularioRespuesta.attr('data-compras-error') == 'true';
-                var urlEdicion = formularioRespuesta.attr('data-compras-editar-url');
-                var mensaje = 'No se pudo confirmar el resultado del guardado. ' +
-                        'Los datos cargados se conservan. Verifique el estado del requerimiento antes de reintentar.';
+                var token =
+                        jQuery(
+                                '#<portlet:namespace />compras_save_token'
+                        );
 
-                if (status == 'success' && formularioRespuesta.length == 1) {
+                var respuesta =
+                        jQuery(
+                                xhr && xhr.responseXML
+                                        ? xhr.responseXML
+                                        : []
+                        );
+
+                var formularioRespuesta =
+                        respuesta.find(
+                                '#<portlet:namespace />fmCompras'
+                        );
+
+                var idRespuesta =
+                        formularioRespuesta.find(
+                                '#<portlet:namespace />id_requerimiento_compra'
+                        ).val();
+
+                var tokenRespuesta =
+                        formularioRespuesta.find(
+                                '#<portlet:namespace />compras_save_token'
+                        ).val();
+
+                var errorServidor =
+                        formularioRespuesta.attr(
+                                'data-compras-error'
+                        ) == 'true';
+
+                var urlEdicion =
+                        formularioRespuesta.attr(
+                                'data-compras-editar-url'
+                        );
+
+                if (status == 'success'
+                        && formularioRespuesta.length == 1) {
+
                     if (!errorServidor
-                            && formularioRespuesta.attr('data-compras-guardado') == 'true'
-                            && parseInt(idRespuesta, 10) > 0 && urlEdicion) {
-                        window.location.href = urlEdicion
+                            && formularioRespuesta.attr(
+                                    'data-compras-guardado'
+                            ) == 'true'
+                            && parseInt(
+                                    idRespuesta,
+                                    10
+                            ) > 0
+                            && urlEdicion) {
+
+                        window.location.href =
+                                urlEdicion
                                 + '&<portlet:namespace />compras_guardado=true'
                                 + '&<portlet:namespace />compras_operacion=saveAll';
+
                         return;
                     }
 
                     if (errorServidor) {
-                        var mensajeServidor = jQuery.trim(respuesta.find('.portlet-msg-error').text());
-                        if (mensajeServidor != '') {
-                            mensaje = mensajeServidor;
+                        var mensajeServidor =
+                                jQuery.trim(
+                                        respuesta.find(
+                                                '.portlet-msg-error'
+                                        ).first().text()
+                                );
+
+                        /*
+                         * El servidor acaba de renderizar otra pantalla
+                         * editable y entregó un token nuevo.
+                         *
+                         * Sólo se copia sobre el formulario actual cuando
+                         * seguimos trabajando sobre el mismo ID. De esta
+                         * manera un alta que haya avanzado parcialmente no
+                         * vuelve a enviarse accidentalmente como un alta nueva.
+                         */
+                        if (String(idRespuesta) == String(idAntesGuardado)
+                                && tokenRespuesta
+                                && jQuery.trim(tokenRespuesta) != ''
+                                && jQuery.trim(tokenRespuesta) != 'null') {
+
+                            token.val(
+                                    jQuery.trim(
+                                            tokenRespuesta
+                                    )
+                            );
+
+                            if (mensajeServidor != '') {
+                                alert(
+                                        mensajeServidor
+                                );
+                            } else {
+                                alert(
+                                        'No se pudo guardar el requerimiento. '
+                                                + 'Revise los datos e intente nuevamente.'
+                                );
+                            }
+
+                            return;
                         }
 
-                        /* Un alta parcialmente persistida no debe reenviarse como nueva. */
-                        if (idRespuesta == idAntesGuardado
-                                && tokenRespuesta && tokenRespuesta != 'null') {
-                            token.val(tokenRespuesta);
-                        } else {
-                            mensaje += ' Los datos cargados se conservan. ' +
-                                    'Revise el requerimiento antes de volver a guardar.';
+                        /*
+                         * Existe un error de servidor pero el contexto
+                         * devuelto ya no coincide con el formulario original.
+                         *
+                         * No se reemplaza el ID ni se habilita un nuevo
+                         * envío silencioso desde esta misma carga.
+                         */
+                        if (mensajeServidor != '') {
+                            alert(
+                                    mensajeServidor
+                            );
                         }
                     }
                 }
 
-                var aviso = jQuery('#<portlet:namespace />resultado_guardado');
+                /*
+                 * Un resultado que no pudo interpretarse no se presenta
+                 * como un error funcional del usuario.
+                 *
+                 * La información continúa visible en pantalla y no se
+                 * expone ningún concepto técnico como token, iframe o
+                 * estado de sesión.
+                 */
+                var aviso =
+                        jQuery(
+                                '#<portlet:namespace />resultado_guardado'
+                        );
+
                 if (aviso.length == 0) {
-                    aviso = jQuery('<div class="portlet-msg-error" role="alert"></div>');
-                    aviso.attr('id', '<portlet:namespace />resultado_guardado');
-                    aviso.insertBefore('#<portlet:namespace />compras_layout');
+                    aviso =
+                            jQuery(
+                                    '<div class="portlet-msg-info" '
+                                            + 'role="status"></div>'
+                            );
+
+                    aviso.attr(
+                            'id',
+                            '<portlet:namespace />resultado_guardado'
+                    );
+
+                    aviso.insertBefore(
+                            '#<portlet:namespace />compras_layout'
+                    );
+                } else {
+                    aviso
+                            .removeClass(
+                                    'portlet-msg-error'
+                            )
+                            .addClass(
+                                    'portlet-msg-info'
+                            )
+                            .attr(
+                                    'role',
+                                    'status'
+                            );
                 }
-                aviso.text(mensaje).attr('tabindex', '-1').show();
-                <portlet:namespace />focusSeguroCompra('#<portlet:namespace />resultado_guardado');
+
+                aviso
+                        .text(
+                                'No se pudo confirmar automáticamente '
+                                        + 'el guardado. La información '
+                                        + 'cargada permanece en pantalla. '
+                                        + 'Verifique el requerimiento antes '
+                                        + 'de volver a guardar.'
+                        )
+                        .attr(
+                                'tabindex',
+                                '-1'
+                        )
+                        .show();
+
+                <portlet:namespace />focusSeguroCompra(
+                        '#<portlet:namespace />resultado_guardado'
+                );
             }
         });
 
-        if (!<portlet:namespace />submitFormularioCompra(form)) {
+        if (!<portlet:namespace />submitFormularioCompra(
+                form
+        )) {
 
             <c:if test="<%= modoEditableScriptsCompra
         && puedeEditarEstructuraScriptsCompra %>">
@@ -1476,9 +1743,18 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             <portlet:namespace />cargarAfiliadoExistenteEnEdicion();
         </c:if>
 
-        <portlet:namespace />actualizarVisibilidadAfiliado(false);
-        <portlet:namespace />actualizarVisibilidadObservaciones(false);
-        <portlet:namespace />aplicarReglaCargosPorSector(false);
+        <portlet:namespace />actualizarVisibilidadAfiliado(
+                false
+        );
+
+        <portlet:namespace />actualizarVisibilidadObservaciones(
+                false
+        );
+
+        <portlet:namespace />aplicarReglaCargosPorSector(
+                false
+        );
+
         <portlet:namespace />sincronizarFormularioCompra();
 
         <portlet:namespace />consultarItemsHistoricosAfiliado(
@@ -1490,11 +1766,19 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                 )
         );
 
-        jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').change(function() {
+        jQuery(
+                '#<portlet:namespace />cargo_ospim, '
+                        + '#<portlet:namespace />cargo_tercerizadora'
+        ).change(function() {
+
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
-        jQuery('#<portlet:namespace />cargo_ospim, #<portlet:namespace />cargo_tercerizadora').keyup(function() {
+        jQuery(
+                '#<portlet:namespace />cargo_ospim, '
+                        + '#<portlet:namespace />cargo_tercerizadora'
+        ).keyup(function() {
+
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
@@ -1502,23 +1786,34 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
             jQuery(
                     '#<portlet:namespace />sector_id, '
-                    + '#<portlet:namespace />id_sector'
+                            + '#<portlet:namespace />id_sector'
             ).change(function() {
 
-                <portlet:namespace />cambiarSectorCompra(true);
+                <portlet:namespace />cambiarSectorCompra(
+                        true
+                );
             });
 
         <% } %>
 
-        jQuery('#<portlet:namespace />observaciones').change(function() {
+        jQuery(
+                '#<portlet:namespace />observaciones'
+        ).change(function() {
+
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
-        jQuery('#<portlet:namespace />observaciones').keyup(function() {
+        jQuery(
+                '#<portlet:namespace />observaciones'
+        ).keyup(function() {
+
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
-        jQuery('#<portlet:namespace />surge').change(function() {
+        jQuery(
+                '#<portlet:namespace />surge'
+        ).change(function() {
+
             <portlet:namespace />actualizarSurgeCompra();
         });
 
@@ -1531,23 +1826,29 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
             jQuery(
                     '#<portlet:namespace />cuil, '
-                    + '#<portlet:namespace />inte'
+                            + '#<portlet:namespace />inte'
             ).change(function() {
 
                 <portlet:namespace />ocultarVencimientoCudAfiliado();
+
                 <portlet:namespace />ocultarSituacionMedicaAfiliado();
+
                 <portlet:namespace />ocultarItemsHistoricosAfiliado();
+
                 <portlet:namespace />sincronizarFormularioCompra();
             });
 
             jQuery(
                     '#<portlet:namespace />cuil, '
-                    + '#<portlet:namespace />inte'
+                            + '#<portlet:namespace />inte'
             ).keyup(function() {
 
                 <portlet:namespace />ocultarVencimientoCudAfiliado();
+
                 <portlet:namespace />ocultarSituacionMedicaAfiliado();
+
                 <portlet:namespace />ocultarItemsHistoricosAfiliado();
+
                 <portlet:namespace />sincronizarFormularioCompra();
             });
 
@@ -1567,18 +1868,38 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
-        if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
-            window['<portlet:namespace />filtrarArticulosPorSector']();
+        if (typeof window[
+                '<portlet:namespace />filtrarArticulosPorSector'
+        ] == 'function') {
+
+            window[
+                    '<portlet:namespace />filtrarArticulosPorSector'
+            ]();
         }
 
         setTimeout(function() {
-            <portlet:namespace />actualizarVisibilidadAfiliado(false);
-            <portlet:namespace />actualizarVisibilidadObservaciones(false);
-            <portlet:namespace />aplicarReglaCargosPorSector(false);
+
+            <portlet:namespace />actualizarVisibilidadAfiliado(
+                    false
+            );
+
+            <portlet:namespace />actualizarVisibilidadObservaciones(
+                    false
+            );
+
+            <portlet:namespace />aplicarReglaCargosPorSector(
+                    false
+            );
+
             <portlet:namespace />sincronizarFormularioCompra();
 
-            if (typeof window['<portlet:namespace />filtrarArticulosPorSector'] == 'function') {
-                window['<portlet:namespace />filtrarArticulosPorSector']();
+            if (typeof window[
+                    '<portlet:namespace />filtrarArticulosPorSector'
+            ] == 'function') {
+
+                window[
+                        '<portlet:namespace />filtrarArticulosPorSector'
+                ]();
             }
         }, 300);
     });
