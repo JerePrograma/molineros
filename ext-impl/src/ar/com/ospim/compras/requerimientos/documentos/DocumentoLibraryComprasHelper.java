@@ -9,8 +9,6 @@ import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
-import com.liferay.portal.kernel.util.MimeTypesUtil;
-import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
@@ -346,14 +344,16 @@ public class DocumentoLibraryComprasHelper
 
             throw new Exception(
                     "El adjunto persistido "
-                            + "no es JPEG/JPG ni PNG."
+                            + "no es JPG, JPEG, PNG ni PDF."
             );
         }
 
         String contentTypeEsperado =
-                ".png".equals(extension)
-                        ? CONTENT_TYPE_PNG
-                        : CONTENT_TYPE_JPEG;
+                ".pdf".equals(extension)
+                        ? CONTENT_TYPE_PDF
+                        : (".png".equals(extension)
+                                ? CONTENT_TYPE_PNG
+                                : CONTENT_TYPE_JPEG);
 
         /*
          * La firma binaria es la fuente autoritativa.
@@ -761,7 +761,8 @@ public class DocumentoLibraryComprasHelper
 
         return ".jpg".equals(extension)
                 || ".jpeg".equals(extension)
-                || ".png".equals(extension);
+                || ".png".equals(extension)
+                || ".pdf".equals(extension);
     }
 
     public boolean esExtensionOrdenMedica(
@@ -947,11 +948,9 @@ public class DocumentoLibraryComprasHelper
             String contentTypeEsperado)
             throws Exception {
 
-        boolean valida;
+        boolean valida = false;
 
-        if (CONTENT_TYPE_PNG.equals(
-                contentTypeEsperado
-        )) {
+        if (CONTENT_TYPE_PNG.equals(contentTypeEsperado)) {
 
             valida =
                     firma != null
@@ -965,19 +964,31 @@ public class DocumentoLibraryComprasHelper
                             && firma[6] == 0x1A
                             && firma[7] == 0x0A;
 
-        } else {
+        } else if (CONTENT_TYPE_JPEG.equals(contentTypeEsperado)) {
+
             valida =
                     firma != null
                             && leidos >= 3
                             && (firma[0] & 0xFF) == 0xFF
                             && (firma[1] & 0xFF) == 0xD8
                             && (firma[2] & 0xFF) == 0xFF;
+
+        } else if (CONTENT_TYPE_PDF.equals(contentTypeEsperado)) {
+
+            valida =
+                    firma != null
+                            && leidos >= 5
+                            && firma[0] == '%'
+                            && firma[1] == 'P'
+                            && firma[2] == 'D'
+                            && firma[3] == 'F'
+                            && firma[4] == '-';
         }
 
         if (!valida) {
             throw new Exception(
                     "Adjunto: el contenido no coincide "
-                            + "con una imagen JPEG o PNG válida."
+                            + "con el formato JPG, JPEG, PNG o PDF informado."
             );
         }
     }
@@ -988,24 +999,17 @@ public class DocumentoLibraryComprasHelper
             String esperado)
             throws Exception {
 
-        if (WebKeysCompras.isEmpty(
-                contentType
-        )
-                || "application/octet-stream".equals(
-                contentType
-        )) {
+        if (WebKeysCompras.isEmpty(contentType)
+                || "application/octet-stream".equals(contentType)) {
 
             throw new Exception(
                     "Adjunto: el tipo MIME "
                             + origen
-                            + " no identifica una imagen JPEG o PNG."
+                            + " no identifica un archivo JPG, JPEG, PNG o PDF."
             );
         }
 
-        if (!esperado.equals(
-                contentType
-        )) {
-
+        if (!esperado.equals(contentType)) {
             throw new Exception(
                     "Adjunto: el tipo MIME "
                             + origen
@@ -1022,36 +1026,23 @@ public class DocumentoLibraryComprasHelper
         }
 
         String contentType =
-                value.trim()
-                        .toLowerCase(
-                                Locale.ENGLISH
-                        );
+                value.trim().toLowerCase(Locale.ENGLISH);
 
         int separador =
                 contentType.indexOf(';');
 
         if (separador >= 0) {
             contentType =
-                    contentType.substring(
-                            0,
-                            separador
-                    ).trim();
+                    contentType.substring(0, separador).trim();
         }
 
-        if ("image/jpg".equals(
-                contentType
-        )
-                || "image/pjpeg".equals(
-                contentType
-        )) {
+        if ("image/jpg".equals(contentType)
+                || "image/pjpeg".equals(contentType)) {
 
             return CONTENT_TYPE_JPEG;
         }
 
-        if ("image/x-png".equals(
-                contentType
-        )) {
-
+        if ("image/x-png".equals(contentType)) {
             return CONTENT_TYPE_PNG;
         }
 
@@ -1097,12 +1088,9 @@ public class DocumentoLibraryComprasHelper
         )
                 || ordenMedica.getFechaDocumento() == null
                 || !(
-                CONTENT_TYPE_JPEG.equals(
-                        ordenMedica.getContentType()
-                )
-                        || CONTENT_TYPE_PNG.equals(
-                        ordenMedica.getContentType()
-                )
+                CONTENT_TYPE_JPEG.equals(ordenMedica.getContentType())
+                        || CONTENT_TYPE_PNG.equals(ordenMedica.getContentType())
+                        || CONTENT_TYPE_PDF.equals(ordenMedica.getContentType())
         )) {
 
             throw new Exception(
@@ -1157,11 +1145,11 @@ public class DocumentoLibraryComprasHelper
         }
 
         String contentTypeEsperado =
-                ".png".equals(
-                        extensionNombre
-                )
-                        ? CONTENT_TYPE_PNG
-                        : CONTENT_TYPE_JPEG;
+                ".pdf".equals(extensionNombre)
+                        ? CONTENT_TYPE_PDF
+                        : (".png".equals(extensionNombre)
+                                ? CONTENT_TYPE_PNG
+                                : CONTENT_TYPE_JPEG);
 
         String contentTypeInformado =
                 normalizarContentType(
@@ -1177,14 +1165,6 @@ public class DocumentoLibraryComprasHelper
         validarFirmaImagen(
                 ordenMedica.getArchivo(),
                 contentTypeEsperado
-        );
-    }
-
-    protected String detectarContentTypePorNombre(
-            String nombreOriginal) {
-
-        return MimeTypesUtil.getContentType(
-                nombreOriginal
         );
     }
 
@@ -1312,52 +1292,6 @@ public class DocumentoLibraryComprasHelper
     }
 
     public OrdenMedicaValidada validarOrdenMedica(
-            UploadPortletRequest uploadRequest)
-            throws Exception {
-
-        String fecha =
-                uploadRequest != null
-                        ? ParamUtil.getString(
-                        uploadRequest,
-                        PARAM_FECHA_ORDEN_MEDICA,
-                        null
-                )
-                        : null;
-
-        return validarOrdenMedica(
-                uploadRequest,
-                PARAM_ARCHIVO_ORDEN_MEDICA,
-                fecha
-        );
-    }
-
-    public OrdenMedicaValidada validarOrdenMedica(
-            UploadPortletRequest uploadRequest,
-            String fechaNormalizada)
-            throws Exception {
-
-        return validarOrdenMedica(
-                uploadRequest,
-                PARAM_ARCHIVO_ORDEN_MEDICA,
-                fechaNormalizada
-        );
-    }
-
-    public OrdenMedicaValidada validarOrdenMedica(
-            UploadPortletRequest uploadRequest,
-            String nombreCampoArchivo,
-            String fechaNormalizada)
-            throws Exception {
-
-        return validarOrdenMedica(
-                uploadRequest,
-                nombreCampoArchivo,
-                fechaNormalizada,
-                null
-        );
-    }
-
-    public OrdenMedicaValidada validarOrdenMedica(
             UploadPortletRequest uploadRequest,
             String nombreCampoArchivo,
             String fechaNormalizada,
@@ -1407,7 +1341,7 @@ public class DocumentoLibraryComprasHelper
 
             throw new Exception(
                     "Adjunto: debe seleccionar "
-                            + "una imagen no vacía."
+                            + "un archivo no vacío."
             );
         }
 
@@ -1444,16 +1378,16 @@ public class DocumentoLibraryComprasHelper
 
             throw new Exception(
                     "Adjunto: sólo se permiten "
-                            + "archivos JPG, JPEG o PNG."
+                            + "archivos JPG, JPEG, PNG o PDF."
             );
         }
 
         String contentTypeEsperado =
-                ".png".equals(
-                        extension
-                )
-                        ? CONTENT_TYPE_PNG
-                        : CONTENT_TYPE_JPEG;
+                ".pdf".equals(extension)
+                        ? CONTENT_TYPE_PDF
+                        : (".png".equals(extension)
+                                ? CONTENT_TYPE_PNG
+                                : CONTENT_TYPE_JPEG);
 
         validarFirmaImagen(
                 archivo,
