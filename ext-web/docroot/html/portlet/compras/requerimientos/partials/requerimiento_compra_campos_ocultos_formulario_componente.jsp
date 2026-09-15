@@ -34,6 +34,9 @@ String tokenGuardadoCompra =
       data-compras-error="<%= ParamUtil.getBoolean(renderRequest, "compras_error", false) %>"
       data-compras-guardado="<%= ParamUtil.getBoolean(renderRequest, "compras_guardado", false) %>"
       data-compras-reintento-seguro="<%= ParamUtil.getBoolean(renderRequest, "compras_reintento_seguro", false) %>"
+      data-compras-operacion="<%= HtmlUtil.escape(ParamUtil.getString(renderRequest, "compras_operacion", "")) %>"
+      data-compras-error-mensaje="<%= HtmlUtil.escape(errorParaAlert) %>"
+      data-compras-listado-url="<%= HtmlUtil.escape(volverURL.toString()) %>"
       data-compras-editar-url="<%= HtmlUtil.escape(editarURL.toString()) %>">
 
     <input type="hidden"

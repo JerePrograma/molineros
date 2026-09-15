@@ -117,6 +117,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 || idRequerimientoCompra <= 0;
     }
 
+    private static final class ContextoGuardadoCompra {
+        private boolean tokenConsumido;
+        private boolean persistenciaInvocada;
+    }
+
     public void processAction(
             ActionMapping mapping,
             ActionForm form,
@@ -125,30 +130,34 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             ActionResponse actionResponse) throws Exception {
 
         ActionRequest actionRequestOriginal = actionRequest;
-        UploadPortletRequest uploadRequest =
-                obtenerUploadPortletRequest(actionRequestOriginal);
+        UploadPortletRequest uploadRequest = null;
+        String cmd = "";
+        int idRequerimientoCompra = 0;
+        boolean altaOriginal = true;
+        ContextoGuardadoCompra contextoGuardado = new ContextoGuardadoCompra();
 
-        if (uploadRequest != null) {
-            actionRequest = new MultipartActionRequest(
-                    actionRequestOriginal,
-                    uploadRequest
-            );
-        }
-
-        String cmd = getParametroTrim(actionRequest, Constants.CMD);
-
-        int idRequerimientoCompra =
-                parseEnteroConDefault(
-                        actionRequest,
-                        "id_requerimiento_compra",
-                        "ID del requerimiento",
-                        0
-                );
-
-        boolean altaOriginal = vieneDeAlta(actionRequest);
-        boolean persistenciaGuardadoIniciada = false;
-        
         try {
+            actionResponse.setRenderParameter("compras_guardado", "false");
+            actionResponse.setRenderParameter("compras_error", "false");
+            actionResponse.setRenderParameter("compras_reintento_seguro", "false");
+
+            uploadRequest = obtenerUploadPortletRequest(actionRequestOriginal);
+            if (uploadRequest != null) {
+                actionRequest = new MultipartActionRequest(
+                        actionRequestOriginal,
+                        uploadRequest
+                );
+            }
+
+            cmd = getParametroTrim(actionRequest, Constants.CMD);
+            idRequerimientoCompra = parseEnteroConDefault(
+                    actionRequest,
+                    "id_requerimiento_compra",
+                    "ID del requerimiento",
+                    0
+            );
+            altaOriginal = vieneDeAlta(actionRequest);
+
             User user = PortalUtil.getUser(actionRequest);
             String usuario = user != null
                     ? user.getScreenName()
@@ -157,8 +166,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if ("saveCotizacion".equals(cmd)
                     || "cerrarCotizacion".equals(cmd)) {
 
-            	validarPermisoCotizar(user);
-            	consumirTokenGuardadoCompra(actionRequest);
+                validarPermisoCotizar(user);
+                consumirTokenGuardadoCompra(actionRequest);
+                contextoGuardado.tokenConsumido = true;
 
                 if (idRequerimientoCompra <= 0) {
                     errorCampo(
@@ -175,7 +185,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 boolean surge = parseSurgeObligatorio(actionRequest);
 
-                persistenciaGuardadoIniciada = true;
+                contextoGuardado.persistenciaInvocada = true;
                 GuardadoCotizacionResultado resultado =
                         requerimientoHelper
                                 .guardarAvanceCotizacion(
@@ -231,7 +241,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if ("saveAll".equals(cmd)) {
                 validarPermisoABM(user);
                 consumirTokenGuardadoCompra(actionRequest);
-                
+                contextoGuardado.tokenConsumido = true;
+
                 RequerimientoCompra requerimiento =
                         getRequerimientoFromRequest(actionRequest);
 
@@ -254,13 +265,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                     && actual.puedeEditarEstructura();
                 }
 
-                persistenciaGuardadoIniciada = true;
                 idRequerimientoCompra = guardarCabeceraRequerimiento(
                         actionRequestOriginal,
                         actionRequest,
                         uploadRequest,
                         requerimiento,
-                        usuario
+                        usuario,
+                        contextoGuardado
                 );
 
                 if (guardarDetallesEstructura) {
@@ -302,7 +313,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 validarPermisoABM(user);
                 consumirTokenGuardadoCompra(actionRequest);
-                
+                contextoGuardado.tokenConsumido = true;
+
                 RequerimientoCompra requerimiento =
                         getRequerimientoFromRequest(actionRequest);
 
@@ -312,13 +324,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     );
                 }
 
-                persistenciaGuardadoIniciada = true;
                 idRequerimientoCompra = guardarCabeceraRequerimiento(
                         actionRequestOriginal,
                         actionRequest,
                         uploadRequest,
                         requerimiento,
-                        usuario
+                        usuario,
+                        contextoGuardado
                 );
 
                 actionResponse.setRenderParameter("compras_guardado", "true");
@@ -383,10 +395,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
             );
         } catch (Exception e) {
-        	boolean reintentoSeguro =
-        	        tokenGuardadoConsumido
-        	                && !persistenciaGuardadoIniciada;
-        	
+            boolean reintentoSeguro =
+                    contextoGuardado.tokenConsumido
+                            && !contextoGuardado.persistenciaInvocada;
+
             String mensaje =
                     obtenerMensajeUsuario(
                             e,
@@ -473,7 +485,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "compras_reintento_seguro",
                     String.valueOf(reintentoSeguro)
             );
-            
+
             actionResponse.setRenderParameter(
                     "compras_error",
                     "true"
@@ -500,7 +512,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             ActionRequest actionRequest,
             UploadPortletRequest uploadRequest,
             RequerimientoCompra requerimiento,
-            String usuario) throws Exception {
+            String usuario,
+            ContextoGuardadoCompra contextoGuardado) throws Exception {
 
         boolean esNuevo =
                 requerimiento.getIdRequerimientoCompra() <= 0;
@@ -576,6 +589,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             ordenesMedicas
                     );
 
+            contextoGuardado.persistenciaInvocada = true;
+
             return requerimientoHelper
                     .guardarNuevoRequerimientoCompraConOrdenesMedicas(
                             requerimiento,
@@ -593,6 +608,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          * El Helper verifica que continúe PENDIENTE y preserva
          * sector/afiliado.
          */
+        contextoGuardado.persistenciaInvocada = true;
+
         int idGuardado =
                 requerimientoHelper
                         .guardarRequerimientoCompra(

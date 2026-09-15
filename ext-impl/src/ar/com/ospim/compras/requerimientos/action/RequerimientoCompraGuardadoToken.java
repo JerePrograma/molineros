@@ -17,6 +17,8 @@ public final class RequerimientoCompraGuardadoToken {
     private static final String SESION = "COMPRAS_SAVE_TOKENS";
     private static final int MAX_TOKENS = 20;
 
+    private static final Object BLOQUEO = new Object();
+
     private RequerimientoCompraGuardadoToken() {
     }
 
@@ -31,7 +33,7 @@ public final class RequerimientoCompraGuardadoToken {
         PortletSession session =
                 request.getPortletSession();
 
-        synchronized (session) {
+        synchronized (BLOQUEO) {
             Set<String> tokens =
                     copiarTokens(
                             session.getAttribute(
@@ -88,7 +90,7 @@ public final class RequerimientoCompraGuardadoToken {
             throw rechazoEnvio();
         }
 
-        synchronized (session) {
+        synchronized (BLOQUEO) {
             Set<String> tokens =
                     copiarTokens(
                             session.getAttribute(
