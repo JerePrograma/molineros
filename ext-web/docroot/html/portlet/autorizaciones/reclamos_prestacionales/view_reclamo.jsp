@@ -4121,11 +4121,16 @@ function validarExisteComprobante( params ) {
 				rtaExisteCompro=(resp  === 'true');
 	   		}
 	   }); 
-	   if(rtaExisteCompro){
-		  alert('Ya existe una prestación en esa fecha para el mismo comprobante');
-		  respuesta=false;
-		   
-	   }
+	   
+	   	var estadoReclamo = jQuery('#<portlet:namespace />estado').val();
+		var tipoGestionCierre = jQuery('#<portlet:namespace />tipo_gestion_cierre_reclamo').val();
+		var esAnulado = (estadoReclamo == '2');
+		var esRechazado = (estadoReclamo == '3' && tipoGestionCierre == '5');
+
+		if (rtaExisteCompro && !esAnulado && !esRechazado) {
+		    alert('Ya existe una prestación en esa fecha para el mismo comprobante');
+		    respuesta=false;
+		}
 	   
 	   if(mensajeErrorOut != ''){
 		   alert(mensajeErrorOut);

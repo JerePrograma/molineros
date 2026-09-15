@@ -324,7 +324,7 @@ public class ClienteAppMobileServiceUtil {
                         Integer idSeccional = (a.getSeccional() != null ? a.getSeccional().getId() : null);
                         r.setIdSeccional(idSeccional);
                         r.setTipoPedido("REINTEGRO");
-                        r.setSector("PRESTACIONES MEDICAS");
+                        //r.setSector("PRESTACIONES MEDICAS");
                         
                         Comprobante comp = construirComprobanteReintegro(r, "Ya existe ID");
                         comprobantesErroneos.add(comp);
@@ -352,7 +352,7 @@ public class ClienteAppMobileServiceUtil {
                     Integer idSeccional = (a.getSeccional() != null ? a.getSeccional().getId() : null);
                     r.setIdSeccional(idSeccional);
                     r.setTipoPedido("REINTEGRO");
-                    r.setSector("PRESTACIONES MEDICAS");
+                    //r.setSector("PRESTACIONES MEDICAS");
                     long companyId = PortalUtil.getDefaultCompanyId();
                     User user = UserLocalServiceUtil.getDefaultUser(companyId);
                     user.setScreenName("AppMobile");

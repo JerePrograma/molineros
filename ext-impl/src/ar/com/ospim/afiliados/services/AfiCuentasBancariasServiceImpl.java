@@ -162,7 +162,7 @@ public class AfiCuentasBancariasServiceImpl {
 
         try {
             con = ConnectionHelper.getConnection();
-            String sql = "{? = call public.inserta_o_actualiza_afi_cuenta_bancaria(?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+            String sql = "{? = call public.inserta_o_actualiza_afi_cuenta_bancaria(?,?,?,?,?,?,?,?,?,?,?)}";
             stmt = con.prepareCall(sql);
             stmt.registerOutParameter(1, Types.INTEGER);
             stmt.setString(2, cuilTitular);
@@ -173,9 +173,9 @@ public class AfiCuentasBancariasServiceImpl {
             stmt.setBoolean(7, titular);
             stmt.setString(8, cbu);
             stmt.setString(9, cuilCbu);
-            stmt.setString(12, fileCbu);
-            stmt.setString(13, fileNotaAutorizada);
-            stmt.setString(14, user.getScreenName());
+            stmt.setString(10, fileCbu);
+            stmt.setString(11, fileNotaAutorizada);
+            stmt.setString(12, user.getScreenName());
 
             stmt.execute();
             resultado = stmt.getInt(1);

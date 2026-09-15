@@ -7,6 +7,7 @@
 			<%
 				//Si debe mostrarse el btn de agregar afiliado								
 					boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ABM_ADMINISTRACION);
+/*			
 					String rolSolicitarCotizacion = WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR;
 					boolean puedeModificarSolicitarCotizacion = false;
 
@@ -35,14 +36,16 @@
 							puedeModificarSolicitarCotizacion = false;
 						}
 					}
-
+*/
 					List<Prestador> prestadores= (ArrayList<Prestador>)renderRequest.getAttribute(WebKeysLiquidaciones.BUSQUEDA_PRESTADORES);
 					PortletURL portletURL = renderResponse.createRenderURL();
+/*					
 					PortletURL actualizarSolicitarCotizacionURL = renderResponse.createActionURL();
 					actualizarSolicitarCotizacionURL.setParameter(
 							"struts_action", "/prestadores/actualizar_solicitar_cotizacion_prestador");
 					String actualizarSolicitarCotizacionURLString =
 							actualizarSolicitarCotizacionURL.toString().replace("&amp;", "&");
+*/					
 					String orderByCol = ParamUtil.getString(request, "orderByCol");
 					String orderByType = ParamUtil.getString(request, "orderByType");
 					 		List<String> headerNames = new ArrayList<String>();
@@ -55,7 +58,7 @@
 					if(showABMButtons) {
 						headerNames.add("editar-borrar");
 					}
-					headerNames.add("solicitar-cotizacion");
+					//headerNames.add("solicitar-cotizacion");
 					SearchContainer searchContainer = new SearchContainer(renderRequest, null, null,
 					SearchContainer.DEFAULT_CUR_PARAM,SearchContainer.MAX_DELTA, portletURL, headerNames,
 					LanguageUtil.get(pageContext, "no-prestadores-were-found"));
@@ -85,6 +88,7 @@
 								row.addJSP( "left", SearchEntry.DEFAULT_VALIGN, "/html/portlet/prestadores/editar_borrar_prestador.jsp");
 							}
 
+/*							
 							String solicitarCotizacionCheckId = renderResponse.getNamespace()
 									+ "solicitarCotizacion_" + prestador.getId_prestador();
 							boolean solicitarCotizacion = prestador.isSolicitarCotizacion();
@@ -104,82 +108,11 @@
 									+ titleSolicitarCotizacion
 									+ "onclick=\"return actualizarSolicitarCotizacionPrestador(this, event);\" />";
 							row.addText("center", SearchEntry.DEFAULT_VALIGN, solicitarCotizacionHtml);
+*/							
 				 			resultRows.add(row);
 					 	}
 				 }
 			%>
 
-	<script type="text/javascript">
-	var puedeModificarSolicitarCotizacion =
-		<%= puedeModificarSolicitarCotizacion ? "true" : "false" %>;
-	var actualizarSolicitarCotizacionURL =
-		'<%= actualizarSolicitarCotizacionURLString %>';
-
-	function setSolicitarCotizacionCheckedNative(check, checked) {
-		check.checked = checked;
-		if (checked) {
-			check.setAttribute('checked', 'checked');
-		} else {
-			check.removeAttribute('checked');
-		}
-	}
-
-	function actualizarSolicitarCotizacionPrestador(check, event) {
-		if (event) {
-			if (event.stopPropagation) {
-				event.stopPropagation();
-			}
-			event.cancelBubble = true;
-		}
-
-		if (!puedeModificarSolicitarCotizacion) {
-			setSolicitarCotizacionCheckedNative(check, !check.checked);
-			return false;
-		}
-
-		var prestadorId = check.value;
-		var solicitarCotizacion = check.checked;
-		var estadoAnterior = !solicitarCotizacion;
-		check.disabled = true;
-
-		var params = 'idPrestador=' + encodeURIComponent(prestadorId)
-				+ '&solicitarCotizacion=' + encodeURIComponent(solicitarCotizacion ? 'true' : 'false')
-				+ '&<portlet:namespace />idPrestador=' + encodeURIComponent(prestadorId)
-				+ '&<portlet:namespace />solicitarCotizacion='
-				+ encodeURIComponent(solicitarCotizacion ? 'true' : 'false');
-
-		var xhr = null;
-		if (window.XMLHttpRequest) {
-			xhr = new XMLHttpRequest();
-		} else if (window.ActiveXObject) {
-			xhr = new ActiveXObject('Microsoft.XMLHTTP');
-		}
-
-		if (xhr == null) {
-			setSolicitarCotizacionCheckedNative(check, estadoAnterior);
-			check.disabled = false;
-			alert('El navegador no permite ejecutar la actualización.');
-			return false;
-		}
-
-		xhr.open('POST', actualizarSolicitarCotizacionURL, true);
-		xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState != 4) {
-				return;
-			}
-			if (xhr.status >= 200 && xhr.status < 300) {
-				window.location.reload();
-				return;
-			}
-			setSolicitarCotizacionCheckedNative(check, estadoAnterior);
-			check.disabled = false;
-			alert('No se pudo actualizar Solicitar Cotización.');
-		};
-
-		xhr.send(params);
-		return true;
-	}
-	</script>
 
 	<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />

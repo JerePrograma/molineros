@@ -4553,15 +4553,17 @@
 			value="/portlet/liquidaciones/comprobantes/comprobantes_interbanking_search_result.jsp" />
 	</definition>
 	
-	<definition
-    name="portlet.prestadores.cartilla_sop"
-    extends="portlet.prestadores">
+	<definition name="portlet.prestadores.cartilla_sop" extends="portlet.prestadores">
+	    <put name="portlet_content" value="/portlet/prestadores/convenios_prest/cartilla_sop.jsp"/>
+	</definition>
 
-    <put
-        name="portlet_content"
-        value="/portlet/prestadores/convenios_prest/cartilla_sop.jsp"/>
-
-</definition>
+	<definition name="portlet.tesoreria.aportes.contribuciones.editar" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/aportes_contribuciones/aportes_contribuciones_editar.jsp"/>
+	</definition>
+	
+	<definition name="portlet.tesoreria.aportes.contribuciones.historico" extends="portlet.tesoreria">
+		<put name="portlet_content" value="/portlet/tesoreria/aportes_contribuciones/aportes_contribuciones_historico.jsp"/>
+	</definition>
 
 
 	<!-- COMPRAS -->

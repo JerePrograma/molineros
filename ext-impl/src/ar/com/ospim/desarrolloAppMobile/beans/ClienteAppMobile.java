@@ -427,6 +427,7 @@ public class ClienteAppMobile {
 			        for (int i = 0; i < items.length(); i++) {
 			            try {
 			                JSONObject j = items.getJSONObject(i);
+			                
 			                ReclamoPrestacional r = new ReclamoPrestacional();
 			                Afiliado a = new Afiliado();			    			                
 			                
@@ -449,10 +450,16 @@ public class ClienteAppMobile {
 			                } catch (NumberFormatException e1) {
 			                	
 			                }
-			                r.setSucuComprobante(sucursal);
-			                
+			                r.setSucuComprobante(sucursal);			                
 			                r.setImporteComprobante(BigDecimal.valueOf(j.optDouble("importe", 0)));
-			                r.setSector("PRESTACIONES MEDICAS");
+			                
+			                String tipoReintegro = j.optString("reintegro_tipo", "PRESTACIONES MEDICAS");
+
+			                if (tipoReintegro == null || tipoReintegro.trim().isEmpty() || "null".equalsIgnoreCase(tipoReintegro)) {
+			                    tipoReintegro = "PRESTACIONES MEDICAS";
+			                }
+
+			                r.setSector(tipoReintegro);
 			                
 			                //crea prestaciones
 			                if (r.getPrestaciones() == null || r.getPrestaciones().isEmpty()) {

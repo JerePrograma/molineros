@@ -19,6 +19,7 @@ boolean showABMCentroCostoUOMA = PermissionUtil.userContainsRole(user, WebKeysUO
 boolean showTABLEROCentroCostoUOMA = PermissionUtil.userContainsRole(user, WebKeysUOMA.ROL_TABLERO_CENTRO_COSTO_UOMA);
 boolean showABMFacturacion = PermissionUtil.userContainsRole(user, WebKeysUOMA.ROL_FACTURACION);
 
+boolean showABMAportes = PermissionUtil.userContainsRole(user, "ABM_Tesoreria");
 
 if ((tabs1 == null || tabs1.equals("bandeja-de-entrada")) && tesoreria){
 	tabs1="calculo-deuda"; 
@@ -48,6 +49,10 @@ if(tesoreria){
 }
 
 tabs1Values=tabs1Values!=null?tabs1Values + ",adm-facturacion-ospim":"adm-facturacion-ospim";
+
+if (showABMAportes) {
+	tabs1Values = tabs1Values != null ? tabs1Values + ",tabla-aportes-contrib" : "tabla-aportes-contrib";
+}
 
 String tabs1Names = StringUtil.replace(tabs1Values, StringPool.UNDERLINE, StringPool.DASH);
 String keywords = ParamUtil.getString(request, "keywords");
@@ -129,6 +134,10 @@ currentURL = PortalUtil.getCurrentURL(request);
 	
 	<c:when test='<%= tabs1.equals("adm-facturacion-ospim") %>'>
 		<liferay-util:include page="/html/portlet/tesoreria/facturacion/facturacion_opciones.jsp"/>	
+	</c:when>
+	
+	<c:when test='<%= tabs1.equals("tabla-aportes-contrib") && showABMAportes %>'>
+		<liferay-util:include page="/html/portlet/tesoreria/aportes_contribuciones/aportes_contribuciones.jsp"/>
 	</c:when>
 	
 </c:choose>

@@ -1766,7 +1766,7 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 	var descripcionSeguimiento_filtro_edit = jQuery("#<portlet:namespace />descripcionSeguimiento_filtro_edit").val();
 	var nom_seleccionado_edit = jQuery("#<portlet:namespace />nom_seleccionado").val(); 
 	var tipoNomenclador_edit = jQuery('#<portlet:namespace />tipoNomenclador').val();
-   
+   	
 	
 	
 	
@@ -1871,7 +1871,8 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
    		return false;
    }
     
-    
+  	var cuil=jQuery('#<portlet:namespace />cuil').val();
+	var inte=jQuery('#<portlet:namespace />inte').val();
     
     frecuencia="UNICA";    
 	
@@ -1910,7 +1911,10 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 						   "codigoSeguimiento_filtro_edit":codigoSeguimiento_filtro_edit,
 						   "descripcionSeguimiento_filtro_edit":descripcionSeguimiento_filtro_edit,
 						   "nom_seleccionado_edit":nom_seleccionado_edit,
-						   "tipoNomenclador_edit":tipoNomenclador_edit	   
+						   "tipoNomenclador_edit":tipoNomenclador_edit,
+						   "cuil":cuil,
+						   "inte":inte
+						   
 					  };	
 	
  	var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones" /></portlet:renderURL>';
@@ -2150,7 +2154,8 @@ function <portlet:namespace />agregarPrestacion() {
    		return false;
 	}
     
-   
+    var cuil=jQuery('#<portlet:namespace />cuil').val();
+	var inte=jQuery('#<portlet:namespace />inte').val();
    
 	var accion = "&<%= Constants.ACTION %>=" + "<%= WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL %>";
 
@@ -2179,7 +2184,9 @@ function <portlet:namespace />agregarPrestacion() {
 			   "cpbte_letra":cpbteLetra,
 			   "fecha_prestacion_dia":fechaPrestacionDia,
 			   "fecha_prestacion_mes":fechaPrestacionMes,
-			   "fecha_prestacion_anio":fechaPrestacionAnio
+			   "fecha_prestacion_anio":fechaPrestacionAnio,
+			   "cuil":cuil,
+			   "inte":inte
 			   };
 	
 	if(cpbteTipo != 'OTR'){
@@ -2292,7 +2299,8 @@ function validarExisteComprobante( params ) {
 	    url +='&descripcionSeguimiento_filtro_edit='+params.descripcionSeguimiento_filtro_edit;
 	    url +='&nom_seleccionado_edit='+params.nom_seleccionado_edit;
 	    url +='&tipoNomenclador_edit='+params.tipoNomenclador_edit;
-		   
+	    url +='&cuil='+params.cuil;
+	    url +='&inte='+params.inte;   
     
 	   jQuery.ajax({   
 		   url: url,

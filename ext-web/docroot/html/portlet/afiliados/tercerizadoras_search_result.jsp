@@ -60,7 +60,10 @@
 			 		}
 				ResultRow rowTercerizadora = new ResultRow(terce,terce.getTercerizadora().getId_tercerizadora(), i);			
  				rowTercerizadora.addText(terce.getTercerizadora().getDescripcion());	 					
- 				rowTercerizadora.addText(sdf.format(terce.getFechaInicioPres()));
+ 				//rowTercerizadora.addText(sdf.format(terce.getFechaInicioPres()));
+ 				rowTercerizadora.addText(
+ 					    terce.getFechaInicioPres() != null ? sdf.format(terce.getFechaInicioPres()) : ""
+ 					);
  				rowTercerizadora.addText(terce.getFechaFinPres()!=null?sdf.format(terce.getFechaFinPres()):"");
  				/* StringBuilder sb= new StringBuilder(); */
  				/* if(null==view || !view.trim().equals("true")){	 	

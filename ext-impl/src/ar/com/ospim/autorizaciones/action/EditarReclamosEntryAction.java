@@ -398,6 +398,10 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 				session.setAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getPrestaciones());
 				session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getRevisiones());
 				
+				//NUEVO: Al reabrir cambia el estado en BD, por lo tanto se debe se actualizar tambien en sesion
+			    session.setAttribute(RECLAMO_PRESTACION_ESTADO_ORIGINAL, reclamoPrestacional.getEstado());
+			    
+			    
 				// Guarda Flag para refresh de vista
 				session.removeAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS );					
 				session.setAttribute(WebKeysAutorizaciones.RECLAMO_NUEVO_ESTADO_OBS, ReclamoPrestacional.getEstadoObservado());
@@ -421,7 +425,10 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 				session.removeAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION );					
 				session.setAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION, reclamoPrestacional );	
 				session.setAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getPrestaciones());
-				session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getRevisiones());					
+				session.setAttribute(WebKeysAutorizaciones.LISTADO_REVISIONES_RECLAMOS_EN_SESION , reclamoPrestacional.getRevisiones());
+				
+			    //NUEVO: Al reabrir cambia el estado en BD, por lo tanto se debe se actualizar tambien en sesion
+			    session.setAttribute(RECLAMO_PRESTACION_ESTADO_ORIGINAL, reclamoPrestacional.getEstado());
 		    }
 			
 			
