@@ -99,7 +99,8 @@ public class GeneraVademecumAdmifarmXLS {
             }
             HSSFRow fila = hoja.createRow(numero++);
             // Texto: no convertir el identificador a double ni perder digitos.
-            fila.createCell(0).setCellValue(registro.getRegistro().toPlainString());
+            fila.createCell(0).setCellValue(registro.getRegistro() == null
+                    ? "" : registro.getRegistro().toPlainString());
             for (int c = 0; c < registro.getValores().length; c++) {
                 String valor = registro.getValores()[c];
                 fila.createCell(c + 1).setCellValue(valor == null ? "" : valor);

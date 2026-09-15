@@ -105,12 +105,24 @@ public class ImportarVademecumAdmifarmAction extends PortletAction {
         Comparacion cambios = VademecumAdmifarmHelper.comparar(
                 importacion.getAnteriores(), importacion.getRegistros());
 
+        int cantidadSinRegistro = 0;
+        for (Registro registro : importacion.getRegistros()) {
+            if (registro.getRegistro() == null) {
+                cantidadSinRegistro++;
+            }
+        }
+        String advertencia = "";
+        if (cantidadSinRegistro > 0) {
+            advertencia = " Advertencia: " + cantidadSinRegistro
+                    + " filas se cargaron sin numero de registro.";
+        }
+
         SessionMessages.add(request, "vademecum-importado", "Vademecum " + tipo
                 + " importado: " + importacion.getRegistros().size()
                 + " registros. Altas: " + cambios.getAltas().size()
                 + ". Bajas: " + cambios.getBajas().size()
                 + ". Modificaciones: " + cambios.getModificadosDespues().size()
-                + ". Sin cambios: " + cambios.getSinCambios() + ".");
+                + ". Sin cambios: " + cambios.getSinCambios() + "." + advertencia);
     }
 
     private void descargar(ActionRequest request, ActionResponse response)

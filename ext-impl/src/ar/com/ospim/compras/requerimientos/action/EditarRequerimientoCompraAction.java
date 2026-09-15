@@ -31,7 +31,6 @@ import org.apache.struts.action.ActionMapping;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
-import javax.portlet.PortletSession;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import javax.portlet.filter.ActionRequestWrapper;
@@ -45,30 +44,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 public class EditarRequerimientoCompraAction extends PortletAction {
 
     private static final Log _log =
             LogFactoryUtil.getLog(EditarRequerimientoCompraAction.class);
-
-    /*
-     * Blindaje anti doble envío.
-     *
-     * Se usa un SET de tokens, no un único token, para no romper pantallas
-     * abiertas en múltiples tabs. Cada render agrega un token válido.
-     * Cada save consume exactamente un token.
-     */
-    private static final String PARAM_COMPRAS_SAVE_TOKEN =
-            "compras_save_token";
-
-    private static final String ATTR_COMPRAS_SAVE_TOKEN =
-            "COMPRAS_SAVE_TOKEN";
-
-    private static final String SESSION_COMPRAS_SAVE_TOKENS =
-            "COMPRAS_SAVE_TOKENS";
-
-    private static final int MAX_TOKENS_GUARDADO_COMPRA = 20;
 
     private static final int MAX_DETALLES_COTIZACION_RETORNO = 1000;
 

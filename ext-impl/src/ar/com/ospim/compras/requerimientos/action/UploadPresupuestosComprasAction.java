@@ -31,15 +31,12 @@ import org.apache.struts.action.ActionMapping;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
-import javax.portlet.PortletSession;
+
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
@@ -65,12 +62,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             "presupuestoBorrar";
     private static final String OPERACION_PRESUPUESTO_ERROR =
             "presupuestoError";
-
-    private static final String ATTR_COMPRAS_SAVE_TOKEN =
-            "COMPRAS_SAVE_TOKEN";
-    private static final String SESSION_COMPRAS_SAVE_TOKENS =
-            "COMPRAS_SAVE_TOKENS";
-    private static final int MAX_TOKENS_GUARDADO_COMPRA = 20;
 
     private final PresupuestoCompraHelper presupuestoHelper =
             new PresupuestoCompraHelper();
@@ -353,12 +344,6 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     )
             );
 
-            if (!soloLectura) {
-                generarTokenGuardadoCompra(
-                        renderRequest
-                );
-            }
-
             cargarCatalogos(
                     renderRequest
             );
@@ -400,6 +385,10 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         WebKeysCompras.ITEMS_REQUERIMIENTO_COMPRA_EN_EDICION,
                         requerimiento.getDetalles()
                 );
+
+                if (!soloLectura) {
+                    generarTokenGuardadoCompra(renderRequest);
+                }
             }
 
         } catch (Exception e) {

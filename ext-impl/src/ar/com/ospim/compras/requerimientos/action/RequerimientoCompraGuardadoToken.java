@@ -17,12 +17,6 @@ public final class RequerimientoCompraGuardadoToken {
     private static final String SESION = "COMPRAS_SAVE_TOKENS";
     private static final int MAX_TOKENS = 20;
 
-    /*
-     * Exclusión compartida por los dos generadores y el consumidor.
-     * Sólo cubre operaciones en memoria dentro de esta JVM/classloader.
-     */
-    private static final Object BLOQUEO = new Object();
-
     private RequerimientoCompraGuardadoToken() {
     }
 
@@ -31,58 +25,93 @@ public final class RequerimientoCompraGuardadoToken {
             return;
         }
 
-        String token = UUID.randomUUID().toString();
-        PortletSession session = request.getPortletSession();
+        String token =
+                UUID.randomUUID().toString();
 
-        synchronized (BLOQUEO) {
+        PortletSession session =
+                request.getPortletSession();
+
+        synchronized (session) {
             Set<String> tokens =
-                    copiarTokens(session.getAttribute(SESION));
+                    copiarTokens(
+                            session.getAttribute(
+                                    SESION
+                            )
+                    );
 
             while (tokens.size() >= MAX_TOKENS) {
-                Iterator<String> iterator = tokens.iterator();
+                Iterator<String> iterator =
+                        tokens.iterator();
+
+                if (!iterator.hasNext()) {
+                    break;
+                }
+
                 iterator.next();
                 iterator.remove();
             }
 
             tokens.add(token);
-            session.setAttribute(SESION, tokens);
+
+            session.setAttribute(
+                    SESION,
+                    tokens
+            );
         }
 
-        request.setAttribute(ATRIBUTO, token);
+        request.setAttribute(
+                ATRIBUTO,
+                token
+        );
     }
 
     public static void consumir(
             ActionRequest request,
-            String valor) throws ValidacionCompraException {
+            String valor)
+            throws ValidacionCompraException {
 
         if (request == null) {
             throw new IllegalArgumentException(
-                    "No se recibió la solicitud de guardado."
+                    "No se recibio la solicitud de guardado."
             );
         }
 
-        String token = valor != null ? valor.trim() : "";
-        PortletSession session = request.getPortletSession(false);
+        String token =
+                valor != null
+                        ? valor.trim()
+                        : "";
 
-        synchronized (BLOQUEO) {
-            if (session == null
-                    || token.length() == 0
-                    || "null".equals(token)) {
+        PortletSession session =
+                request.getPortletSession(false);
 
-                throw rechazoEnvio();
-            }
+        if (session == null) {
+            throw rechazoEnvio();
+        }
 
+        synchronized (session) {
             Set<String> tokens =
-                    copiarTokens(session.getAttribute(SESION));
+                    copiarTokens(
+                            session.getAttribute(
+                                    SESION
+                            )
+                    );
 
-            if (!tokens.remove(token)) {
+            if (token.length() == 0
+                    || "null".equals(token)
+                    || !tokens.remove(token)) {
+
                 throw rechazoEnvio();
             }
 
             if (tokens.isEmpty()) {
-                session.removeAttribute(SESION);
+                session.removeAttribute(
+                        SESION
+                );
             } else {
-                session.setAttribute(SESION, tokens);
+                session.setAttribute(
+                        SESION,
+                        tokens
+                );
             }
         }
     }

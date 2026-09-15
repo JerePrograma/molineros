@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -26,9 +27,14 @@ import ar.com.ospim.farmaciaOspim.beans.ImportacionVademecumAdmifarm.Comparacion
 import ar.com.ospim.farmaciaOspim.beans.ImportacionVademecumAdmifarm.Registro;
 import ar.com.ospim.util.PermissionUtil;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.model.User;
 
 public class VademecumAdmifarmHelper {
+
+    private static final Log log =
+            LogFactoryUtil.getLog(VademecumAdmifarmHelper.class);
 
     private static final String TOKEN = "VADEMECUM_ADMIFARM_TOKEN_";
     public static final long MAX_ARCHIVO = 20L * 1024L * 1024L;
@@ -105,8 +111,8 @@ public class VademecumAdmifarmHelper {
             int[] posiciones = posicionesColumnas(tipo);
 
             List<Registro> registros = new ArrayList<Registro>();
-            StringBuffer erroresRegistro = new StringBuffer();
-            int cantidadErrores = 0;
+            StringBuffer filasSinRegistro = new StringBuffer();
+            int cantidadSinRegistro = 0;
             // La primera fila corresponde al encabezado; los datos empiezan en la segunda.
             int primeraFila = 1;
 
@@ -118,6 +124,14 @@ public class VademecumAdmifarmHelper {
 
                 boolean vacia = true;
                 for (int c = 0; c < fila.getLastCellNum(); c++) {
+                    // La celda de registro no utiliza la validacion restrictiva
+                    // del resto de las columnas, ni siquiera al detectar filas vacias.
+                    if (c == posiciones[0]) {
+                        if (tieneDatoRegistro(fila.getCell(c), formato)) {
+                            vacia = false;
+                        }
+                        continue;
+                    }
                     String valor = valorCelda(fila.getCell(c), formato, f + 1);
                     if (valor.length() > 0) {
                         vacia = false;
@@ -138,29 +152,17 @@ public class VademecumAdmifarmHelper {
                     continue;
                 }
 
-                Cell celdaRegistro = fila.getCell(posiciones[0]);
-                BigDecimal registro;
-                try {
-                    if (celdaRegistro != null
-                            && celdaRegistro.getCellType() == CellType.NUMERIC) {
-                        registro = BigDecimal.valueOf(celdaRegistro.getNumericCellValue());
-                        if (registro.precision() - registro.scale() > 15) {
-                            throw new NumberFormatException("Precision de Excel");
+                BigDecimal registro = leerRegistro(fila.getCell(posiciones[0]), formato);
+                if (registro == null) {
+                    cantidadSinRegistro++;
+                    if (cantidadSinRegistro <= 10) {
+                        if (filasSinRegistro.length() > 0) {
+                            filasSinRegistro.append(", ");
                         }
-                    } else {
-                        registro = new BigDecimal(
-                                valorCelda(celdaRegistro, formato, f + 1));
+                        filasSinRegistro.append(f + 1);
                     }
-                } catch (NumberFormatException e) {
-                    cantidadErrores++;
-                    if (cantidadErrores <= 10) {
-                        if (erroresRegistro.length() > 0) {
-                            erroresRegistro.append(", ");
-                        }
-                        erroresRegistro.append(f + 1);
-                    }
-                    continue;
                 }
+                // La fila se conserva aunque no tenga numero. No se inventa un identificador.
 
                 String[] valores = new String[columnas.length - 1];
                 for (int c = 1; c < columnas.length; c++) {
@@ -173,16 +175,18 @@ public class VademecumAdmifarmHelper {
                 registros.add(new Registro(registro, valores));
             }
 
-            if (cantidadErrores > 0) {
-                throw new IllegalArgumentException("Hay " + cantidadErrores
-                        + " filas sin registro numerico valido. Filas: "
-                        + erroresRegistro.toString() + ". No se importo ninguna fila.");
-            }
             if (registros.isEmpty()) {
                 throw new IllegalArgumentException(
                         "El archivo no contiene registros. No se modifico el Vademecum.");
             }
             indexar(registros);
+            if (cantidadSinRegistro > 0) {
+                log.warn("Archivo leido con advertencias: " + cantidadSinRegistro
+                        + " filas sin registro numerico valido. Filas: "
+                        + filasSinRegistro.toString()
+                        + (cantidadSinRegistro > 10 ? " (primeras 10)" : "")
+                        + ". Se conservaron para importar con registro nulo.");
+            }
             return registros;
         } finally {
             try {
@@ -210,6 +214,40 @@ public class VademecumAdmifarmHelper {
         throw new IllegalArgumentException("El tipo de Vademecum no es valido.");
     }
 
+    private static boolean tieneDatoRegistro(Cell celda, DataFormatter formato) {
+        if (celda == null || celda.getCellType() == CellType.BLANK) {
+            return false;
+        }
+        if (celda.getCellType() == CellType.STRING) {
+            return formato.formatCellValue(celda).trim().length() > 0;
+        }
+        return true;
+    }
+
+    private static BigDecimal leerRegistro(Cell celda, DataFormatter formato) {
+        if (celda == null) {
+            return null;
+        }
+        try {
+            if (celda.getCellType() == CellType.NUMERIC) {
+                BigDecimal numero = BigDecimal.valueOf(celda.getNumericCellValue());
+                if (numero.precision() - numero.scale() > 15) {
+                    // No usar como identificador un numero cuya precision no es confiable.
+                    return null;
+                }
+                return numero;
+            }
+            if (celda.getCellType() == CellType.STRING) {
+                return new BigDecimal(formato.formatCellValue(celda).trim());
+            }
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        // Vacia, formula, error o booleano en registro: conservar la fila sin numero.
+        // No se ejecutan formulas para obtener un identificador.
+        return null;
+    }
+
     private static String valorCelda(Cell celda, DataFormatter formato, int fila) {
         if (celda == null) {
             return "";
@@ -229,11 +267,16 @@ public class VademecumAdmifarmHelper {
         }
         Map<BigDecimal, Registro> resultado = new LinkedHashMap<BigDecimal, Registro>();
         for (Registro fila : registros) {
-            if (fila == null || fila.getRegistro() == null) {
-                throw new IllegalArgumentException("Hay una fila sin registro en el Vademecum.");
+            if (fila == null) {
+                throw new IllegalArgumentException("Hay una fila nula en el Vademecum.");
             }
             if (fila.getValores() == null) {
                 throw new IllegalArgumentException("Hay una fila sin columnas en el Vademecum.");
+            }
+            // Este indice solo identifica filas numeradas. comparar() procesa
+            // las filas sin numero por separado, sin descartarlas de la importacion.
+            if (fila.getRegistro() == null) {
+                continue;
             }
             BigDecimal clave = fila.getRegistro().stripTrailingZeros();
             if (resultado.put(clave, fila) != null) {
@@ -266,7 +309,53 @@ public class VademecumAdmifarmHelper {
                 resultado.getBajas().add(entrada.getValue());
             }
         }
+        compararSinRegistro(anteriores, actuales, resultado);
         return resultado;
+    }
+
+    private static void compararSinRegistro(List<Registro> anteriores,
+            List<Registro> actuales, Comparacion resultado) {
+        Map<List<String>, LinkedList<Registro>> pendientes =
+                new LinkedHashMap<List<String>, LinkedList<Registro>>();
+
+        for (Registro fila : anteriores) {
+            if (fila.getRegistro() != null) {
+                continue;
+            }
+            List<String> clave = claveSinRegistro(fila);
+            LinkedList<Registro> coincidencias = pendientes.get(clave);
+            if (coincidencias == null) {
+                coincidencias = new LinkedList<Registro>();
+                pendientes.put(clave, coincidencias);
+            }
+            coincidencias.add(fila);
+        }
+
+        for (Registro fila : actuales) {
+            if (fila.getRegistro() != null) {
+                continue;
+            }
+            LinkedList<Registro> coincidencias = pendientes.get(claveSinRegistro(fila));
+            if (coincidencias != null && !coincidencias.isEmpty()) {
+                // Se empareja una sola ocurrencia; no se colapsan filas repetidas.
+                coincidencias.removeFirst();
+                resultado.agregarSinCambios();
+            } else {
+                resultado.getAltas().add(fila);
+            }
+        }
+
+        for (LinkedList<Registro> coincidencias : pendientes.values()) {
+            resultado.getBajas().addAll(coincidencias);
+        }
+    }
+
+    private static List<String> claveSinRegistro(Registro fila) {
+        List<String> clave = new ArrayList<String>();
+        for (String valor : fila.getValores()) {
+            clave.add(valor == null ? "" : valor.trim());
+        }
+        return clave;
     }
 
     private static boolean mismosValores(Registro antes, Registro ahora) {
