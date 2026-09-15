@@ -409,11 +409,11 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         <% } %>
         <br />
 
-        - Los formatos permitidos son JPG, JPEG y PNG.
+        - Los formatos permitidos son JPG, JPEG, PNG y PDF.
         <br />
 
-        - El archivo debe contener realmente una imagen JPEG o PNG válida;
-          no alcanza con cambiarle la extensión.
+        - El contenido del archivo debe corresponder al formato informado;
+            no alcanza con cambiarle la extensión.
         <br />
 
         - El archivo no puede estar vacío.

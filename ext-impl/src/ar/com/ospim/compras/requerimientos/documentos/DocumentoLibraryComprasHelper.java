@@ -174,24 +174,6 @@ public class DocumentoLibraryComprasHelper
         return coincide;
     }
 
-    public static DocumentoComprasCreado crearIdentidadOrdenMedica(
-            RequerimientoCompraPresupuesto ordenMedica)
-            throws Exception {
-
-        validarIdentidadAsociacionDocumento(
-                ordenMedica
-        );
-
-        return new DocumentoComprasCreado(
-                ordenMedica.getDlGroupId().longValue(),
-                ordenMedica.getDlFolderId().longValue(),
-                ordenMedica.getDlFileEntryId().longValue(),
-                ordenMedica.getDlFileUuid(),
-                ordenMedica.getNombrePersistido(),
-                ordenMedica.getTitulo()
-        );
-    }
-
     /**
      * Recupera la entrada de Document Library y comprueba toda la identidad
      * persistida de la Orden médica.
@@ -293,24 +275,6 @@ public class DocumentoLibraryComprasHelper
                 contenido,
                 nombreOriginal,
                 contentType
-        );
-    }
-
-    public static OrdenMedicaContenido recuperarOrdenMedicaValidada(
-            RequerimientoCompraPresupuesto ordenMedica,
-            int idRequerimientoCompra,
-            long companyId) throws Exception {
-
-        DLFileEntry entry =
-                obtenerEntradaOrdenMedicaValidada(
-                        ordenMedica,
-                        idRequerimientoCompra,
-                        companyId
-                );
-
-        return leerOrdenMedicaValidada(
-                entry,
-                ordenMedica.getNombreOriginal()
         );
     }
 
