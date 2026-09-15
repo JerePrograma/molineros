@@ -33,6 +33,7 @@ String tokenGuardadoCompra =
       class="compras-form-colector"
       data-compras-error="<%= ParamUtil.getBoolean(renderRequest, "compras_error", false) %>"
       data-compras-guardado="<%= ParamUtil.getBoolean(renderRequest, "compras_guardado", false) %>"
+      data-compras-reintento-seguro="<%= ParamUtil.getBoolean(renderRequest, "compras_reintento_seguro", false) %>"
       data-compras-editar-url="<%= HtmlUtil.escape(editarURL.toString()) %>">
 
     <input type="hidden"

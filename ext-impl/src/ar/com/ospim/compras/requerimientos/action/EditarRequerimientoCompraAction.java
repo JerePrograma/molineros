@@ -1139,14 +1139,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     requerimiento.getDetalles()
             );
 
-            boolean requiereRevision =
-                    "REVISAR".equals(
-                            renderRequest.getAttribute(
-                                    "COMPRAS_GUARDADO_RESULTADO"
-                            )
-                    );
-
-            if (!soloLectura && !requiereRevision) {
+            if (!soloLectura) {
                 generarTokenGuardadoCompra(renderRequest);
             }
         } catch (Exception e) {
