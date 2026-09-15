@@ -49,7 +49,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         );
 
         request.setAttribute(
-                WebKeysCompras.ATTR_CALLBACK_BUSQUEDA_NOMENCLADOR,
+                "COMPRAS_CALLBACK_BUSQUEDA",
                 response.getNamespace()
                         + "seleccionarNomencladorDetalle"
         );
@@ -59,7 +59,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         );
 
         return mapping.findForward(
-                WebKeysCompras.FORWARD_COMPRAS_BUSCAR_ITEM_TECNICO
+                "portlet.compras.buscar_item_tecnico"
         );
     }
 
@@ -118,7 +118,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             return;
         }
 
-        if (WebKeysCompras.SECTOR_PRESTACIONES_MEDICAS.equals(
+        if ("PRESTACIONES MEDICAS".equals(
                 sector
         )) {
             /*
@@ -139,42 +139,42 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         }
 
         int marcaReinLiq =
-                WebKeysCompras.SECTOR_DISCAPACIDAD.equals(sector)
+                "DISCAPACIDAD".equals(sector)
                         ? WebKeysCompras
                         .MARCA_REIN_LIQ_DISCAPACIDAD
                         : 0;
 
         request.setAttribute(
-                WebKeysCompras.ATTR_SECTOR_NOMENCLADOR,
+                "COMPRAS_SECTOR_NOMENCLADOR",
                 sector
         );
 
         request.setAttribute(
-                WebKeysCompras.ATTR_MARCA_REIN_LIQ,
+                "COMPRAS_MARCA_REIN_LIQ",
                 String.valueOf(
                         marcaReinLiq
                 )
         );
 
         request.setAttribute(
-                WebKeysCompras.ATTR_ES_PRESTACIONES_MEDICAS,
-                WebKeysCompras.SECTOR_PRESTACIONES_MEDICAS.equals(sector)
+                "COMPRAS_ES_PREST_MED",
+                "PRESTACIONES MEDICAS".equals(sector)
                         ? "1"
                         : "0"
         );
 
         request.setAttribute(
-                WebKeysCompras.ATTR_CODIGO_NOMENCLADOR,
+                "COMPRAS_CODIGO_NOMENCLADOR",
                 codigo
         );
 
         request.setAttribute(
-                WebKeysCompras.ATTR_DESCRIPCION_NOMENCLADOR,
+                "COMPRAS_DESCRIPCION_NOMENCLADOR",
                 descripcion
         );
 
         request.setAttribute(
-                WebKeysCompras.ATTR_ID_TIPO_NOMENCLADOR,
+                "COMPRAS_ID_TIPO_NOMENCLADOR",
                 String.valueOf(
                         filtroTipoNomenclador.intValue()
                 )
@@ -191,7 +191,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                     );
 
             request.setAttribute(
-                    WebKeysCompras.ATTR_RESULTADOS_NOMENCLADOR,
+                    "COMPRAS_RESULTADOS_NOMENCLADOR",
                     resultados != null
                             ? resultados
                             : new ArrayList<Nomenclador>()
@@ -218,7 +218,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                         0
                 );
 
-        if (!WebKeysCompras.SECTOR_PRESTACIONES_MEDICAS.equals(sector)) {
+        if (!"PRESTACIONES MEDICAS".equals(sector)) {
             return idTipoPrestacion;
         }
 
@@ -320,12 +320,12 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             String mensaje) {
 
         request.setAttribute(
-                WebKeysCompras.ATTR_ERROR_BUSQUEDA_NOMENCLADOR,
+                "COMPRAS_ERROR_BUSQUEDA",
                 mensaje
         );
 
         request.setAttribute(
-                WebKeysCompras.ATTR_RESULTADOS_NOMENCLADOR,
+                "COMPRAS_RESULTADOS_NOMENCLADOR",
                 new ArrayList<Nomenclador>()
         );
     }

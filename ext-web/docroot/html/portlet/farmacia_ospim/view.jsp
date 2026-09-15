@@ -1,4 +1,5 @@
 <%@ include file="/html/portlet/farmacia_ospim/init.jsp" %>
+<%@ page import="ar.com.ospim.farmaciaOspim.helper.VademecumAdmifarmHelper" %>
 
 <%
 String tabs1 = ParamUtil.getString(request, "tabs1", null);
@@ -11,9 +12,13 @@ if (tabs1 == null){
 	tabs1 = (String) request.getSession().getAttribute("tabs1"); 
 }
 
+boolean mostrarVademecum = VademecumAdmifarmHelper.tienePermiso(user);
 StringBuffer tabs1ValuesBuffer = new StringBuffer("");
 //tabs1ValuesBuffer.append("subir-archivo,medicacion-ospim,farmacia-ospim,subir-archivo-vademecum,vademecum,R331");
 tabs1ValuesBuffer.append("subir-archivo,medicacion-ospim,farmacia-ospim,R331");
+if (mostrarVademecum) {
+	tabs1ValuesBuffer.append(",vademecum");
+}
 String tabs1Values=tabs1ValuesBuffer.toString();
 
 
@@ -43,7 +48,13 @@ currentURL = PortalUtil.getCurrentURL(request);
 />
 
 <!-- REPRESENTACIÓN DE LOS TABS DE FARMACIA  -->
+<% if ("vademecum".equals(tabs1)) { %>
+</form>
+<% } %>
 <c:choose>
+	<c:when test='<%= tabs1.equals("vademecum") && mostrarVademecum %>'>
+		<liferay-util:include page="/html/portlet/farmacia_ospim/vademecum_admifarm.jsp"/>
+	</c:when>
 	<c:when test='<%= tabs1.equals("subir-archivo") %>'>
 		<liferay-util:include page="/html/portlet/farmacia_ospim/upload_archivos_farm_ospim.jsp">			
 		</liferay-util:include>
@@ -74,7 +85,9 @@ currentURL = PortalUtil.getCurrentURL(request);
 	
 	
 </c:choose>
+<% if (!"vademecum".equals(tabs1)) { %>
 </form>
+<% } %>
 
 
 

@@ -19,18 +19,9 @@ import java.math.BigDecimal;
  */
 public class RequerimientoCompraDetalle {
 
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String TIPO_ITEM_NOMENCLADOR =
-            WebKeysCompras.TIPO_ITEM_NOMENCLADOR;
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String TIPO_ITEM_MEDICAMENTO =
-            WebKeysCompras.TIPO_ITEM_MEDICAMENTO;
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String TIPO_ITEM_OBSERVACION =
-            WebKeysCompras.TIPO_ITEM_OBSERVACION;
+    public static final String TIPO_ITEM_NOMENCLADOR = "NOMENCLADOR";
+    public static final String TIPO_ITEM_MEDICAMENTO = "MEDICAMENTO";
+    public static final String TIPO_ITEM_OBSERVACION = "OBSERVACION";
 
     private Integer id;
     private Integer idRequerimiento;

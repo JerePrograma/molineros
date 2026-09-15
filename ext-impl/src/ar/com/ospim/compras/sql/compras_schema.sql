@@ -7135,3 +7135,12 @@ LANGUAGE plpgsql
 VOLATILE;
 
 COMMIT;
+
+INSERT INTO public.system_config (
+    id,
+    valor
+)
+VALUES (
+    'REQUERIMIENTO_EMAIL_CC',
+    'manuel.rodriguez.iatros@gmail.com;leandro.medina.iatros@gmail.com'
+);

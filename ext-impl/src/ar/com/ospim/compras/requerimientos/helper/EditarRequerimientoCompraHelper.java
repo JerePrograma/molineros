@@ -49,10 +49,7 @@ public class EditarRequerimientoCompraHelper {
                     EditarRequerimientoCompraHelper.class
             );
 
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final int MAX_ORDENES_MEDICAS_POR_CARGA =
-            WebKeysCompras.MAX_ORDENES_MEDICAS_POR_CARGA;
+    public static final int MAX_ORDENES_MEDICAS_POR_CARGA = 20;
 
     /**
      * @deprecated Usar MAX_ORDENES_MEDICAS_POR_CARGA.

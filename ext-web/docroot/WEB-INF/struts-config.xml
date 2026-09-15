@@ -5163,6 +5163,9 @@
 	
 <!-- Farmacia Ospim-->
 	<action path="/farmaciaospim/view" forward="portlet.farmaciaospim.view" /> 
+	<action path="/farmaciaospim/vademecum_admifarm" type="ar.com.ospim.farmaciaOspim.action.ImportarVademecumAdmifarmAction">
+		<forward name="portlet.farmaciaospim.view" path="portlet.farmaciaospim.view" />
+	</action>
 	
 	<action path="/uoma/busqueda_control_ingresos_egresos" forward="portlet.uoma.reporte.control_ingresos_egresos" />
 	<action path="/uoma/traer_control_ingresos_egresos" type="ar.com.uoma.action.TraerControlIngresosEgresos"/>	
@@ -7052,6 +7055,7 @@
 		</action>
 
 
+
 		<!-- COMPRAS -->
 
 		<action
@@ -7297,6 +7301,10 @@
                 type="ar.com.ospim.compras.requerimientos.action.BuscarItemsHistoricosAfiliadoCompraAction" />
 
         <!-- COMPRAS -->
+       <action path="/tesoreria/aportes_contribuciones" type="ar.com.ospim.tesoreria.action.AportesContribucionesAction">
+			<forward name="portlet.tesoreria.aportes.contribuciones.editar" path="portlet.tesoreria.aportes.contribuciones.editar"/>
+			<forward name="portlet.tesoreria.aportes.contribuciones.historico" path="portlet.tesoreria.aportes.contribuciones.historico"/>
+		</action>
 
  </action-mappings>
   

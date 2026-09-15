@@ -1,26 +1,13 @@
 package ar.com.ospim.compras.requerimientos.beans;
-import ar.com.ospim.compras.WebKeysCompras;
 
 import java.io.Serializable;
 
 public class NotificacionCotizacionDetalle implements Serializable {
     private static final long serialVersionUID = 1L;
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String RESULTADO_ENVIADO =
-            WebKeysCompras.RESULTADO_NOTIFICACION_ENVIADO;
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String RESULTADO_OMITIDO =
-            WebKeysCompras.RESULTADO_NOTIFICACION_OMITIDO;
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String RESULTADO_EMAIL_INVALIDO =
-            WebKeysCompras.RESULTADO_NOTIFICACION_EMAIL_INVALIDO;
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String RESULTADO_ERROR =
-            WebKeysCompras.RESULTADO_NOTIFICACION_ERROR;
+    public static final String RESULTADO_ENVIADO = "ENVIADO";
+    public static final String RESULTADO_OMITIDO = "OMITIDO";
+    public static final String RESULTADO_EMAIL_INVALIDO = "EMAIL_INVALIDO";
+    public static final String RESULTADO_ERROR = "ERROR";
     private int idPrestador;
     private String prestador;
     private String emailReal;

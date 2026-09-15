@@ -21,14 +21,11 @@ import javax.servlet.http.HttpSession;
 /** Criterios de una respuesta exitosa, sin conservar filas ni workbooks. */
 public final class ExportarRequerimientosCompraHelper {
 
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String REPORTE =
-            WebKeysCompras.REPORTE_EXPORTACION_REQUERIMIENTOS;
-    /** @deprecated Valor canonico en WebKeysCompras. */
-    @Deprecated
-    public static final String TOKEN =
-            WebKeysCompras.PARAM_EXPORTACION_TOKEN;
+    public static final String REPORTE = "COMPRAS_REQUERIMIENTOS";
+    public static final String TOKEN = "compras_exportacion_token";
+    private static final String CONTEXTOS = "COMPRAS_EXPORTACIONES";
+    private static final int MAX_CONTEXTOS = 20;
+
     public static boolean puedeConsultar(User user) throws Exception {
         return user != null
                 && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
@@ -49,18 +46,18 @@ public final class ExportarRequerimientosCompraHelper {
         String token = UUID.randomUUID().toString();
         // Liferay crea wrappers distintos para la misma sesion en peticiones concurrentes.
         synchronized (ExportarRequerimientosCompraHelper.class) {
-            Contextos contextos = (Contextos) session.getAttribute(WebKeysCompras.SESSION_EXPORTACIONES_REQUERIMIENTOS);
+            Contextos contextos = (Contextos) session.getAttribute(CONTEXTOS);
             if (contextos == null) {
                 contextos = new Contextos();
             }
-            if (contextos.valores.size() >= WebKeysCompras.MAX_CONTEXTOS_EXPORTACION) {
+            if (contextos.valores.size() >= MAX_CONTEXTOS) {
                 Iterator<String> it = contextos.valores.keySet().iterator();
                 it.next();
                 it.remove();
             }
             contextos.valores.put(token,
                     new Criterios(userId, filtro, incluirRp, mostrarRp, locale));
-            session.setAttribute(WebKeysCompras.SESSION_EXPORTACIONES_REQUERIMIENTOS, contextos);
+            session.setAttribute(CONTEXTOS, contextos);
         }
         return token;
     }
@@ -68,7 +65,7 @@ public final class ExportarRequerimientosCompraHelper {
     public static Criterios obtener(HttpSession session, long userId, String token) {
         if (session != null && token != null) {
             synchronized (ExportarRequerimientosCompraHelper.class) {
-                Contextos contextos = (Contextos) session.getAttribute(WebKeysCompras.SESSION_EXPORTACIONES_REQUERIMIENTOS);
+                Contextos contextos = (Contextos) session.getAttribute(CONTEXTOS);
                 Criterios criterios = contextos == null
                         ? null : contextos.valores.get(token);
                 if (criterios != null && criterios.userId == userId) {

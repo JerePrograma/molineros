@@ -21,11 +21,11 @@ Efectos secundarios:
 
 <%
 request.setAttribute(
-        WebKeysCompras.MODO_REQUERIMIENTO_COMPRA_ATTR,
-        WebKeysCompras.MODO_REQUERIMIENTO_VISTA
+        "MODO_REQUERIMIENTO_COMPRA",
+        "VISTA"
 );
 %>
 
 <%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_modelo_vista_componente.jsp" %>
 <%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_contexto_publicacion_componente.jsp" %>
-<%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_ensamblado.jsp" %>
+<%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_consulta_ensamblado.jsp" %>

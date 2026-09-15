@@ -1,9 +1,8 @@
-<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%--
 Responsabilidad:
     Recupera atributos request e incluye la botonera en un contexto runtime aislado.
 Incluido desde:
-    requerimiento_compra_ensamblado.jsp, requerimiento_compra_ensamblado.jsp
+    requerimiento_compra_consulta_ensamblado.jsp, requerimiento_compra_edicion_ensamblado.jsp
 Pantallas o estados de uso:
     Alta, edición o consulta según el caller indicado.
 Entradas requeridas:
@@ -23,13 +22,13 @@ Efectos secundarios:
 Requiere el requerimiento, permisos de pantalla y las URLs de volver e imprimir.
 --%>
 <%
-RequerimientoCompra req = (RequerimientoCompra) request.getAttribute(WebKeysCompras.ATTR_REQUERIMIENTO_MODELO);
-boolean puedeABM = Boolean.TRUE.equals(request.getAttribute(WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_ABM));
-boolean modoEditable = Boolean.TRUE.equals(request.getAttribute(WebKeysCompras.ATTR_REQUERIMIENTO_MODO_EDITABLE));
-boolean puedeEditarEstructuraPantalla = Boolean.TRUE.equals(request.getAttribute(WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_EDITAR_ESTRUCTURA));
-boolean puedeEditarCotizacionPantalla = Boolean.TRUE.equals(request.getAttribute(WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_EDITAR_COTIZACION));
-PortletURL volverURL = (PortletURL) request.getAttribute(WebKeysCompras.ATTR_REQUERIMIENTO_VOLVER_URL);
-PortletURL imprimirURL = (PortletURL) request.getAttribute(WebKeysCompras.ATTR_REQUERIMIENTO_IMPRIMIR_URL);
+RequerimientoCompra req = (RequerimientoCompra) request.getAttribute("compras.requerimiento.req");
+boolean puedeABM = Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.puedeABM"));
+boolean modoEditable = Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.modoEditable"));
+boolean puedeEditarEstructuraPantalla = Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.puedeEditarEstructura"));
+boolean puedeEditarCotizacionPantalla = Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.puedeEditarCotizacion"));
+PortletURL volverURL = (PortletURL) request.getAttribute("compras.requerimiento.volverURL");
+PortletURL imprimirURL = (PortletURL) request.getAttribute("compras.requerimiento.imprimirURL");
 String namespaceCompra = renderResponse.getNamespace();
 %>
 

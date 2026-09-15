@@ -2,7 +2,7 @@
 Responsabilidad:
     Prepara el contexto e incluye scripts de edición en orden estable.
 Incluido desde:
-    requerimiento_compra_ensamblado.jsp
+    requerimiento_compra_edicion_ensamblado.jsp
 Pantallas o estados de uso:
     Alta y PENDIENTE; ENVIADO A COTIZAR sólo donde la capacidad publicada lo permite.
 Entradas requeridas:

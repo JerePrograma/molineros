@@ -14,6 +14,8 @@ import java.util.Map;
  */
 public class BusquedaRequerimientoCompraServiceUtil {
 
+    private static final int MAX_ITEMS_HISTORICOS_AFILIADO = 20;
+
     private static BusquedaRequerimientoCompraServiceImpl instance = null;
 
     public static BusquedaRequerimientoCompraServiceImpl getInstance() {
@@ -162,7 +164,7 @@ public class BusquedaRequerimientoCompraServiceUtil {
                         idRequerimientoExcluir > 0
                                 ? idRequerimientoExcluir
                                 : 0,
-                        WebKeysCompras.MAX_ITEMS_HISTORICOS_AFILIADO
+                        MAX_ITEMS_HISTORICOS_AFILIADO
                 );
 
         for (int i = 0; i < items.size(); i++) {

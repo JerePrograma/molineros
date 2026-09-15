@@ -29,7 +29,7 @@ public class NotificarCotizacionPrestadorHelper {
             );
 
     private static final boolean REDIRECCION_QA_HABILITADA =
-            true;
+            false;
 
     private static final String EMAIL_DESTINO_QA =
             "acomas@ospim.org.ar";

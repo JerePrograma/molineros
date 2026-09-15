@@ -21,6 +21,9 @@ import javax.portlet.RenderResponse;
 
 public class EditarRequerimientoCompraDetalleAction extends PortletAction {
 
+    private static final String CMD_ADD_ITEMS =
+            "addItems";
+
     private final RequerimientoCompraDetalleHelper detalleHelper =
             new RequerimientoCompraDetalleHelper();
 
@@ -65,8 +68,8 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                             user
                     );
 
-            if (WebKeysCompras.CMD_ADD_ITEM.equals(cmd)
-                    || WebKeysCompras.CMD_UPDATE_ITEM.equals(cmd)) {
+            if ("addItem".equals(cmd)
+                    || "updateItem".equals(cmd)) {
 
                 detalleHelper.guardarDetalleDesdeRequest(
                         actionRequest,
@@ -74,7 +77,7 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                         usuario
                 );
 
-            } else if (WebKeysCompras.CMD_ADD_ITEMS.equals(cmd)) {
+            } else if (CMD_ADD_ITEMS.equals(cmd)) {
 
                 int cantidadGuardada =
                         detalleHelper.guardarDetallesDesdeRequest(
@@ -99,7 +102,7 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                     );
                 }
 
-            } else if (WebKeysCompras.CMD_DELETE_ITEM.equals(cmd)) {
+            } else if ("deleteItem".equals(cmd)) {
 
                 detalleHelper.borrarDetalleDesdeRequest(
                         actionRequest,
@@ -166,12 +169,12 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
             );
 
             actionResponse.setRenderParameter(
-                    WebKeysCompras.PARAM_COMPRAS_ERROR,
+                    "compras_error",
                     "true"
             );
 
             actionResponse.setRenderParameter(
-                    WebKeysCompras.PARAM_COMPRAS_OPERACION,
+                    "compras_operacion",
                     cmd != null
                             ? cmd
                             : ""

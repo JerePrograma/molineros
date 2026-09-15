@@ -1,9 +1,8 @@
-<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%--
 Responsabilidad:
     Recupera atributos request e incluye la carga de Órdenes Médicas.
 Incluido desde:
-    requerimiento_compra_ensamblado.jsp
+    requerimiento_compra_edicion_ensamblado.jsp
 Pantallas o estados de uso:
     Alta y PENDIENTE; ENVIADO A COTIZAR sólo donde la capacidad publicada lo permite.
 Entradas requeridas:
@@ -29,21 +28,21 @@ Requiere:
 boolean esNuevo =
         Boolean.TRUE.equals(
                 request.getAttribute(
-                        WebKeysCompras.ATTR_REQUERIMIENTO_ES_NUEVO
+                        "compras.requerimiento.esNuevo"
                 )
         );
 
 boolean modoEditable =
         Boolean.TRUE.equals(
                 request.getAttribute(
-                        WebKeysCompras.ATTR_REQUERIMIENTO_MODO_EDITABLE
+                        "compras.requerimiento.modoEditable"
                 )
         );
 
 boolean puedeEditarEstructuraPantalla =
         Boolean.TRUE.equals(
                 request.getAttribute(
-                        WebKeysCompras.ATTR_REQUERIMIENTO_PUEDE_EDITAR_ESTRUCTURA
+                        "compras.requerimiento.puedeEditarEstructura"
                 )
         );
 %>

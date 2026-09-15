@@ -18,7 +18,7 @@ Efectos secundarios:
 --%>
 <%@ page import="java.util.Calendar" %>
 <%
-final int maxOrdenesMedicasPorCarga = WebKeysCompras.MAX_ORDENES_MEDICAS_POR_CARGA;
+final int maxOrdenesMedicasPorCarga = 20;
 
 Calendar fechaOrdenMedicaReferencia =
         Calendar.getInstance();

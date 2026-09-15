@@ -56,6 +56,22 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     UploadPresupuestosComprasAction.class
             );
 
+    private static final String MODO_VER = "ver";
+    private static final String MODO_EDITAR = "editar";
+
+    private static final String OPERACION_PRESUPUESTO_AGREGAR =
+            "presupuestoAgregar";
+    private static final String OPERACION_PRESUPUESTO_BORRAR =
+            "presupuestoBorrar";
+    private static final String OPERACION_PRESUPUESTO_ERROR =
+            "presupuestoError";
+
+    private static final String ATTR_COMPRAS_SAVE_TOKEN =
+            "COMPRAS_SAVE_TOKEN";
+    private static final String SESSION_COMPRAS_SAVE_TOKENS =
+            "COMPRAS_SAVE_TOKENS";
+    private static final int MAX_TOKENS_GUARDADO_COMPRA = 20;
+
     private final PresupuestoCompraHelper presupuestoHelper =
             new PresupuestoCompraHelper();
 
@@ -76,14 +92,14 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         int idRequerimientoCompra =
                 ParamUtil.getInteger(
                         actionRequest,
-                        WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                        "id_requerimiento_compra",
                         0
                 );
 
         String modo =
                 ParamUtil.getString(
                         actionRequest,
-                        WebKeysCompras.PARAM_MODO,
+                        "modo",
                         ""
                 );
 
@@ -112,14 +128,14 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             modo =
                     ParamUtil.getString(
                             uploadReq,
-                            WebKeysCompras.PARAM_MODO,
+                            "modo",
                             modo
                     );
 
             idRequerimientoCompra =
                     ParamUtil.getInteger(
                             uploadReq,
-                            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                            "id_requerimiento_compra",
                             idRequerimientoCompra
                     );
 
@@ -172,8 +188,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
 
                 actionResponse.setRenderParameter(
-                        WebKeysCompras.PARAM_COMPRAS_OPERACION,
-                        WebKeysCompras.OPERACION_PRESUPUESTO_AGREGAR
+                        "compras_operacion",
+                        OPERACION_PRESUPUESTO_AGREGAR
                 );
 
                 SessionMessages.add(
@@ -197,8 +213,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 );
 
                 actionResponse.setRenderParameter(
-                        WebKeysCompras.PARAM_COMPRAS_OPERACION,
-                        WebKeysCompras.OPERACION_PRESUPUESTO_BORRAR
+                        "compras_operacion",
+                        OPERACION_PRESUPUESTO_BORRAR
                 );
 
                 SessionMessages.add(
@@ -241,8 +257,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             );
 
             actionResponse.setRenderParameter(
-                    WebKeysCompras.PARAM_COMPRAS_OPERACION,
-                    WebKeysCompras.OPERACION_PRESUPUESTO_ERROR
+                    "compras_operacion",
+                    OPERACION_PRESUPUESTO_ERROR
             );
 
             prepararRetorno(
@@ -264,22 +280,22 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         String modo =
                 ParamUtil.getString(
                         renderRequest,
-                        WebKeysCompras.PARAM_MODO,
+                        "modo",
                         ""
                 );
 
         String strutsAction =
                 ParamUtil.getString(
                         renderRequest,
-                        WebKeysCompras.PARAM_STRUTS_ACTION,
+                        "struts_action",
                         ""
                 );
 
         boolean soloLectura =
-                WebKeysCompras.MODO_VER.equalsIgnoreCase(
+                MODO_VER.equalsIgnoreCase(
                         modo
                 )
-                        || WebKeysCompras.STRUTS_ACTION_VER_REQUERIMIENTO
+                        || "/compras/ver_requerimiento"
                         .equals(
                                 strutsAction
                         );
@@ -303,7 +319,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             int idRequerimientoCompra =
                     ParamUtil.getInteger(
                             renderRequest,
-                            WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                            "id_requerimiento_compra",
                             0
                     );
 
@@ -501,7 +517,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             );
         }
 
-        if (WebKeysCompras.MODO_VER.equalsIgnoreCase(
+        if (MODO_VER.equalsIgnoreCase(
                 modo
         )) {
 
@@ -578,24 +594,24 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         );
 
         response.setRenderParameter(
-                WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                "id_requerimiento_compra",
                 String.valueOf(
                         idRequerimientoCompra
                 )
         );
 
-        if (WebKeysCompras.MODO_VER.equalsIgnoreCase(
+        if (MODO_VER.equalsIgnoreCase(
                 modo
         )) {
 
             response.setRenderParameter(
-                    WebKeysCompras.PARAM_MODO,
-                    WebKeysCompras.MODO_VER
+                    "modo",
+                    MODO_VER
             );
 
             response.setRenderParameter(
-                    WebKeysCompras.PARAM_STRUTS_ACTION,
-                    WebKeysCompras.STRUTS_ACTION_VER_REQUERIMIENTO
+                    "struts_action",
+                    "/compras/ver_requerimiento"
             );
 
             setForward(
@@ -605,13 +621,13 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
         } else {
             response.setRenderParameter(
-                    WebKeysCompras.PARAM_MODO,
-                    WebKeysCompras.MODO_EDITAR
+                    "modo",
+                    MODO_EDITAR
             );
 
             response.setRenderParameter(
-                    WebKeysCompras.PARAM_STRUTS_ACTION,
-                    WebKeysCompras.STRUTS_ACTION_EDITAR_REQUERIMIENTO
+                    "struts_action",
+                    "/compras/editar_requerimiento"
             );
 
             setForward(
@@ -712,7 +728,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             Object tokensObj =
                     session.getAttribute(
-                            WebKeysCompras.SESSION_COMPRAS_SAVE_TOKENS
+                            SESSION_COMPRAS_SAVE_TOKENS
                     );
 
             if (tokensObj instanceof Set) {
@@ -722,7 +738,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
             if (tokens == null
                     || tokens.size()
-                    >= WebKeysCompras.MAX_TOKENS_GUARDADO_COMPRA) {
+                    >= MAX_TOKENS_GUARDADO_COMPRA) {
 
                 tokens =
                         new HashSet();
@@ -733,13 +749,13 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             );
 
             session.setAttribute(
-                    WebKeysCompras.SESSION_COMPRAS_SAVE_TOKENS,
+                    SESSION_COMPRAS_SAVE_TOKENS,
                     tokens
             );
         }
 
         renderRequest.setAttribute(
-                WebKeysCompras.ATTR_COMPRAS_SAVE_TOKEN,
+                ATTR_COMPRAS_SAVE_TOKEN,
                 token
         );
     }
