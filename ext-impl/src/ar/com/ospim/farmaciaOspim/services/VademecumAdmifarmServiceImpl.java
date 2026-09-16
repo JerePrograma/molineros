@@ -1,7 +1,6 @@
 package ar.com.ospim.farmaciaOspim.services;
 
 import java.math.BigDecimal;
-import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -58,7 +57,7 @@ public class VademecumAdmifarmServiceImpl implements VademecumAdmifarmService {
             transaccionTerminada = true;
             return importaciones;
         } finally {
-            cerrar(con, stmt, rs, null, autoCommit,
+            cerrar(con, stmt, rs, autoCommit,
                     transaccionIniciada, transaccionTerminada);
         }
     }
@@ -68,7 +67,6 @@ public class VademecumAdmifarmServiceImpl implements VademecumAdmifarmService {
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
-        Array[] parametros = new Array[7];
         boolean autoCommit = true;
         boolean transaccionIniciada = false;
         boolean transaccionTerminada = false;
@@ -83,10 +81,14 @@ public class VademecumAdmifarmServiceImpl implements VademecumAdmifarmService {
             transaccionIniciada = true;
 
             stmt = con.prepareCall(
-                    "{? = call public.importar_vademecum_admifarm(?, ?, ?, ?, ?, ?, ?, ?)}");
+                    "{? = call public.importar_vademecum_admifarm(?, "
+                            + "CAST(? AS numeric[]), CAST(? AS text[]), "
+                            + "CAST(? AS text[]), CAST(? AS text[]), "
+                            + "CAST(? AS text[]), CAST(? AS text[]), "
+                            + "CAST(? AS text[]))}");
             stmt.registerOutParameter(1, Types.OTHER);
             stmt.setString(2, tipo);
-            cargarParametros(con, stmt, tipo, registros, parametros);
+            cargarParametros(stmt, tipo, registros);
             stmt.execute();
             rs = (ResultSet) stmt.getObject(1);
 
@@ -97,7 +99,7 @@ public class VademecumAdmifarmServiceImpl implements VademecumAdmifarmService {
             transaccionTerminada = true;
             return importacion;
         } finally {
-            cerrar(con, stmt, rs, parametros, autoCommit,
+            cerrar(con, stmt, rs, autoCommit,
                     transaccionIniciada, transaccionTerminada);
         }
     }
@@ -133,15 +135,15 @@ public class VademecumAdmifarmServiceImpl implements VademecumAdmifarmService {
             transaccionTerminada = true;
             return importacion;
         } finally {
-            cerrar(con, stmt, rs, null, autoCommit,
+            cerrar(con, stmt, rs, autoCommit,
                     transaccionIniciada, transaccionTerminada);
         }
     }
 
-    // Los arrays son parametros JDBC. No se construyen sentencias ni nombres de tablas.
-    private void cargarParametros(Connection con, CallableStatement stmt,
-            String tipo, List<Registro> registros, Array[] parametros)
-            throws SQLException {
+    // Se envian parametros de texto y el CALL los convierte a arrays PostgreSQL.
+    // No requiere createArrayOf ni APIs JDBC4 en la conexion del pool.
+    private void cargarParametros(CallableStatement stmt,
+            String tipo, List<Registro> registros) throws SQLException {
         int cantidadColumnas = ImportacionVademecumAdmifarm.getColumnas(tipo).length;
         if (registros == null || registros.isEmpty() || registros.size() > 65535) {
             throw new IllegalArgumentException(
@@ -171,12 +173,51 @@ public class VademecumAdmifarmServiceImpl implements VademecumAdmifarmService {
             valores[5][i] = ampliado ? fila[5] : null;      // tipo_venta
         }
 
-        parametros[0] = con.createArrayOf("numeric", numeros);
-        stmt.setArray(3, parametros[0]);
+        stmt.setString(3, parametroNumerico(numeros));
         for (int i = 0; i < valores.length; i++) {
-            parametros[i + 1] = con.createArrayOf("text", valores[i]);
-            stmt.setArray(i + 4, parametros[i + 1]);
+            stmt.setString(i + 4, parametroTexto(valores[i]));
         }
+    }
+
+    private String parametroNumerico(BigDecimal[] valores) {
+        StringBuffer parametro = new StringBuffer("{");
+        for (int i = 0; i < valores.length; i++) {
+            if (i > 0) {
+                parametro.append(',');
+            }
+            if (valores[i] == null) {
+                parametro.append("NULL");
+            } else {
+                parametro.append(valores[i].toPlainString());
+            }
+        }
+        parametro.append('}');
+        return parametro.toString();
+    }
+
+    private String parametroTexto(String[] valores) {
+        StringBuffer parametro = new StringBuffer("{");
+        for (int i = 0; i < valores.length; i++) {
+            if (i > 0) {
+                parametro.append(',');
+            }
+            String valor = valores[i];
+            if (valor == null) {
+                parametro.append("NULL");
+            } else {
+                parametro.append('"');
+                for (int c = 0; c < valor.length(); c++) {
+                    char caracter = valor.charAt(c);
+                    if (caracter == '"' || caracter == '\\') {
+                        parametro.append('\\');
+                    }
+                    parametro.append(caracter);
+                }
+                parametro.append('"');
+            }
+        }
+        parametro.append('}');
+        return parametro.toString();
     }
 
     private ImportacionVademecumAdmifarm cargarImportacion(ResultSet rs,
@@ -222,7 +263,7 @@ public class VademecumAdmifarmServiceImpl implements VademecumAdmifarmService {
     }
 
     private void cerrar(Connection con, CallableStatement stmt, ResultSet rs,
-            Array[] parametros, boolean autoCommit, boolean transaccionIniciada,
+            boolean autoCommit, boolean transaccionIniciada,
             boolean transaccionTerminada) {
         if (rs != null) {
             try {
@@ -232,18 +273,6 @@ public class VademecumAdmifarmServiceImpl implements VademecumAdmifarmService {
             }
         }
         ConnectionHelper.cerrar(stmt);
-
-        if (parametros != null) {
-            for (int i = 0; i < parametros.length; i++) {
-                if (parametros[i] != null) {
-                    try {
-                        parametros[i].free();
-                    } catch (SQLException e) {
-                        log.warn("No se pudo liberar un parametro de Vademecum", e);
-                    }
-                }
-            }
-        }
 
         if (con != null && transaccionIniciada) {
             if (!transaccionTerminada) {
