@@ -34,6 +34,8 @@ Efectos secundarios:
         <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/requerimiento_compra_orden_medica_consulta_runtime_componente.jsp" />
     </c:if>
 
+    <jsp:include page="/html/portlet/compras/requerimientos/partials/requerimiento_compra_auditoria_componente.jsp" />
+
     <jsp:include page="/html/portlet/compras/requerimientos/partials/runtime/requerimiento_compra_acciones_runtime_componente.jsp" />
 </div>
 
