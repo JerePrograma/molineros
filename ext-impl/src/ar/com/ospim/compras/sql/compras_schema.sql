@@ -2123,7 +2123,258 @@ $func$
 LANGUAGE plpgsql
 STABLE;
 
+CREATE OR REPLACE FUNCTION compras.buscar_requerimientos(
+    p_estado integer,
+    p_sector integer,
+    p_afiliado_cuil_titular character varying,
+    p_afiliado_int integer,
+    p_id_tercerizadora character varying,
+    p_recupero boolean,
+    p_surge boolean,
+    p_texto character varying,
+    p_fecha_alta_desde date,
+    p_fecha_alta_hasta date,
+    p_id_requerimiento_compra integer
+)
+    RETURNS SETOF compras.requerimiento_base_row
+    LANGUAGE 'plpgsql'
+    COST 100
+    STABLE
+    ROWS 1000
+AS $BODY$
+DECLARE
+    v_texto VARCHAR;
+    v_cuil VARCHAR;
+BEGIN
+    v_texto := NULLIF(
+        upper(btrim(p_texto)),
+        ''
+    );
 
+    v_cuil := NULLIF(
+        regexp_replace(
+            COALESCE(
+                p_afiliado_cuil_titular,
+                ''
+            ),
+            '[^0-9]',
+            '',
+            'g'
+        ),
+        ''
+    );
+
+    RETURN QUERY
+    SELECT rb.*
+    FROM compras.requerimiento_base() rb
+    WHERE (
+        (
+            p_estado = 99
+            AND rb.id_estado = 99
+        )
+        OR (
+            p_estado IS DISTINCT FROM 99
+            AND rb.baja_fecha IS NULL
+        )
+    )
+    AND (
+        p_estado IS NULL
+        OR rb.id_estado = p_estado
+    )
+    AND (
+        p_sector IS NULL
+        OR rb.id_sector = p_sector
+    )
+    AND (
+        p_id_requerimiento_compra IS NULL
+        OR rb.id = p_id_requerimiento_compra
+    )
+    AND (
+        v_cuil IS NULL
+        OR regexp_replace(
+            COALESCE(
+                rb.afiliado_cuil_titular,
+                ''
+            ),
+            '[^0-9]',
+            '',
+            'g'
+        ) LIKE '%' || v_cuil || '%'
+    )
+    AND (
+        p_afiliado_int IS NULL
+        OR rb.afiliado_int = p_afiliado_int
+    )
+    AND (
+        NULLIF(
+            btrim(p_id_tercerizadora),
+            ''
+        ) IS NULL
+        OR upper(
+            COALESCE(
+                rb.id_tercerizadora,
+                ''
+            )
+        ) = upper(
+            btrim(p_id_tercerizadora)
+        )
+    )
+    AND (
+        p_recupero IS NULL
+        OR rb.recupero = p_recupero
+    )
+    AND (
+        p_surge IS NULL
+        OR rb.surge = p_surge
+    )
+    AND (
+        p_fecha_alta_desde IS NULL
+        OR rb.alta_fecha >= p_fecha_alta_desde
+    )
+    AND (
+        p_fecha_alta_hasta IS NULL
+        OR rb.alta_fecha
+            < p_fecha_alta_hasta + INTERVAL '1 day'
+    )
+    AND (
+        v_texto IS NULL
+
+        OR rb.id::VARCHAR = btrim(p_texto)
+
+        OR upper(
+            COALESCE(
+                rb.observaciones,
+                ''
+            )
+        ) LIKE '%' || v_texto || '%'
+
+        OR upper(
+            COALESCE(
+                rb.sector_descripcion,
+                ''
+            )
+        ) LIKE '%' || v_texto || '%'
+
+        OR upper(
+            COALESCE(
+                rb.afiliado_nombre_apellido,
+                ''
+            )
+        ) LIKE '%' || v_texto || '%'
+
+        OR upper(
+            COALESCE(
+                rb.afiliado_documento,
+                ''
+            )
+        ) LIKE '%' || v_texto || '%'
+
+        OR EXISTS (
+            SELECT 1
+            FROM compras.requerimiento_detalle d
+            WHERE d.id_requerimiento = rb.id
+              AND d.baja_fecha IS NULL
+              AND (
+                  upper(
+                      COALESCE(
+                          d.tipo_item,
+                          ''
+                      )
+                  ) LIKE '%' || v_texto || '%'
+
+                  OR upper(
+                      COALESCE(d.codigo_nomenclador, '')
+                  ) LIKE '%' || v_texto || '%'
+
+                  OR upper(
+                      COALESCE(d.descripcion_nomenclador, '')
+                  ) LIKE '%' || v_texto || '%'
+
+                  OR upper(
+                      COALESCE(d.nombre_medicamento, '')
+                  ) LIKE '%' || v_texto || '%'
+
+                  OR COALESCE(d.troquel::VARCHAR, '')
+                      LIKE '%' || btrim(p_texto) || '%'
+
+                  OR upper(
+                      COALESCE(
+                          d.observaciones,
+                          ''
+                      )
+                  ) LIKE '%' || v_texto || '%'
+              )
+        )
+    )
+    ORDER BY rb.id DESC;
+END;
+$BODY$;
+
+ALTER FUNCTION compras.buscar_requerimientos(
+    integer,
+    integer,
+    character varying,
+    integer,
+    character varying,
+    boolean,
+    boolean,
+    character varying,
+    date,
+    date,
+    integer
+)
+    OWNER TO postgres;
+
+CREATE OR REPLACE FUNCTION compras.buscar_requerimientos(
+    p_estado integer,
+    p_sector integer,
+    p_afiliado_cuil_titular character varying,
+    p_afiliado_int integer,
+    p_id_tercerizadora character varying,
+    p_recupero boolean,
+    p_surge boolean,
+    p_texto character varying,
+    p_fecha_alta_desde date,
+    p_fecha_alta_hasta date
+)
+    RETURNS SETOF compras.requerimiento_base_row
+    LANGUAGE 'plpgsql'
+    COST 100
+    STABLE
+    ROWS 1000
+AS $BODY$
+BEGIN
+    RETURN QUERY
+    SELECT *
+    FROM compras.buscar_requerimientos(
+        p_estado,
+        p_sector,
+        p_afiliado_cuil_titular,
+        p_afiliado_int,
+        p_id_tercerizadora,
+        p_recupero,
+        p_surge,
+        p_texto,
+        p_fecha_alta_desde,
+        p_fecha_alta_hasta,
+        NULL::INTEGER
+    );
+END;
+$BODY$;
+
+ALTER FUNCTION compras.buscar_requerimientos(
+    integer,
+    integer,
+    character varying,
+    integer,
+    character varying,
+    boolean,
+    boolean,
+    character varying,
+    date,
+    date
+)
+    OWNER TO postgres;
 
 CREATE FUNCTION compras.get_requerimiento(
     p_id_requerimiento INTEGER

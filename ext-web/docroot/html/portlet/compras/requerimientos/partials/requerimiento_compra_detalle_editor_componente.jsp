@@ -222,7 +222,7 @@ Efectos secundarios:
 
             <td>
                 <label for="<portlet:namespace />detalle_observaciones">
-                    Observaciones:
+                    Descripción:
                 </label>
             </td>
 

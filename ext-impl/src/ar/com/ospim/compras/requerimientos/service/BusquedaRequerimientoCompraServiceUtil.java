@@ -26,21 +26,6 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return instance;
     }
 
-    public static List<RequerimientoCompra> buscarRequerimientos(
-            RequerimientoCompraFiltro filtro) throws Exception {
-
-        RequerimientoCompraFiltro filtroEfectivo =
-                filtro != null
-                        ? filtro
-                        : new RequerimientoCompraFiltro();
-
-        validarFiltroBusqueda(filtroEfectivo);
-
-        return getInstance().buscarRequerimientos(
-                filtroEfectivo
-        );
-    }
-
     public static List<RequerimientoCompra> buscarRequerimientosListado(
             RequerimientoCompraFiltro filtro,
             boolean incluirReclamoRp) throws Exception {

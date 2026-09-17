@@ -97,6 +97,26 @@ if (WebKeysCompras.isEmpty(sectorFiltro)) {
     sectorFiltro = "0";
 }
 
+String idRequerimientoCompraFiltro =
+        ParamUtil.getString(
+                renderRequest,
+                "id_requerimiento_compra",
+                ""
+        );
+
+if (WebKeysCompras.isEmpty(idRequerimientoCompraFiltro)) {
+    idRequerimientoCompraFiltro =
+            ParamUtil.getString(
+                    renderRequest,
+                    renderResponse.getNamespace()
+                            + "id_requerimiento_compra",
+                    ""
+            );
+}
+
+idRequerimientoCompraFiltro =
+        idRequerimientoCompraFiltro.trim();
+
 String surgeFiltro =
         ParamUtil.getString(
                 renderRequest,
@@ -231,6 +251,22 @@ if (tercerizadoras == null) {
         </tr>
 
         <tr>
+            <td>
+                <label for="<portlet:namespace />id_requerimiento_compra">
+                    ID:
+                </label>
+            </td>
+
+            <td>
+                <input id="<portlet:namespace />id_requerimiento_compra"
+                       name="<portlet:namespace />id_requerimiento_compra"
+                       type="text"
+                       size="10"
+                       value="<%= HtmlUtil.escape(
+                               idRequerimientoCompraFiltro
+                       ) %>" />
+            </td>
+
             <td>
                 <label>Estado:</label>
             </td>
@@ -830,6 +866,10 @@ if (tercerizadoras == null) {
 
         <portlet:namespace />limpiarFechasAltaFiltro();
 
+        <portlet:namespace />limpiarCampoSiExiste(
+                'id_requerimiento_compra'
+        );
+
         jQuery(
                 '#<portlet:namespace />estado'
         ).val(
@@ -953,6 +993,30 @@ if (tercerizadoras == null) {
 
                 return false;
             }
+        }
+
+        var idRequerimientoCompra =
+                <portlet:namespace />trimValue(
+                        'id_requerimiento_compra'
+                );
+
+        if (idRequerimientoCompra != ''
+                && (
+                        !/^[0-9]+$/.test(idRequerimientoCompra)
+                        || Number(idRequerimientoCompra) <= 0
+                        || Number(idRequerimientoCompra) > 2147483647
+                )) {
+
+            alert(
+                    'El ID debe ser un numero entero positivo '
+                    + 'dentro del rango permitido.'
+            );
+
+            jQuery(
+                    '#<portlet:namespace />id_requerimiento_compra'
+            ).focus();
+
+            return false;
         }
 
         return true;
@@ -1323,6 +1387,11 @@ if (tercerizadoras == null) {
         var sector_id =
                 jQuery('#<portlet:namespace />sector_id').val();
 
+        var idRequerimientoCompra =
+                <portlet:namespace />trimValue(
+                        'id_requerimiento_compra'
+                );
+
         var fechaAltaDesdeDia =
                 <portlet:namespace />normalizarValorFechaAlta(
                         jQuery(
@@ -1428,6 +1497,10 @@ if (tercerizadoras == null) {
                 + '&id_tercerizadora='
                     + encodeURIComponent(id_tercerizadora)
                 + '&surge=' + encodeURIComponent(surge)
+                + '&id_requerimiento_compra='
+                    + encodeURIComponent(idRequerimientoCompra)
+                + '&<portlet:namespace />id_requerimiento_compra='
+                    + encodeURIComponent(idRequerimientoCompra)
                 + '&<portlet:namespace />estado='
                     + encodeURIComponent(estado)
                 + '&<portlet:namespace />sector_id='
@@ -1547,7 +1620,8 @@ if (tercerizadoras == null) {
         });
 
         jQuery(
-                '#<portlet:namespace />cuil, '
+                '#<portlet:namespace />id_requerimiento_compra, '
+                + '#<portlet:namespace />cuil, '
                 + '#<portlet:namespace />inte, '
                 + '#<portlet:namespace />tipoDoc, '
                 + '#<portlet:namespace />nroDoc, '

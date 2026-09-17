@@ -9,6 +9,7 @@ public class RequerimientoCompraFiltro implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private Integer idRequerimientoCompra;
     private Integer idEstado;
     private Integer idSector;
     private String afiliadoCuilTitular;
@@ -25,6 +26,21 @@ public class RequerimientoCompraFiltro implements Serializable {
     private Date fechaAltaDesde;
     private Date fechaAltaHasta;
 
+    public Integer getIdRequerimientoCompra() {
+        return idRequerimientoCompra;
+    }
+
+    public String getIdRequerimientoCompraString() {
+        return idRequerimientoCompra != null
+                && idRequerimientoCompra.intValue() > 0
+                ? String.valueOf(idRequerimientoCompra)
+                : "";
+    }
+
+    public void setIdRequerimientoCompra(Integer idRequerimientoCompra) {
+        this.idRequerimientoCompra = idRequerimientoCompra;
+    }
+
     public Integer getIdEstado() {
         return idEstado;
     }
@@ -34,7 +50,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public String getIdEstadoString() {
-        return idEstado != null && idEstado.intValue() > 0 ? String.valueOf(idEstado) : "";
+        return idEstado != null && idEstado.intValue() > 0
+                ? String.valueOf(idEstado) : "";
     }
 
     public void setIdEstado(Integer idEstado) {
@@ -54,7 +71,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public String getIdSectorString() {
-        return idSector != null && idSector.intValue() > 0 ? String.valueOf(idSector) : "";
+        return idSector != null && idSector.intValue() > 0
+                ? String.valueOf(idSector) : "";
     }
 
     public void setIdSector(Integer idSector) {
@@ -70,7 +88,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public void setAfiliadoCuilTitular(String afiliadoCuilTitular) {
-        this.afiliadoCuilTitular = WebKeysCompras.trimToNull(afiliadoCuilTitular);
+        this.afiliadoCuilTitular =
+                WebKeysCompras.trimToNull(afiliadoCuilTitular);
     }
 
     public Integer getAfiliadoInt() {
@@ -78,7 +97,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public String getAfiliadoIntString() {
-        return afiliadoInt != null && afiliadoInt.intValue() >= 0 ? String.valueOf(afiliadoInt) : "";
+        return afiliadoInt != null && afiliadoInt.intValue() >= 0
+                ? String.valueOf(afiliadoInt) : "";
     }
 
     public void setAfiliadoInt(Integer afiliadoInt) {
@@ -90,7 +110,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public void setIdTercerizadora(String idTercerizadora) {
-        this.idTercerizadora = WebKeysCompras.trimToNull(idTercerizadora);
+        this.idTercerizadora =
+                WebKeysCompras.trimToNull(idTercerizadora);
     }
 
     public Boolean getRecupero() {
@@ -142,7 +163,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public boolean tieneFiltros() {
-        return idEstado != null
+        return idRequerimientoCompra != null
+                || idEstado != null
                 || idSector != null
                 || !WebKeysCompras.isEmpty(afiliadoCuilTitular)
                 || afiliadoInt != null
@@ -159,7 +181,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public void setAfiliadoTipoDoc(String afiliadoTipoDoc) {
-        this.afiliadoTipoDoc = WebKeysCompras.trimToNull(afiliadoTipoDoc);
+        this.afiliadoTipoDoc =
+                WebKeysCompras.trimToNull(afiliadoTipoDoc);
     }
 
     public String getAfiliadoNroDoc() {
@@ -167,7 +190,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public void setAfiliadoNroDoc(String afiliadoNroDoc) {
-        this.afiliadoNroDoc = WebKeysCompras.trimToNull(afiliadoNroDoc);
+        this.afiliadoNroDoc =
+                WebKeysCompras.trimToNull(afiliadoNroDoc);
     }
 
     public String getAfiliadoApellido() {
@@ -175,7 +199,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public void setAfiliadoApellido(String afiliadoApellido) {
-        this.afiliadoApellido = WebKeysCompras.trimToNull(afiliadoApellido);
+        this.afiliadoApellido =
+                WebKeysCompras.trimToNull(afiliadoApellido);
     }
 
     public String getAfiliadoNombre() {
@@ -183,7 +208,8 @@ public class RequerimientoCompraFiltro implements Serializable {
     }
 
     public void setAfiliadoNombre(String afiliadoNombre) {
-        this.afiliadoNombre = WebKeysCompras.trimToNull(afiliadoNombre);
+        this.afiliadoNombre =
+                WebKeysCompras.trimToNull(afiliadoNombre);
     }
 
     public Integer getAfiliadoIdSeccional() {

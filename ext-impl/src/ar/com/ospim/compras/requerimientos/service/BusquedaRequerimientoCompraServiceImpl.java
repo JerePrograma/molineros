@@ -28,7 +28,7 @@ import java.util.HashMap;
 public class BusquedaRequerimientoCompraServiceImpl {
 
     private static final String SQL_BUSCAR_REQUERIMIENTOS =
-            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?)}";
+            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?,?)}";
 
     private static final String SQL_GET_REQUERIMIENTO =
             "{call compras.get_requerimiento(?)}";
@@ -102,6 +102,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         Connection con = null;
         CallableStatement stmt = null;
         ResultSet rs = null;
+
         List<RequerimientoCompra> resultado =
                 new ArrayList<RequerimientoCompra>();
 
@@ -119,6 +120,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt.setString(8, filtro.getTexto());
             setNullableDate(stmt, 9, filtro.getFechaAltaDesde());
             setNullableDate(stmt, 10, filtro.getFechaAltaHasta());
+            setNullableInteger(stmt, 11, filtro.getIdRequerimientoCompra());
 
             rs = stmt.executeQuery();
 

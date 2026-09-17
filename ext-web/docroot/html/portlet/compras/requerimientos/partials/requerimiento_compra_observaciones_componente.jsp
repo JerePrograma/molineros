@@ -17,7 +17,7 @@ Efectos secundarios:
     Sólo renderiza o incluye presentación; no ejecuta persistencia.
 --%>
 <fieldset class="block-labels compras-observaciones">
-    <legend>Observación / Descripción</legend>
+    <legend>Observación</legend>
 
     <% if (puedeEditarEstructuraPantalla) { %>
         <table class="lfr-table">

@@ -28,12 +28,14 @@ import java.util.Map;
 
 public class BuscarRequerimientosComprasAction extends PortletAction {
 
-    private static Log _log = LogFactoryUtil.getLog(BuscarRequerimientosComprasAction.class);
+    private static Log _log =
+            LogFactoryUtil.getLog(BuscarRequerimientosComprasAction.class);
 
     private final RequerimientoCompraReclamoPrestacionalHelper reclamoHelper =
             new RequerimientoCompraReclamoPrestacionalHelper();
 
     private static final String[] SEARCH_PARAMS = new String[] {
+            "id_requerimiento_compra",
             "id_estado",
             "estado",
             "id_sector",
@@ -93,8 +95,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             boolean cotizadosIncluyeReclamoRp =
                     ParamUtil.getBoolean(
                             renderRequest,
-                            WebKeysCompras
-                                    .PARAM_COTIZADOS_INCLUYE_RECLAMO_RP,
+                            WebKeysCompras.PARAM_COTIZADOS_INCLUYE_RECLAMO_RP,
                             false
                     );
 
@@ -107,9 +108,9 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             List<RequerimientoCompra> requerimientos =
                     BusquedaRequerimientoCompraServiceUtil
                             .buscarRequerimientosListado(
-                            filtro,
-                            incluirReclamoRpEnCotizados
-                    );
+                                    filtro,
+                                    incluirReclamoRpEnCotizados
+                            );
 
             /*
              * Id RP debe estar disponible tanto en la solapa general
@@ -118,8 +119,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
              * Las relaciones se recuperan en una única consulta batch;
              * no se consulta individualmente desde el JSP.
              */
-            Map<Integer, RequerimientoCompraReclamoPrestacional>
-                    relacionesRp =
+            Map<Integer, RequerimientoCompraReclamoPrestacional> relacionesRp =
                     cargarRelacionesRpListado(
                             requerimientos
                     );
@@ -134,7 +134,9 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                     ExportarRequerimientosCompraHelper.publicar(
                             PortalUtil.getHttpServletRequest(renderRequest).getSession(),
                             user.getUserId(), filtro, incluirReclamoRpEnCotizados,
-                            mostrarIdRpListado, renderRequest.getLocale()));
+                            mostrarIdRpListado, renderRequest.getLocale()
+                    )
+            );
 
             renderRequest.setAttribute(
                     WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
@@ -144,8 +146,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             );
 
             renderRequest.setAttribute(
-                    WebKeysCompras
-                            .RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
+                    WebKeysCompras.RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
                     relacionesRp
             );
         } catch (Exception e) {
@@ -162,8 +163,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             );
 
             renderRequest.setAttribute(
-                    WebKeysCompras
-                            .RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
+                    WebKeysCompras.RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
                     new HashMap<Integer, RequerimientoCompraReclamoPrestacional>()
             );
 
@@ -177,39 +177,34 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_RESULT_SEARCH);
     }
 
-private Map<Integer, RequerimientoCompraReclamoPrestacional>
-            cargarRelacionesRpListado(
-                    List<RequerimientoCompra> requerimientos)
-                    throws Exception {
+    private Map<Integer, RequerimientoCompraReclamoPrestacional>
+    cargarRelacionesRpListado(
+            List<RequerimientoCompra> requerimientos)
+            throws Exception {
 
         List<Integer> ids =
                 new ArrayList<Integer>();
 
         for (int i = 0;
-                requerimientos != null
-                && i < requerimientos.size();
-                i++) {
+             requerimientos != null
+                     && i < requerimientos.size();
+             i++) {
 
             RequerimientoCompra requerimiento =
                     requerimientos.get(i);
 
             if (requerimiento != null
-                    && requerimiento
-                            .getIdRequerimientoCompra() > 0) {
+                    && requerimiento.getIdRequerimientoCompra() > 0) {
 
                 ids.add(
                         Integer.valueOf(
-                                requerimiento
-                                        .getIdRequerimientoCompra()
+                                requerimiento.getIdRequerimientoCompra()
                         )
                 );
             }
         }
 
-        return reclamoHelper
-                .obtenerVinculadasPorRequerimientos(
-                        ids
-                );
+        return reclamoHelper.obtenerVinculadasPorRequerimientos(ids);
     }
 
     private void validarPermisoView(User user) throws Exception {
@@ -242,7 +237,10 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
         }
     }
 
-    private void copiarParametrosBusqueda(ActionRequest actionRequest, ActionResponse actionResponse) {
+    private void copiarParametrosBusqueda(
+            ActionRequest actionRequest,
+            ActionResponse actionResponse) {
+
         for (int i = 0; i < SEARCH_PARAMS.length; i++) {
             String name = SEARCH_PARAMS[i];
             String value = actionRequest.getParameter(name);
@@ -253,9 +251,10 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
         }
     }
 
-    private void setResultadoBusqueda(RenderRequest renderRequest,
-                                      RequerimientoCompraFiltro filtro,
-                                      List<RequerimientoCompra> requerimientos) {
+    private void setResultadoBusqueda(
+            RenderRequest renderRequest,
+            RequerimientoCompraFiltro filtro,
+            List<RequerimientoCompra> requerimientos) {
 
         if (filtro == null) {
             filtro = new RequerimientoCompraFiltro();
@@ -311,6 +310,20 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
 
         validarParametrosFiltro(request);
 
+        String idRequerimientoCompraRaw =
+                WebKeysCompras.trimToNull(
+                        getParametro(
+                                request,
+                                "id_requerimiento_compra"
+                        )
+                );
+
+        if (idRequerimientoCompraRaw != null) {
+            filtro.setIdRequerimientoCompra(
+                    Integer.valueOf(idRequerimientoCompraRaw)
+            );
+        }
+
         int idEstado = ParamUtil.getInteger(request, "id_estado", 0);
 
         if (idEstado <= 0) {
@@ -331,23 +344,29 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
             filtro.setIdSector(Integer.valueOf(idSector));
         }
 
-        String afiliadoCuilTitular = ParamUtil.getString(request, "afiliado_cuil_titular", null);
+        String afiliadoCuilTitular =
+                ParamUtil.getString(request, "afiliado_cuil_titular", null);
 
         if (!WebKeysCompras.isEmpty(afiliadoCuilTitular)) {
             filtro.setAfiliadoCuilTitular(afiliadoCuilTitular);
         }
 
-        String afiliadoIntRaw = ParamUtil.getString(request, "afiliado_int", null);
+        String afiliadoIntRaw =
+                ParamUtil.getString(request, "afiliado_int", null);
 
         if (!WebKeysCompras.isEmpty(afiliadoIntRaw)) {
             afiliadoIntRaw = afiliadoIntRaw.trim();
 
             if (afiliadoIntRaw.matches("^[0-9]+$")) {
-                filtro.setAfiliadoInt(Integer.valueOf(Integer.parseInt(afiliadoIntRaw)));
+                filtro.setAfiliadoInt(
+                        Integer.valueOf(Integer.parseInt(afiliadoIntRaw))
+                );
             }
         }
 
-        String idTercerizadora = getParametro(request, "id_tercerizadora");
+        String idTercerizadora =
+                getParametro(request, "id_tercerizadora");
+
         if (!WebKeysCompras.isEmpty(idTercerizadora)) {
             idTercerizadora = idTercerizadora.trim();
 
@@ -377,29 +396,77 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
     }
 
     private void validarParametrosFiltro(RenderRequest request) {
-        String[] enteros = {"id_estado", "estado", "id_sector", "sector_id", "afiliado_int"};
+        String idRequerimientoCompraRaw =
+                WebKeysCompras.trimToNull(
+                        getParametro(
+                                request,
+                                "id_requerimiento_compra"
+                        )
+                );
+
+        if (idRequerimientoCompraRaw != null) {
+            try {
+                if (!idRequerimientoCompraRaw.matches("^[0-9]+$")
+                        || Integer.parseInt(idRequerimientoCompraRaw) <= 0) {
+
+                    throw new NumberFormatException();
+                }
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                        "El ID del requerimiento debe ser un numero entero "
+                                + "entre 1 y 2147483647."
+                );
+            }
+        }
+
+        String[] enteros = {
+                "id_estado",
+                "estado",
+                "id_sector",
+                "sector_id",
+                "afiliado_int"
+        };
+
         for (int i = 0; i < enteros.length; i++) {
             String value = getParametro(request, enteros[i]);
+
             if (!WebKeysCompras.isEmpty(value)) {
                 try {
                     if (!value.trim().matches("^[0-9]+$")
                             || Integer.parseInt(value.trim()) < 0) {
+
                         throw new NumberFormatException();
                     }
                 } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("El filtro " + enteros[i] + " no es valido.");
+                    throw new IllegalArgumentException(
+                            "El filtro " + enteros[i] + " no es valido."
+                    );
                 }
             }
         }
+
         String surge = getParametro(request, "surge");
+
         if (!WebKeysCompras.isEmpty(surge)
-                && !"true".equalsIgnoreCase(surge) && !"false".equalsIgnoreCase(surge)
-                && !"1".equals(surge) && !"0".equals(surge)) {
-            throw new IllegalArgumentException("El filtro SURGE no es valido.");
+                && !"true".equalsIgnoreCase(surge)
+                && !"false".equalsIgnoreCase(surge)
+                && !"1".equals(surge)
+                && !"0".equals(surge)) {
+
+            throw new IllegalArgumentException(
+                    "El filtro SURGE no es valido."
+            );
         }
-        String cuil = getParametro(request, "afiliado_cuil_titular");
-        if (!WebKeysCompras.isEmpty(cuil) && !cuil.matches("^[0-9 .-]*[0-9][0-9 .-]*$")) {
-            throw new IllegalArgumentException("El filtro CUIL no es valido.");
+
+        String cuil =
+                getParametro(request, "afiliado_cuil_titular");
+
+        if (!WebKeysCompras.isEmpty(cuil)
+                && !cuil.matches("^[0-9 .-]*[0-9][0-9 .-]*$")) {
+
+            throw new IllegalArgumentException(
+                    "El filtro CUIL no es valido."
+            );
         }
     }
 
@@ -507,7 +574,8 @@ private Map<Integer, RequerimientoCompraReclamoPrestacional>
             return value;
         }
 
-        String namespace = PortalUtil.getPortletNamespace(PortalUtil.getPortletId(request));
+        String namespace =
+                PortalUtil.getPortletNamespace(PortalUtil.getPortletId(request));
 
         value = ParamUtil.getString(request, namespace + name, null);
 
