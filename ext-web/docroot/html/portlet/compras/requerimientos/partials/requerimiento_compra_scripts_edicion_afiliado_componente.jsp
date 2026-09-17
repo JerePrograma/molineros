@@ -23,6 +23,114 @@ List<RequerimientoCompraSector> sectores =
         (List<RequerimientoCompraSector>) request.getAttribute(
                 "compras.requerimiento.sectores"
         );
+
+boolean afiliadoInicialEsNuevo =
+        Boolean.TRUE.equals(
+                request.getAttribute(
+                        "compras.requerimiento.esNuevo"
+                )
+        );
+
+String afiliadoInicialCuil =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoCuil"
+        );
+
+String afiliadoInicialInt =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoInt"
+        );
+
+String afiliadoInicialTipoDocumento =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoTipoDocumento"
+        );
+
+String afiliadoInicialNumeroDocumento =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoNumeroDocumento"
+        );
+
+String afiliadoInicialApellido =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoApellido"
+        );
+
+String afiliadoInicialNombre =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoNombre"
+        );
+
+String afiliadoInicialIdSeccional =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoIdSeccional"
+        );
+
+String afiliadoInicialSeccional =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoSeccional"
+        );
+
+String afiliadoInicialNumeroOspim =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoNumeroOspim"
+        );
+
+String afiliadoInicialNumeroUoma =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoNumeroUoma"
+        );
+
+String afiliadoInicialNumeroAmtima =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoNumeroAmtima"
+        );
+
+String afiliadoInicialBajaFecha =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoBajaFecha"
+        );
+
+String afiliadoInicialNombrePlan =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoNombrePlan"
+        );
+
+String afiliadoInicialIdPlan =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoIdPlan"
+        );
+
+String afiliadoInicialFechaAlta =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoFechaAlta"
+        );
+
+String afiliadoInicialIncapacidad =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoIncapacidad"
+        );
+
+String afiliadoInicialIdTercerizadora =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoIdTercerizadora"
+        );
+
+String afiliadoInicialTercerizadora =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoTercerizadora"
+        );
+
+String afiliadoInicialAntecedentes =
+        (String) request.getAttribute(
+                "compras.requerimiento.afiliadoAntecedentes"
+        );
+
+String afiliadoInicialAntecedentesFlag =
+        afiliadoInicialAntecedentes != null
+        && !afiliadoInicialAntecedentes.equalsIgnoreCase("No")
+                ? "1"
+                : "0";
 %>
 <portlet:renderURL
         var="comprasBuscarAfiliadosURL"
@@ -1669,5 +1777,53 @@ List<RequerimientoCompraSector> sectores =
             <portlet:namespace />mostrarMensajeAfiliadoInicial('');
         }
     }
+
+    /*
+     * En ALTA el afiliado se completa mediante selección manual.
+     *
+     * En EDICION la identidad ya está persistida y no puede modificarse,
+     * pero el componente legacy de afiliado renderiza sus inputs vacíos.
+     * Se reutiliza la misma función canónica de carga para hidratar
+     * visualmente el afiliado ya asociado al requerimiento.
+     */
+    jQuery(function() {
+
+        if (<%= afiliadoInicialEsNuevo ? "true" : "false" %>) {
+            return;
+        }
+
+        var cuilInicial =
+                '<%= jsCompra(afiliadoInicialCuil) %>';
+
+        if (jQuery.trim(cuilInicial) == '') {
+            return;
+        }
+
+        seleccionaCamposAfiliado(
+                cuilInicial,
+                '<%= jsCompra(afiliadoInicialInt) %>',
+                '<%= jsCompra(afiliadoInicialTipoDocumento) %>',
+                '<%= jsCompra(afiliadoInicialNumeroDocumento) %>',
+                '<%= jsCompra(afiliadoInicialNombre) %>',
+                '<%= jsCompra(afiliadoInicialApellido) %>',
+                '<%= jsCompra(afiliadoInicialIdSeccional) %>',
+                '<%= jsCompra(afiliadoInicialSeccional) %>',
+                '<%= jsCompra(afiliadoInicialNumeroOspim) %>',
+                '<%= jsCompra(afiliadoInicialNumeroUoma) %>',
+                '<%= jsCompra(afiliadoInicialNumeroAmtima) %>',
+                '<%= jsCompra(afiliadoInicialBajaFecha) %>',
+                '<%= jsCompra(afiliadoInicialNombrePlan) %>',
+                '<%= jsCompra(afiliadoInicialIdPlan) %>',
+                '<%= jsCompra(afiliadoInicialFechaAlta) %>',
+                '<%= jsCompra(afiliadoInicialIncapacidad) %>',
+                '<%= jsCompra(afiliadoInicialIdTercerizadora) %>',
+                '<%= jsCompra(afiliadoInicialTercerizadora) %>',
+                '0',
+                '0',
+                '0',
+                '0',
+                '<%= afiliadoInicialAntecedentesFlag %>'
+        );
+    });
 
 </script>

@@ -4511,65 +4511,69 @@ STABLE;
 CREATE FUNCTION compras.get_requerimiento_compra_pdf(
     p_id_requerimiento INTEGER
 )
-    RETURNS TABLE (
-                      id_requerimiento INTEGER,
-                      alta_fecha TIMESTAMP WITHOUT TIME ZONE,
-                      alta_usr VARCHAR,
+RETURNS TABLE (
+    id_requerimiento INTEGER,
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE,
+    alta_usr VARCHAR,
 
-                      id_estado INTEGER,
-                      estado_descripcion VARCHAR,
+    id_estado INTEGER,
+    estado_descripcion VARCHAR,
 
-                      id_sector INTEGER,
-                      sector_descripcion VARCHAR,
-                      requiere_afiliado BOOLEAN,
+    id_sector INTEGER,
+    sector_descripcion VARCHAR,
+    requiere_afiliado BOOLEAN,
 
-                      afiliado_id_ospim INTEGER,
-                      afiliado_int INTEGER,
-                      afiliado_nombre_apellido VARCHAR,
-                      afiliado_documento VARCHAR,
+    afiliado_id_ospim INTEGER,
+    afiliado_int INTEGER,
+    afiliado_nombre_apellido VARCHAR,
+    afiliado_documento VARCHAR,
 
-                      afiliado_direccion VARCHAR,
-                      afiliado_localidad VARCHAR,
-                      afiliado_provincia VARCHAR,
-                      afiliado_celular VARCHAR,
-                      afiliado_telefono VARCHAR,
-                      afiliado_email VARCHAR,
+    afiliado_direccion VARCHAR,
+    afiliado_localidad VARCHAR,
+    afiliado_provincia VARCHAR,
+    afiliado_celular VARCHAR,
+    afiliado_telefono VARCHAR,
+    afiliado_email VARCHAR,
+    afiliado_seccional VARCHAR,
 
-                      cargo_ospim INTEGER,
-                      cargo_tercerizadora INTEGER,
-                      id_tercerizadora VARCHAR,
-                      recupero BOOLEAN,
-                      observaciones TEXT,
+    cargo_ospim INTEGER,
+    cargo_tercerizadora INTEGER,
+    id_tercerizadora VARCHAR,
+    recupero BOOLEAN,
+    surge BOOLEAN,
+    observaciones TEXT,
 
-                      detalle_id INTEGER,
-                      detalle_orden INTEGER,
+    detalle_id INTEGER,
+    detalle_orden INTEGER,
 
-                      tipo_item VARCHAR,
-                      codigo_item VARCHAR,
-                      descripcion_item VARCHAR,
+    tipo_item VARCHAR,
+    codigo_item VARCHAR,
+    descripcion_item VARCHAR,
 
-                      id_prestacion INTEGER,
-                      id_tipo_nomenclador INTEGER,
-                      codigo_nomenclador VARCHAR,
-                      descripcion_nomenclador VARCHAR,
+    id_prestacion INTEGER,
+    id_tipo_nomenclador INTEGER,
+    codigo_nomenclador VARCHAR,
+    descripcion_nomenclador VARCHAR,
 
-                      id_medicamento INTEGER,
-                      troquel INTEGER,
-                      nombre_medicamento VARCHAR,
+    id_medicamento INTEGER,
+    troquel INTEGER,
+    nombre_medicamento VARCHAR,
 
-                      cantidad INTEGER,
+    cantidad INTEGER,
 
-                      precio_unitario_estimado NUMERIC,
-                      precio_total_estimado NUMERIC,
+    precio_unitario_estimado NUMERIC,
+    precio_total_estimado NUMERIC,
 
-                      prestador_razon_social VARCHAR,
-                      prestador_cuit VARCHAR,
+    prestador_razon_social VARCHAR,
+    prestador_cuit VARCHAR,
 
-                      detalle_observaciones TEXT
-                  )
-    AS $func$
+    detalle_observaciones TEXT
+)
+AS $func$
 BEGIN
+
 RETURN QUERY
+
 SELECT
     rb.id,
     rb.alta_fecha,
@@ -4594,10 +4598,13 @@ SELECT
     rb.afiliado_telefono,
     rb.afiliado_email,
 
+    sec.descripcion AS afiliado_seccional,
+
     rb.cargo_ospim,
     rb.cargo_tercerizadora,
     rb.id_tercerizadora,
     rb.recupero,
+    rb.surge,
     rb.observaciones,
 
     d.id,
@@ -4605,48 +4612,59 @@ SELECT
     CASE
         WHEN d.id IS NULL THEN NULL
         ELSE row_number() OVER (
-                PARTITION BY rb.id
-                ORDER BY d.id
-            )::INTEGER
-END AS detalle_orden,
+            PARTITION BY rb.id
+            ORDER BY d.id
+        )::INTEGER
+    END AS detalle_orden,
 
-        d.tipo_item,
-        d.codigo_item,
-        d.descripcion_item,
+    d.tipo_item,
+    d.codigo_item,
+    d.descripcion_item,
 
-        d.id_prestacion,
-        d.id_tipo_nomenclador,
-        d.codigo_nomenclador,
-        d.descripcion_nomenclador,
+    d.id_prestacion,
+    d.id_tipo_nomenclador,
+    d.codigo_nomenclador,
+    d.descripcion_nomenclador,
 
-        d.id_medicamento,
-        d.troquel,
-        d.nombre_medicamento,
+    d.id_medicamento,
+    d.troquel,
+    d.nombre_medicamento,
 
-        d.cantidad,
+    d.cantidad,
 
-        d.precio_unitario_estimado,
-        d.precio_total_estimado,
+    d.precio_unitario_estimado,
+    d.precio_total_estimado,
 
-        d.prestador_razon_social,
-        d.prestador_cuit,
+    d.prestador_razon_social,
+    d.prestador_cuit,
 
-        d.observaciones
+    d.observaciones
 
-    FROM compras.requerimiento_base() rb
+FROM compras.requerimiento_base() rb
 
-    LEFT JOIN compras.get_requerimiento_detalle(
-        p_id_requerimiento
-    ) d
-      ON d.id_requerimiento = rb.id
+LEFT JOIN public.afiliado afi
+       ON afi.cuil_titular = rb.afiliado_cuil_titular
+      AND afi.inte = rb.afiliado_int
 
-    WHERE rb.id = p_id_requerimiento
+LEFT JOIN public.seccional sec
+       ON sec.id_seccional = afi.id_seccional
 
-    ORDER BY d.id NULLS LAST;
+LEFT JOIN compras.get_requerimiento_detalle(
+    p_id_requerimiento
+) d
+       ON d.id_requerimiento = rb.id
+
+WHERE rb.id = p_id_requerimiento
+
+ORDER BY d.id NULLS LAST;
+
 END;
 $func$
 LANGUAGE plpgsql
 STABLE;
+
+ALTER FUNCTION compras.get_requerimiento_compra_pdf(integer)
+    OWNER TO postgres;
 
 -- =====================================================================
 -- FUNCIONES DE PRESUPUESTOS, VÌNCULOS Y COTIZACI”N
