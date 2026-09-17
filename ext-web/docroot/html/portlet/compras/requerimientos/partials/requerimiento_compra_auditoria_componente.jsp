@@ -24,51 +24,98 @@ Efectos secundarios:
 RequerimientoCompra requerimientoAuditoria =
         (RequerimientoCompra) request.getAttribute("compras.requerimiento.req");
 
+SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+
 if (requerimientoAuditoria != null
         && requerimientoAuditoria.getIdRequerimientoCompra() > 0) {
 %>
-<div id="<portlet:namespace />compras_auditoria" class="compras-seccion" align="center">
-    <table class="lfr-table" style="border-collapse: separate; border-spacing: 5px;">
-        <tr>
-            <td><hr /></td>
-        </tr>
-        <tr>
-            <td>
-                <table style="font-size: 8pt;">
-                    <tr>
-                        <td><label>Alta Usuario:</label></td>
-                        <td>
-                            <%= HtmlUtil.escape(requerimientoAuditoria.getAltaUsr() != null
-                                    ? requerimientoAuditoria.getAltaUsr() : "") %>
-                        </td>
-                        <td><label>Alta Fecha:</label></td>
-                        <td>
-                            <%= DateUtils.format(requerimientoAuditoria.getAltaFecha(), DateUtils.LONG) %>
-                        </td>
-                        <td>|</td>
-                        <td><label>Modi Usuario:</label></td>
-                        <td>
-                            <%= HtmlUtil.escape(requerimientoAuditoria.getModiUsr() != null
-                                    ? requerimientoAuditoria.getModiUsr() : "") %>
-                        </td>
-                        <td><label>Modi Fecha:</label></td>
-                        <td>
-                            <%= DateUtils.format(requerimientoAuditoria.getModiFecha(), DateUtils.LONG) %>
-                        </td>
-                        <td>|</td>
-                        <td><label>Baja Usuario:</label></td>
-                        <td>
-                            <%= HtmlUtil.escape(requerimientoAuditoria.getBajaUsr() != null
-                                    ? requerimientoAuditoria.getBajaUsr() : "") %>
-                        </td>
-                        <td><label>Baja Fecha:</label></td>
-                        <td>
-                            <%= DateUtils.format(requerimientoAuditoria.getBajaFecha(), DateUtils.LONG) %>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</div>
+
+    <div align="center">
+        <table class="lfr-table"
+               style="border-collapse: separate; border-spacing: 5px;">
+
+            <tr>
+                <td colspan="12"><hr /></td>
+            </tr>
+
+            <tr>
+                <td colspan="12">
+                    <div align="center"
+                         id="<portlet:namespace />compras_auditoria">
+
+                        <table style="font-size:8;">
+                            <tr>
+
+                                <td>
+                                    <label>Alta Usuario:</label>
+                                </td>
+                                <td>
+                                    <%= requerimientoAuditoria.getAltaUsr() != null
+                                        ? requerimientoAuditoria.getAltaUsr()
+                                        : "" %>
+                                </td>
+
+                                <td>
+                                    <label>Alta Fecha:</label>
+                                </td>
+                                <td>
+                                    <%= requerimientoAuditoria.getAltaFecha() != null
+                                        ? sdf2.format(requerimientoAuditoria.getAltaFecha())
+                                        : "" %>
+                                </td>
+
+                                <td>
+                                |
+                                </td>
+
+                                <td>
+                                    <label>Modi Usuario:</label>
+                                </td>
+                                <td>
+                                    <%= requerimientoAuditoria.getModiUsr() != null
+                                        ? requerimientoAuditoria.getModiUsr()
+                                        : "" %>
+                                </td>
+
+                                <td>
+                                    <label>Modi Fecha:</label>
+                                </td>
+                                <td>
+                                    <%= requerimientoAuditoria.getModiFecha() != null
+                                        ? sdf2.format(requerimientoAuditoria.getModiFecha())
+                                        : "" %>
+                                </td>
+
+                                <td>
+                                |
+                                </td>
+
+                                <td>
+                                    <label>Baja Usuario:</label>
+                                </td>
+                                <td>
+                                    <%= requerimientoAuditoria.getBajaUsr() != null
+                                        ? requerimientoAuditoria.getBajaUsr()
+                                        : "" %>
+                                </td>
+
+                                <td>
+                                    <label>Baja Fecha:</label>
+                                </td>
+                                <td>
+                                    <%= requerimientoAuditoria.getBajaFecha() != null
+                                        ? sdf2.format(requerimientoAuditoria.getBajaFecha())
+                                        : "" %>
+                                </td>
+
+                            </tr>
+                        </table>
+
+                    </div>
+                </td>
+            </tr>
+
+        </table>
+    </div>
+
 <% } %>
