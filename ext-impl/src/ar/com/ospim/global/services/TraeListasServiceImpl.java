@@ -3286,4 +3286,38 @@ public class TraeListasServiceImpl {
 	
 	 return listaEstadosRevision;
 	}
+	 
+	 
+	 public List<String> getCuitsExcluidosPorRol(String rol) {
+
+		    Connection con = null;
+		    PreparedStatement stmt = null;
+
+		    List<String> cuits = new ArrayList<String>();
+
+		    try {
+
+		        String sql = "SELECT cuit " + "FROM traer_cuits_excluidos_por_rol(?)";
+
+		        con = ConnectionHelper.getConnection();
+		        stmt = con.prepareStatement(sql);
+		        stmt.setString(1, rol);
+
+		        ResultSet rs = stmt.executeQuery();
+
+		        while (rs.next()) {
+		            cuits.add(rs.getString("cuit"));
+		        }
+
+		    } catch (Exception e) {
+
+		        _log.error("Error obteniendo CUIT excluidos para el rol " + rol,e);
+
+		    } finally {
+
+		        ConnectionHelper.cerrar(stmt, con);
+		    }
+
+		    return cuits;
+		}
 }

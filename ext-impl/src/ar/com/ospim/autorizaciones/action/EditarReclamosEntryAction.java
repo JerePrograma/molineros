@@ -1104,7 +1104,7 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 				                if (token != null) {
 				                    String codigoExterno = null;
 				                    if (estadoNuevo == 1) {// PENDIENTE
-				                        codigoExterno = "PE";
+				                        codigoExterno = "IN";
 				                    } else if (estadoNuevo == 3) { // CERRADO
 				                        final int TG_RECHAZADO = 5; 
 

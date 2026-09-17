@@ -1,6 +1,7 @@
 package ar.com.ospim.liquidaciones.comprobantes.action;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -31,6 +33,7 @@ import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import ar.com.ospim.comprobantesPortalProveedores.beans.ComprobanteFiltro;
 import ar.com.ospim.global.WebKeysGlobal;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
 import ar.com.ospim.util.StringUtils;
 
@@ -60,19 +63,24 @@ public class ComprobantesConsultaInterbankingAction extends PortletAction {
 		if (!StringUtils.checkEmpty(cmd)) {
 			if(cmd.equals("filter") ){
 				ComprobanteFiltro comp = getComprobanteFromRequest(renderRequest);
-				session
-				.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_COMPROBANTES_INTERBANKING);
-				List<Object>busqueda =buscarDocumentosPorLike(comp.getCuit(),comp.getFechaEmisionDesde(),comp.getFechaEmisionHasta());
+				session.removeAttribute(WebKeysLiquidaciones.BUSQUEDA_COMPROBANTES_INTERBANKING);
+				
+				// Se agrega validación para excluir CUIT según los roles del usuario
+				User user = PortalUtil.getUser(renderRequest);	
+				
+				// No se ejecuta la búsqueda si el CUIT está excluido para alguno de los roles del usuario
+				List<Object> busqueda = new ArrayList<Object>();
+								
+				if (!TraeListasServiceUtil.cuitExcluidoParaUsuario(user, comp.getCuit())) {
+		            busqueda = buscarDocumentosPorLike(comp.getCuit(), comp.getFechaEmisionDesde(), comp.getFechaEmisionHasta());
+		        }
+				
 				renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_COMPROBANTES_INTERBANKING,busqueda);
-				return mapping
-						.findForward("portlet.liquidaciones.comprobantes.interbanking.search.result");
+				return mapping.findForward("portlet.liquidaciones.comprobantes.interbanking.search.result");
 			}
 		}
 		
-		
-
-		return mapping
-					.findForward("portlet.liquidaciones.comprobantes.interbanking.search.result");
+		return mapping.findForward("portlet.liquidaciones.comprobantes.interbanking.search.result");
 	}
 	
 	

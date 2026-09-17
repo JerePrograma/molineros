@@ -380,26 +380,11 @@ String botoneraReclamoPrestacionalFormId =
     }
 
     function <%= namespaceCompra %>imprimirRequerimientoCompra() {
-        var iframe = document.getElementById('<portlet:namespace />iframeImpresionRequerimientoCompra');
-
-        if (!iframe) {
-            alert('No se pudo preparar la impresión del requerimiento.');
-            return false;
-        }
-
-        var url = '<%= imprimirURL.toString() %>';
-        url += (url.indexOf('?') >= 0 ? '&' : '?') + '_ts=' + new Date().getTime();
-
-        iframe.onload = function() {
-            try {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
-            } catch (e) {
-                alert('No se pudo imprimir automáticamente el PDF.');
-            }
-        };
-
-        iframe.src = url;
+    
+        var id = jQuery('#<portlet:namespace />requerimiento_id_visual').val();
+        window.location.href =
+            "/pdfservlet/?accion=requerimientoCompra&id_requerimiento="+ id;
+        
         return false;
     }
 </script>

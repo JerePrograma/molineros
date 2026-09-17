@@ -1,7 +1,10 @@
 package ar.com.ospim.padronentidades.action;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.portlet.PortletConfig;
 import javax.portlet.PortletSession;
@@ -25,7 +28,10 @@ import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.util.PortalUtil;
 
 public class PadronEntidadesUnificadoAction extends PortletAction {
 
@@ -99,6 +105,38 @@ public class PadronEntidadesUnificadoAction extends PortletAction {
 			}
 		}
 
+		//NUEVO
+		User user = PortalUtil.getUser(renderRequest);
+		Set<String> cuitsExcluidos = new HashSet<String>();
+
+		if (user != null) {
+		    List<Role> rolesUsuario = user.getRoles();
+
+		    for (Role role : rolesUsuario) {
+		        List<String> cuitsRol = TraeListasServiceUtil.getCuitsExcluidosPorRol(role.getName());
+
+		        if (cuitsRol != null) {
+		            cuitsExcluidos.addAll(cuitsRol);
+		        }
+		    }
+		}
+		
+		if (proveedores != null && !cuitsExcluidos.isEmpty()) {
+		    Iterator<Empresa> iterator = proveedores.iterator();
+
+		    while (iterator.hasNext()) {
+		        Empresa empresa = iterator.next();
+
+		        if (cuitsExcluidos.contains(empresa.getCuit())) {
+		            iterator.remove();
+		        }
+		    }
+		}
+		
+		if (proveedores != null && StringUtils.checkNotEmpty(cuit)) {
+		    renderRequest.setAttribute("total", proveedores.size());
+		}
+		
 		List<EntidadPadronUnificado> entidades = new ArrayList<EntidadPadronUnificado>();
 		if (proveedores != null) {
 			entidades.addAll(proveedores);

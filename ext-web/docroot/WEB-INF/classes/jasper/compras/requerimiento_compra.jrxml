@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="requerimiento_compra" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="336"/>
+	<property name="ireport.y" value="384"/>
 	<parameter name="ID_REQUERIMIENTO" class="java.lang.String"/>
 	<queryString language="SQL">
 		<![CDATA[SELECT *
@@ -337,6 +337,9 @@ FROM compras.get_requerimiento_compra_pdf(
     || "NOMENCLADOR".equalsIgnoreCase(
             $F{tipo_item}.trim()
        )
+    || "OBSERVACION".equalsIgnoreCase(
+            $F{tipo_item}.trim()
+       )
         ? ""
         : $F{tipo_item}.trim()
 )
@@ -348,8 +351,9 @@ FROM compras.get_requerimiento_compra_pdf(
             $F{tipo_item} == null
             || $F{tipo_item}.trim().length() == 0
             || "NOMENCLADOR".equalsIgnoreCase(
-                    $F{tipo_item}.trim()
-               )
+                    $F{tipo_item}.trim())
+            || "OBSERVACION".equalsIgnoreCase(
+                    $F{tipo_item}.trim())
                 ? ""
                 : " - "
           )
@@ -366,6 +370,9 @@ FROM compras.get_requerimiento_compra_pdf(
                 && !"NOMENCLADOR".equalsIgnoreCase(
                         $F{tipo_item}.trim()
                    )
+               && !"OBSERVACION".equalsIgnoreCase(
+                        $F{tipo_item}.trim()
+                   )
             )
             || (
                 $F{codigo_item} != null
@@ -380,7 +387,7 @@ FROM compras.get_requerimiento_compra_pdf(
     $F{detalle_observaciones} == null
     || $F{detalle_observaciones}.trim().length() == 0
         ? ""
-        : "\n" + $F{detalle_observaciones}
+        : $F{detalle_observaciones}
 )]]></textFieldExpression>
 				</textField>
 				<textField isBlankWhenNull="true">

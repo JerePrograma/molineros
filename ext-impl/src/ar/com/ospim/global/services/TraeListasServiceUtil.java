@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import com.liferay.portal.SystemException;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.model.User;
 import com.liferay.portal.util.PortalUtil;
 
 import ar.com.empresas.WebKeysEmpresas;
@@ -1767,4 +1769,26 @@ public class TraeListasServiceUtil {
 		return getInstance().getReclamosPrestacionalesRevisionEstadoAutorizado();
 	}	
 	
+	public static List<String> getCuitsExcluidosPorRol(String rol) {
+	    return getInstance().getCuitsExcluidosPorRol(rol);
+	}
+	
+	public static boolean cuitExcluidoParaUsuario(User user, String cuit) {
+
+	    if (user == null || cuit == null) {
+	        return false;
+	    }
+
+	    List<Role> rolesUsuario = user.getRoles();
+
+	    for (Role role : rolesUsuario) {
+	        List<String> cuitsRol = getCuitsExcluidosPorRol(role.getName());
+
+	        if (cuitsRol != null && cuitsRol.contains(cuit)) {
+	            return true;
+	        }
+	    }
+
+	    return false;
+	}
 }

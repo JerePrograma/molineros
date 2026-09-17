@@ -1,6 +1,7 @@
 package ar.com.ospim.liquidaciones.ordenespago.action;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.portlet.ActionRequest;
@@ -15,13 +16,16 @@ import org.apache.struts.action.ActionMapping;
 
 import ar.com.ospim.global.beans.OrdenPagoOspim;
 import ar.com.ospim.global.services.OrdenPagoServiceUtil;
+import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.liquidaciones.WebKeysLiquidaciones;
 
 import com.liferay.ibm.icu.util.Calendar;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
+import com.liferay.portal.util.PortalUtil;
 
 /**
  * <a href="BuscarOrdenesPagoOspimAction.java.html"><b><i>View Source</i></b></a>
@@ -98,11 +102,28 @@ public class BuscarOrdenesPagoOspimAction extends PortletAction {
 			
 			String cbu=ParamUtil.getString(renderRequest, "cbu");
 
+			// Se agrega validación para excluir CUIT según los roles del usuario
+			User user = PortalUtil.getUser(renderRequest);
+			
+			// No se ejecuta la búsqueda si el CUIT está excluido para alguno de los roles del usuario
+			List<OrdenPagoOspim> lista = new ArrayList<OrdenPagoOspim>();
 
-			List<OrdenPagoOspim> lista = OrdenPagoServiceUtil.getOrdenesPagoOspim(
-					numeroChequeInt, numeroInt,cuit, idSeccional>0?null:sucursal, null!=fechaDesde?fechaDesde.getTime():null,null!=fechaHasta?fechaHasta.getTime():null, idSeccional,cbu);
-			renderRequest.setAttribute(
-					WebKeysLiquidaciones.BUSQUEDA_ORDENES_PAGO, lista);
+			if (!TraeListasServiceUtil.cuitExcluidoParaUsuario(user, cuit)) {
+				
+			    lista = OrdenPagoServiceUtil.getOrdenesPagoOspim(
+			            numeroChequeInt,
+			            numeroInt,
+			            cuit,
+			            idSeccional > 0 ? null : sucursal,
+			            null != fechaDesde ? fechaDesde.getTime() : null,
+			            null != fechaHasta ? fechaHasta.getTime() : null,
+			            idSeccional,
+			            cbu
+			    );
+			}
+			
+			renderRequest.setAttribute(WebKeysLiquidaciones.BUSQUEDA_ORDENES_PAGO, lista);
+			
 		} catch (Exception e) {
 			_log.error(e);
 		}
