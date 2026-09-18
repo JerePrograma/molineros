@@ -35,6 +35,9 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_CAMBIAR_ESTADO =
             "{call compras.cambiar_estado_requerimiento(?,?,?)}";
 
+    private static final String SQL_ANULAR_REQUERIMIENTO =
+            "{call compras.anular_requerimiento(?,?,?)}";
+
     private static final String SQL_REGISTRAR_PRESUPUESTO =
             "{ ? = call compras.registrar_requerimiento_presupuesto(?,?,?,?,?,?,?,?,?,?,?) }";
 
@@ -246,11 +249,31 @@ public class EditarRequerimientoCompraServiceImpl {
             int idRequerimientoCompra,
             String usuario) throws Exception {
 
-        cambiarEstado(
+        anularRequerimiento(
                 idRequerimientoCompra,
-                WebKeysCompras.ESTADO_ANULADO,
+                "",
                 usuario
         );
+    }
+
+    public void anularRequerimiento(
+            int idRequerimientoCompra,
+            String motivoBaja,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_ANULAR_REQUERIMIENTO);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setString(2, motivoBaja != null ? motivoBaja : "");
+            stmt.setString(3, usuario);
+            stmt.execute();
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
     }
 
     public void cambiarEstado(

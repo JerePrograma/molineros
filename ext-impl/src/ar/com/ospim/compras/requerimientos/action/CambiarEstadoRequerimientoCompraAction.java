@@ -78,6 +78,13 @@ public class CambiarEstadoRequerimientoCompraAction
                         0
                 );
 
+        String motivoBaja =
+                ParamUtil.getString(
+                        actionRequest,
+                        "motivo_baja",
+                        ""
+                );
+
         boolean reintentarNotificaciones =
                 ParamUtil.getBoolean(
                         actionRequest,
@@ -222,9 +229,9 @@ public class CambiarEstadoRequerimientoCompraAction
                 );
 
                 requerimientoHelper
-                        .cambiarEstado(
+                        .anularRequerimiento(
                                 idRequerimientoCompra,
-                                WebKeysCompras.ESTADO_ANULADO,
+                                motivoBaja,
                                 usuario
                         );
 

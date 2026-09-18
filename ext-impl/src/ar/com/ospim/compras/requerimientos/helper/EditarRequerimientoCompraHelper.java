@@ -1008,6 +1008,58 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
+    public void anularRequerimiento(
+            int idRequerimientoCompra,
+            String motivoBaja,
+            String usuario) throws Exception {
+
+        try {
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario(
+                        "Debe informar el requerimiento de compra."
+                );
+            }
+
+            RequerimientoCompra requerimientoActual =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(
+                                    idRequerimientoCompra
+                            );
+
+            if (requerimientoActual == null) {
+                throw errorUsuario(
+                        "El requerimiento ya no esta disponible."
+                );
+            }
+
+            if (!WebKeysCompras.validarTransicionEstado(
+                    requerimientoActual.getEstado(),
+                    WebKeysCompras.ESTADO_ANULADO
+            )) {
+                throw errorUsuario(
+                        "El requerimiento no puede anularse "
+                                + "desde su estado actual."
+                );
+            }
+
+            persistence.anularRequerimiento(
+                    idRequerimientoCompra,
+                    motivoBaja != null ? motivoBaja : "",
+                    normalizarUsuario(usuario)
+            );
+
+        } catch (Exception e) {
+            throw manejarErrorOperacion(
+                    "anular el requerimiento",
+                    "No se pudo anular el requerimiento. "
+                            + "Actualice la pantalla e intente nuevamente.",
+                    e,
+                    "idRequerimiento=" + idRequerimientoCompra
+                            + ", usuario=" + usuario
+            );
+        }
+    }
+
     public int pasarAOrdenCompra(
             int idRequerimientoCompra,
             String usuario) throws Exception {

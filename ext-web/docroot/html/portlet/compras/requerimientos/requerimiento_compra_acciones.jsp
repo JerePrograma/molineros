@@ -12,7 +12,7 @@ Atributos de request consumidos:
 Parámetros consumidos:
     Sólo parámetros de render ya validados por el Action; no persiste datos.
 IDs o funciones JavaScript expuestos:
-    id_requerimiento_compra, estado_nuevo
+    id_requerimiento_compra, estado_nuevo, motivo_baja, solicitarMotivoBaja
 Efectos secundarios:
     Sólo renderiza presentación; las operaciones se delegan al Action.
 --%>
@@ -68,13 +68,17 @@ String ns =
         renderResponse.getNamespace(); 
  
 String anularFormId = 
-        ns + "anular_" + idRequerimientoForm; 
+        ns + "anular_" + idRequerimientoForm;
+
+String motivoBajaInputId =
+        ns + "motivo_baja_" + idRequerimientoForm;
  
 String anularURL = 
-        "javascript:if(confirm('¿Confirma eliminar el requerimiento?')) " 
-        + "submitForm(document.getElementById('" 
+        "javascript:" + ns + "solicitarMotivoBaja('" 
         + anularFormId 
-        + "'));"; 
+        + "','"
+        + motivoBajaInputId
+        + "');"; 
 %> 
  
 <portlet:renderURL 
@@ -111,7 +115,12 @@ String anularURL =
  
         <input type="hidden" 
                name="<portlet:namespace />estado_nuevo" 
-               value="<%= WebKeysCompras.ESTADO_ANULADO %>" /> 
+               value="<%= WebKeysCompras.ESTADO_ANULADO %>" />
+
+        <input type="hidden"
+               id="<%= motivoBajaInputId %>"
+               name="<portlet:namespace />motivo_baja"
+               value="" /> 
     </form> 
 </c:if> 
  
@@ -132,3 +141,37 @@ String anularURL =
     </c:if> 
  
 </liferay-ui:icon-menu>
+
+<script type="text/javascript">
+    function <portlet:namespace />solicitarMotivoBaja(
+            formId,
+            motivoInputId) {
+
+        var motivo = window.prompt(
+                'Ingrese el motivo de baja (opcional). '
+                + 'Presione Aceptar para confirmar.',
+                ''
+        );
+
+        /*
+         * Cancelar aborta la operacion.
+         * Aceptar con texto vacio es valido.
+         */
+        if (motivo === null) {
+            return false;
+        }
+
+        var form = document.getElementById(formId);
+        var motivoInput = document.getElementById(motivoInputId);
+
+        if (!form || !motivoInput) {
+            alert('No se pudo preparar la baja del requerimiento.');
+            return false;
+        }
+
+        motivoInput.value = motivo;
+        submitForm(form);
+
+        return false;
+    }
+</script>
