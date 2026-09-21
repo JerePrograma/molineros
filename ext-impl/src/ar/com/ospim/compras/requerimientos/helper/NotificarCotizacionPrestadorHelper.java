@@ -35,7 +35,7 @@ public class NotificarCotizacionPrestadorHelper {
             "acomas@ospim.org.ar";
 
     /*
-     * El nombre histórico de la configuración se conserva por compatibilidad.
+     * El nombre histÃ³rico de la configuraciÃ³n se conserva por compatibilidad.
      * Los destinatarios se envian actualmente como BCC.
      */
     private static final String EMAIL_COPIA_COTIZACION =
@@ -103,7 +103,7 @@ public class NotificarCotizacionPrestadorHelper {
 
             if (_log.isInfoEnabled()) {
                 _log.info(
-                        "No hay prestadores pendientes de notificación. "
+                        "No hay prestadores pendientes de notificaciÃ³n. "
                                 + "idRequerimiento="
                                 + idRequerimientoCompra
                                 + ", habilitados="
@@ -132,7 +132,7 @@ public class NotificarCotizacionPrestadorHelper {
                 );
 
         /*
-         * El PDF se genera una única vez.
+         * El PDF se genera una Ãºnica vez.
          *
          * El mismo byte[] se persiste y posteriormente
          * se adjunta al correo.
@@ -153,27 +153,32 @@ public class NotificarCotizacionPrestadorHelper {
                         companyId
                 );
 
+        boolean copiaCotizacionEnviada =
+                false;
+
         for (int i = 0;
              i < candidatos.size();
              i++) {
 
-            procesarPrestador(
-                    requerimiento,
-                    candidatos.get(i),
-                    usuario,
-                    companyId,
-                    serviceContext,
-                    resultado,
-                    pedidoPresupuestoPdf,
-                    nombrePedidoPresupuestoPdf,
-                    ordenesMedicasAdjuntas
-            );
+            copiaCotizacionEnviada =
+                    procesarPrestador(
+                            requerimiento,
+                            candidatos.get(i),
+                            usuario,
+                            companyId,
+                            serviceContext,
+                            resultado,
+                            pedidoPresupuestoPdf,
+                            nombrePedidoPresupuestoPdf,
+                            ordenesMedicasAdjuntas,
+                            copiaCotizacionEnviada
+                    );
         }
 
         if (resultado.getPendientesSinClasificar() > 0) {
 
             _log.error(
-                    "El proceso de notificación finalizo "
+                    "El proceso de notificaciÃ³n finalizo "
                             + "con candidatos sin clasificar. "
                             + "idRequerimiento="
                             + idRequerimientoCompra
@@ -189,7 +194,7 @@ public class NotificarCotizacionPrestadorHelper {
         return resultado;
     }
 
-    private void procesarPrestador(
+    private boolean procesarPrestador(
             RequerimientoCompra requerimiento,
             PrestadorCotizacion prestador,
             String usuario,
@@ -198,7 +203,8 @@ public class NotificarCotizacionPrestadorHelper {
             NotificacionCotizacionResultado resultado,
             byte[] pedidoPresupuestoPdf,
             String nombrePedidoPresupuestoPdf,
-            List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas) {
+            List<OrdenMedicaAdjunta> ordenesMedicasAdjuntas,
+            boolean copiaCotizacionEnviada) {
 
         if (prestador == null) {
 
@@ -222,7 +228,7 @@ public class NotificarCotizacionPrestadorHelper {
                     false
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         int idRequerimiento =
@@ -296,7 +302,7 @@ public class NotificarCotizacionPrestadorHelper {
                     false
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         if (reserva == null) {
@@ -321,7 +327,7 @@ public class NotificarCotizacionPrestadorHelper {
                     false
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         if (!reserva.isReservado()) {
@@ -360,7 +366,7 @@ public class NotificarCotizacionPrestadorHelper {
                     false
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         /*
@@ -464,7 +470,7 @@ public class NotificarCotizacionPrestadorHelper {
                     false
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         if (modoTemporal
@@ -618,7 +624,7 @@ public class NotificarCotizacionPrestadorHelper {
                     emailRealInvalidoAdvertido
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         if (modoTemporal
@@ -704,7 +710,7 @@ public class NotificarCotizacionPrestadorHelper {
                     emailRealInvalidoAdvertido
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         /*
@@ -736,6 +742,9 @@ public class NotificarCotizacionPrestadorHelper {
              * pedidoPresupuestoPdf es exactamente el mismo byte[]
              * que se conservo documentalmente.
              */
+            boolean incluirCopiaCotizacion =
+                    !copiaCotizacionEnviada;
+
             enviarMail(
                     companyId,
                     emailsDestino,
@@ -743,8 +752,14 @@ public class NotificarCotizacionPrestadorHelper {
                     cuerpo,
                     pedidoPresupuestoPdf,
                     nombrePedidoPresupuestoPdf,
-                    ordenesMedicasAdjuntas
+                    ordenesMedicasAdjuntas,
+                    incluirCopiaCotizacion
             );
+
+            if (incluirCopiaCotizacion) {
+                copiaCotizacionEnviada =
+                        true;
+            }
 
         } catch (Exception e) {
 
@@ -804,7 +819,7 @@ public class NotificarCotizacionPrestadorHelper {
                     emailRealInvalidoAdvertido
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         /*
@@ -852,7 +867,7 @@ public class NotificarCotizacionPrestadorHelper {
                     emailRealInvalidoAdvertido
             );
 
-            return;
+            return copiaCotizacionEnviada;
         }
 
         /*
@@ -924,6 +939,8 @@ public class NotificarCotizacionPrestadorHelper {
                     )
             );
         }
+
+        return copiaCotizacionEnviada;
     }
 
     protected RequerimientoCompraPedidoCotizacion registrarPedidoCotizacionActual(
@@ -939,7 +956,7 @@ public class NotificarCotizacionPrestadorHelper {
 
             throw new Exception(
                     "Debe informar el requerimiento "
-                            + "del pedido de cotización."
+                            + "del pedido de cotizaciÃ³n."
             );
         }
 
@@ -947,7 +964,7 @@ public class NotificarCotizacionPrestadorHelper {
 
             throw new Exception(
                     "Debe informar el prestador "
-                            + "del pedido de cotización."
+                            + "del pedido de cotizaciÃ³n."
             );
         }
 
@@ -955,7 +972,7 @@ public class NotificarCotizacionPrestadorHelper {
                 || contenido.length == 0) {
 
             throw new Exception(
-                    "El pedido de cotización generado "
+                    "El pedido de cotizaciÃ³n generado "
                             + "no contiene datos."
             );
         }
@@ -965,8 +982,8 @@ public class NotificarCotizacionPrestadorHelper {
         )) {
 
             throw new Exception(
-                    "El pedido de cotización generado "
-                            + "no posee un nombre válido."
+                    "El pedido de cotizaciÃ³n generado "
+                            + "no posee un nombre vÃ¡lido."
             );
         }
 
@@ -1004,8 +1021,8 @@ public class NotificarCotizacionPrestadorHelper {
             )) {
 
                 throw new Exception(
-                        "Document Library no devolvió una identidad "
-                                + "válida para el pedido de cotización."
+                        "Document Library no devolviÃ³ una identidad "
+                                + "vÃ¡lida para el pedido de cotizaciÃ³n."
                 );
             }
 
@@ -1071,7 +1088,7 @@ public class NotificarCotizacionPrestadorHelper {
 
                 throw new Exception(
                         "No se obtuvo el intento asociado "
-                                + "al pedido de cotización."
+                                + "al pedido de cotizaciÃ³n."
                 );
             }
 
@@ -1097,8 +1114,8 @@ public class NotificarCotizacionPrestadorHelper {
 
                     _log.error(
                             "No se pudo compensar el pedido "
-                                    + "de cotización creado "
-                                    + "antes de fallar su asociación. "
+                                    + "de cotizaciÃ³n creado "
+                                    + "antes de fallar su asociaciÃ³n. "
                                     + "idRequerimiento="
                                     + idRequerimiento
                                     + ", idPrestador="
@@ -1124,8 +1141,8 @@ public class NotificarCotizacionPrestadorHelper {
     }
 
     /**
-     * Contrato canónico para el flujo actual: recupera todas las Órdenes
-     * médicas activas del requerimiento.
+     * Contrato canÃ³nico para el flujo actual: recupera todas las Ã“rdenes
+     * mÃ©dicas activas del requerimiento.
      */
     protected List<OrdenMedicaAdjunta> recuperarOrdenesMedicasAdjuntas(
             int idRequerimientoCompra,
@@ -1145,7 +1162,7 @@ public class NotificarCotizacionPrestadorHelper {
             if (_log.isDebugEnabled()) {
                 _log.debug(
                         "El requerimiento no posee un adjunto activo; "
-                                + "se conserva el envío histórico con PDF. "
+                                + "se conserva el envÃ­o histÃ³rico con PDF. "
                                 + "idRequerimiento="
                                 + idRequerimientoCompra
                 );
@@ -1178,7 +1195,7 @@ public class NotificarCotizacionPrestadorHelper {
                     Long.valueOf(fileEntryId)
             )) {
                 throw new Exception(
-                        "El requerimiento contiene más de un "
+                        "El requerimiento contiene mÃ¡s de un "
                                 + "adjunto activo asociado al mismo "
                                 + "documento de Document Library."
                 );
@@ -1218,9 +1235,9 @@ public class NotificarCotizacionPrestadorHelper {
     /**
      * Contrato legacy conservado para tests y subclases existentes.
      *
-     * Devuelve exclusivamente la primera Orden médica, reproduciendo el
-     * comportamiento histórico. El flujo productivo actual no utiliza este
-     * método para enviar cotizaciones.
+     * Devuelve exclusivamente la primera Orden mÃ©dica, reproduciendo el
+     * comportamiento histÃ³rico. El flujo productivo actual no utiliza este
+     * mÃ©todo para enviar cotizaciones.
      */
     protected OrdenMedicaAdjunta recuperarOrdenMedicaAdjunta(
             int idRequerimientoCompra,
@@ -1307,7 +1324,7 @@ public class NotificarCotizacionPrestadorHelper {
     }
 
     /**
-     * Firma legacy conservada. La regla canónica vive en
+     * Firma legacy conservada. La regla canÃ³nica vive en
      * DocumentoLibraryComprasHelper.
      */
     protected String validarContenidoOrdenMedica(
@@ -1350,7 +1367,7 @@ public class NotificarCotizacionPrestadorHelper {
 
         } catch (Exception e) {
             _log.warn(
-                    "No se pudo calcular el diagnóstico "
+                    "No se pudo calcular el diagnÃ³stico "
                             + "de prestadores candidatos. "
                             + "idRequerimiento="
                             + (
@@ -1392,7 +1409,7 @@ public class NotificarCotizacionPrestadorHelper {
 
         if (_log.isDebugEnabled()) {
             _log.debug(
-                    "Diagnóstico de prestadores candidatos. "
+                    "DiagnÃ³stico de prestadores candidatos. "
                             + "idRequerimiento="
                             + requerimiento.getIdRequerimientoCompra()
                             + ", sector="
@@ -1473,8 +1490,8 @@ public class NotificarCotizacionPrestadorHelper {
     }
 
     /**
-     * Contrato canónico del envío actual: un único correo con 0..N Órdenes
-     * médicas adicionales.
+     * Contrato canÃ³nico del envÃ­o actual: un Ãºnico correo con 0..N Ã“rdenes
+     * mÃ©dicas adicionales.
      */
     protected void enviarMail(
             long companyId,
@@ -1484,6 +1501,29 @@ public class NotificarCotizacionPrestadorHelper {
             byte[] pedidoPresupuestoPdf,
             String nombrePedidoPresupuestoPdf,
             List<OrdenMedicaAdjunta> ordenesMedicas)
+            throws Exception {
+
+        enviarMail(
+                companyId,
+                emails,
+                asunto,
+                cuerpo,
+                pedidoPresupuestoPdf,
+                nombrePedidoPresupuestoPdf,
+                ordenesMedicas,
+                true
+        );
+    }
+
+    private void enviarMail(
+            long companyId,
+            String[] emails,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            List<OrdenMedicaAdjunta> ordenesMedicas,
+            boolean incluirCopiaCotizacion)
             throws Exception {
 
         List<CotizacionPrestadorMailHelper.AdjuntoOrdenMedica> adjuntos =
@@ -1500,7 +1540,7 @@ public class NotificarCotizacionPrestadorHelper {
             if (ordenMedica == null) {
 
                 throw new Exception(
-                        "Se encontró un adjunto inválido."
+                        "Se encontrÃ³ un adjunto invÃ¡lido."
                 );
             }
 
@@ -1515,7 +1555,9 @@ public class NotificarCotizacionPrestadorHelper {
 
         mailHelper.enviar(
                 emails,
-                resolverEmailsCopiaCotizacion(),
+                incluirCopiaCotizacion
+                        ? resolverEmailsCopiaCotizacion()
+                        : new String[0],
                 asunto,
                 cuerpo,
                 pedidoPresupuestoPdf,
@@ -1543,7 +1585,7 @@ public class NotificarCotizacionPrestadorHelper {
 
             if (finalizacion == null) {
                 _log.error(
-                        "La finalización no devolvió resultado. "
+                        "La finalizaciÃ³n no devolviÃ³ resultado. "
                                 + "estadoSolicitado="
                                 + estado
                                 + ", idPrestador="
@@ -1558,7 +1600,7 @@ public class NotificarCotizacionPrestadorHelper {
             if (!finalizacion.isActualizado()) {
                 _log.error(
                         "No se pudo persistir el estado final "
-                                + "de la cotización. "
+                                + "de la cotizaciÃ³n. "
                                 + "estadoSolicitado="
                                 + estado
                                 + ", estadoAnterior="
@@ -1581,7 +1623,7 @@ public class NotificarCotizacionPrestadorHelper {
         } catch (Exception persistenciaError) {
             _log.error(
                     "Error persistiendo el estado final "
-                            + "de la cotización. "
+                            + "de la cotizaciÃ³n. "
                             + "estadoSolicitado="
                             + estado
                             + ", idPrestador="
@@ -1661,7 +1703,7 @@ public class NotificarCotizacionPrestadorHelper {
                 reserva.getEstadoEnvio()
         )) {
             return "El prestador ya estaba siendo procesado "
-                    + "por otra ejecución.";
+                    + "por otra ejecuciÃ³n.";
         }
 
         if (!WebKeysCompras.isEmpty(
@@ -1702,7 +1744,7 @@ public class NotificarCotizacionPrestadorHelper {
 
         if (_log.isDebugEnabled()) {
             _log.debug(
-                    "Destinatarios BCC de cotización resueltos. "
+                    "Destinatarios BCC de cotizaciÃ³n resueltos. "
                             + "cantidadBcc="
                             + emails.length
                             + ", modoTemporal="
@@ -1716,7 +1758,7 @@ public class NotificarCotizacionPrestadorHelper {
     private String construirAsunto(
             RequerimientoCompra requerimiento) {
 
-        return "Solicitud de cotización - Requerimiento #"
+        return "Solicitud de cotizaciÃ³n - Requerimiento #"
                 + requerimiento
                 .getIdRequerimientoCompra();
     }
@@ -1742,7 +1784,7 @@ public class NotificarCotizacionPrestadorHelper {
         sb.append(",\n\n");
 
         sb.append(
-                "OSPIM solicita cotización para el "
+                "OSPIM solicita cotizaciÃ³n para el "
                         + "siguiente requerimiento de compra:"
         );
 
@@ -1796,15 +1838,15 @@ public class NotificarCotizacionPrestadorHelper {
                 "\nPor favor responder este correo "
                         + "informando disponibilidad, "
                         + "plazo de entrega "
-                        + "e importe de cotización a "
+                        + "e importe de cotizaciÃ³n a "
                         + "kfernandez@ospim.org.ar."
         );
 
         sb.append(
                 "\n\nLos presupuestos se deben presentar en formato .PDF, "
-                        + "fijando como plazo límite de entrega "
-                        + "las próximas 48 horas, "
-                        + "con horario tope de recepción a las 18:00 hs."
+                        + "fijando como plazo lÃ­mite de entrega "
+                        + "las prÃ³ximas 48 horas, "
+                        + "con horario tope de recepciÃ³n a las 18:00 hs."
         );
 
         return sb.toString();
@@ -1860,7 +1902,7 @@ public class NotificarCotizacionPrestadorHelper {
                 );
             } else {
                 sb.append(
-                        "Item sin descripción"
+                        "Item sin descripciÃ³n"
                 );
             }
 
@@ -1872,7 +1914,7 @@ public class NotificarCotizacionPrestadorHelper {
             if (!WebKeysCompras.isEmpty(
                     detalle.getObservaciones()
             )) {
-                sb.append(" | Descripción: ");
+                sb.append(" | DescripciÃ³n: ");
 
                 sb.append(
                         detalle.getObservacionesVisible()
@@ -1906,7 +1948,7 @@ public class NotificarCotizacionPrestadorHelper {
 
         if (requerimiento == null) {
             throw new Exception(
-                    "No se encontró el requerimiento de compra."
+                    "No se encontrÃ³ el requerimiento de compra."
             );
         }
 
