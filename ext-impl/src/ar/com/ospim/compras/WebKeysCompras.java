@@ -39,12 +39,28 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int TIPO_NOMENCLADOR_ANALISIS_CLINICOS = 4;
     public static final int TIPO_NOMENCLADOR_QUIRURGICO = 6;
     public static final int TIPO_NOMENCLADOR_PROTESIS_INSUMOS = 10;
+    public static final int TIPO_NOMENCLADOR_PROTESIS = 14;
+
+    public static final int TIPO_PRESTACION_PROTESIS_TRAUMATOLOGIA = 3;
+    public static final int TIPO_PRESTACION_PROTESIS_CARDIOLOGIA = 4;
+    public static final int TIPO_PRESTACION_PROTESIS_GENERAL = 5;
     public static final int TIPO_PRESTACION_INSUMOS = 6;
 
     public static boolean esTipoPrestacionInsumos(
             int idTipoPrestacion) {
 
         return idTipoPrestacion == TIPO_PRESTACION_INSUMOS;
+    }
+
+    public static boolean esTipoPrestacionProtesis(
+            int idTipoPrestacion) {
+
+        return idTipoPrestacion
+                == TIPO_PRESTACION_PROTESIS_TRAUMATOLOGIA
+                || idTipoPrestacion
+                == TIPO_PRESTACION_PROTESIS_CARDIOLOGIA
+                || idTipoPrestacion
+                == TIPO_PRESTACION_PROTESIS_GENERAL;
     }
 
     public static boolean esTipoNomencladorPrestacionesMedicas(
@@ -59,7 +75,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 || idTipoNomenclador
                 == TIPO_NOMENCLADOR_QUIRURGICO
                 || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROPIO;
+                == TIPO_NOMENCLADOR_PROPIO
+                || idTipoNomenclador
+                == TIPO_NOMENCLADOR_PROTESIS;
     }
 
     public static final String
@@ -618,8 +636,21 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                     == TIPO_NOMENCLADOR_PROTESIS_INSUMOS;
         }
 
-        return idTipoNomenclador
-                != TIPO_NOMENCLADOR_PROTESIS_INSUMOS;
+        if (idTipoNomenclador
+                == TIPO_NOMENCLADOR_PROTESIS_INSUMOS) {
+
+            return false;
+        }
+
+        if (idTipoNomenclador
+                == TIPO_NOMENCLADOR_PROTESIS) {
+
+            return esTipoPrestacionProtesis(
+                    idTipoPrestacion
+            );
+        }
+
+        return true;
     }
 
     public static boolean esSectorDetalleObservacionCompras(

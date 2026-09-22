@@ -22,11 +22,13 @@ public final class NomencladorCompraBusquedaHelper {
             WebKeysCompras.TIPO_NOMENCLADOR_PRACTICAS_ESPECIALIZADAS,
             WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS,
             WebKeysCompras.TIPO_NOMENCLADOR_QUIRURGICO,
-            WebKeysCompras.TIPO_NOMENCLADOR_PROPIO
+            WebKeysCompras.TIPO_NOMENCLADOR_PROPIO,
+            WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS
     };
 
     public List<Nomenclador> buscar(
             String sectorDescripcion,
+            int idTipoPrestacion,
             int idTipoNomenclador,
             int marcaReinLiq,
             String codigo,
@@ -69,6 +71,7 @@ public final class NomencladorCompraBusquedaHelper {
 
         } else if ("PRESTACIONES MEDICAS".equals(sector)) {
             resultados = buscarPrestacionesMedicas(
+                    idTipoPrestacion,
                     idTipoNomenclador,
                     descripcionNormalizada,
                     codigoNormalizado
@@ -109,14 +112,25 @@ public final class NomencladorCompraBusquedaHelper {
             int idTipoReal =
                     nomenclador.getId_tipo_nomenclador();
 
-            if (!WebKeysCompras
-                    .esNomencladorValidoParaSectorCompras(
-                            sector,
-                            idTipoReal,
-                            nomenclador.getMarcaReintegroLiquidacion(),
-                            nomenclador.getCodigo()
-                    )) {
+            boolean valido =
+                    "PRESTACIONES MEDICAS".equals(sector)
+                            ? WebKeysCompras
+                            .esNomencladorValidoParaTipoPrestacionCompras(
+                                    sector,
+                                    idTipoPrestacion,
+                                    idTipoReal,
+                                    nomenclador.getMarcaReintegroLiquidacion(),
+                                    nomenclador.getCodigo()
+                            )
+                            : WebKeysCompras
+                            .esNomencladorValidoParaSectorCompras(
+                                    sector,
+                                    idTipoReal,
+                                    nomenclador.getMarcaReintegroLiquidacion(),
+                                    nomenclador.getCodigo()
+                            );
 
+            if (!valido) {
                 continue;
             }
 
@@ -136,6 +150,7 @@ public final class NomencladorCompraBusquedaHelper {
     }
 
     private List<Nomenclador> buscarPrestacionesMedicas(
+            int idTipoPrestacion,
             int idTipoNomenclador,
             String descripcion,
             String codigo) throws Exception {
@@ -161,6 +176,16 @@ public final class NomencladorCompraBusquedaHelper {
             if (idTipoNomenclador <= 0
                     && tipo == WebKeysCompras
                     .TIPO_NOMENCLADOR_PROTESIS_INSUMOS) {
+
+                continue;
+            }
+
+            if (idTipoNomenclador <= 0
+                    && tipo == WebKeysCompras
+                    .TIPO_NOMENCLADOR_PROTESIS
+                    && !WebKeysCompras.esTipoPrestacionProtesis(
+                    idTipoPrestacion
+            )) {
 
                 continue;
             }

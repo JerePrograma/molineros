@@ -333,11 +333,12 @@ Efectos secundarios:
                         )
                         : '';
 
-        return idTipoNomenclador == '4'
-                || idTipoNomenclador == '2'
-                || idTipoNomenclador == '10'
+        return idTipoNomenclador == '2'
+                || idTipoNomenclador == '3'
+                || idTipoNomenclador == '4'
                 || idTipoNomenclador == '6'
-                || idTipoNomenclador == '3';
+                || idTipoNomenclador == '10'
+                || idTipoNomenclador == '14';
     }
 
     function <portlet:namespace />agregarOpcionTipoNomenclador(
@@ -562,6 +563,25 @@ Efectos secundarios:
                 == '<%= WebKeysCompras.TIPO_PRESTACION_INSUMOS %>';
     }
 
+    function <portlet:namespace />esTipoPrestacionProtesisDetalle(
+            idTipoPrestacion) {
+
+        if (typeof idTipoPrestacion == 'undefined') {
+            idTipoPrestacion =
+                    <portlet:namespace />obtenerIdTipoPrestacionDetalle();
+        }
+
+        idTipoPrestacion = idTipoPrestacion == null
+                ? ''
+                : jQuery.trim(
+                        String(idTipoPrestacion)
+                );
+
+        return idTipoPrestacion == '3'
+                || idTipoPrestacion == '4'
+                || idTipoPrestacion == '5';
+    }
+
     function <portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(
             idTipoNomenclador,
             idTipoPrestacion) {
@@ -596,6 +616,14 @@ Efectos secundarios:
                     == '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS %>';
         }
 
+        if (idTipoNomenclador
+                == '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS %>') {
+
+            return <portlet:namespace />esTipoPrestacionProtesisDetalle(
+                    idTipoPrestacion
+            );
+        }
+
         return idTipoNomenclador
                 != '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS %>';
     }
@@ -615,12 +643,12 @@ Efectos secundarios:
                     idTipoPrestacion
             )) {
 
-                if (<portlet:namespace />esTipoPrestacionInsumosDetalle(
+                if (<portlet:namespace />esTipoPrestacionProtesisDetalle(
                         idTipoPrestacion
                 )) {
                     alert(
-                            'Para Insumos debe seleccionar una prestación '
-                            + 'del nomenclador tipo 10.'
+                            'Para Prótesis debe seleccionar una prestación '
+                            + 'de nomenclador tipo 2, 3, 4, 6 o 14.'
                     );
                 } else {
                     alert(
@@ -752,16 +780,18 @@ Efectos secundarios:
             if (!<portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(
                     tipoTecnico
             )) {
-                if (<portlet:namespace />esTipoPrestacionInsumosDetalle()) {
+                if (<portlet:namespace />esTipoPrestacionProtesisDetalle(
+                        idTipoPrestacion
+                )) {
                     alert(
-                            'Para Insumos debe buscar y seleccionar una '
-                                    + 'prestación del nomenclador tipo 10.'
+                            'Para Prótesis debe seleccionar una prestación '
+                            + 'de nomenclador tipo 2, 3, 4, 6 o 14.'
                     );
                 } else {
                     alert(
-                            'Debe buscar y seleccionar una prestación de '
-                                    + 'nomenclador tipo 2, 3, 4 o 6; el tipo 10 '
-                                    + 'corresponde exclusivamente a Insumos.'
+                            'Para el Tipo seleccionado debe elegir una prestación '
+                            + 'de nomenclador tipo 2, 3, 4 o 6; el tipo 10 '
+                            + 'corresponde exclusivamente a Insumos.'
                     );
                 }
 

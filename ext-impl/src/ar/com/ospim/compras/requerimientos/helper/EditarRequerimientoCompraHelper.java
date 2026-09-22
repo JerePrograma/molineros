@@ -2133,6 +2133,13 @@ private String mensajeNomencladorInvalido(
                     + "del nomenclador tipo 10.";
         }
 
+        if (WebKeysCompras.esTipoPrestacionProtesis(
+                idTipoPrestacion
+        )) {
+            return "Para Prótesis debe seleccionar una prestación "
+                    + "de nomenclador tipo 2, 3, 4, 6 o 14.";
+        }
+
         return "Para el tipo de PRESTACIONES MÉDICAS seleccionado "
                 + "debe elegir un nomenclador tipo 2, 3, 4 o 6; "
                 + "el tipo 10 corresponde exclusivamente a Insumos.";

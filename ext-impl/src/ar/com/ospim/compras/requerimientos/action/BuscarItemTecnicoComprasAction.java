@@ -184,6 +184,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             List<Nomenclador> resultados =
                     nomencladorHelper.buscar(
                             sector,
+                            idTipoPrestacion,
                             filtroTipoNomenclador.intValue(),
                             marcaReinLiq,
                             codigo,
