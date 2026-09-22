@@ -20,8 +20,10 @@ import java.util.Properties;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
+import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.Multipart;
+import javax.mail.SendFailedException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -245,6 +247,20 @@ public class CotizacionPrestadorMailHelper {
                 "TLSv1.2"
         );
 
+        /*
+         * Si un prestador posee varios emails, se intenta enviar
+         * a todos los destinatarios válidos aunque alguno falle.
+         */
+        propiedades.setProperty(
+                "mail.smtp.sendpartial",
+                "true"
+        );
+
+        propiedades.setProperty(
+                "mail.smtp.reportsuccess",
+                "false"
+        );
+
         String usuarioSmtp =
                 normalizar(
                         propiedades.getProperty(
@@ -370,7 +386,50 @@ public class CotizacionPrestadorMailHelper {
                 );
             }
 
+        } catch (SendFailedException e) {
+
+            int destinosEnviados =
+                    contarDireccionesEnviadas(
+                            e.getValidSentAddresses(),
+                            emailsDestino
+                    );
+
+            boolean copiaEnviada =
+                    contarDireccionesEnviadas(
+                            e.getValidSentAddresses(),
+                            emailsCopia
+                    ) > 0;
+
+            if (destinosEnviados > 0) {
+
+                enviado = true;
+
+                _log.warn(
+                        "El envío SMTP de cotización fue parcial. "
+                                + "destinatariosEnviados="
+                                + destinosEnviados
+                                + ", destinatariosTotales="
+                                + emailsDestino.length,
+                        e
+                );
+
+                throw new EnvioParcialException(
+                        destinosEnviados,
+                        emailsDestino.length,
+                        copiaEnviada,
+                        e
+                );
+            }
+
+            _log.error(
+                    "Falló el envío SMTP de cotización.",
+                    e
+            );
+
+            throw e;
+
         } catch (Exception e) {
+
             _log.error(
                     "Falló el envío SMTP de cotización.",
                     e
@@ -909,6 +968,102 @@ public class CotizacionPrestadorMailHelper {
                             true
                     )
             );
+        }
+    }
+
+    private int contarDireccionesEnviadas(
+            Address[] direccionesEnviadas,
+            String[] emailsEsperados) {
+
+        if (direccionesEnviadas == null
+                || emailsEsperados == null) {
+
+            return 0;
+        }
+
+        int cantidad = 0;
+
+        for (int i = 0;
+             i < direccionesEnviadas.length;
+             i++) {
+
+            String emailEnviado = null;
+
+            if (direccionesEnviadas[i]
+                    instanceof InternetAddress) {
+
+                emailEnviado =
+                        ((InternetAddress)
+                                direccionesEnviadas[i])
+                                .getAddress();
+            }
+
+            if (isEmpty(emailEnviado)) {
+                continue;
+            }
+
+            for (int j = 0;
+                 j < emailsEsperados.length;
+                 j++) {
+
+                if (!isEmpty(emailsEsperados[j])
+                        && emailEnviado.trim()
+                        .equalsIgnoreCase(
+                                emailsEsperados[j].trim()
+                        )) {
+
+                    cantidad++;
+                    break;
+                }
+            }
+        }
+
+        return cantidad;
+    }
+
+    public static final class EnvioParcialException
+            extends Exception {
+
+        private final int destinatariosEnviados;
+        private final int destinatariosTotales;
+        private final boolean copiaEnviada;
+
+        private EnvioParcialException(
+                int destinatariosEnviados,
+                int destinatariosTotales,
+                boolean copiaEnviada,
+                Throwable causa) {
+
+            super(
+                    "Envío SMTP parcial: "
+                            + destinatariosEnviados
+                            + " de "
+                            + destinatariosTotales
+                            + " destinatarios principales "
+                            + "fueron aceptados.",
+                    causa
+            );
+
+            this.destinatariosEnviados =
+                    destinatariosEnviados;
+
+            this.destinatariosTotales =
+                    destinatariosTotales;
+
+            this.copiaEnviada =
+                    copiaEnviada;
+        }
+
+        public int getDestinatariosEnviados() {
+            return destinatariosEnviados;
+        }
+
+        public int getDestinatariosTotales() {
+            return destinatariosTotales;
+        }
+
+        public boolean isCopiaEnviada() {
+            return copiaEnviada;
         }
     }
 }

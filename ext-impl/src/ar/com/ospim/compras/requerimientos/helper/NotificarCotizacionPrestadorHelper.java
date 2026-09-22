@@ -714,6 +714,13 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         /*
+         * pedidoPresupuestoPdf es exactamente el mismo byte[]
+         * que se conservo documentalmente.
+         */
+        boolean incluirCopiaCotizacion =
+                !copiaCotizacionEnviada;
+
+        /*
          * ==========================================================
          * 4. ENVIO DEL CORREO
          * ==========================================================
@@ -737,13 +744,6 @@ public class NotificarCotizacionPrestadorHelper {
                             requerimiento,
                             prestador
                     );
-
-            /*
-             * pedidoPresupuestoPdf es exactamente el mismo byte[]
-             * que se conservo documentalmente.
-             */
-            boolean incluirCopiaCotizacion =
-                    !copiaCotizacionEnviada;
 
             enviarMail(
                     companyId,
@@ -1323,21 +1323,6 @@ public class NotificarCotizacionPrestadorHelper {
         );
     }
 
-    /**
-     * Firma legacy conservada. La regla canónica vive en
-     * DocumentoLibraryComprasHelper.
-     */
-    protected String validarContenidoOrdenMedica(
-            byte[] contenido,
-            String nombreOriginal) throws Exception {
-
-        return DocumentoLibraryComprasHelper
-                .validarContenidoOrdenMedica(
-                        contenido,
-                        nombreOriginal
-                );
-    }
-
     protected RequerimientoCompra getRequerimientoCompra(
             int idRequerimientoCompra) throws Exception {
 
@@ -1438,22 +1423,6 @@ public class NotificarCotizacionPrestadorHelper {
         );
     }
 
-    protected boolean registrarCotizacionPrestador(
-            int idRequerimientoCompra,
-            int idPrestador,
-            String usuario) throws Exception {
-
-        ReservaCotizacionPrestador reserva =
-                reservarCotizacionPrestador(
-                        idRequerimientoCompra,
-                        idPrestador,
-                        usuario
-                );
-
-        return reserva != null
-                && reserva.isReservado();
-    }
-
     protected FinalizacionCotizacionPrestador finalizarCotizacionPrestadorConDetalle(
             int idRequerimiento,
             int idPrestador,
@@ -1467,51 +1436,6 @@ public class NotificarCotizacionPrestadorHelper {
                 estado,
                 truncar(error, 4000),
                 normalizarUsuario(usuario)
-        );
-    }
-
-    protected boolean finalizarCotizacionPrestador(
-            int idRequerimiento,
-            int idPrestador,
-            String estado,
-            String error) throws Exception {
-
-        FinalizacionCotizacionPrestador finalizacion =
-                finalizarCotizacionPrestadorConDetalle(
-                        idRequerimiento,
-                        idPrestador,
-                        estado,
-                        error,
-                        "sistema"
-                );
-
-        return finalizacion != null
-                && finalizacion.isActualizado();
-    }
-
-    /**
-     * Contrato canónico del envío actual: un único correo con 0..N Órdenes
-     * médicas adicionales.
-     */
-    protected void enviarMail(
-            long companyId,
-            String[] emails,
-            String asunto,
-            String cuerpo,
-            byte[] pedidoPresupuestoPdf,
-            String nombrePedidoPresupuestoPdf,
-            List<OrdenMedicaAdjunta> ordenesMedicas)
-            throws Exception {
-
-        enviarMail(
-                companyId,
-                emails,
-                asunto,
-                cuerpo,
-                pedidoPresupuestoPdf,
-                nombrePedidoPresupuestoPdf,
-                ordenesMedicas,
-                true
         );
     }
 

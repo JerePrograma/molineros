@@ -6417,6 +6417,221 @@ SELECT
 END;
 $function$;
 
+CREATE OR REPLACE FUNCTION compras.finalizar_notificacion_cotizacion_prestador(
+    p_id_requerimiento integer,
+    p_id_prestador integer,
+    p_estado character varying,
+    p_error text,
+    p_usuario character varying
+)
+RETURNS TABLE(
+    actualizado boolean,
+    estado_anterior text,
+    estado_actual text,
+    motivo text
+)
+LANGUAGE 'plpgsql'
+COST 100
+VOLATILE
+ROWS 1000
+AS $function$
+
+DECLARE
+    v_usuario VARCHAR(100);
+    v_estado_solicitado VARCHAR(20);
+    v_estado_anterior VARCHAR(20);
+    v_error TEXT;
+
+BEGIN
+
+    IF p_id_requerimiento IS NULL
+       OR p_id_requerimiento <= 0 THEN
+
+        RAISE EXCEPTION
+            'El id de requerimiento debe ser mayor que cero.';
+
+    END IF;
+
+
+    IF p_id_prestador IS NULL
+       OR p_id_prestador <= 0 THEN
+
+        RAISE EXCEPTION
+            'El id de prestador debe ser mayor que cero.';
+
+    END IF;
+
+
+    v_estado_solicitado :=
+        UPPER(
+            BTRIM(
+                COALESCE(
+                    p_estado,
+                    ''
+                )
+            )
+        );
+
+
+    IF v_estado_solicitado NOT IN (
+        'ENVIADO',
+        'ERROR',
+        'EMAIL_INVALIDO'
+    ) THEN
+
+        RAISE EXCEPTION
+            'Estado final no permitido: %.',
+            v_estado_solicitado;
+
+    END IF;
+
+
+    v_usuario :=
+        LEFT(
+            COALESCE(
+                NULLIF(
+                    BTRIM(p_usuario),
+                    ''
+                ),
+                'sistema'
+            ),
+            100
+        );
+
+
+    v_error :=
+        CASE
+            WHEN p_error IS NULL THEN
+                NULL
+            ELSE
+                LEFT(
+                    p_error,
+                    4000
+                )
+        END;
+
+
+    SELECT
+        rcp.estado_envio
+    INTO
+        v_estado_anterior
+    FROM compras.requerimiento_cotizacion_prestador rcp
+    WHERE rcp.id_requerimiento =
+          p_id_requerimiento
+      AND rcp.id_prestador =
+          p_id_prestador
+    FOR UPDATE;
+
+
+    IF NOT FOUND THEN
+
+        RETURN QUERY
+        SELECT
+            FALSE,
+            NULL::TEXT,
+            NULL::TEXT,
+            (
+                'No existe una fila de notificación '
+                    || 'para el requerimiento y prestador.'
+            )::TEXT;
+
+        RETURN;
+
+    END IF;
+
+
+    IF v_estado_anterior <> 'PROCESANDO' THEN
+
+        RETURN QUERY
+        SELECT
+            FALSE,
+            v_estado_anterior::TEXT,
+            v_estado_anterior::TEXT,
+            (
+                'La fila no se encontraba PROCESANDO. '
+                    || 'No se modifico el estado.'
+            )::TEXT;
+
+        RETURN;
+
+    END IF;
+
+
+    UPDATE compras.requerimiento_cotizacion_prestador
+    SET
+        estado_envio =
+            v_estado_solicitado,
+
+        fecha_envio =
+            CASE
+                WHEN v_estado_solicitado = 'ENVIADO'
+                    THEN clock_timestamp()
+                ELSE NULL
+            END,
+
+        ultimo_error =
+            CASE
+                WHEN v_estado_solicitado = 'ENVIADO'
+                    THEN v_error
+                ELSE COALESCE(
+                    v_error,
+                    'Error sin detalle informado.'
+                )
+            END,
+
+        modi_fecha =
+            clock_timestamp(),
+
+        modi_usr =
+            v_usuario
+
+    WHERE id_requerimiento =
+          p_id_requerimiento
+      AND id_prestador =
+          p_id_prestador
+      AND estado_envio =
+          'PROCESANDO';
+
+
+    IF NOT FOUND THEN
+
+        RETURN QUERY
+        SELECT
+            FALSE,
+            v_estado_anterior::TEXT,
+            v_estado_anterior::TEXT,
+            (
+                'La fila cambio de estado antes de '
+                    || 'completar la finalización.'
+            )::TEXT;
+
+        RETURN;
+
+    END IF;
+
+
+    RETURN QUERY
+    SELECT
+        TRUE,
+        v_estado_anterior::TEXT,
+        v_estado_solicitado::TEXT,
+        (
+            'El estado final fue persistido correctamente.'
+        )::TEXT;
+
+END;
+
+$function$;
+
+
+ALTER FUNCTION compras.finalizar_notificacion_cotizacion_prestador(
+    integer,
+    integer,
+    character varying,
+    text,
+    character varying
+)
+OWNER TO postgres;
 
 /*
  * ============================================================

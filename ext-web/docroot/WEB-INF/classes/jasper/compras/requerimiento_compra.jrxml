@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="requerimiento_compra" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
-	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="384"/>
+	<property name="ireport.y" value="48"/>
 	<parameter name="ID_REQUERIMIENTO" class="java.lang.String"/>
-	<queryString language="SQL">
+	<queryString>
 		<![CDATA[SELECT *
 FROM compras.get_requerimiento_compra_pdf(
     CAST($P{ID_REQUERIMIENTO} AS INTEGER)
@@ -28,10 +28,12 @@ FROM compras.get_requerimiento_compra_pdf(
 	<field name="afiliado_celular" class="java.lang.String"/>
 	<field name="afiliado_telefono" class="java.lang.String"/>
 	<field name="afiliado_email" class="java.lang.String"/>
+	<field name="afiliado_seccional" class="java.lang.String"/>
 	<field name="cargo_ospim" class="java.lang.Integer"/>
 	<field name="cargo_tercerizadora" class="java.lang.Integer"/>
 	<field name="id_tercerizadora" class="java.lang.String"/>
 	<field name="recupero" class="java.lang.Boolean"/>
+	<field name="surge" class="java.lang.Boolean"/>
 	<field name="observaciones" class="java.lang.String"/>
 	<field name="detalle_id" class="java.lang.Integer"/>
 	<field name="detalle_orden" class="java.lang.Integer"/>
@@ -77,7 +79,7 @@ FROM compras.get_requerimiento_compra_pdf(
 					<textElement>
 						<font fontName="SansSerif" size="8" isBold="true"/>
 					</textElement>
-					<text><![CDATA[Nï¿½mero:]]></text>
+					<text><![CDATA[Número:]]></text>
 				</staticText>
 				<textField isBlankWhenNull="true">
 					<reportElement x="82" y="38" width="85" height="13"/>
@@ -122,7 +124,7 @@ FROM compras.get_requerimiento_compra_pdf(
 					<text><![CDATA[Sector:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-					<reportElement x="82" y="58" width="458" height="13"/>
+					<reportElement x="82" y="58" width="85" height="13"/>
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
@@ -136,7 +138,7 @@ FROM compras.get_requerimiento_compra_pdf(
 					<text><![CDATA[Afiliado:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-					<reportElement x="82" y="80" width="458" height="13"/>
+					<reportElement x="82" y="80" width="226" height="13"/>
 					<textElement>
 						<font fontName="SansSerif" size="8"/>
 					</textElement>
@@ -234,6 +236,62 @@ FROM compras.get_requerimiento_compra_pdf(
         ? ""
         : " Email: " + $F{afiliado_email})]]></textFieldExpression>
 				</textField>
+				<staticText>
+					<reportElement x="180" y="58" width="70" height="13"/>
+					<textElement>
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Cargo OSPIM:]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="260" y="58" width="36" height="13"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{cargo_ospim}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="308" y="58" width="53" height="13"/>
+					<textElement>
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Cargo Terc:]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="373" y="58" width="42" height="13"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{cargo_tercerizadora}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="450" y="58" width="33" height="13"/>
+					<textElement>
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Surge:]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="483" y="58" width="57" height="13"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{surge}?"SI":"NO"]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="332" y="80" width="58" height="13"/>
+					<textElement>
+						<font size="8" isBold="true"/>
+					</textElement>
+					<text><![CDATA[Seccional:]]></text>
+				</staticText>
+				<textField isBlankWhenNull="true">
+					<reportElement x="398" y="80" width="142" height="13"/>
+					<textElement>
+						<font size="8"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_seccional}]]></textFieldExpression>
+				</textField>
 			</frame>
 		</band>
 	</title>
@@ -305,10 +363,10 @@ FROM compras.get_requerimiento_compra_pdf(
 		</band>
 	</columnHeader>
 	<detail>
-		<band height="42" splitType="Stretch">
+		<band height="21" splitType="Stretch">
 			<printWhenExpression><![CDATA[$F{detalle_id} != null]]></printWhenExpression>
 			<frame>
-				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="555" height="38"/>
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="555" height="18"/>
 				<box>
 					<pen lineWidth="0.5"/>
 				</box>
@@ -327,7 +385,7 @@ FROM compras.get_requerimiento_compra_pdf(
 					<textFieldExpression class="java.lang.Integer"><![CDATA[$F{cantidad}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-					<reportElement x="74" y="4" width="192" height="30"/>
+					<reportElement x="74" y="4" width="192" height="12"/>
 					<textElement>
 						<font fontName="SansSerif" size="7"/>
 					</textElement>
@@ -411,7 +469,7 @@ FROM compras.get_requerimiento_compra_pdf(
         .format($F{precio_total_estimado})]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-					<reportElement x="398" y="4" width="153" height="30"/>
+					<reportElement x="398" y="4" width="153" height="12"/>
 					<textElement>
 						<font fontName="SansSerif" size="7"/>
 					</textElement>
@@ -434,21 +492,6 @@ FROM compras.get_requerimiento_compra_pdf(
           + $F{prestador_razon_social}.trim()
 )]]></textFieldExpression>
 				</textField>
-				<line>
-					<reportElement x="28" y="0" width="1" height="38"/>
-				</line>
-				<line>
-					<reportElement x="70" y="0" width="1" height="38"/>
-				</line>
-				<line>
-					<reportElement x="270" y="0" width="1" height="38"/>
-				</line>
-				<line>
-					<reportElement x="332" y="0" width="1" height="38"/>
-				</line>
-				<line>
-					<reportElement x="394" y="0" width="1" height="38"/>
-				</line>
 			</frame>
 		</band>
 	</detail>
