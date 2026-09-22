@@ -37,6 +37,12 @@ public class NotificarCotizacionPrestadorServiceImpl {
             "{ ? = call compras.registrar_pedido_cotizacion_documento("
                     + "?,?,?,?,?,?,?,?,?,?) }";
 
+    private static final String SQL_RESERVAR_COPIA_COTIZACION =
+            "{ ? = call compras.reservar_copia_cotizacion_requerimiento(?) }";
+
+    private static final String SQL_LIBERAR_COPIA_COTIZACION =
+            "{call compras.liberar_copia_cotizacion_requerimiento(?)}";
+
     public List<PrestadorCotizacion> listarPrestadoresCandidatos(
             int idRequerimientoCompra) throws Exception {
 
@@ -317,6 +323,70 @@ public class NotificarCotizacionPrestadorServiceImpl {
             return stmt.getInt(
                     1
             );
+
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+    public boolean reservarCopiaCotizacion(
+            int idRequerimiento) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            stmt = con.prepareCall(
+                    SQL_RESERVAR_COPIA_COTIZACION
+            );
+
+            stmt.registerOutParameter(
+                    1,
+                    java.sql.Types.BOOLEAN
+            );
+
+            stmt.setInt(
+                    2,
+                    idRequerimiento
+            );
+
+            stmt.execute();
+
+            return stmt.getBoolean(1);
+
+        } finally {
+            ConnectionHelper.cerrar(
+                    stmt,
+                    con
+            );
+        }
+    }
+
+
+    public void liberarCopiaCotizacion(
+            int idRequerimiento) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+
+        try {
+            con = ConnectionHelper.getConnection();
+
+            stmt = con.prepareCall(
+                    SQL_LIBERAR_COPIA_COTIZACION
+            );
+
+            stmt.setInt(
+                    1,
+                    idRequerimiento
+            );
+
+            stmt.execute();
 
         } finally {
             ConnectionHelper.cerrar(

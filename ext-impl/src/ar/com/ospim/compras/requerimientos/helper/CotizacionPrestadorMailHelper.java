@@ -538,7 +538,8 @@ public class CotizacionPrestadorMailHelper {
         );
 
         for (int i = 0;
-             ordenesMedicas != null && i < ordenesMedicas.size();
+             ordenesMedicas != null
+                     && i < ordenesMedicas.size();
              i++) {
 
             AdjuntoOrdenMedica ordenMedica =
@@ -559,7 +560,8 @@ public class CotizacionPrestadorMailHelper {
     private MimeBodyPart crearParteAdjunto(
             byte[] contenido,
             String nombre,
-            String contentType) throws Exception {
+            String contentType)
+            throws Exception {
 
         MimeBodyPart parte =
                 new MimeBodyPart();
@@ -611,7 +613,6 @@ public class CotizacionPrestadorMailHelper {
                     "Debe informar el cuerpo del correo."
             );
         }
-
     }
 
     private void validarEmailsDestino(
@@ -682,7 +683,10 @@ public class CotizacionPrestadorMailHelper {
             return;
         }
 
-        for (int i = 0; i < ordenesMedicas.size(); i++) {
+        for (int i = 0;
+             i < ordenesMedicas.size();
+             i++) {
+
             AdjuntoOrdenMedica ordenMedica =
                     ordenesMedicas.get(i);
 
@@ -756,7 +760,8 @@ public class CotizacionPrestadorMailHelper {
 
     private void validarEmail(
             String email,
-            String tipo) throws Exception {
+            String tipo)
+            throws Exception {
 
         try {
             InternetAddress direccion =
@@ -828,7 +833,8 @@ public class CotizacionPrestadorMailHelper {
     }
 
     private void validarEmailsCopia(
-            String[] emailsCopia) throws Exception {
+            String[] emailsCopia)
+            throws Exception {
 
         if (emailsCopia == null
                 || emailsCopia.length == 0) {
@@ -853,9 +859,16 @@ public class CotizacionPrestadorMailHelper {
         }
     }
 
+    /*
+     * Los destinatarios BCC se establecen en una única operación.
+     *
+     * Esto evita generar múltiples cabeceras Bcc en stacks
+     * JavaMail legacy.
+     */
     private void agregarDestinatariosCopia(
             MimeMessage mensaje,
-            String[] emailsCopia) throws Exception {
+            String[] emailsCopia)
+            throws Exception {
 
         if (emailsCopia == null
                 || emailsCopia.length == 0) {
@@ -863,18 +876,110 @@ public class CotizacionPrestadorMailHelper {
             return;
         }
 
+        InternetAddress[] destinatarios =
+                new InternetAddress[
+                        emailsCopia.length
+                        ];
+
         for (int i = 0;
              i < emailsCopia.length;
              i++) {
 
-            mensaje.addRecipient(
-                    Message.RecipientType.BCC,
+            destinatarios[i] =
                     new InternetAddress(
                             emailsCopia[i].trim(),
                             true
-                    )
-            );
+                    );
         }
+
+        mensaje.setRecipients(
+                Message.RecipientType.BCC,
+                destinatarios
+        );
+    }
+
+    /*
+     * Los destinatarios TO se establecen en una única operación.
+     *
+     * Esto evita que versiones legacy de JavaMail construyan
+     * más de una cabecera To cuando existen múltiples emails
+     * para un mismo prestador.
+     */
+    private void agregarDestinatariosPrincipales(
+            MimeMessage mensaje,
+            String[] emailsDestino)
+            throws Exception {
+
+        InternetAddress[] destinatarios =
+                new InternetAddress[
+                        emailsDestino.length
+                        ];
+
+        for (int i = 0;
+             i < emailsDestino.length;
+             i++) {
+
+            destinatarios[i] =
+                    new InternetAddress(
+                            emailsDestino[i].trim(),
+                            true
+                    );
+        }
+
+        mensaje.setRecipients(
+                Message.RecipientType.TO,
+                destinatarios
+        );
+    }
+
+    private int contarDireccionesEnviadas(
+            Address[] direccionesEnviadas,
+            String[] emailsEsperados) {
+
+        if (direccionesEnviadas == null
+                || emailsEsperados == null) {
+
+            return 0;
+        }
+
+        int cantidad = 0;
+
+        for (int i = 0;
+             i < direccionesEnviadas.length;
+             i++) {
+
+            String emailEnviado = null;
+
+            if (direccionesEnviadas[i]
+                    instanceof InternetAddress) {
+
+                emailEnviado =
+                        ((InternetAddress)
+                                direccionesEnviadas[i])
+                                .getAddress();
+            }
+
+            if (isEmpty(emailEnviado)) {
+                continue;
+            }
+
+            for (int j = 0;
+                 j < emailsEsperados.length;
+                 j++) {
+
+                if (!isEmpty(emailsEsperados[j])
+                        && emailEnviado.trim()
+                        .equalsIgnoreCase(
+                                emailsEsperados[j].trim()
+                        )) {
+
+                    cantidad++;
+                    break;
+                }
+            }
+        }
+
+        return cantidad;
     }
 
     public static final class AdjuntoOrdenMedica {
@@ -949,76 +1054,6 @@ public class CotizacionPrestadorMailHelper {
         public String getName() {
             return nombre;
         }
-    }
-
-    private void agregarDestinatariosPrincipales(
-            MimeMessage mensaje,
-            String[] emailsDestino)
-            throws Exception {
-
-        for (int i = 0;
-             emailsDestino != null
-                     && i < emailsDestino.length;
-             i++) {
-
-            mensaje.addRecipient(
-                    Message.RecipientType.TO,
-                    new InternetAddress(
-                            emailsDestino[i].trim(),
-                            true
-                    )
-            );
-        }
-    }
-
-    private int contarDireccionesEnviadas(
-            Address[] direccionesEnviadas,
-            String[] emailsEsperados) {
-
-        if (direccionesEnviadas == null
-                || emailsEsperados == null) {
-
-            return 0;
-        }
-
-        int cantidad = 0;
-
-        for (int i = 0;
-             i < direccionesEnviadas.length;
-             i++) {
-
-            String emailEnviado = null;
-
-            if (direccionesEnviadas[i]
-                    instanceof InternetAddress) {
-
-                emailEnviado =
-                        ((InternetAddress)
-                                direccionesEnviadas[i])
-                                .getAddress();
-            }
-
-            if (isEmpty(emailEnviado)) {
-                continue;
-            }
-
-            for (int j = 0;
-                 j < emailsEsperados.length;
-                 j++) {
-
-                if (!isEmpty(emailsEsperados[j])
-                        && emailEnviado.trim()
-                        .equalsIgnoreCase(
-                                emailsEsperados[j].trim()
-                        )) {
-
-                    cantidad++;
-                    break;
-                }
-            }
-        }
-
-        return cantidad;
     }
 
     public static final class EnvioParcialException

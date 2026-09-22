@@ -258,9 +258,6 @@ public class DescargarOrdenMedicaCompraAction
     /*
      * Si la URL identifica un fileEntry concreto, se busca exactamente
      * esa Orden médica dentro del requerimiento.
-     *
-     * Si no viene ese parámetro se conserva el comportamiento histórico
-     * mediante getOrdenMedica(idRequerimientoCompra).
      */
     private RequerimientoCompraPresupuesto resolverOrdenMedica(
             int idRequerimientoCompra,
