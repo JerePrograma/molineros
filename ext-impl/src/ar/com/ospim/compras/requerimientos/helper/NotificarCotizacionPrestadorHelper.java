@@ -28,20 +28,17 @@ public class NotificarCotizacionPrestadorHelper {
                     NotificarCotizacionPrestadorHelper.class
             );
 
-    private static final boolean REDIRECCION_QA_HABILITADA =
-            false;
+    private static final String CONFIG_REQUERIMIENTO_REDIRECCION_QA_HABILITADA =
+            "REQUERIMIENTO_REDIRECCION_QA_HABILITADA";
 
-    private static final String EMAIL_DESTINO_QA =
-            "acomas@ospim.org.ar";
+    private static final String CONFIG_REQUERIMIENTO_EMAIL_CC =
+            "REQUERIMIENTO_EMAIL_CC";
 
-    /*
-     * El nombre histórico de la configuración se conserva por compatibilidad.
-     * Los destinatarios se envian actualmente como BCC.
-     */
-    private static final String EMAIL_COPIA_COTIZACION =
-            TraeListasServiceUtil.getSystemConfig(
-                    "REQUERIMIENTO_EMAIL_CC"
-            );
+    private static final String CONFIG_REQUERIMIENTO_EMAIL_QA =
+            "REQUERIMIENTO_EMAIL_QA";
+
+    private static final String CONFIG_REQUERIMIENTO_EMAIL_RESPUESTA =
+            "REQUERIMIENTO_EMAIL_RESPUESTA";
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile(
@@ -1729,31 +1726,32 @@ public class NotificarCotizacionPrestadorHelper {
 
     protected boolean redireccionQaHabilitada() {
 
-        return REDIRECCION_QA_HABILITADA;
+        String valor =
+                TraeListasServiceUtil.getSystemConfig(
+                        CONFIG_REQUERIMIENTO_REDIRECCION_QA_HABILITADA
+                );
+
+        if (valor == null) {
+
+            return false;
+        }
+
+        return Boolean.parseBoolean(
+                valor.trim()
+        );
     }
 
     private String[] resolverEmailsCopiaCotizacion() {
 
         String configuracion =
-                EMAIL_COPIA_COTIZACION != null
-                        ? EMAIL_COPIA_COTIZACION
-                        : "";
-
-        String[] emails =
-                configuracion.split(
-                        ";",
-                        -1
+                TraeListasServiceUtil.getSystemConfig(
+                        CONFIG_REQUERIMIENTO_EMAIL_CC
                 );
 
-        for (int i = 0;
-             i < emails.length;
-             i++) {
-
-            emails[i] =
-                    emails[i] != null
-                            ? emails[i].trim()
-                            : "";
-        }
+        String[] emails =
+                resolverEmails(
+                        configuracion
+                );
 
         if (_log.isDebugEnabled()) {
 
@@ -1780,6 +1778,9 @@ public class NotificarCotizacionPrestadorHelper {
     private String construirCuerpo(
             RequerimientoCompra requerimiento,
             PrestadorCotizacion prestador) {
+
+        String emailRespuesta =
+                resolverEmailRespuestaCotizacion();
 
         StringBuilder sb =
                 new StringBuilder();
@@ -1891,8 +1892,24 @@ public class NotificarCotizacionPrestadorHelper {
                 "\nPor favor responder este correo "
                         + "informando disponibilidad, "
                         + "plazo de entrega "
-                        + "e importe de cotización a "
-                        + "kfernandez@ospim.org.ar."
+                        + "e importe de cotización"
+        );
+
+        if (!WebKeysCompras.isEmpty(
+                emailRespuesta
+        )) {
+
+            sb.append(
+                    " a "
+            );
+
+            sb.append(
+                    emailRespuesta
+            );
+        }
+
+        sb.append(
+                "."
         );
 
         sb.append(
@@ -2237,6 +2254,108 @@ public class NotificarCotizacionPrestadorHelper {
     private String[] resolverEmailsPrestador(
             String emailsConcatenados) {
 
+        return resolverEmails(
+                emailsConcatenados
+        );
+    }
+
+    private String[] resolverEmailsDestino(
+            String[] emailsReales,
+            boolean modoTemporal) {
+
+        if (modoTemporal) {
+
+            String configuracionQa =
+                    TraeListasServiceUtil
+                            .getSystemConfig(
+                                    CONFIG_REQUERIMIENTO_EMAIL_QA
+                            );
+
+            return resolverEmails(
+                    configuracionQa
+            );
+        }
+
+        return resolverEmails(
+                emailsReales
+        );
+    }
+
+    private String unirEmails(
+            String[] emails) {
+
+        String[] emailsValidos =
+                resolverEmails(
+                        emails
+                );
+
+        if (emailsValidos.length == 0) {
+
+            return null;
+        }
+
+        StringBuilder sb =
+                new StringBuilder();
+
+        for (int i = 0;
+             i < emailsValidos.length;
+             i++) {
+
+            if (i > 0) {
+
+                sb.append(
+                        ";"
+                );
+            }
+
+            sb.append(
+                    emailsValidos[i]
+            );
+        }
+
+        return sb.toString();
+    }
+
+    private String resolverEmailRespuestaCotizacion() {
+
+        String configuracion =
+                TraeListasServiceUtil
+                        .getSystemConfig(
+                                CONFIG_REQUERIMIENTO_EMAIL_RESPUESTA
+                        );
+
+        String[] emails =
+                resolverEmails(
+                        configuracion
+                );
+
+        if (emails.length == 0) {
+
+            _log.warn(
+                    "No hay un email válido configurado en "
+                            + CONFIG_REQUERIMIENTO_EMAIL_RESPUESTA
+                            + ". Se continuará el envío "
+                            + "sin informar un email de respuesta."
+            );
+
+            return null;
+        }
+
+        if (emails.length > 1) {
+
+            _log.warn(
+                    "Existe más de un email configurado en "
+                            + CONFIG_REQUERIMIENTO_EMAIL_RESPUESTA
+                            + ". Se utilizará únicamente el primero."
+            );
+        }
+
+        return emails[0];
+    }
+
+    private String[] resolverEmails(
+            String emailsConcatenados) {
+
         String normalizado =
                 normalizarEmail(
                         emailsConcatenados
@@ -2247,10 +2366,22 @@ public class NotificarCotizacionPrestadorHelper {
             return new String[0];
         }
 
-        String[] candidatos =
+        return resolverEmails(
                 normalizado.split(
-                        ";"
-                );
+                        ";",
+                        -1
+                )
+        );
+    }
+
+    private String[] resolverEmails(
+            String[] candidatos) {
+
+        if (candidatos == null
+                || candidatos.length == 0) {
+
+            return new String[0];
+        }
 
         List<String> resultado =
                 new ArrayList<String>();
@@ -2267,11 +2398,23 @@ public class NotificarCotizacionPrestadorHelper {
                             candidatos[i]
                     );
 
+            /*
+             * Tolera:
+             *
+             * correo@dominio.com;
+             * correo@dominio.com;;
+             * ;correo@dominio.com
+             * espacios entre separadores
+             */
             if (email == null) {
 
                 continue;
             }
 
+            /*
+             * Un email inválido dentro de una lista no debe
+             * inutilizar los demás destinatarios válidos.
+             */
             if (!esEmailValido(
                     email
             )) {
@@ -2297,62 +2440,5 @@ public class NotificarCotizacionPrestadorHelper {
                         resultado.size()
                         ]
         );
-    }
-
-    private String[] resolverEmailsDestino(
-            String[] emailsReales,
-            boolean modoTemporal) {
-
-        if (modoTemporal) {
-
-            String emailQa =
-                    normalizarEmail(
-                            EMAIL_DESTINO_QA
-                    );
-
-            if (emailQa == null) {
-
-                return new String[0];
-            }
-
-            return new String[] {
-                    emailQa
-            };
-        }
-
-        return emailsReales != null
-                ? emailsReales
-                : new String[0];
-    }
-
-    private String unirEmails(
-            String[] emails) {
-
-        if (emails == null
-                || emails.length == 0) {
-
-            return null;
-        }
-
-        StringBuilder sb =
-                new StringBuilder();
-
-        for (int i = 0;
-             i < emails.length;
-             i++) {
-
-            if (i > 0) {
-
-                sb.append(
-                        ";"
-                );
-            }
-
-            sb.append(
-                    emails[i]
-            );
-        }
-
-        return sb.toString();
     }
 }

@@ -274,19 +274,26 @@ public class ReporteContabilidadBalanceSumasSaldosExcel extends
 				  haberAcumulado = haberAcumulado.add(repo.getHaberAjustado());
 
 				   HSSFCell cell8 = row.createCell(8);
-//				      cell8.setCellValue(repo.getDebeAjustado().subtract(repo.getHaberAjustado())
-//						   .add(saldoInicial).doubleValue());
-				      
-				      cell8.setCellValue(repo.getDebeAjustado().subtract(repo.getHaberAjustado())
-							   .add(BigDecimal.ZERO).doubleValue());   
-				      
-				   cell8.setCellStyle(styleMoney);
-				
-				   //saldoAcumulado = saldoAcumulado.add(repo.getDebeAjustado().subtract(repo.getHaberAjustado())).add(
-				   //		saldoInicial);
 				   
-				   saldoAcumulado = saldoAcumulado.add(repo.getDebeAjustado().subtract(repo.getHaberAjustado())).add(
-							BigDecimal.ZERO);
+				   if(repo.getDebe().setScale(2, RoundingMode.HALF_UP).doubleValue()==
+						   repo.getDebeAjustado().setScale(2, RoundingMode.HALF_UP).doubleValue() &&
+						   repo.getHaber().setScale(2, RoundingMode.HALF_UP).doubleValue()==
+						   repo.getHaberAjustado().setScale(2, RoundingMode.HALF_UP).doubleValue()	   ) 
+				   {
+					   
+				      cell8.setCellValue(repo.getDebeAjustado().subtract(repo.getHaberAjustado())
+						   .add(saldoInicial).doubleValue());
+				      
+				    saldoAcumulado = saldoAcumulado.add(repo.getDebeAjustado().subtract(repo.getHaberAjustado())).add(
+							saldoInicial);
+				      
+				   }else {   
+				      cell8.setCellValue(repo.getDebeAjustado().subtract(repo.getHaberAjustado())
+							    .add(BigDecimal.ZERO).doubleValue());
+				      saldoAcumulado = saldoAcumulado.add(repo.getDebeAjustado().subtract(repo.getHaberAjustado())).add(
+								BigDecimal.ZERO);
+				   }   
+				   cell8.setCellStyle(styleMoney);
 			}
 
 			i++;
