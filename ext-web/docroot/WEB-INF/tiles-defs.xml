@@ -4599,6 +4599,10 @@
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_consulta.jsp" />
 	</definition>
 
+	<definition name="portlet.compras.comparativa" extends="portlet.compras">
+        <put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_comparativa.jsp" />
+    </definition>
+
 	<definition name="portlet.compras.imprimir_requerimiento" extends="portlet.compras">
 		<put name="portlet_content" value="/portlet/compras/requerimientos/requerimiento_compra_impresion_pdf.jsp" />
 	</definition>

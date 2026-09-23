@@ -1,0 +1,31 @@
+-- Comparativa vigente por requerimiento y prestador.
+CREATE TABLE compras.requerimiento_comparativa (
+    id_comparativa SERIAL PRIMARY KEY,
+    id_requerimiento INTEGER NOT NULL REFERENCES compras.requerimiento (id_requerimiento),
+    id_prestador INTEGER NOT NULL REFERENCES public.prestador (id_prestador),
+    fecha_presupuesto DATE,
+    forma_pago INTEGER NOT NULL DEFAULT 30,
+    plazo_entrega VARCHAR(5),
+    validez_presupuesto INTEGER,
+    envio VARCHAR(20),
+    iva NUMERIC(18,2),
+    iibb NUMERIC(18,2),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL,
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    CONSTRAINT uq_compras_comparativa_prestador UNIQUE (id_requerimiento, id_prestador)
+);
+
+CREATE TABLE compras.requerimiento_comparativa_detalle (
+    id_detalle SERIAL PRIMARY KEY,
+    id_comparativa INTEGER NOT NULL REFERENCES compras.requerimiento_comparativa (id_comparativa),
+    id_prestacion INTEGER NOT NULL REFERENCES autorizaciones.nomenclador (id_prestacion),
+    cantidad INTEGER,
+    importe_unitario NUMERIC(18,2),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL,
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    CONSTRAINT uq_compras_comparativa_prestacion UNIQUE (id_comparativa, id_prestacion)
+);

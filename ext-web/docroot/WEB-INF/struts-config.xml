@@ -7287,6 +7287,10 @@
         <action
                 path="/compras/buscar_afiliado_fecha_vto_documentacion"
                 type="ar.com.ospim.compras.requerimientos.action.BuscarAfiliadoFechaVtoDocumentacionCompraAction" />
+        <action path="/compras/comparativa"
+                type="ar.com.ospim.compras.requerimientos.action.RequerimientoCompraComparativaAction">
+            <forward name="portlet.compras.comparativa" path="portlet.compras.comparativa" />
+        </action>
         <action
                 path="/compras/ver_situacion_medica_vigente"
                 type="ar.com.ospim.compras.requerimientos.action.VerSituacionMedicaVigenteCompraAction">

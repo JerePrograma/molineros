@@ -23,6 +23,10 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.jasperreports.engine.JRExporterParameter;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
+import ar.com.ospim.compras.requerimientos.action.RequerimientoCompraComparativaAction;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
@@ -166,6 +170,11 @@ public class PdfServlet extends HttpServlet {
 			throws ServletException, IOException {
 
 		String accion = ParamUtil.getString(req, "accion");
+
+		if ("comparativaCompra".equals(accion)) {
+            generaComparativaCompra(req, res);
+            return;
+        }
 
 		if ("requerimientoCompra".equals(accion)) {
 			generaRequerimientoCompra(req, res);
@@ -1300,4 +1309,58 @@ public class PdfServlet extends HttpServlet {
 			}
 		}
 	}
+
+    private void generaComparativaCompra(HttpServletRequest req,
+            HttpServletResponse res) throws IOException {
+        try {
+            RequerimientoCompraComparativaAction.validarPermiso(PortalUtil.getUser(req), false);
+        } catch (Exception e) {
+            res.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        int id = ParamUtil.getInteger(req, "id_requerimiento", 0);
+        if (id <= 0) {
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        InputStream in = null;
+        try {
+            RequerimientoCompraComparativaHelper helper =
+                    new RequerimientoCompraComparativaHelper();
+            ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra r =
+                    helper.obtenerRequerimiento(id);
+            in = getClass().getClassLoader().getResourceAsStream(
+                    "jasper/compras/requerimiento_comparativa.jrxml");
+            if (in == null) {
+                throw new IOException("No se encontró el reporte de comparativa.");
+            }
+            HashMap<String, String> parametros = new HashMap<String, String>();
+            parametros.put("REQUERIMIENTO", String.valueOf(id));
+            JasperPrint print = JasperFillManager.fillReport(
+                    JasperCompileManager.compileReport(in),
+                    parametros,
+                    new JRMapCollectionDataSource(
+                            helper.filasPdf(r, helper.cargar(r))));
+            crearPdfFromByteArray(req, res,
+                    JasperExportManager.exportReportToPdf(print),
+                    "ComparativaCompra_" + id + ".pdf");
+        } catch (IllegalArgumentException e) {
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "No hay una comparativa disponible para imprimir.");
+        } catch (Exception e) {
+            _log.error("No se pudo generar el PDF de comparativa. Requerimiento=" + id, e);
+            if (!res.isCommitted()) {
+                res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "No se pudo generar el PDF de la comparativa.");
+            }
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    _log.warn("No se pudo cerrar el reporte de comparativa.", e);
+                }
+            }
+        }
+    }
 }

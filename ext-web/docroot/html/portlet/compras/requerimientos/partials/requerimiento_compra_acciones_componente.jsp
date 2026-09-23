@@ -135,6 +135,23 @@ boolean botoneraPuedeImprimir =
         botoneraRequerimientoPersistido
         && (botoneraTieneRolView || puedeABM || botoneraTieneRolCotizar);
 
+boolean botoneraHayPresupuestoPrestador = false;
+if (botoneraCotizacionesEmpresaAttr instanceof java.util.List) {
+    for (Object documento : (java.util.List) botoneraCotizacionesEmpresaAttr) {
+        if (documento instanceof ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto) {
+            ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto presupuestoComparativa =
+                    (ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto) documento;
+            if (presupuestoComparativa.isActivo() && presupuestoComparativa.isPresupuestoPrestador()) {
+                botoneraHayPresupuestoPrestador = true;
+            }
+        }
+    }
+}
+PortletURL botoneraComparativaURL = renderResponse.createRenderURL();
+botoneraComparativaURL.setWindowState(LiferayWindowState.EXCLUSIVE);
+botoneraComparativaURL.setParameter("struts_action", "/compras/comparativa");
+botoneraComparativaURL.setParameter("id_requerimiento_compra", String.valueOf(botoneraIdRequerimientoActual));
+
 boolean botoneraPuedeCrearReclamoPrestacional =
         botoneraRequerimientoPersistido
         && botoneraSectorPermiteReclamoPrestacional
@@ -310,6 +327,12 @@ String botoneraReclamoPrestacionalFormId =
                        );" />
             <% } %>
 
+            <% if (botoneraPuedeImprimir && botoneraHayPresupuestoPrestador) { %>
+                <input type="button" id="<portlet:namespace />btnCrearComparativa"
+                       value="Crear comparativa"
+                       onclick="return <portlet:namespace />abrirComparativaCompra();" />
+            <% } %>
+
             <% if (botoneraPuedeCrearReclamoPrestacional) { %>
                 <input type="button"
                        id="<portlet:namespace />btnCrearReclamoPrestacional"
@@ -357,6 +380,22 @@ String botoneraReclamoPrestacionalFormId =
 </iframe>
 
 <script type="text/javascript">
+    var <portlet:namespace />popupComparativaCompra = null;
+
+    function <portlet:namespace />abrirComparativaCompra() {
+        if (<portlet:namespace />popupComparativaCompra != null) {
+            Liferay.Popup.close(<portlet:namespace />popupComparativaCompra);
+        }
+        <portlet:namespace />popupComparativaCompra = Liferay.Popup({
+            title: 'Comparativa de presupuestos',
+            modal: true,
+            width: 1050
+        });
+        jQuery(<portlet:namespace />popupComparativaCompra).load(
+                '<%= botoneraComparativaURL.toString() %>');
+        return false;
+    }
+
     function <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(formId, botonId, mensajeConfirmacion, textoProcesando) {
         var form = document.getElementById(formId);
         var btn = document.getElementById(botonId);
