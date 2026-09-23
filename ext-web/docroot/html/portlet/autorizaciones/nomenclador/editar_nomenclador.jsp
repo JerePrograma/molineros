@@ -48,7 +48,8 @@
 					     
 					    if(tnom.getId_tipo_nomenclador() == 1 || tnom.getId_tipo_nomenclador() == 6 ||
 					    		tnom.getId_tipo_nomenclador() == 3 || tnom.getId_tipo_nomenclador() == 9 || tnom.getId_tipo_nomenclador() == 10
-					    		|| tnom.getId_tipo_nomenclador() == 11 || tnom.getId_tipo_nomenclador() == 12 || "view".equalsIgnoreCase(accion) ){ %>
+					    		|| tnom.getId_tipo_nomenclador() == 11 || tnom.getId_tipo_nomenclador() == 12
+					    				|| tnom.getId_tipo_nomenclador() == 14 || "view".equalsIgnoreCase(accion) ){ %>
 								<option value="<%= tnom.getId_tipo_nomenclador()%>"
 								<%if(tnom.getId_tipo_nomenclador()== nomenclador.getId_tipo_nomenclador()){%> selected="selected" <% } %>>
 								<%=tnom.getDescripcion()%></option>
