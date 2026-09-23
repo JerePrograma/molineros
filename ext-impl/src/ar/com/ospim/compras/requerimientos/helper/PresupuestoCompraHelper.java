@@ -3,6 +3,7 @@ package ar.com.ospim.compras.requerimientos.helper;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -131,6 +133,111 @@ public final class PresupuestoCompraHelper {
         );
 
         return presupuestos.size();
+    }
+
+    public RequerimientoCompraPresupuesto obtenerPresupuesto(int idRequerimiento,
+            int idPrestador) throws Exception {
+        RequerimientoCompraPresupuesto encontrado = null;
+        for (RequerimientoCompraPresupuesto p :
+                BusquedaRequerimientoCompraServiceUtil.listarPresupuestos(idRequerimiento)) {
+            if (p.isActivo() && p.getIdPrestador() != null
+                    && p.getIdPrestador().intValue() == idPrestador) {
+                if (encontrado != null) {
+                    throw new IllegalArgumentException("Existe más de un presupuesto activo del prestador.");
+                }
+                encontrado = p;
+            }
+        }
+        return encontrado;
+    }
+
+    public void guardarPresupuestoComparativa(RequerimientoCompraComparativa comparativa,
+            PresupuestoEntrada entrada, Map<String, String> datos,
+            ServiceContext serviceContext, String usuario) throws Exception {
+        int id = comparativa.getIdRequerimiento();
+        validarAccesoCarga(BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(id));
+        RequerimientoCompraComparativaHelper comparativaHelper =
+                new RequerimientoCompraComparativaHelper();
+        List<RequerimientoCompraComparativa> lista = Collections.singletonList(comparativa);
+        comparativaHelper.aplicarEntrada(lista, datos);
+        DocumentoLibraryComprasHelper.validarContextoDocumentLibrary(serviceContext);
+        RequerimientoCompraPresupuesto anterior =
+                obtenerPresupuesto(id, comparativa.getIdPrestador());
+        DLFileEntry archivoAnterior = null;
+        if (anterior != null) {
+            validarIdentidadAsociacion(anterior);
+            if (anterior.getDlGroupId().longValue() != serviceContext.getScopeGroupId()) {
+                throw new IllegalArgumentException("El presupuesto no pertenece al sitio actual.");
+            }
+            archivoAnterior = DLFileEntryLocalServiceUtil.getDLFileEntry(
+                    anterior.getDlFileEntryId().longValue());
+            validarDocumentoAsociado(anterior, archivoAnterior);
+        }
+        boolean archivoNuevo = !WebKeysCompras.isEmpty(entrada.getNombreOriginal())
+                || (entrada.getArchivo() != null && entrada.getArchivo().length() > 0L);
+        if (!archivoNuevo) {
+            if (anterior == null) {
+                throw new IllegalArgumentException("Debe seleccionar el PDF del primer presupuesto.");
+            }
+            comparativaHelper.guardar(lista, datos, usuario);
+            return;
+        }
+
+        PresupuestoValidado validado = validarPresupuestos(id,
+                Collections.singletonList(entrada),
+                BusquedaRequerimientoCompraServiceUtil.listarPrestadoresEnviados(id),
+                false, DocumentoLibraryComprasHelper.obtenerMaximoTamanoDocumento()).get(0);
+        DLFolder folder = DocumentoLibraryComprasHelper.obtenerOCrearFolderCompras(serviceContext);
+        DocumentoPresupuestoCreado documento = null;
+        RequerimientoCompraPresupuesto asociacion = null;
+        boolean anteriorInactivo = false;
+        try {
+            documento = crearArchivoPresupuesto(serviceContext.getUserId(),
+                    folder.getFolderId(), validado, serviceContext);
+            if (anterior != null) {
+                anteriorInactivo = darDeBajaAsociacion(anterior,
+                        anterior.getIdRequerimientoPresupuesto().intValue(), id, usuario);
+                if (!anteriorInactivo) {
+                    throw new IllegalArgumentException("El presupuesto cambió. Actualice la pantalla.");
+                }
+            }
+            asociacion = registrarAsociacionPresupuesto(id, validado, documento, usuario);
+            comparativaHelper.guardar(lista, datos, usuario);
+        } catch (Exception error) {
+            if (asociacion != null) {
+                compensarPresupuestosCreados(id, Collections.singletonList(
+                        new PresupuestoCreado(documento, asociacion)), usuario);
+            } else if (documento != null) {
+                try {
+                    eliminarArchivoPresupuesto(documento.getFolderId(), documento.getNombre());
+                } catch (Exception cleanupError) {
+                    _log.error("No se pudo quitar el PDF tras fallar el guardado del presupuesto.", cleanupError);
+                }
+            }
+            if (anteriorInactivo) {
+                try {
+                    if (!reactivarAsociacion(anterior,
+                            anterior.getIdRequerimientoPresupuesto().intValue(), id)) {
+                        throw new IllegalStateException("No se pudo reactivar el presupuesto anterior.");
+                    }
+                } catch (Exception reactivarError) {
+                    _log.error("No se pudo recuperar el presupuesto anterior. Requerimiento=" + id,
+                            reactivarError);
+                    throw new Exception("Falló el guardado y no se pudo recuperar el presupuesto anterior. "
+                            + "Revise las cotizaciones antes de reintentar.", error);
+                }
+            }
+            throw traducirErrorDocumento(error);
+        }
+        if (archivoAnterior != null) {
+            try {
+                eliminarArchivoPresupuesto(archivoAnterior.getFolderId(), archivoAnterior.getName());
+            } catch (Exception cleanupError) {
+                throw new Exception("El presupuesto y sus datos se guardaron, pero no se pudo quitar "
+                        + "el archivo anterior de Document Library. El nuevo es el único vigente.",
+                        cleanupError);
+            }
+        }
     }
 
     public void borrarPresupuesto(
@@ -289,9 +396,10 @@ public final class PresupuestoCompraHelper {
 
             if (prestador != null
                     && prestador.getIdPrestador() > 0
-                    && WebKeysCompras.ENVIO_ENVIADO.equals(
-                    prestador.getEstadoEnvio()
-            )) {
+                    && (WebKeysCompras.ENVIO_ENVIADO.equals(
+                            prestador.getEstadoEnvio())
+                        || WebKeysCompras.ENVIO_COTIZADO.equals(
+                            prestador.getEstadoEnvio()))) {
 
                 prestadoresPorId.put(
                         Integer.valueOf(

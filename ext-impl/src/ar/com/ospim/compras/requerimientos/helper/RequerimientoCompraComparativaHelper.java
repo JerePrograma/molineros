@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
@@ -62,29 +64,7 @@ public class RequerimientoCompraComparativaHelper {
                     "El requerimiento no tiene presupuestos de prestadores cargados.");
         }
         for (RequerimientoCompraComparativa c : lista) {
-            Map<Integer, RequerimientoCompraComparativaDetalle> guardados =
-                    new HashMap<Integer, RequerimientoCompraComparativaDetalle>();
-            for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
-                guardados.put(Integer.valueOf(d.getIdPrestacion()), d);
-            }
-            List<RequerimientoCompraComparativaDetalle> detalles =
-                    new ArrayList<RequerimientoCompraComparativaDetalle>();
-            for (RequerimientoCompraDetalle item : r.getDetalles()) {
-                RequerimientoCompraComparativaDetalle d = guardados.remove(item.getIdPrestacion());
-                if (d == null) {
-                    d = new RequerimientoCompraComparativaDetalle();
-                    d.setIdPrestacion(item.getIdPrestacionInt());
-                }
-                d.setCodigo(item.getCodigoItemVisible());
-                d.setPrestacion(item.getDescripcionItemVisible());
-                detalles.add(d);
-            }
-            if (!guardados.isEmpty()) {
-                throw new IllegalArgumentException(
-                        "Hay prestaciones guardadas que ya no pertenecen al requerimiento.");
-            }
-            c.setDetalles(detalles);
-            calcular(c);
+            completarDetalles(r, c);
         }
         Collections.sort(lista, new Comparator<RequerimientoCompraComparativa>() {
             public int compare(RequerimientoCompraComparativa a,
@@ -101,6 +81,77 @@ public class RequerimientoCompraComparativaHelper {
             }
         });
         return lista;
+    }
+
+    public Map<Integer, Map<Integer, String>> obtenerPreciosPorPrestador(int idRequerimiento)
+            throws Exception {
+        Map<Integer, Map<Integer, String>> precios =
+                new HashMap<Integer, Map<Integer, String>>();
+        for (RequerimientoCompraComparativa c :
+                RequerimientoCompraComparativaServiceUtil.listar(idRequerimiento)) {
+            Map<Integer, String> importes = new HashMap<Integer, String>();
+            for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
+                if (d.getImporteUnitario() != null) {
+                    importes.put(Integer.valueOf(d.getIdPrestacion()),
+                            d.getImporteUnitario().toPlainString());
+                }
+            }
+            precios.put(Integer.valueOf(c.getIdPrestador()), importes);
+        }
+        return precios;
+    }
+
+    public RequerimientoCompraComparativa cargarPrestador(RequerimientoCompra r,
+            int idPrestador) throws Exception {
+        boolean enviado = false;
+        for (PrestadorCotizacion p : BusquedaRequerimientoCompraServiceUtil
+                .listarPrestadoresEnviados(r.getIdRequerimientoCompra())) {
+            if (p.getIdPrestador() == idPrestador
+                    && (WebKeysCompras.ENVIO_ENVIADO.equals(p.getEstadoEnvio())
+                        || WebKeysCompras.ENVIO_COTIZADO.equals(p.getEstadoEnvio()))) {
+                enviado = true;
+                break;
+            }
+        }
+        if (!enviado || r.esSectorSinCotizacionPrestador()) {
+            throw new IllegalArgumentException("Seleccione un prestador notificado para este requerimiento.");
+        }
+        List<RequerimientoCompraComparativa> lista =
+                RequerimientoCompraComparativaServiceUtil.listar(
+                        r.getIdRequerimientoCompra(), idPrestador);
+        if (lista.size() != 1) {
+            throw new IllegalArgumentException("No se pudo cargar el prestador seleccionado.");
+        }
+        RequerimientoCompraComparativa c = lista.get(0);
+        completarDetalles(r, c);
+        return c;
+    }
+
+    private void completarDetalles(RequerimientoCompra r,
+            RequerimientoCompraComparativa c) {
+        Map<Integer, RequerimientoCompraComparativaDetalle> guardados =
+                new HashMap<Integer, RequerimientoCompraComparativaDetalle>();
+        for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
+            guardados.put(Integer.valueOf(d.getIdPrestacion()), d);
+        }
+        List<RequerimientoCompraComparativaDetalle> detalles =
+                new ArrayList<RequerimientoCompraComparativaDetalle>();
+        for (RequerimientoCompraDetalle item : r.getDetalles()) {
+            RequerimientoCompraComparativaDetalle d = guardados.remove(item.getIdPrestacion());
+            if (d == null) {
+                d = new RequerimientoCompraComparativaDetalle();
+                d.setIdPrestacion(item.getIdPrestacionInt());
+            }
+            d.setCodigo(item.getCodigoItemVisible());
+            d.setPrestacion(item.getDescripcionItemVisible());
+            detalles.add(d);
+        }
+        if (!guardados.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Hay prestaciones guardadas que ya no pertenecen al requerimiento.");
+        }
+        c.setDetalles(detalles);
+        calcular(c);
     }
 
     public void guardar(List<RequerimientoCompraComparativa> lista,
@@ -132,7 +183,7 @@ public class RequerimientoCompraComparativaHelper {
             String contexto = "Prestador " + c.getIdPrestador() + ": ";
             if (!String.valueOf(c.getIdPrestador()).equals(entrada.get("prestador" + sufijo))) {
                 throw new IllegalArgumentException(
-                        "Cambió la lista de presupuestos. Cierre y vuelva a abrir la comparativa.");
+                        "Cambió el prestador de la carga. Vuelva a seleccionarlo.");
             }
             try {
                 c.setFechaPresupuesto(fecha(entrada.get("fecha" + sufijo)));

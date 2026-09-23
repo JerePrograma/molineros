@@ -20,6 +20,11 @@ public class RequerimientoCompraComparativaServiceImpl {
 
     public List<RequerimientoCompraComparativa> listar(int idRequerimiento)
             throws Exception {
+        return listar(idRequerimiento, 0);
+    }
+
+    public List<RequerimientoCompraComparativa> listar(int idRequerimiento,
+            int idPrestador) throws Exception {
         Connection con = null;
         PreparedStatement stmt = null;
         List<RequerimientoCompraComparativa> resultado =
@@ -27,7 +32,13 @@ public class RequerimientoCompraComparativaServiceImpl {
         try {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareStatement(
-                    "SELECT c.*, rp.id_prestador AS prestador_id, p.descripcion "
+                    idPrestador > 0
+                    ? "SELECT c.*, p.id_prestador AS prestador_id, p.descripcion "
+                        + "FROM public.prestador p "
+                        + "LEFT JOIN compras.requerimiento_comparativa c "
+                        + "ON c.id_prestador = p.id_prestador AND c.id_requerimiento = ? "
+                        + "WHERE p.id_prestador = ?"
+                    : "SELECT c.*, rp.id_prestador AS prestador_id, p.descripcion "
                     + "FROM compras.listar_documentos_requerimiento(?, 1) rp "
                     + "JOIN public.prestador p ON p.id_prestador = rp.id_prestador "
                     + "LEFT JOIN compras.requerimiento_comparativa c "
@@ -35,6 +46,9 @@ public class RequerimientoCompraComparativaServiceImpl {
                     + "AND c.id_prestador = rp.id_prestador "
                     + "ORDER BY rp.id_prestador");
             stmt.setInt(1, idRequerimiento);
+            if (idPrestador > 0) {
+                stmt.setInt(2, idPrestador);
+            }
             ResultSet rs = stmt.executeQuery();
             try {
                 while (rs.next()) {

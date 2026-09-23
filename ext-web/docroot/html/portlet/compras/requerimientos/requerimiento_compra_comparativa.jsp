@@ -18,17 +18,9 @@ Map<String, String> comparativaEntrada =
 boolean comparativaEditable = Boolean.TRUE.equals(renderRequest.getAttribute("comparativaEditable"));
 boolean comparativaExiste = Boolean.TRUE.equals(renderRequest.getAttribute("comparativaExiste"));
 String comparativaError = (String) renderRequest.getAttribute("comparativaError");
-PortletURL comparativaGuardarURL = renderResponse.createActionURL();
-comparativaGuardarURL.setWindowState(LiferayWindowState.EXCLUSIVE);
-comparativaGuardarURL.setParameter("struts_action", "/compras/comparativa");
-PortletURL comparativaEditarURL = renderResponse.createRenderURL();
-comparativaEditarURL.setWindowState(LiferayWindowState.EXCLUSIVE);
-comparativaEditarURL.setParameter("struts_action", "/compras/comparativa");
-comparativaEditarURL.setParameter("id_requerimiento_compra",
-        comparativaReq == null ? "0" : String.valueOf(comparativaReq.getIdRequerimientoCompra()));
-comparativaEditarURL.setParameter("editar", "true");
+String comparativaArchivoActual = (String) renderRequest.getAttribute("comparativaArchivoActual");
 %>
-<div id="<portlet:namespace />comparativaContenido">
+<div id="<portlet:namespace /><%= comparativaEditable ? "comparativaPrestadorContenido" : "comparativaContenido" %>">
 <% if (comparativaError != null) { %>
     <div class="portlet-msg-error"><%= HtmlUtil.escape(comparativaError) %></div>
 <% } %>
@@ -36,17 +28,23 @@ comparativaEditarURL.setParameter("editar", "true");
     <div class="portlet-msg-success">Comparativa guardada.</div>
 <% } %>
 <% if (comparativaReq != null && comparativas != null) { %>
+    <% if (!comparativaEditable) { %>
     <h3>Comparativa del requerimiento <%= comparativaReq.getIdRequerimientoCompra() %></h3>
+        <% if (!comparativaExiste) { %>
+        <div class="portlet-msg-info">Todavía no hay datos de comparativa guardados.</div>
+        <% } %>
+    <% } %>
     <% if (comparativaEditable) { %>
         <p>Ingrese cantidades e importes netos sin separador de miles. IVA e IIBB son importes adicionales del presupuesto completo.</p>
     <% } %>
-    <form id="<portlet:namespace />comparativaForm" method="post"
-          action="<%= comparativaGuardarURL.toString() %>"
-          onsubmit="return <portlet:namespace />guardarComparativa(this);">
-        <input type="hidden" name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= comparativaReq.getIdRequerimientoCompra() %>" />
-        <input type="hidden" name="<portlet:namespace />cmd" value="guardar" />
-        <div style="max-height:550px;overflow:auto;">
+        <% if (comparativaEditable) { %>
+            <input type="hidden" id="<portlet:namespace />comparativaTieneArchivo"
+                   value="<%= comparativaArchivoActual != null %>" />
+            <% if (comparativaArchivoActual != null) { %>
+            <p>Archivo actual: <%= HtmlUtil.escape(comparativaArchivoActual) %></p>
+            <% } %>
+        <% } %>
+        <div <%= comparativaEditable ? "" : "style=\"max-height:550px;overflow:auto;\"" %>>
         <% for (RequerimientoCompraComparativa comparativa : comparativas) {
             if (!comparativaEditable && comparativa.getIdComparativa() == 0) {
                 continue;
@@ -59,8 +57,10 @@ comparativaEditarURL.setParameter("editar", "true");
                     (Adjudicado)
                 <% } %>
             </legend>
+            <% if (comparativaEditable) { %>
             <input type="hidden" name="<portlet:namespace />prestador<%= sufijoComparativa %>"
                    value="<%= comparativa.getIdPrestador() %>" />
+            <% } %>
             <table class="lfr-table">
                 <tr>
                     <td><label for="<portlet:namespace />fecha<%= sufijoComparativa %>">Fecha presupuesto (dd/mm/aaaa)</label>
@@ -170,40 +170,16 @@ comparativaEditarURL.setParameter("editar", "true");
         <% } %>
         </div>
         <% if (comparativaEditable) { %>
-            <input type="submit" id="<portlet:namespace />guardarComparativaBoton" value="Guardar comparativa" />
-        <% } else if (Boolean.TRUE.equals(renderRequest.getAttribute("comparativaPuedeEditar"))) { %>
-            <input type="button" value="Modificar comparativa"
-                   onclick="<portlet:namespace />cargarComparativa('<%= HtmlUtil.escape(comparativaEditarURL.toString()) %>');" />
+            <div style="text-align:right;">
+                <input type="button" id="<portlet:namespace />guardarComparativaBoton" value="Guardar"
+                       onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();" />
+                <input type="button" value="Eliminar"
+                       onclick="return <portlet:namespace />limpiarPresupuestoComparativa();" />
+            </div>
         <% } %>
         <% if (comparativaExiste && !comparativaEditable) { %>
             <input type="button" value="Imprimir PDF"
                    onclick="window.open('/pdfservlet/?accion=comparativaCompra&amp;id_requerimiento=<%= comparativaReq.getIdRequerimientoCompra() %>');" />
         <% } %>
-    </form>
 <% } %>
-<script type="text/javascript">
-function <portlet:namespace />cargarComparativa(url) {
-    jQuery.ajax({
-        url: url,
-        success: function(html) { jQuery('#<portlet:namespace />comparativaContenido').replaceWith(html); },
-        error: function() { alert('No se pudo consultar la comparativa.'); }
-    });
-}
-function <portlet:namespace />guardarComparativa(form) {
-    var boton = jQuery('#<portlet:namespace />guardarComparativaBoton');
-    if (boton.attr('disabled')) { return false; }
-    boton.attr('disabled', 'disabled');
-    jQuery.ajax({
-        type: 'POST',
-        url: form.action,
-        data: jQuery(form).serialize(),
-        success: function(html) { jQuery('#<portlet:namespace />comparativaContenido').replaceWith(html); },
-        error: function() {
-            boton.removeAttr('disabled');
-            alert('No se pudo confirmar el guardado. Vuelva a consultar la comparativa.');
-        }
-    });
-    return false;
-}
-</script>
 </div>

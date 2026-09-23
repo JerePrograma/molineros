@@ -149,6 +149,9 @@ headerNames.add(
                         : "Prestador"
 );
 headerNames.add("Descargar");
+if (!cotizacionEmpresaPresupuestos) {
+    headerNames.add("Editar");
+}
 headerNames.add("Eliminar");
 
 String mensajeSinResultados =
@@ -343,6 +346,22 @@ try {
         }
 
         row.addText(descargar.toString());
+
+        if (!cotizacionEmpresaPresupuestos) {
+            StringBuilder editar = new StringBuilder();
+            if (puedeEliminarPresupuestos && presupuesto.isActivo()
+                    && presupuesto.getIdPrestador() != null
+                    && presupuesto.getIdPrestador().intValue() > 0) {
+                editar.append("<a href=\"#\" title=\"Editar presupuesto\" onclick=\"jQuery('#");
+                editar.append(namespaceAdjuntos);
+                editar.append("presupuesto_0_id_prestador').val('");
+                editar.append(presupuesto.getIdPrestador().intValue());
+                editar.append("').change(); return false;\"><img alt=\"Editar presupuesto\" src=\"");
+                editar.append(themeDisplay.getPathThemeImages());
+                editar.append("/common/edit.png\" /></a>");
+            }
+            row.addText(editar.toString());
+        }
 
         StringBuilder borrar =
                 new StringBuilder();

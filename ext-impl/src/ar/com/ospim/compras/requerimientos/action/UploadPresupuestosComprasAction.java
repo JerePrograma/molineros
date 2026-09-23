@@ -5,6 +5,9 @@ import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativaDetalle;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper;
 import ar.com.ospim.compras.requerimientos.helper.PresupuestoCompraHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
@@ -32,6 +35,8 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -147,7 +152,34 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             user
                     );
 
-            if (Constants.ADD.equals(cmd)) {
+            if ("guardarComparativa".equals(cmd)) {
+                RequerimientoCompraComparativaHelper comparativaHelper =
+                        new RequerimientoCompraComparativaHelper();
+                int idPrestador = ParamUtil.getInteger(uploadReq, "presupuesto_0_id_prestador");
+                RequerimientoCompraComparativa comparativa = comparativaHelper.cargarPrestador(
+                        comparativaHelper.obtenerRequerimiento(idRequerimientoCompra), idPrestador);
+                Map<String, String> entrada = new HashMap<String, String>();
+                String sufijo = "_" + idPrestador;
+                String[] campos = {"prestador", "fecha", "pago", "plazo", "validez", "envio", "iva", "iibb"};
+                for (String campo : campos) {
+                    entrada.put(campo + sufijo, ParamUtil.getString(uploadReq, campo + sufijo));
+                }
+                for (RequerimientoCompraComparativaDetalle detalle : comparativa.getDetalles()) {
+                    String clave = sufijo + "_" + detalle.getIdPrestacion();
+                    entrada.put("cantidad" + clave, ParamUtil.getString(uploadReq, "cantidad" + clave));
+                    entrada.put("importe" + clave, ParamUtil.getString(uploadReq, "importe" + clave));
+                }
+                presupuestoHelper.guardarPresupuestoComparativa(comparativa,
+                        new PresupuestoCompraHelper.PresupuestoEntrada(0,
+                                uploadReq.getFile("presupuesto_0"),
+                                uploadReq.getFileName("presupuesto_0"), idPrestador),
+                        entrada, serviceContext, usuario);
+                actionResponse.setRenderParameter("prestador_comparativa", String.valueOf(idPrestador));
+                actionResponse.setRenderParameter("presupuestos_guardados", "1");
+                actionResponse.setRenderParameter("compras_operacion", OPERACION_PRESUPUESTO_AGREGAR);
+                SessionMessages.add(actionRequest, "requerimiento-compra-presupuesto-guardado");
+
+            } else if (Constants.ADD.equals(cmd)) {
                 int cantidad =
                         ParamUtil.getInteger(
                                 uploadReq,

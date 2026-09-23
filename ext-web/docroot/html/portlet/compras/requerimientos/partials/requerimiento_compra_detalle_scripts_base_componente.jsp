@@ -16,7 +16,28 @@ IDs o funciones JavaScript expuestos:
 Efectos secundarios:
     Sólo modifica el DOM o el modelo JavaScript; no ejecuta persistencia.
 --%>
+<%
+Map<Integer, Map<Integer, String>> preciosComparativaDetalle =
+        (Map<Integer, Map<Integer, String>>) request.getAttribute(
+                "compras.requerimiento.preciosComparativa");
+String errorPreciosComparativaDetalle = (String) request.getAttribute(
+        "compras.requerimiento.errorPreciosComparativa");
+%>
+<% if (puedeCotizarDetalle && errorPreciosComparativaDetalle != null) { %>
+    <div class="portlet-msg-error"><%= HtmlUtil.escape(errorPreciosComparativaDetalle) %></div>
+<% } %>
 <script type="text/javascript">
+    var <portlet:namespace />preciosComparativaDetalle = {};
+    <% if (puedeCotizarDetalle && preciosComparativaDetalle != null) {
+        for (Map.Entry<Integer, Map<Integer, String>> preciosPrestador
+                : preciosComparativaDetalle.entrySet()) { %>
+        <portlet:namespace />preciosComparativaDetalle['<%= preciosPrestador.getKey() %>'] = {};
+        <% for (Map.Entry<Integer, String> precioPrestacion : preciosPrestador.getValue().entrySet()) { %>
+        <portlet:namespace />preciosComparativaDetalle['<%= preciosPrestador.getKey() %>']['<%= precioPrestacion.getKey() %>'] =
+                '<%= jsDetalleCompra(precioPrestacion.getValue()) %>';
+        <% }
+        }
+    } %>
     var <portlet:namespace />detallesCompra = [];
     var <portlet:namespace />detalleDeletedIds = [];
     var <portlet:namespace />prestadoresEnviadosDetalleCache = [];
@@ -217,6 +238,7 @@ Efectos secundarios:
     }
 
     function <portlet:namespace />capturarPrestadorAdjudicado() {
+        var prestadorAnterior = <portlet:namespace />idPrestadorAdjudicado;
         var selector =
                 jQuery(
                         '#<portlet:namespace />id_prestador_adjudicado'
@@ -238,6 +260,12 @@ Efectos secundarios:
                             );
         }
 
+        var aplicarPrecios = prestadorAnterior != <portlet:namespace />idPrestadorAdjudicado
+                && <portlet:namespace />idPrestadorAdjudicado != ''
+                && <%= puedeCotizarDetalle ? "true" : "false" %>;
+        var precios = <portlet:namespace />preciosComparativaDetalle[
+                <portlet:namespace />idPrestadorAdjudicado] || {};
+
         for (var i = 0;
                 i < <portlet:namespace />detallesCompra.length;
                 i++) {
@@ -253,6 +281,14 @@ Efectos secundarios:
                     <portlet:namespace />idPrestadorAdjudicado;
             detalle.prestador =
                     <portlet:namespace />prestadorAdjudicado;
+            if (aplicarPrecios) {
+                var importe = precios[detalle.idPrestacion];
+                detalle.precioUnitario = importe == null ? '' : importe;
+                detalle.precioTotal = <portlet:namespace />calcularTotalDetalle(i);
+            }
+        }
+        if (aplicarPrecios) {
+            <portlet:namespace />renderDetallesCompra();
         }
     }
 

@@ -5,9 +5,11 @@ import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 
 import com.liferay.portal.kernel.util.HttpUtil;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.WebKeys;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -126,9 +128,10 @@ public final class RequerimientoCompraRenderActionUtil {
 
                         if (prestador != null
                                 && prestador.getIdPrestador() > 0
-                                && WebKeysCompras.ENVIO_ENVIADO.equals(
-                                        prestador.getEstadoEnvio()
-                                )) {
+                                && (WebKeysCompras.ENVIO_ENVIADO.equals(
+                                        prestador.getEstadoEnvio())
+                                    || WebKeysCompras.ENVIO_COTIZADO.equals(
+                                        prestador.getEstadoEnvio()))) {
 
                             prestadoresDisponiblesPresupuesto.add(
                                     prestador
@@ -263,6 +266,22 @@ public final class RequerimientoCompraRenderActionUtil {
                             !WebKeysCompras.isEmpty(e.getMessage())
                                     ? e.getMessage()
                                     : "No se pudieron cargar los presupuestos asociados al requerimiento.";
+                }
+            }
+
+            if (!requerimiento.esSectorSinCotizacionPrestador()
+                    && requerimiento.puedeEditarCotizacion()) {
+                try {
+                    renderRequest.setAttribute("compras.requerimiento.preciosComparativa",
+                            new RequerimientoCompraComparativaHelper()
+                                    .obtenerPreciosPorPrestador(idRequerimientoCompra));
+                } catch (Exception e) {
+                    LogFactoryUtil.getLog(RequerimientoCompraRenderActionUtil.class).error(
+                            "No se pudieron consultar los precios de la comparativa. Requerimiento="
+                                    + idRequerimientoCompra, e);
+                    renderRequest.setAttribute("compras.requerimiento.errorPreciosComparativa",
+                            "No se pudieron consultar los precios de la comparativa. "
+                                    + "Revise o complete los precios unitarios antes de guardar la cotización.");
                 }
             }
 

@@ -171,10 +171,7 @@ boolean hayPrestadoresDisponiblesPresupuestos =
 int maxPresupuestosCargaActual =
         cotizacionEmpresaPresupuestos
                 ? WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA
-                : Math.min(
-                        WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA,
-                        prestadoresDisponiblesPresupuestos.size()
-                );
+                : 1;
 
 PortletURL uploadPresupuestosURL =
         renderResponse.createActionURL();
@@ -187,6 +184,12 @@ uploadPresupuestosURL.setParameter(
         "struts_action",
         "/compras/upload_presupuestos_requerimiento"
 );
+
+PortletURL comparativaPrestadorURL = renderResponse.createRenderURL();
+comparativaPrestadorURL.setWindowState(LiferayWindowState.EXCLUSIVE);
+comparativaPrestadorURL.setParameter("struts_action", "/compras/comparativa");
+comparativaPrestadorURL.setParameter("id_requerimiento_compra",
+        String.valueOf(idRequerimientoCompraPresupuestos));
 
 PortletURL buscarEmpresasCotizacionURL = null;
 
@@ -623,23 +626,6 @@ boolean msgPresupuestoBorrado =
                 !cotizacionEmpresaPresupuestos
                 &&
                 puedeEditarPresupuestos
-                && hayPrestadoresEnviadosPresupuestos
-                && !hayPrestadoresDisponiblesPresupuestos
-                && WebKeysCompras.isEmpty(
-                        errorPrestadoresPresupuestos
-                )
-        %>">
-            <div class="portlet-msg-info">
-                Todos los prestadores notificados ya tienen un presupuesto
-                cargado. Para reemplazar uno, primero debe eliminar el archivo
-                existente.
-            </div>
-        </c:if>
-
-        <c:if test="<%=
-                !cotizacionEmpresaPresupuestos
-                &&
-                puedeEditarPresupuestos
                 && WebKeysCompras.isEmpty(
                         errorPrestadoresPresupuestos
                 )
@@ -652,14 +638,12 @@ boolean msgPresupuestoBorrado =
                 <colgroup>
                     <col style="width: 40%;" />
                     <col style="width: 35%;" />
-                    <col style="width: 25%;" />
                 </colgroup>
 
                 <thead>
                     <tr>
                         <th>Prestador enviado</th>
                         <th>Archivo</th>
-                        <th>Acciones</th>
                     </tr>
                 </thead>
 
@@ -697,6 +681,7 @@ boolean msgPresupuestoBorrado =
                 }
                 %>
             </select>
+            <div id="<portlet:namespace />comparativaPrestadorSeccion"></div>
         </c:if>
 
         <c:if test="<%=
@@ -781,22 +766,16 @@ boolean msgPresupuestoBorrado =
         - El presupuesto debe presentarse en formato PDF.
         <br />
 
-        - Debe seleccionar un archivo no vacío.
+        - Seleccione un prestador y complete sus datos y prestaciones.
+          Guardar registra el archivo y los datos del presupuesto.
         <br />
 
-        - Un mismo prestador no puede repetirse dentro de la misma carga.
+        - En la primera carga debe seleccionar un PDF no vacío.
+          Al editar, puede conservar el archivo actual o seleccionar uno para reemplazarlo.
         <br />
 
         - Sólo puede existir un presupuesto activo por prestador.
-          Para reemplazarlo, primero debe eliminar el presupuesto existente.
-        <br />
-
-        - Puede utilizar "Agregar otro presupuesto" para cargar varios
-          presupuestos en una misma operación.
-        <br />
-
-        - La cantidad máxima de presupuestos de una operación depende
-          de los prestadores disponibles y del máximo configurado por el sistema.
+          Eliminar limpia la carga actual; la tabla Cotizaciones permite eliminar un presupuesto guardado.
         <br />
 
         - El archivo debe respetar el tamaño máximo permitido por
@@ -1117,6 +1096,7 @@ boolean msgPresupuestoBorrado =
                                 + '</div>'
                 );
 
+        <% if (cotizacionEmpresaPresupuestos) { %>
         var subir =
                 jQuery(
                         '<input '
@@ -1187,6 +1167,7 @@ boolean msgPresupuestoBorrado =
         acciones.append(borrar);
         acciones.append(document.createTextNode(' '));
         acciones.append(agregar);
+        <% } %>
 
         row.append(
                 jQuery(
@@ -1200,7 +1181,14 @@ boolean msgPresupuestoBorrado =
                 ).append(archivo).append(ayudaArchivo)
         );
 
+        <% if (cotizacionEmpresaPresupuestos) { %>
         row.append(acciones);
+        <% } else { %>
+        prestador.change(function() {
+            archivo.val('');
+            <portlet:namespace />cargarComparativaPrestador(prestador.val());
+        });
+        <% } %>
         tbody.append(row);
 
         <portlet:namespace />reindexarFilasPresupuesto();
@@ -1229,6 +1217,34 @@ boolean msgPresupuestoBorrado =
             );
             return false;
         }
+
+        <% if (!cotizacionEmpresaPresupuestos) { %>
+        var idPrestador = jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val();
+        var seccion = jQuery('#<portlet:namespace />comparativaPrestadorSeccion');
+        var prestadorCargado = seccion.find(
+                'input[name="<portlet:namespace />prestador_' + idPrestador + '"]').val();
+        if (!idPrestador || prestadorCargado != idPrestador) {
+            alert('Seleccione un prestador y espere a que se carguen sus datos.');
+            return false;
+        }
+        var archivo = jQuery('#<portlet:namespace />presupuesto_0').val();
+        if (!archivo && seccion.find('#<portlet:namespace />comparativaTieneArchivo').val() != 'true') {
+            alert('Debe seleccionar el PDF del primer presupuesto.');
+            return false;
+        }
+        if (archivo && !/\.pdf$/i.test(archivo)) {
+            alert('El archivo debe estar en formato PDF.');
+            return false;
+        }
+        var boton = seccion.find('#<portlet:namespace />guardarComparativaBoton');
+        if (boton.attr('disabled')) { return false; }
+        boton.attr('disabled', 'disabled');
+        accion.value = 'guardarComparativa';
+        idPresupuesto.value = '';
+        <portlet:namespace />reindexarFilasPresupuesto();
+        form.submit();
+        return false;
+        <% } %>
 
         var rows =
                 jQuery(
@@ -1409,6 +1425,36 @@ boolean msgPresupuestoBorrado =
         return false;
     }
 
+    <% if (!cotizacionEmpresaPresupuestos) { %>
+    function <portlet:namespace />cargarComparativaPrestador(idPrestador) {
+        var seccion = jQuery('#<portlet:namespace />comparativaPrestadorSeccion');
+        seccion.empty();
+        if (!idPrestador) { return; }
+        seccion.html('<div class="portlet-msg-info">Cargando presupuesto...</div>');
+        jQuery.ajax({
+            url: '<%= comparativaPrestadorURL.toString() %>',
+            data: { '<portlet:namespace />id_prestador': idPrestador },
+            success: function(html) {
+                if (jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val() == idPrestador) {
+                    seccion.html(html);
+                }
+            },
+            error: function() {
+                if (jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val() == idPrestador) {
+                    seccion.html('<div class="portlet-msg-error">No se pudo cargar el presupuesto.</div>');
+                }
+            }
+        });
+    }
+
+    function <portlet:namespace />limpiarPresupuestoComparativa() {
+        jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val('');
+        jQuery('#<portlet:namespace />presupuesto_0').val('');
+        jQuery('#<portlet:namespace />comparativaPrestadorSeccion').empty();
+        return false;
+    }
+    <% } %>
+
     jQuery(function() {
         <% if (puedeEditarPresupuestos
                 && (
@@ -1422,6 +1468,11 @@ boolean msgPresupuestoBorrado =
                 )) { %>
 
             <portlet:namespace />agregarFilaPresupuesto();
+            <% if (!cotizacionEmpresaPresupuestos
+                    && ParamUtil.getInteger(renderRequest, "prestador_comparativa") > 0) { %>
+            jQuery('#<portlet:namespace />presupuesto_0_id_prestador')
+                    .val('<%= ParamUtil.getInteger(renderRequest, "prestador_comparativa") %>').change();
+            <% } %>
         <% } %>
     });
 </script>

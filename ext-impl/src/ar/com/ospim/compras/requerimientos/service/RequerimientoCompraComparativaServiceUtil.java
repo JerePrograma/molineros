@@ -13,6 +13,11 @@ public class RequerimientoCompraComparativaServiceUtil {
         return service.listar(idRequerimiento);
     }
 
+    public static List<RequerimientoCompraComparativa> listar(int idRequerimiento,
+            int idPrestador) throws Exception {
+        return service.listar(idRequerimiento, idPrestador);
+    }
+
     public static void guardar(List<RequerimientoCompraComparativa> comparativas,
             List<Integer> detallesVaciados, String usuario) throws Exception {
         service.guardar(comparativas, detallesVaciados, usuario);
