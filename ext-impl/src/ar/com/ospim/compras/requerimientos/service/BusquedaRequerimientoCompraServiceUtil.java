@@ -176,7 +176,19 @@ public class BusquedaRequerimientoCompraServiceUtil {
 
     public static List<RequerimientoCompraEstado> listarEstados()
             throws Exception {
-        return WebKeysCompras.listarEstados();
+        return getInstance().listarEstados();
+    }
+
+    public static Map<Integer, String> listarNomencladores() throws Exception {
+        return getInstance().listarNomencladores();
+    }
+
+    public static String getEstadoDescripcion(int idEstado) throws Exception {
+        List<RequerimientoCompraEstado> estados = listarEstados();
+        for (int i = 0; i < estados.size(); i++) {
+            if (estados.get(i).getIdEstado() == idEstado) { return estados.get(i).getDescripcion(); }
+        }
+        return "";
     }
 
     public static List<RequerimientoCompraSector> listarSectores()

@@ -398,7 +398,7 @@ int idRpCabecera =
                             boolean usaCodigoPrestacion =
                                     WebKeysCompras
                                             .getFiltroTipoNomencladorCompras(
-                                                    sector.getDescripcion()
+                                                    sector
                                             ) != null;
 
                             String usaCodigoPrestacionAttr =
@@ -409,13 +409,17 @@ int idRpCabecera =
                             String sinCotizacionPrestadorAttr =
                                     WebKeysCompras
                                             .esSectorSinCotizacionPrestador(
-                                                    sector.getDescripcion()
+                                                    sector
                                             )
                                                     ? "true"
                                                     : "false";
                         %>
 
                             <option value="<%= sectorId %>"
+                                    data-tipo-item="<%= sector.getTipoItem() %>"
+                                    data-busqueda-medica="<%= sector.isBusquedaNomencladorMedica() %>"
+                                    data-medicamento-legacy="<%= sector.isPermiteMedicamentoLegacy() %>"
+                                    data-filtro-nomenclador="<%= sector.getFiltroTipoNomenclador() != null ? sector.getFiltroTipoNomenclador().toString() : "" %>"
                                     data-requiere-afiliado="<%= requiereAfiliado %>"
                                     data-usa-codigo-prestacion="<%= usaCodigoPrestacionAttr %>"
                                     data-sin-cotizacion-prestador="<%= sinCotizacionPrestadorAttr %>"

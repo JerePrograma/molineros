@@ -1,0 +1,149 @@
+INICIO 2026-09-23T10:25:32.960581 ('devmolineros', 'PostgreSQL 9.6.15 on x86_64-pc-linux-gnu (Ubuntu 9.6.15-1.pgdg16.04+1), compiled by gcc (Ubuntu 5.4.0-6ubuntu1~16.04.11) 5.4.0 20160609, 64-bit')
+HEAD 308990e77a909ff49a88f47b33d0b36db2f7519d
+Solo FASE 1. FASE 2 no se carga ni se ejecuta.
+CONSERVADO requerimiento filas 16 huellas iguales
+CONSERVADO requerimiento_detalle filas 17 huellas iguales
+CONSERVADO requerimiento_presupuesto filas 25 huellas iguales
+CONSERVADO requerimiento_cotizacion_prestador filas 44 huellas iguales
+CONSERVADO requerimiento_pedido_cotizacion filas 44 huellas iguales
+CONSERVADO requerimiento_reclamo_prestacional filas 8 huellas iguales
+OK: 209 controles SQL; se ejecuta ROLLBACK a continuacion.
+POST ROLLBACK: contenido, secuencias, permisos, objetos externos y 8 tablas originales verificados.
+ROLLBACK efectuado; no se publicaron cambios en DB.
+
+EXIT CODE ENSAYO: 0
+
+VALIDACION ESTATICA Y GIT
+
+COMANDO: python docs/sql/compras/pruebas_refactor/verificar_contratos.py
+EXIT CODE: 0
+OK: 207 verificaciones estaticas; no acredita ejecucion SQL ni UI.
+OK TOTAL: 323 verificaciones estaticas, incluyendo separacion de fases.
+STDERR: warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/action/BuscarItemTecnicoComprasAction.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/beans/NotificacionCotizacionDetalle.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompra.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraEstado.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraSector.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/beans/TipoPrestacionCompra.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/helper/EditarRequerimientoCompraHelper.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NomencladorCompraBusquedaHelper.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NotificarCotizacionPrestadorHelper.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/helper/ReclamoPrestacionalCompraPrecargaHelper.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/helper/RequerimientoCompraReclamoPrestacionalHelper.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceImpl.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceUtil.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_acciones_componente.jsp', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_datos_basicos_componente.jsp', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_base_componente.jsp', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_edicion_componente.jsp', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_scripts_edicion_afiliado_componente.jsp', CRLF will be replaced by LF the next time Git touches it
+
+COMANDO: git -c core.safecrlf=false diff --check
+EXIT CODE: 0
+
+COMANDO: git status --short
+EXIT CODE: 0
+ M docs/sql/compras/20260922_compras_fuente_verdad_produccion.md
+ M ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/action/BuscarItemTecnicoComprasAction.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/NotificacionCotizacionDetalle.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompra.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraEstado.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraSector.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/TipoPrestacionCompra.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/EditarRequerimientoCompraHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NomencladorCompraBusquedaHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NotificarCotizacionPrestadorHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/ReclamoPrestacionalCompraPrecargaHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/RequerimientoCompraReclamoPrestacionalHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceImpl.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceUtil.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java
+ M ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_acciones_componente.jsp
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_datos_basicos_componente.jsp
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_base_componente.jsp
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_edicion_componente.jsp
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_scripts_edicion_afiliado_componente.jsp
+?? docs/sql/compras/20260922_refactor_normalizacion_compras.md
+?? docs/sql/compras/20260922_refactor_normalizacion_compras.sql
+?? docs/sql/compras/20260923_despliegue_refactor_compras.md
+?? docs/sql/compras/20260923_refactor_compras_fase1_expand.sql
+?? docs/sql/compras/20260923_refactor_compras_fase2_cleanup.sql
+?? docs/sql/compras/pruebas_refactor/
+
+COMANDO: git -c core.safecrlf=false diff --stat
+EXIT CODE: 0
+ .../20260922_compras_fuente_verdad_produccion.md   |   55 +-
+ .../src/ar/com/ospim/compras/WebKeysCompras.java   |  337 +-
+ .../action/BuscarItemTecnicoComprasAction.java     |   57 +-
+ .../action/EditarRequerimientoCompraAction.java    |   10 +-
+ .../beans/NotificacionCotizacionDetalle.java       |    7 +-
+ .../requerimientos/beans/RequerimientoCompra.java  |   41 +-
+ .../beans/RequerimientoCompraEstado.java           |   20 +-
+ .../beans/RequerimientoCompraSector.java           |   32 +
+ .../requerimientos/beans/TipoPrestacionCompra.java |   11 +
+ .../helper/EditarRequerimientoCompraHelper.java    |  131 +-
+ .../helper/NomencladorCompraBusquedaHelper.java    |  252 +-
+ .../helper/NotificarCotizacionPrestadorHelper.java |    2 +-
+ .../ReclamoPrestacionalCompraPrecargaHelper.java   |   94 +-
+ ...querimientoCompraReclamoPrestacionalHelper.java |    4 +-
+ .../BusquedaRequerimientoCompraServiceImpl.java    |   86 +-
+ .../BusquedaRequerimientoCompraServiceUtil.java    |   14 +-
+ ...clamoPrestacionalCompraPrecargaServiceUtil.java |    2 +-
+ .../ar/com/ospim/compras/sql/compras_schema.sql    | 4921 ++++++--------------
+ .../requerimiento_compra_acciones_componente.jsp   |    2 +-
+ ...querimiento_compra_datos_basicos_componente.jsp |    8 +-
+ ...ento_compra_detalle_scripts_base_componente.jsp |   41 +-
+ ...o_compra_detalle_scripts_edicion_componente.jsp |  258 +-
+ ..._compra_scripts_edicion_afiliado_componente.jsp |    4 -
+ 23 files changed, 1884 insertions(+), 4505 deletions(-)
+
+COMANDO: git -c core.safecrlf=false diff --name-only
+EXIT CODE: 0
+docs/sql/compras/20260922_compras_fuente_verdad_produccion.md
+ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/action/BuscarItemTecnicoComprasAction.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/NotificacionCotizacionDetalle.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompra.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraEstado.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraSector.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/TipoPrestacionCompra.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/EditarRequerimientoCompraHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NomencladorCompraBusquedaHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NotificarCotizacionPrestadorHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/ReclamoPrestacionalCompraPrecargaHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/RequerimientoCompraReclamoPrestacionalHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceImpl.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceUtil.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java
+ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_acciones_componente.jsp
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_datos_basicos_componente.jsp
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_base_componente.jsp
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_edicion_componente.jsp
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_scripts_edicion_afiliado_componente.jsp
+
+COMANDO: git rev-parse HEAD
+EXIT CODE: 0
+308990e77a909ff49a88f47b33d0b36db2f7519d
+
+COMANDO: git rev-parse origin/main
+EXIT CODE: 0
+308990e77a909ff49a88f47b33d0b36db2f7519d
+
+Parseo offline cleanup: 13 sentencias SQL y 8 bloques PL/pgSQL, exit 0.
+FASE 2 no se ejecuto. El canonico no se ejecuto.
+El parser PL/pgSQL offline general no resuelve namespaces de aplicacion; FASE 1 se verifico ejecutandola en PostgreSQL 9.6.15 con ROLLBACK.
+Se corrigieron errores de sintaxis en scripts Python auxiliares durante su preparacion; los runners finales pasan.
+Pruebas UI/PDF renderizado/Excel/mail/DL/RP: no ejecutadas en esta correccion SQL.
+Build Java: no repetido; fuentes Java y JSP no cambiaron en esta correccion.
+Commit/push: no realizados.
+SHA-256: 31 de 37 archivos previos sin cambios; los 22 Java/JSP/test Java permanecen iguales.
+Encoding/scope: 42 archivos revisados, ISO-8859-1 sin BOM y sin indicadores de mojibake.

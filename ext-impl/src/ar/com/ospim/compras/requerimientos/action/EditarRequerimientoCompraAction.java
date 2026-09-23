@@ -1123,6 +1123,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             );
 
             cargarCatalogos(renderRequest);
+            if (requerimiento.getIdRequerimientoCompra() <= 0) {
+                requerimiento.setEstadoDescripcionVisual(
+                        BusquedaRequerimientoCompraServiceUtil.getEstadoDescripcion(requerimiento.getEstado()));
+            }
             cargarAfiliadoRequerimiento(renderRequest, requerimiento);
             ActualizarContactoAfiliadoCompraToken.publicar(
                     renderRequest,
@@ -1341,6 +1345,8 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     private void cargarCatalogos(
             RenderRequest request) throws Exception {
 
+        request.setAttribute("NOMENCLADORES_COMPRAS",
+                BusquedaRequerimientoCompraServiceUtil.listarNomencladores());
         request.setAttribute(
                 WebKeysCompras.ESTADOS_REQUERIMIENTO_COMPRA,
                 BusquedaRequerimientoCompraServiceUtil.listarEstados()
@@ -1614,10 +1620,6 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             requerimiento.setIdTercerizadora(null);
         }
 
-        requerimiento.setRecupero(
-                cargoTercerizadora != null
-                        && cargoTercerizadora.intValue() > 0
-        );
         requerimiento.setSurge(
                 parseSurgeObligatorio(request)
         );

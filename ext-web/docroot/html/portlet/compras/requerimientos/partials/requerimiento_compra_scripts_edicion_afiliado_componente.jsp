@@ -423,10 +423,6 @@ String afiliadoInicialAntecedentesFlag =
                         )
                         : '';
 
-        if (id == '9') {
-            return 'MEDICAMENTOS';
-        }
-
         if (typeof <portlet:namespace />tiposNomencladorPrestacionesMedicas
                 != 'undefined'
                 && <portlet:namespace />tiposNomencladorPrestacionesMedicas) {

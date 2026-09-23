@@ -1014,10 +1014,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         }
 
         String sector =
-                mapearSector(
-                        requerimiento
-                                .getSectorDescripcion()
-                );
+                mapearSector(requerimiento.getSectorConfiguracion());
 
         if (WebKeysCompras.isEmpty(
                 sector
@@ -1244,7 +1241,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     }
 
     public static String mapearSector(
-            String sectorCompras) {
+            ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector sectorCompras) {
 
         return WebKeysCompras
                 .getSectorReclamoPrestacional(
@@ -1711,9 +1708,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             throws Exception {
 
         String sector =
-                mapearSector(
-                        requerimiento.getSectorDescripcion()
-                );
+                mapearSector(requerimiento.getSectorConfiguracion());
 
         if (WebKeysCompras.isEmpty(
                 sector
@@ -1772,82 +1767,11 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 );
             }
 
-            boolean nomencladorValido;
-
-            if (detalle.getIdTipoPrestacionInt() > 0) {
-                nomencladorValido =
-                        WebKeysCompras
-                                .esNomencladorValidoParaTipoPrestacionCompras(
-                                        sector,
-                                        detalle.getIdTipoPrestacionInt(),
-                                        nomenclador
-                                                .getId_tipo_nomenclador(),
-                                        nomenclador
-                                                .getMarcaReintegroLiquidacion(),
-                                        nomenclador.getCodigo()
-                                );
-            } else {
-                nomencladorValido =
-                        WebKeysCompras.esNomencladorValidoParaSectorCompras(
-                                sector,
-                                nomenclador.getId_tipo_nomenclador(),
-                                nomenclador.getMarcaReintegroLiquidacion(),
-                                nomenclador.getCodigo()
-                        );
-            }
-
-            if (!nomencladorValido) {
-
-                if ("FARMACIA".equals(sector)) {
-                    throw new IllegalArgumentException(
-                            "Para Farmacia debe utilizarse una "
-                                    + "prestación del nomenclador tipo 9."
-                    );
-                }
-
-                if ("DISCAPACIDAD".equals(sector)) {
-                    throw new IllegalArgumentException(
-                            "Para Discapacidad debe utilizarse una "
-                                    + "prestación con marca ReinLiq 6 "
-                                    + "o el código 431003."
-                    );
-                }
-
-                if ("ODONTOLOGIA".equals(sector)) {
-                    throw new IllegalArgumentException(
-                            "Para Odontologia debe utilizarse una "
-                                    + "prestación del nomenclador tipo 1."
-                    );
-                }
-
-                if ("PRESTACIONES MEDICAS".equals(sector)) {
-                    if (detalle.getIdTipoPrestacionInt() <= 0) {
-                        throw new IllegalArgumentException(
-                                "PRESTACIONES MÉDICAS requiere un "
-                                        + "nomenclador tipo 2, 3, 4, 6 o 10."
-                        );
-                    }
-
-                    if (WebKeysCompras.esTipoPrestacionInsumos(
-                            detalle.getIdTipoPrestacionInt()
-                    )) {
-                        throw new IllegalArgumentException(
-                                "Para Insumos debe utilizarse una "
-                                        + "prestación del nomenclador tipo 10."
-                        );
-                    }
-
-                    throw new IllegalArgumentException(
-                            "Debe utilizarse un nomenclador tipo 2, 3, 4 o 6; "
-                                    + "el tipo 10 corresponde exclusivamente "
-                                    + "a Insumos."
-                    );
-                }
-
+            if (!NomencladorCompraBusquedaHelper.esValido(
+                    requerimiento.getSectorConfiguracion(), detalle.getIdTipoPrestacionInt(),
+                    nomenclador.getId_tipo_nomenclador())) {
                 throw new IllegalArgumentException(
-                        "La prestación seleccionada no corresponde "
-                                + "al sector del requerimiento."
-                );
+                        "La prestación seleccionada no corresponde al sector del requerimiento.");
             }
 
             String codigoCanonico =
@@ -1913,9 +1837,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
          * No se habilitan nuevas altas de este tipo.
          */
         if (detalle.tieneMedicamento()) {
-            if (!"FARMACIA".equals(
-                    sector
-            )) {
+            if (!requerimiento.getSectorConfiguracion().isPermiteMedicamentoLegacy()) {
                 throw new IllegalArgumentException(
                         "Un medicamento histórico solo puede "
                                 + "utilizarse en Farmacia."

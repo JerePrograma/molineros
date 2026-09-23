@@ -80,7 +80,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                         ""
                 ).trim();
 
-        String sector =
+        RequerimientoCompraSector sector =
                 resolverSector(
                         request
                 );
@@ -118,35 +118,11 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             return;
         }
 
-        if ("PRESTACIONES MEDICAS".equals(
-                sector
-        )) {
-            /*
-             * El tipo de prestacion fue validado contra el catalogo del
-             * sector. INSUMOS consulta exclusivamente el tipo 10; los
-             * demas tipos medicos consultan la clasificacion general,
-             * cuya busqueda excluye el tipo 10.
-             */
-            filtroTipoNomenclador =
-                    WebKeysCompras.esTipoPrestacionInsumos(
-                            idTipoPrestacion
-                    )
-                            ? Integer.valueOf(
-                                    WebKeysCompras
-                                            .TIPO_NOMENCLADOR_PROTESIS_INSUMOS
-                            )
-                            : Integer.valueOf(0);
-        }
-
-        int marcaReinLiq =
-                "DISCAPACIDAD".equals(sector)
-                        ? WebKeysCompras
-                        .MARCA_REIN_LIQ_DISCAPACIDAD
-                        : 0;
+        int marcaReinLiq = 0;
 
         request.setAttribute(
                 "COMPRAS_SECTOR_NOMENCLADOR",
-                sector
+                sector.getDescripcion()
         );
 
         request.setAttribute(
@@ -158,7 +134,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
 
         request.setAttribute(
                 "COMPRAS_ES_PREST_MED",
-                "PRESTACIONES MEDICAS".equals(sector)
+                sector.isBusquedaNomencladorMedica()
                         ? "1"
                         : "0"
         );
@@ -210,7 +186,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
 
     private int resolverTipoPrestacion(
             RenderRequest request,
-            String sector) throws Exception {
+            RequerimientoCompraSector sector) throws Exception {
 
         int idTipoPrestacion =
                 ParamUtil.getInteger(
@@ -218,10 +194,6 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                         "id_tipo_prestacion",
                         0
                 );
-
-        if (!"PRESTACIONES MEDICAS".equals(sector)) {
-            return idTipoPrestacion;
-        }
 
         if (idTipoPrestacion <= 0) {
             throw new Exception(
@@ -238,11 +210,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
 
             if (tipo != null
                     && tipo.getIdInt() == idTipoPrestacion
-                    && sector.equals(
-                            WebKeysCompras.normalizarSectorCompra(
-                                    tipo.getSectorDescripcion()
-                            )
-                    )) {
+                    && tipo.getIdSectorInt() == sector.getIdSector()) {
                 return idTipoPrestacion;
             }
         }
@@ -253,7 +221,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         );
     }
 
-    private String resolverSector(
+    private RequerimientoCompraSector resolverSector(
             RenderRequest request) throws Exception {
 
         int idRequerimiento =
@@ -283,11 +251,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 );
             }
 
-            return WebKeysCompras
-                    .normalizarSectorCompra(
-                            requerimiento
-                                    .getSectorDescripcion()
-                    );
+            return requerimiento.getSectorConfiguracion();
         }
 
         int idSector =
@@ -310,10 +274,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             );
         }
 
-        return WebKeysCompras
-                .normalizarSectorCompra(
-                        sector.getDescripcion()
-                );
+        return sector;
     }
 
     private void publicarError(

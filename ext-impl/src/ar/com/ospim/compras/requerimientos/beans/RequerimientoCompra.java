@@ -25,13 +25,22 @@ public class RequerimientoCompra {
 
     private Integer idSector;
     private String sectorDescripcion;
+    private RequerimientoCompraSector sectorConfiguracion;
+    private String estadoDescripcionVisual;
+    private String estadoCodigo;
+
+    public RequerimientoCompraSector getSectorConfiguracion() { return sectorConfiguracion; }
+    public void setSectorConfiguracion(RequerimientoCompraSector value) { sectorConfiguracion = value; }
+    public String getEstadoCodigo() { return estadoCodigo; }
+    public void setEstadoCodigo(String value) { estadoCodigo = value; }
+    public void setEstadoDescripcionVisual(String value) { estadoDescripcionVisual = value; }
+
     private Boolean requiereAfiliado;
 
     private Integer cargoOspim;
     private Integer cargoTercerizadora;
     private String idTercerizadora;
 
-    private Boolean recupero;
     private Boolean surge;
     private Boolean legales;
     private String observaciones;
@@ -59,7 +68,6 @@ public class RequerimientoCompra {
         this.requiereAfiliado = Boolean.FALSE;
         this.cargoOspim = Integer.valueOf(0);
         this.cargoTercerizadora = Integer.valueOf(0);
-        this.recupero = Boolean.FALSE;
         this.surge = Boolean.FALSE;
         this.legales = Boolean.FALSE;
         this.detalles = new ArrayList<RequerimientoCompraDetalle>();
@@ -309,23 +317,23 @@ public class RequerimientoCompra {
     }
 
     public Boolean getRecupero() {
-        return recupero;
+        return Boolean.valueOf(isRecupero());
     }
 
     public boolean isRecupero() {
-        return Boolean.TRUE.equals(recupero);
+        return cargoTercerizadora != null && cargoTercerizadora.intValue() > 0;
     }
 
     public String getRecuperoDescripcion() {
-        return WebKeysCompras.getBooleanDescripcion(recupero);
+        return WebKeysCompras.getBooleanDescripcion(getRecupero());
     }
 
     public void setRecupero(Boolean recupero) {
-        this.recupero = recupero != null ? recupero : Boolean.FALSE;
+        // Compatibilidad: recupero se obtiene exclusivamente de cargoTercerizadora.
     }
 
     public void setRecupero(boolean recupero) {
-        this.recupero = Boolean.valueOf(recupero);
+        // Compatibilidad: no aceptar una decision independiente sobre recupero.
     }
 
     public Boolean getSurge() {
@@ -401,12 +409,7 @@ public class RequerimientoCompra {
     }
 
     public String getEstadoDescripcion() {
-        String descripcionCentralizada =
-                WebKeysCompras.getEstadoDescripcion(getEstado());
-
-        return !WebKeysCompras.isEmpty(descripcionCentralizada)
-                ? descripcionCentralizada
-                : estadoDescripcion;
+        return estadoDescripcionVisual != null ? estadoDescripcionVisual : estadoDescripcion;
     }
 
     public String getEstadoDescripcionVisible() {
@@ -609,7 +612,7 @@ public class RequerimientoCompra {
     }
 
     public boolean puedeEnviarACotizar() {
-        return !esSectorSinCotizacionPrestador()
+        return sectorConfiguracion != null && !esSectorSinCotizacionPrestador()
                 && WebKeysCompras.puedeEnviarACotizar(getEstado())
                 && bajaFecha == null;
     }
@@ -620,20 +623,20 @@ public class RequerimientoCompra {
         return bajaFecha == null
                 && WebKeysCompras.puedePasarAOrdenCompra(
                         getEstado(),
-                        getSectorDescripcion(),
+                        getSectorConfiguracion(),
                         tieneDetalles(),
                         hayCotizacionesEmpresa
                 );
     }
 
     public boolean puedeReintentarNotificaciones() {
-        return !esSectorSinCotizacionPrestador()
+        return sectorConfiguracion != null && !esSectorSinCotizacionPrestador()
                 && WebKeysCompras.puedeReintentarNotificaciones(getEstado())
                 && bajaFecha == null;
     }
 
     public boolean puedeReintentarNotificaciones(boolean hayPrestadoresPendientes) {
-        return !esSectorSinCotizacionPrestador()
+        return sectorConfiguracion != null && !esSectorSinCotizacionPrestador()
                 && WebKeysCompras.puedeReintentarNotificaciones(
                 getEstado(),
                 hayPrestadoresPendientes
@@ -641,9 +644,7 @@ public class RequerimientoCompra {
     }
 
     public boolean esSectorSinCotizacionPrestador() {
-        return WebKeysCompras.esSectorSinCotizacionPrestador(
-                getSectorDescripcion()
-        );
+        return sectorConfiguracion != null && sectorConfiguracion.isPermiteCotizacionEmpresa();
     }
 
     public boolean isEditable() {

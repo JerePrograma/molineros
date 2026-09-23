@@ -1,0 +1,7 @@
+Buildfile: C:\wsmolineros\ext\ext-service\build.xml
+
+compile:
+    [javac] C:\wsmolineros\ext\ext-service\build-parent.xml:29: warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
+
+BUILD SUCCESSFUL
+Total time: 9 seconds

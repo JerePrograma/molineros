@@ -1539,6 +1539,10 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
+            requerimiento.setSectorConfiguracion(sector);
+            if (requerimiento.getIdRequerimientoCompra() <= 0 && !sector.isSeleccionableAlta()) {
+                throw errorUsuario("El sector informado no está habilitado para nuevas compras.");
+            }
             requerimiento.setSectorDescripcion(
                     sector.getDescripcion()
             );
@@ -1553,27 +1557,17 @@ public class EditarRequerimientoCompraHelper {
         }
 
         /*
-         * El snapshot del afiliado se captura exclusivamente durante el alta.
-         *
-         * En requerimientos existentes la identidad y los datos asociados
-         * al afiliado son inmutables.
+         * Validar el maestro en el alta. En lecturas posteriores los datos
+         * actuales se obtienen por la identidad conservada en Compras.
          */
         if (requerimiento.getIdRequerimientoCompra() <= 0
                 && requerimiento.tieneAfiliadoInformado()) {
 
-            cargarSnapshotAfiliado(
+            cargarDatosActualesAfiliado(
                     requerimiento
             );
         }
 
-        int cargoTercerizadora =
-                requerimiento.getCargoTercerizadora() != null
-                        ? requerimiento.getCargoTercerizadora().intValue()
-                        : 0;
-
-        requerimiento.setRecupero(
-                cargoTercerizadora > 0
-        );
     }
 
     private void validarRequerimientoParaGuardar(
@@ -1623,10 +1617,6 @@ public class EditarRequerimientoCompraHelper {
             );
         }
 
-        requerimiento.setRecupero(
-                cargoTercerizadora > 0
-        );
-
         if (requerimiento.isRequiereAfiliado()
                 && cargoTercerizadora > 0
                 && WebKeysCompras.isEmpty(
@@ -1658,7 +1648,7 @@ public class EditarRequerimientoCompraHelper {
     }
 }
 
-private void cargarSnapshotAfiliado(
+private void cargarDatosActualesAfiliado(
         RequerimientoCompra requerimiento) throws Exception {
 
     List<Afiliado> afiliados =
@@ -1804,7 +1794,6 @@ private void aplicarReglaSectorSinAfiliado(
 
     requerimiento.setCargoOspim(Integer.valueOf(100));
     requerimiento.setCargoTercerizadora(Integer.valueOf(0));
-    requerimiento.setRecupero(false);
 }
 
 private boolean mismoTexto(String a, String b) {
@@ -2026,54 +2015,13 @@ private void validarDetalleNomencladorParaGuardar(
         );
     }
 
-    String sector =
-            WebKeysCompras.normalizarSectorCompra(
-                    requerimiento != null
-                            ? requerimiento.getSectorDescripcion()
-                            : null
-            );
-
-    if (WebKeysCompras.isEmpty(sector)) {
-        throw errorUsuario(
-                "No se pudo determinar el sector del requerimiento."
-        );
-    }
-
-    boolean nomencladorValido;
-
-    if (detalle.getIdTipoPrestacionInt() > 0) {
-        nomencladorValido =
-                WebKeysCompras
-                        .esNomencladorValidoParaTipoPrestacionCompras(
-                                sector,
-                                detalle.getIdTipoPrestacionInt(),
-                                idTipoNomencladorCanonico,
-                                nomenclador.getMarcaReintegroLiquidacion(),
-                                nomenclador.getCodigo()
-                        );
-    } else {
-        /*
-         * Compatibilidad exclusiva con detalles historicos que fueron
-         * persistidos antes de incorporar el tipo de prestacion.
-         */
-        nomencladorValido =
-                detalle.getIdInt() > 0
-                        && WebKeysCompras
-                                .esNomencladorValidoParaSectorCompras(
-                                        sector,
-                                        idTipoNomencladorCanonico,
-                                        nomenclador.getMarcaReintegroLiquidacion(),
-                                        nomenclador.getCodigo()
-                                );
-    }
-
+    boolean nomencladorValido =
+            (detalle.getIdTipoPrestacionInt() > 0 || detalle.getIdInt() > 0)
+            && NomencladorCompraBusquedaHelper.esValido(
+                    requerimiento.getSectorConfiguracion(),
+                    detalle.getIdTipoPrestacionInt(), idTipoNomencladorCanonico);
     if (!nomencladorValido) {
-        throw errorUsuario(
-                mensajeNomencladorInvalido(
-                        sector,
-                        detalle.getIdTipoPrestacionInt()
-                )
-        );
+        throw errorUsuario("La prestación seleccionada no corresponde al sector del requerimiento.");
     }
 
     validarTextoTecnico(
@@ -2100,53 +2048,6 @@ private void validarDetalleNomencladorParaGuardar(
     detalle.setDescripcionItem(
             detalle.getDescripcionNomenclador()
     );
-}
-
-private String mensajeNomencladorInvalido(
-        String sector,
-        int idTipoPrestacion) {
-    if ("FARMACIA".equals(sector)) {
-        return "Para Farmacia debe seleccionar una prestación "
-                + "del nomenclador tipo 9.";
-    }
-
-    if ("DISCAPACIDAD".equals(sector)) {
-        return "Para Discapacidad debe seleccionar una prestación "
-                + "con marca ReinLiq 6 o el código 431003.";
-    }
-
-    if ("ODONTOLOGIA".equals(sector)) {
-        return "Para Odontologia debe seleccionar una prestación "
-                + "del nomenclador tipo 1.";
-    }
-
-    if ("PRESTACIONES MEDICAS".equals(sector)) {
-        if (idTipoPrestacion <= 0) {
-            return "Para PRESTACIONES MÉDICAS debe seleccionar una "
-                    + "prestación de nomenclador tipo 2, 3, 4, 6 o 10.";
-        }
-
-        if (WebKeysCompras.esTipoPrestacionInsumos(
-                idTipoPrestacion
-        )) {
-            return "Para Insumos debe seleccionar una prestación "
-                    + "del nomenclador tipo 10.";
-        }
-
-        if (WebKeysCompras.esTipoPrestacionProtesis(
-                idTipoPrestacion
-        )) {
-            return "Para Prótesis debe seleccionar una prestación "
-                    + "de nomenclador tipo 2, 3, 4, 6 o 14.";
-        }
-
-        return "Para el tipo de PRESTACIONES MÉDICAS seleccionado "
-                + "debe elegir un nomenclador tipo 2, 3, 4 o 6; "
-                + "el tipo 10 corresponde exclusivamente a Insumos.";
-    }
-
-    return "La prestación seleccionada no corresponde "
-            + "al sector del requerimiento.";
 }
 
 private void validarDetalleMedicamentoParaGuardar(
@@ -2287,7 +2188,7 @@ private void prepararDetalleParaGuardar(
     boolean sectorObservacion =
             WebKeysCompras.esSectorDetalleObservacionCompras(
                     requerimiento != null
-                            ? requerimiento.getSectorDescripcion()
+                            ? requerimiento.getSectorConfiguracion()
                             : null
             );
 
@@ -2325,7 +2226,7 @@ private void prepararDetalleParaGuardar(
     Integer filtroTipoNomenclador =
             WebKeysCompras.getFiltroTipoNomencladorCompras(
                     requerimiento != null
-                            ? requerimiento.getSectorDescripcion()
+                            ? requerimiento.getSectorConfiguracion()
                             : null
             );
 

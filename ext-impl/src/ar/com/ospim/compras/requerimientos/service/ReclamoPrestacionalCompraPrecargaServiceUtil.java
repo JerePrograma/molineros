@@ -65,7 +65,7 @@ public final class ReclamoPrestacionalCompraPrecargaServiceUtil {
     }
 
     public static String mapearSector(
-            String sectorCompras) {
+            ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector sectorCompras) {
 
         return ReclamoPrestacionalCompraPrecargaHelper.mapearSector(
                 sectorCompras

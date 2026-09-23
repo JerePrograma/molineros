@@ -1,5 +1,35 @@
 # Compras - Fuente de verdad SQL de produccion
 
+## Actualizacion funcional confirmada para la implementacion
+
+Esta seccion reemplaza las inferencias anteriores de derivabilidad. No modifica
+los resultados crudos del relevamiento SQL ni afirma que la migracion este aplicada.
+
+- **Hecho DB:** el relevamiento de produccion informo PostgreSQL 9.6.5, ocho tablas,
+  81 funciones, cuatro secuencias, 15 constraints, cero CHECK y dos triggers activos.
+- **Regla funcional confirmada:** SURGE es el booleano independiente; RECUPERO es
+  `cargo_tercerizadora > 0`; CARGO OSPIM es `100 - cargo_tercerizadora`.
+- **Hecho DB suministrado:** el requerimiento 1186 con cargo tercerizadora 100 y
+  recupero false es una discrepancia, no una excepcion funcional. Los cargos son
+  la fuente de verdad; nunca se corrigen a partir del booleano redundante.
+- **Regla funcional confirmada:** precio_total_estimado admite edicion explicita
+  y puede diferir de cantidad por precio unitario. Se conserva fisicamente.
+- **Decision de refactor:** mantener las 18 columnas fisicas durante FASE 1;
+  retirarlas solo en FASE 2 despues de despliegue, regresiones y QA. Las lecturas
+  usan aliases logicos y maestros actuales desde FASE 1.
+- **Decision de refactor:** estados en tabla, relacion N:M entre tipo de prestacion
+  y nomenclador, capacidades de sectores y rubro de prestador configurados.
+- **Entorno de pruebas distinto:** la conexion local consultada durante esta
+  implementacion respondio PostgreSQL 9.6.15 y 83 funciones. No reemplaza la foto
+  de produccion anterior. Sus pruebas y limitaciones se documentan por separado.
+
+Despliegue corregido el 2026-09-23: `20260923_refactor_compras_fase1_expand.sql`
+conserva datos y columnas; `20260923_refactor_compras_fase2_cleanup.sql` queda
+diferida hasta la validacion completa. El incremental monolitico anterior esta
+inhabilitado. La fase 1 diagnostica recupero sin actualizar historia y verifica
+contadores pre/post. Ver `20260923_despliegue_refactor_compras.md`. El canonico
+solo sirve para una instalacion nueva y nunca actualiza una DB existente.
+
 ## 1. Objetivo
 
 Este documento acompana a:
@@ -179,7 +209,7 @@ Por lo tanto, la perdida del snapshot historico **no es por si sola un motivo pa
 
 La pregunta correcta pasa a ser:
 
-> Â¿Existe una identidad estable que permita obtener el dato actual de su maestro de manera simple, legacy y segura?
+> ¿Existe una identidad estable que permita obtener el dato actual de su maestro de manera simple, legacy y segura?
 
 Datos de evento, auditoria, transaccion o documento siguen siendo otra categoria y no deben borrarse por confundirlos con datos maestros.
 
@@ -194,13 +224,9 @@ Resultado:
 - 39 filas comparadas.
 - **1 inconsistencia** entre `recupero` y `(cargo_tercerizadora > 0)`.
 
-Consecuencia:
-
-`recupero` sigue siendo candidato conceptual a derivacion, pero **no puede eliminarse suponiendo que todos los datos actuales ya son equivalentes**.
-
-Antes hay que identificar exactamente esa fila y explicar por que existe.
-
-El `.sql` nuevo ya lista el `id_requerimiento` inconsistente y sus valores.
+Regla funcional corregida y confirmada: `recupero = (cargo_tercerizadora > 0)`.
+La discrepancia no habilita una marca independiente. La lectura derivada elimina
+el drift sin alterar los porcentajes. SURGE es el booleano independiente.
 
 ### `cargo_ospim`
 
@@ -209,7 +235,7 @@ Resultado:
 - 39 filas comparadas.
 - 0 inconsistencias para `cargo_ospim + cargo_tercerizadora = 100`.
 
-Es un candidato fuerte a derivacion si el analisis de codigo confirma que no posee significado independiente.
+Regla confirmada: se deriva como `100 - cargo_tercerizadora`; se valida rango y suma en Java.
 
 ### `precio_total_estimado`
 
@@ -221,7 +247,7 @@ Resultado:
 
 Actualmente existe ademas el trigger real `trg_compras_detalle_calcular_total`.
 
-Debe analizarse si existe algun caso funcional legitimo donde se cargue un total explicitamente diferente, porque el trigger actual permite ciertas escrituras explicitas. No asumir que el getter Java basta para sustituir toda la semantica.
+Regla confirmada: el total explicitamente informado puede ser diferente del producto. Se conserva la columna y el trigger de calculo; una actualizacion sin cambio de cantidad/unitario no debe sobrescribir el total manual.
 
 ---
 
@@ -376,11 +402,12 @@ Ejemplos a comprobar:
 
 Se obtiene exactamente de otros datos persistidos.
 
-Candidatos ya comprobados parcialmente:
+Derivaciones confirmadas:
 
-- `recupero`;
-- uno de `cargo_ospim / cargo_tercerizadora`;
-- `precio_total_estimado`.
+- `recupero = cargo_tercerizadora > 0`;
+- `cargo_ospim = 100 - cargo_tercerizadora`.
+
+Se mantienen `surge` como booleano independiente y `precio_total_estimado` como importe editable.
 
 ### CONSULTAR MAESTRO ACTUAL
 

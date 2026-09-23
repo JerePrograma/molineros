@@ -1,13 +1,14 @@
 package ar.com.ospim.compras.requerimientos.beans;
 
 import java.io.Serializable;
+import ar.com.ospim.compras.WebKeysCompras;
 
 public class NotificacionCotizacionDetalle implements Serializable {
     private static final long serialVersionUID = 1L;
-    public static final String RESULTADO_ENVIADO = "ENVIADO";
+    public static final String RESULTADO_ENVIADO = WebKeysCompras.ENVIO_ENVIADO;
     public static final String RESULTADO_OMITIDO = "OMITIDO";
-    public static final String RESULTADO_EMAIL_INVALIDO = "EMAIL_INVALIDO";
-    public static final String RESULTADO_ERROR = "ERROR";
+    public static final String RESULTADO_EMAIL_INVALIDO = WebKeysCompras.ENVIO_EMAIL_INVALIDO;
+    public static final String RESULTADO_ERROR = WebKeysCompras.ENVIO_ERROR;
     private int idPrestador;
     private String prestador;
     private String emailReal;

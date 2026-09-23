@@ -8,6 +8,17 @@ public class TipoPrestacionCompra {
     private String descripcion;
     private Integer idSector;
     private String sectorDescripcion;
+    private String rubroPrestador;
+    private java.util.List<Integer> nomencladores = new java.util.ArrayList<Integer>();
+
+    public String getRubroPrestador() { return rubroPrestador; }
+    public void setRubroPrestador(String value) { rubroPrestador = value; }
+    public java.util.List<Integer> getNomencladores() { return nomencladores; }
+    public void setNomencladores(java.util.List<Integer> value) { nomencladores = value; }
+    public boolean admiteNomenclador(int idTipoNomenclador) {
+        return nomencladores.contains(Integer.valueOf(idTipoNomenclador));
+    }
+
 
     public Integer getId() {
         return id;

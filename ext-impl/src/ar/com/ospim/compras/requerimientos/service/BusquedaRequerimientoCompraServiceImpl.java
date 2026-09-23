@@ -253,6 +253,65 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
+    public Map<Integer, String> listarNomencladores() throws Exception {
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        Map<Integer, String> resultado = new java.util.LinkedHashMap<Integer, String>();
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall("{call compras.listar_tipos_nomenclador_compras()}");
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                resultado.put(Integer.valueOf(rs.getInt("id_tipo_nomenclador")), rs.getString("descripcion"));
+            }
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<RequerimientoCompraEstado> listarEstados() throws Exception {
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        List<RequerimientoCompraEstado> resultado = new ArrayList<RequerimientoCompraEstado>();
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall("{call compras.listar_estados_requerimiento()}");
+            rs = stmt.executeQuery();
+            while (rs.next()) { resultado.add(mapEstado(rs)); }
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    private RequerimientoCompraEstado mapEstado(ResultSet rs) throws Exception {
+        RequerimientoCompraEstado estado = new RequerimientoCompraEstado();
+        estado.setId(getInteger(rs, "id"));
+        estado.setDescripcion(getString(rs, "descripcion"));
+        estado.setDescripcionVisual(getString(rs, "descripcion_visual"));
+        estado.setCodigo(getString(rs, "codigo"));
+        estado.setOrden(rs.getInt("orden"));
+        estado.setActivo(rs.getBoolean("activo"));
+        return estado;
+    }
+
+    private List<Integer> getEnteros(ResultSet rs, String columna) throws Exception {
+        List<Integer> resultado = new ArrayList<Integer>();
+        java.sql.Array array = rs.getArray(columna);
+        if (array != null) {
+            Object[] valores = (Object[]) array.getArray();
+            for (int i = 0; i < valores.length; i++) {
+                resultado.add(Integer.valueOf(((Number) valores[i]).intValue()));
+            }
+        }
+        return resultado;
+    }
+
     public List<RequerimientoCompraSector> listarSectores() throws Exception {
         Connection con = null;
         CallableStatement stmt = null;
@@ -299,6 +358,8 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 tipo.setSectorDescripcion(
                         getString(rs, "sector_descripcion")
                 );
+                tipo.setRubroPrestador(getString(rs, "rubro_prestador"));
+                tipo.setNomencladores(getEnteros(rs, "nomencladores"));
                 resultado.add(tipo);
             }
 
@@ -326,11 +387,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 return null;
             }
 
-            RequerimientoCompraEstado estado =
-                    new RequerimientoCompraEstado();
-            estado.setId(getInteger(rs, "id"));
-            estado.setDescripcion(getString(rs, "descripcion"));
-            return estado;
+            return mapEstado(rs);
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
@@ -865,6 +922,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
         r.setObservaciones(getString(rs, "observaciones"));
         r.setIdEstado(getInteger(rs, "id_estado"));
         r.setEstadoDescripcion(getString(rs, "estado_descripcion"));
+        r.setEstadoDescripcionVisual(getString(rs, "estado_descripcion_visual"));
+        r.setEstadoCodigo(getString(rs, "estado_codigo"));
+        RequerimientoCompraSector sector = new RequerimientoCompraSector(
+                r.getIdSector(), r.getSectorDescripcion(), r.getRequiereAfiliado());
+        configurarSector(rs, sector, "sector_");
+        r.setSectorConfiguracion(sector);
 
         return r;
     }
@@ -917,7 +980,20 @@ public class BusquedaRequerimientoCompraServiceImpl {
         sector.setId(getInteger(rs, "id"));
         sector.setDescripcion(getString(rs, "descripcion"));
         sector.setRequiereAfiliado(getBoolean(rs, "requiere_afiliado"));
+        configurarSector(rs, sector, "");
         return sector;
+    }
+
+    private void configurarSector(ResultSet rs, RequerimientoCompraSector sector, String prefijo)
+            throws Exception {
+        sector.setTipoItem(getString(rs, prefijo + "tipo_item"));
+        sector.setSeleccionableAlta(rs.getBoolean(prefijo + "seleccionable_alta"));
+        sector.setPermiteCotizacionEmpresa(rs.getBoolean(prefijo + "permite_cotizacion_empresa"));
+        sector.setPermiteOrdenCompraDirecta(rs.getBoolean(prefijo + "permite_orden_compra_directa"));
+        sector.setBusquedaNomencladorMedica(rs.getBoolean(prefijo + "busqueda_nomenclador_medica"));
+        sector.setPermiteMedicamentoLegacy(rs.getBoolean(prefijo + "permite_medicamento_legacy"));
+        sector.setSectorReclamoPrestacional(getString(rs, prefijo + "sector_reclamo_prestacional"));
+        sector.setNomencladores(getEnteros(rs, prefijo + "nomencladores"));
     }
 
     private PrestadorCotizacion mapPrestadorCotizacion(ResultSet rs)

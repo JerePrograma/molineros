@@ -1,0 +1,1191 @@
+{
+  "fecha": "2026-09-22T16:44:52.071557",
+  "head": "308990e77a909ff49a88f47b33d0b36db2f7519d",
+  "columnas": [
+    [
+      "requerimiento",
+      "id_requerimiento",
+      "integer",
+      true,
+      "nextval('compras.requerimiento_id_requerimiento_seq'::regclass)"
+    ],
+    [
+      "requerimiento",
+      "estado",
+      "integer",
+      true,
+      "1"
+    ],
+    [
+      "requerimiento",
+      "id_sector",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_cuil_titular",
+      "character varying(20)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_int",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_id_ospim",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_nombre",
+      "character varying(120)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_apellido",
+      "character varying(120)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_documento_tipo",
+      "character varying(10)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_documento_nro",
+      "character varying(30)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_direccion",
+      "character varying(250)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_localidad",
+      "character varying(120)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_provincia",
+      "character varying(120)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_celular",
+      "character varying(80)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_telefono",
+      "character varying(80)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "afiliado_email",
+      "character varying(160)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "cargo_ospim",
+      "integer",
+      true,
+      "100"
+    ],
+    [
+      "requerimiento",
+      "cargo_tercerizadora",
+      "integer",
+      true,
+      "0"
+    ],
+    [
+      "requerimiento",
+      "id_tercerizadora",
+      "character varying(40)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "recupero",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "requerimiento",
+      "surge",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "requerimiento",
+      "legales",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "requerimiento",
+      "observaciones",
+      "text",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "alta_fecha",
+      "timestamp without time zone",
+      true,
+      "now()"
+    ],
+    [
+      "requerimiento",
+      "alta_usr",
+      "character varying(100)",
+      true,
+      "'sistema'::character varying"
+    ],
+    [
+      "requerimiento",
+      "modi_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "modi_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "baja_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "baja_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "motivo_baja",
+      "text",
+      false,
+      null
+    ],
+    [
+      "requerimiento",
+      "copia_cotizacion_enviada",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "requerimiento_base_row",
+      "id",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "alta_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "alta_usr",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "modi_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "modi_usr",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "baja_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "baja_usr",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_cuil_titular",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_int",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_id_ospim",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_nombre",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_apellido",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_nombre_apellido",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_documento_tipo",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_documento_nro",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_documento",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_direccion",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_localidad",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_provincia",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_celular",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_telefono",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "afiliado_email",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "id_sector",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "sector_descripcion",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "requiere_afiliado",
+      "boolean",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "cargo_ospim",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "cargo_tercerizadora",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "id_tercerizadora",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "recupero",
+      "boolean",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "surge",
+      "boolean",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "observaciones",
+      "text",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "id_estado",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "estado_descripcion",
+      "character varying",
+      false,
+      null
+    ],
+    [
+      "requerimiento_base_row",
+      "legales",
+      "boolean",
+      false,
+      null
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "id_requerimiento",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "id_prestador",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "estado_envio",
+      "character varying(20)",
+      true,
+      "'PENDIENTE'::character varying"
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "intentos",
+      "integer",
+      true,
+      "0"
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "email_destino",
+      "text",
+      false,
+      null
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "fecha_creacion",
+      "timestamp without time zone",
+      true,
+      "now()"
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "fecha_ultimo_intento",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "fecha_envio",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "ultimo_error",
+      "text",
+      false,
+      null
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "alta_usr",
+      "character varying(100)",
+      true,
+      "'sistema'::character varying"
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "modi_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "modi_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "id_detalle",
+      "integer",
+      true,
+      "nextval('compras.requerimiento_detalle_id_detalle_seq'::regclass)"
+    ],
+    [
+      "requerimiento_detalle",
+      "id_requerimiento",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "tipo_item",
+      "character varying(20)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "id_tipo_prestacion",
+      "smallint",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "id_prestacion",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "id_tipo_nomenclador",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "codigo_nomenclador",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "descripcion_nomenclador",
+      "character varying(500)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "id_medicamento",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "troquel",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "nombre_medicamento",
+      "character varying(500)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "cantidad",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "observaciones",
+      "text",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "precio_unitario_estimado",
+      "numeric(18,2)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "precio_total_estimado",
+      "numeric(18,2)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "id_prestador",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "alta_fecha",
+      "timestamp without time zone",
+      true,
+      "now()"
+    ],
+    [
+      "requerimiento_detalle",
+      "alta_usr",
+      "character varying(100)",
+      true,
+      "'sistema'::character varying"
+    ],
+    [
+      "requerimiento_detalle",
+      "modi_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "modi_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "baja_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_detalle",
+      "baja_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "id_requerimiento",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "id_prestador",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "intento",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "dl_group_id",
+      "bigint",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "dl_folder_id",
+      "bigint",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "dl_file_entry_id",
+      "bigint",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "dl_file_uuid",
+      "character varying(75)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "nombre_original",
+      "character varying(255)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "nombre_persistido",
+      "character varying(255)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "titulo",
+      "character varying(240)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "alta_fecha",
+      "timestamp without time zone",
+      true,
+      "now()"
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "alta_usr",
+      "character varying(100)",
+      true,
+      "'sistema'::character varying"
+    ],
+    [
+      "requerimiento_presupuesto",
+      "id_requerimiento_presupuesto",
+      "integer",
+      true,
+      "nextval('compras.requerimiento_presupuesto_id_requerimiento_presupuesto_seq'::regclass)"
+    ],
+    [
+      "requerimiento_presupuesto",
+      "id_requerimiento",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "tipo_documento",
+      "smallint",
+      true,
+      "1"
+    ],
+    [
+      "requerimiento_presupuesto",
+      "fecha_documento",
+      "date",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "numero_receta",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "id_prestador",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "empresa_cuit",
+      "character varying(11)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "empresa_sucursal",
+      "character varying(6)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "descripcion_empresa",
+      "character varying(200)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "dl_group_id",
+      "bigint",
+      true,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "dl_folder_id",
+      "bigint",
+      true,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "dl_file_entry_id",
+      "bigint",
+      true,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "dl_file_uuid",
+      "character varying(75)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "nombre_original",
+      "character varying(255)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "nombre_persistido",
+      "character varying(255)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "titulo",
+      "character varying(240)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "descripcion_prestador",
+      "character varying(500)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "alta_fecha",
+      "timestamp without time zone",
+      true,
+      "now()"
+    ],
+    [
+      "requerimiento_presupuesto",
+      "alta_usr",
+      "character varying(100)",
+      true,
+      "'sistema'::character varying"
+    ],
+    [
+      "requerimiento_presupuesto",
+      "baja_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_presupuesto",
+      "baja_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "id_requerimiento",
+      "integer",
+      true,
+      null
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "id_reclamo_prestacional",
+      "integer",
+      false,
+      null
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "estado",
+      "character varying(20)",
+      true,
+      null
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "token_reserva",
+      "character varying(64)",
+      false,
+      null
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "reserva_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "ultimo_error",
+      "text",
+      false,
+      null
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "alta_fecha",
+      "timestamp without time zone",
+      true,
+      "now()"
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "alta_usr",
+      "character varying(100)",
+      true,
+      "'sistema'::character varying"
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "modi_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "modi_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "sector_requerimiento",
+      "id_sector",
+      "integer",
+      true,
+      "nextval('compras.sector_requerimiento_id_sector_seq'::regclass)"
+    ],
+    [
+      "sector_requerimiento",
+      "descripcion",
+      "character varying(120)",
+      true,
+      null
+    ],
+    [
+      "sector_requerimiento",
+      "requiere_afiliado",
+      "boolean",
+      true,
+      "false"
+    ],
+    [
+      "sector_requerimiento",
+      "activo",
+      "boolean",
+      true,
+      "true"
+    ],
+    [
+      "sector_requerimiento",
+      "alta_fecha",
+      "timestamp without time zone",
+      true,
+      "now()"
+    ],
+    [
+      "sector_requerimiento",
+      "alta_usr",
+      "character varying(100)",
+      true,
+      "'sistema'::character varying"
+    ],
+    [
+      "sector_requerimiento",
+      "modi_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "sector_requerimiento",
+      "modi_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "sector_requerimiento",
+      "baja_fecha",
+      "timestamp without time zone",
+      false,
+      null
+    ],
+    [
+      "sector_requerimiento",
+      "baja_usr",
+      "character varying(100)",
+      false,
+      null
+    ],
+    [
+      "tipo_prestacion",
+      "id_tipo_prestacion",
+      "smallint",
+      true,
+      null
+    ],
+    [
+      "tipo_prestacion",
+      "descripcion",
+      "character varying(120)",
+      true,
+      null
+    ],
+    [
+      "tipo_prestacion",
+      "id_sector",
+      "integer",
+      true,
+      null
+    ]
+  ],
+  "constraints": [
+    [
+      "requerimiento",
+      "requerimiento_id_sector_fkey",
+      "FOREIGN KEY (id_sector) REFERENCES compras.sector_requerimiento(id_sector)"
+    ],
+    [
+      "requerimiento",
+      "requerimiento_pkey",
+      "PRIMARY KEY (id_requerimiento)"
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "pk_compras_requerimiento_cotizacion_prestador",
+      "PRIMARY KEY (id_requerimiento, id_prestador)"
+    ],
+    [
+      "requerimiento_cotizacion_prestador",
+      "requerimiento_cotizacion_prestador_id_requerimiento_fkey",
+      "FOREIGN KEY (id_requerimiento) REFERENCES compras.requerimiento(id_requerimiento)"
+    ],
+    [
+      "requerimiento_detalle",
+      "requerimiento_detalle_id_requerimiento_fkey",
+      "FOREIGN KEY (id_requerimiento) REFERENCES compras.requerimiento(id_requerimiento)"
+    ],
+    [
+      "requerimiento_detalle",
+      "requerimiento_detalle_id_tipo_prestacion_fkey",
+      "FOREIGN KEY (id_tipo_prestacion) REFERENCES compras.tipo_prestacion(id_tipo_prestacion)"
+    ],
+    [
+      "requerimiento_detalle",
+      "requerimiento_detalle_pkey",
+      "PRIMARY KEY (id_detalle)"
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "fk_compras_pedido_cotizacion_envio",
+      "FOREIGN KEY (id_requerimiento, id_prestador) REFERENCES compras.requerimiento_cotizacion_prestador(id_requerimiento, id_prestador)"
+    ],
+    [
+      "requerimiento_pedido_cotizacion",
+      "pk_compras_pedido_cotizacion",
+      "PRIMARY KEY (id_requerimiento, id_prestador, intento)"
+    ],
+    [
+      "requerimiento_presupuesto",
+      "requerimiento_presupuesto_id_requerimiento_fkey",
+      "FOREIGN KEY (id_requerimiento) REFERENCES compras.requerimiento(id_requerimiento)"
+    ],
+    [
+      "requerimiento_presupuesto",
+      "requerimiento_presupuesto_pkey",
+      "PRIMARY KEY (id_requerimiento_presupuesto)"
+    ],
+    [
+      "requerimiento_presupuesto",
+      "uq_compras_presupuesto_dl_file_entry",
+      "UNIQUE (dl_file_entry_id)"
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "fk_compras_requerimiento_reclamo_req",
+      "FOREIGN KEY (id_requerimiento) REFERENCES compras.requerimiento(id_requerimiento)"
+    ],
+    [
+      "requerimiento_reclamo_prestacional",
+      "pk_compras_requerimiento_reclamo",
+      "PRIMARY KEY (id_requerimiento)"
+    ],
+    [
+      "sector_requerimiento",
+      "sector_requerimiento_pkey",
+      "PRIMARY KEY (id_sector)"
+    ],
+    [
+      "tipo_prestacion",
+      "tipo_prestacion_id_sector_fkey",
+      "FOREIGN KEY (id_sector) REFERENCES compras.sector_requerimiento(id_sector)"
+    ],
+    [
+      "tipo_prestacion",
+      "tipo_prestacion_pkey",
+      "PRIMARY KEY (id_tipo_prestacion)"
+    ],
+    [
+      "tipo_prestacion",
+      "uq_compras_tipo_prestacion_descripcion",
+      "UNIQUE (descripcion)"
+    ]
+  ],
+  "triggers": [
+    [
+      "CREATE TRIGGER trg_compras_requerimiento_completar_baja BEFORE UPDATE OF estado ON compras.requerimiento FOR EACH ROW EXECUTE PROCEDURE compras.completar_baja_requerimiento_fila()"
+    ],
+    [
+      "CREATE TRIGGER trg_compras_detalle_calcular_total BEFORE INSERT OR UPDATE OF cantidad, precio_unitario_estimado ON compras.requerimiento_detalle FOR EACH ROW EXECUTE PROCEDURE compras.calcular_total_detalle_fila()"
+    ]
+  ]
+}

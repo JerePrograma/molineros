@@ -1965,7 +1965,7 @@ public class NotificarCotizacionPrestadorHelper {
             if (!WebKeysCompras.isEmpty(
                     tipoItem
             )
-                    && !"NOMENCLADOR".equalsIgnoreCase(
+                    && !RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equalsIgnoreCase(
                     tipoItem.trim()
             )) {
 

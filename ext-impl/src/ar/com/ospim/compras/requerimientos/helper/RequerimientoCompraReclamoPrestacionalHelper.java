@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
+import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
@@ -514,7 +516,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             throw new Exception(
                     "El requerimiento vinculado al Reclamo Prestacional "
                             + "no puede pasar a RECLAMO (RP) desde su estado actual: "
-                            + WebKeysCompras.getEstadoDescripcion(estadoActual)
+                            + BusquedaRequerimientoCompraServiceUtil.getEstadoDescripcion(estadoActual)
                             + "."
             );
         }

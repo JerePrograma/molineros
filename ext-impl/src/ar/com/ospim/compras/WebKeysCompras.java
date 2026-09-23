@@ -1,12 +1,11 @@
 package ar.com.ospim.compras;
 
-import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -20,68 +19,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static final String TITULO_ORDEN_MEDICA =
             "Orden médica";
-
-    /*
-     * Estos valores son filtros para la búsqueda.
-     *
-     * El valor cero significa "sin filtro positivo específico".
-     * No debe persistirse necesariamente como id_tipo_nomenclador:
-     * el resultado seleccionado devuelve el tipo real y positivo.
-     */
-    public static final int FILTRO_NOMENCLADOR_GENERAL = 0;
-    public static final int FILTRO_NOMENCLADOR_ODONTOLOGIA = 1;
-    public static final int FILTRO_NOMENCLADOR_DISCAPACIDAD = 8;
-    public static final int FILTRO_NOMENCLADOR_FARMACIA = 9;
-    public static final int MARCA_REIN_LIQ_DISCAPACIDAD = 6;
-
-    public static final int TIPO_NOMENCLADOR_PRACTICAS_ESPECIALIZADAS = 2;
-    public static final int TIPO_NOMENCLADOR_PROPIO = 3;
-    public static final int TIPO_NOMENCLADOR_ANALISIS_CLINICOS = 4;
-    public static final int TIPO_NOMENCLADOR_QUIRURGICO = 6;
-    public static final int TIPO_NOMENCLADOR_PROTESIS_INSUMOS = 10;
-    public static final int TIPO_NOMENCLADOR_PROTESIS = 14;
-
-    public static final int TIPO_PRESTACION_PROTESIS_TRAUMATOLOGIA = 3;
-    public static final int TIPO_PRESTACION_PROTESIS_CARDIOLOGIA = 4;
-    public static final int TIPO_PRESTACION_PROTESIS_GENERAL = 5;
-    public static final int TIPO_PRESTACION_INSUMOS = 6;
-
-    public static boolean esTipoPrestacionInsumos(
-            int idTipoPrestacion) {
-
-        return idTipoPrestacion == TIPO_PRESTACION_INSUMOS;
-    }
-
-    public static boolean esTipoPrestacionProtesis(
-            int idTipoPrestacion) {
-
-        return idTipoPrestacion
-                == TIPO_PRESTACION_PROTESIS_TRAUMATOLOGIA
-                || idTipoPrestacion
-                == TIPO_PRESTACION_PROTESIS_CARDIOLOGIA
-                || idTipoPrestacion
-                == TIPO_PRESTACION_PROTESIS_GENERAL;
-    }
-
-    public static boolean esTipoNomencladorPrestacionesMedicas(
-            int idTipoNomenclador) {
-
-        return idTipoNomenclador
-                == TIPO_NOMENCLADOR_ANALISIS_CLINICOS
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PRACTICAS_ESPECIALIZADAS
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROTESIS_INSUMOS
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_QUIRURGICO
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROPIO
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROTESIS;
-    }
-
-    public static final String
-            CODIGO_ESPECIAL_DISCAPACIDAD = "431003";
 
     public static final String ROL_VIEW_COMPRAS = "VIEW_Compras";
     public static final String ROL_ABM_COMPRAS = "ABM_Compras";
@@ -323,38 +260,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 + "-";
     }
 
-    public static String getEstadoDescripcion(int estado) {
-        switch (estado) {
-            case ESTADO_PENDIENTE:
-                return "PENDIENTE";
-            case ESTADO_A_COTIZAR:
-                return "ENVIADO A COTIZAR";
-            case ESTADO_COTIZADO:
-                return "COTIZADO";
-            case ESTADO_RECLAMO_RP:
-                return "RECLAMO (RP)";
-            case ESTADO_ORDEN_COMPRA:
-                return "ORDEN DE COMPRA";
-            case ESTADO_ANULADO:
-                return "ANULADO";
-            default:
-                return "";
-        }
-    }
-
-    public static List<RequerimientoCompraEstado> listarEstados() {
-        List<RequerimientoCompraEstado> estados =
-                new ArrayList<RequerimientoCompraEstado>();
-
-        agregarEstado(estados, ESTADO_PENDIENTE);
-        agregarEstado(estados, ESTADO_A_COTIZAR);
-        agregarEstado(estados, ESTADO_COTIZADO);
-        agregarEstado(estados, ESTADO_RECLAMO_RP);
-        agregarEstado(estados, ESTADO_ORDEN_COMPRA);
-        agregarEstado(estados, ESTADO_ANULADO);
-
-        return estados;
-    }
 
     public static boolean esEstadoValido(int estado) {
         return estado == ESTADO_PENDIENTE
@@ -440,14 +345,12 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
     public static boolean puedePasarAOrdenCompra(
             int estado,
-            String sectorDescripcion,
+            RequerimientoCompraSector sector,
             boolean hayDetalles,
             boolean hayCotizacionesEmpresa) {
 
         return esPendiente(estado)
-                && esSectorSinCotizacionPrestador(
-                        sectorDescripcion
-                )
+                && sector != null && sector.isPermiteOrdenCompraDirecta()
                 && hayDetalles
                 && hayCotizacionesEmpresa;
     }
@@ -517,166 +420,28 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         );
     }
 
-    public static Integer getFiltroTipoNomencladorCompras(
-            String sectorDescripcion) {
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        if ("FARMACIA".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_FARMACIA
-            );
-        }
-
-        if ("DISCAPACIDAD".equals(sector)) {
-            /*
-             * Reclamos Prestacionales parte del tipo 8,
-             * pero la consulta efectiva utiliza marca ReinLiq 6.
-             */
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_DISCAPACIDAD
-            );
-        }
-
-        if ("ODONTOLOGIA".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_ODONTOLOGIA
-            );
-        }
-
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_GENERAL
-            );
-        }
-
-        return null;
+    public static Integer getFiltroTipoNomencladorCompras(RequerimientoCompraSector sector) {
+        return sector != null ? sector.getFiltroTipoNomenclador() : null;
     }
 
     public static boolean esNomencladorValidoParaSectorCompras(
-            String sectorDescripcion,
-            int idTipoNomenclador,
-            int marcaReinLiq,
-            String codigoNomenclador) {
-
-        if (idTipoNomenclador <= 0) {
-            return false;
-        }
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        String codigo =
-                codigoNomenclador == null
-                        ? ""
-                        : codigoNomenclador.trim();
-
-        if ("FARMACIA".equals(sector)) {
-            return idTipoNomenclador
-                    == FILTRO_NOMENCLADOR_FARMACIA;
-        }
-
-        if ("DISCAPACIDAD".equals(sector)) {
-            return marcaReinLiq
-                    == MARCA_REIN_LIQ_DISCAPACIDAD
-                    || CODIGO_ESPECIAL_DISCAPACIDAD
-                    .equals(codigo);
-        }
-
-        if ("ODONTOLOGIA".equals(sector)) {
-            return idTipoNomenclador
-                    == FILTRO_NOMENCLADOR_ODONTOLOGIA;
-        }
-
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
-            return esTipoNomencladorPrestacionesMedicas(
-                    idTipoNomenclador
-            );
-        }
-
-        return false;
+            RequerimientoCompraSector sector, int idTipoNomenclador) {
+        return sector != null && sector.isNomenclador()
+                && sector.getNomencladores().contains(Integer.valueOf(idTipoNomenclador));
     }
 
     public static boolean esNomencladorValidoParaTipoPrestacionCompras(
-            String sectorDescripcion,
-            int idTipoPrestacion,
-            int idTipoNomenclador,
-            int marcaReinLiq,
-            String codigoNomenclador) {
-
-        if (!esNomencladorValidoParaSectorCompras(
-                sectorDescripcion,
-                idTipoNomenclador,
-                marcaReinLiq,
-                codigoNomenclador
-        )) {
-            return false;
-        }
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        if (!"PRESTACIONES MEDICAS".equals(sector)) {
-            return true;
-        }
-
-        if (idTipoPrestacion <= 0) {
-            return false;
-        }
-
-        if (esTipoPrestacionInsumos(idTipoPrestacion)) {
-            return idTipoNomenclador
-                    == TIPO_NOMENCLADOR_PROTESIS_INSUMOS;
-        }
-
-        if (idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROTESIS_INSUMOS) {
-
-            return false;
-        }
-
-        if (idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROTESIS) {
-
-            return esTipoPrestacionProtesis(
-                    idTipoPrestacion
-            );
-        }
-
-        return true;
+            RequerimientoCompraSector sector, TipoPrestacionCompra tipo, int idTipoNomenclador) {
+        return sector != null && tipo != null && tipo.getIdSectorInt() == sector.getIdSector()
+                && sector.isNomenclador() && tipo.admiteNomenclador(idTipoNomenclador);
     }
 
-    public static boolean esSectorDetalleObservacionCompras(
-            String sectorDescripcion) {
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        return "RRHH".equals(sector)
-                || "LEGALES".equals(sector)
-                || "SISTEMAS".equals(sector)
-                || "OTROS".equals(sector);
+    public static boolean esSectorDetalleObservacionCompras(RequerimientoCompraSector sector) {
+        return sector != null && sector.isObservacion();
     }
 
-    public static boolean esSectorSinCotizacionPrestador(
-            String sectorDescripcion) {
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        return "RRHH".equals(sector)
-                || "SISTEMAS".equals(sector);
+    public static boolean esSectorSinCotizacionPrestador(RequerimientoCompraSector sector) {
+        return sector != null && sector.isPermiteCotizacionEmpresa();
     }
 
     public static String normalizarSectorCompra(
@@ -762,60 +527,13 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 : "";
     }
 
-    public static String getSectorReclamoPrestacional(
-            String sectorDescripcion) {
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
-            return "PRESTACIONES MEDICAS";
-        }
-
-        if ("DISCAPACIDAD".equals(sector)
-                || sector.indexOf("DISCAPAC") >= 0) {
-
-            return "DISCAPACIDAD";
-        }
-
-        if ("FARMACIA".equals(sector)
-                || sector.indexOf("FARMAC") >= 0) {
-
-            return "FARMACIA";
-        }
-
-        if ("ODONTOLOGIA".equals(sector)
-                || sector.indexOf("ODONTO") >= 0) {
-
-            return "ODONTOLOGIA";
-        }
-
-        if ("LEGALES".equals(sector)
-                || sector.indexOf("LEGAL") >= 0) {
-
-            return "LEGALES";
-        }
-
-        /*
-         * OTROS, SISTEMAS, RRHH y cualquier sector no reconocido
-         * no pueden generar Reclamos Prestacionales.
-         *
-         * La regla es deliberadamente fail closed: un sector nuevo
-         * tampoco queda habilitado accidentalmente.
-         */
-        return "";
+    public static String getSectorReclamoPrestacional(RequerimientoCompraSector sector) {
+        return sector != null && sector.getSectorReclamoPrestacional() != null
+                ? sector.getSectorReclamoPrestacional() : "";
     }
 
-    public static boolean puedeGenerarReclamoPrestacional(
-            String sectorDescripcion) {
-
-        return !isEmpty(
-                getSectorReclamoPrestacional(
-                        sectorDescripcion
-                )
-        );
+    public static boolean puedeGenerarReclamoPrestacional(RequerimientoCompraSector sector) {
+        return !isEmpty(getSectorReclamoPrestacional(sector));
     }
 
     public static BigDecimal normalizarImporte(
@@ -886,20 +604,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return normalizado;
     }
 
-    private static void agregarEstado(
-            List<RequerimientoCompraEstado> estados,
-            int id) {
 
-        RequerimientoCompraEstado estado =
-                new RequerimientoCompraEstado();
-
-        estado.setId(Integer.valueOf(id));
-        estado.setDescripcion(
-                getEstadoDescripcion(id)
-        );
-
-        estados.add(estado);
-    }
 
     private WebKeysCompras() {
     }

@@ -1,0 +1,13 @@
+Buildfile: C:\wsmolineros\ext\ext-impl\build.xml
+
+compile:
+    [javac] C:\wsmolineros\ext\ext-impl\build-parent.xml:33: warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
+    [javac] Compiling 3 source files to C:\wsmolineros\ext\ext-impl\classes
+    [javac] Note: C:\wsmolineros\ext\ext-impl\src\ar\com\ospim\compras\requerimientos\action\EditarRequerimientoCompraAction.java uses or overrides a deprecated API.
+    [javac] Note: Recompile with -Xlint:deprecation for details.
+    [javac] Note: C:\wsmolineros\ext\ext-impl\src\ar\com\ospim\compras\requerimientos\action\EditarRequerimientoCompraAction.java uses unchecked or unsafe operations.
+    [javac] Note: Recompile with -Xlint:unchecked for details.
+     [copy] Copying 1 file to C:\wsmolineros\ext\ext-impl\classes
+
+BUILD SUCCESSFUL
+Total time: 7 seconds

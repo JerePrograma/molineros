@@ -6,6 +6,19 @@ public class RequerimientoCompraEstado {
 
     private Integer id;
     private String descripcion;
+    private String descripcionVisual;
+    private String codigo;
+    private int orden;
+    private boolean activo;
+
+    public String getCodigo() { return codigo; }
+    public void setCodigo(String value) { codigo = value; }
+    public int getOrden() { return orden; }
+    public void setOrden(int value) { orden = value; }
+    public boolean isActivo() { return activo; }
+    public void setActivo(boolean value) { activo = value; }
+    public void setDescripcionVisual(String value) { descripcionVisual = value; }
+
 
     public RequerimientoCompraEstado() {
     }
@@ -48,12 +61,7 @@ public class RequerimientoCompraEstado {
     }
 
     public String getDescripcion() {
-        String descripcionCentralizada =
-                WebKeysCompras.getEstadoDescripcion(getIdEstado());
-
-        return !WebKeysCompras.isEmpty(descripcionCentralizada)
-                ? descripcionCentralizada
-                : descripcion;
+        return descripcionVisual != null ? descripcionVisual : descripcion;
     }
 
     public String getDescripcionVisible() {

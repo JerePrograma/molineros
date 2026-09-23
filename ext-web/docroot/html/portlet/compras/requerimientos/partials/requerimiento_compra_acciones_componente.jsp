@@ -30,7 +30,7 @@ String botoneraSectorDescripcionActual =
 boolean botoneraSectorPermiteReclamoPrestacional =
         WebKeysCompras
                 .puedeGenerarReclamoPrestacional(
-                        botoneraSectorDescripcionActual
+                        req != null ? req.getSectorConfiguracion() : null
                 );
 
 boolean botoneraRequerimientoPersistido =

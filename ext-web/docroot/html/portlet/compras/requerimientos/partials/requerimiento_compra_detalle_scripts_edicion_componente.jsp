@@ -234,28 +234,19 @@ Efectos secundarios:
         return false;
     }
 
-    var <portlet:namespace />tiposNomencladorPrestacionesMedicas = [
-        {
-            id: '2',
-                descripcion: 'NOM.NAC.PRÁCTICAS ESPECIALIZADAS'
-        },
-        {
-            id: '3',
-            descripcion: 'NOM-PROPIO'
-        },
-        {
-            id: '4',
-                descripcion: 'NOM.NAC ANÁLISIS CLÍNICOS'
-        },
-        {
-            id: '6',
-                descripcion: 'NOM.NAC QUIRÚRGICO'
-        },
-        {
-            id: '10',
-                descripcion: 'PRÓTESIS E INSUMOS'
-        }
-    ];
+    var <portlet:namespace />tiposNomencladorPrestacionesMedicas = [];
+    <%
+    java.util.Map<Integer, String> catalogoNomencladoresCompra =
+            (java.util.Map<Integer, String>) request.getAttribute("NOMENCLADORES_COMPRAS");
+    if (catalogoNomencladoresCompra != null) {
+        for (java.util.Map.Entry<Integer, String> tipoNomencladorCompra : catalogoNomencladoresCompra.entrySet()) {
+    %>
+    <portlet:namespace />tiposNomencladorPrestacionesMedicas.push({
+        id: '<%= tipoNomencladorCompra.getKey() %>',
+        descripcion: '<%= jsDetalleCompra(tipoNomencladorCompra.getValue()) %>'
+    });
+    <%  }
+    } %>
 
     function <portlet:namespace />normalizarSectorTipoNomenclador(
             value) {
@@ -312,33 +303,23 @@ Efectos secundarios:
     }
 
     function <portlet:namespace />esSectorFarmaciaTipoNomenclador() {
-        return <portlet:namespace />obtenerSectorDescripcionTipoNomenclador()
-                == 'FARMACIA';
+        return <portlet:namespace />esSectorFarmaciaCompra();
     }
 
     function <portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador() {
-        return <portlet:namespace />obtenerSectorDescripcionTipoNomenclador()
-                == 'PRESTACIONES MEDICAS';
+        return <portlet:namespace />esSectorNomencladorCompra();
     }
 
-    function <portlet:namespace />esTipoNomencladorPrestacionesMedicas(
-            idTipoNomenclador) {
-
-        idTipoNomenclador =
-                idTipoNomenclador != null
-                        ? jQuery.trim(
-                                String(
-                                        idTipoNomenclador
-                                )
-                        )
-                        : '';
-
-        return idTipoNomenclador == '2'
-                || idTipoNomenclador == '3'
-                || idTipoNomenclador == '4'
-                || idTipoNomenclador == '6'
-                || idTipoNomenclador == '10'
-                || idTipoNomenclador == '14';
+    function <portlet:namespace />esTipoNomencladorPrestacionesMedicas(idTipoNomenclador) {
+        var idSector = <portlet:namespace />getIdSectorTipoPrestacionDetalle();
+        var tipos = <portlet:namespace />tiposPrestacionDetalleCache;
+        for (var i = 0; i < tipos.length; i++) {
+            if (String(tipos[i].idSector) != String(idSector)) { continue; }
+            for (var j = 0; j < tipos[i].nomencladores.length; j++) {
+                if (String(tipos[i].nomencladores[j]) == String(idTipoNomenclador)) { return true; }
+            }
+        }
+        return false;
     }
 
     function <portlet:namespace />agregarOpcionTipoNomenclador(
@@ -378,26 +359,27 @@ Efectos secundarios:
             var tipo =
                     <portlet:namespace />tiposNomencladorPrestacionesMedicas[i];
 
-            <portlet:namespace />agregarOpcionTipoNomenclador(
-                    select,
-                    tipo.id,
-                    tipo.descripcion
-            );
+            if (<portlet:namespace />esTipoNomencladorPrestacionesMedicas(tipo.id)) {
+                <portlet:namespace />agregarOpcionTipoNomenclador(select, tipo.id, tipo.descripcion);
+            }
         }
     }
 
-    function <portlet:namespace />cargarTipoNomencladorFarmacia(
-            select) {
-
+    function <portlet:namespace />cargarTipoNomencladorFarmacia(select) {
+        var sector = jQuery('#<portlet:namespace />sector_id');
+        var idTipo = sector.is('select')
+                ? sector.find('option:selected').attr('data-filtro-nomenclador')
+                : '<%= req != null && req.getSectorConfiguracion() != null
+                        && req.getSectorConfiguracion().getFiltroTipoNomenclador() != null
+                        ? req.getSectorConfiguracion().getFiltroTipoNomenclador().toString() : "" %>';
         select.empty();
-
-        <portlet:namespace />agregarOpcionTipoNomenclador(
-                select,
-                '9',
-                'MEDICAMENTOS'
-        );
-
-        select.val('9');
+        for (var i = 0; i < <portlet:namespace />tiposNomencladorPrestacionesMedicas.length; i++) {
+            var tipo = <portlet:namespace />tiposNomencladorPrestacionesMedicas[i];
+            if (String(tipo.id) == String(idTipo)) {
+                <portlet:namespace />agregarOpcionTipoNomenclador(select, tipo.id, tipo.descripcion);
+            }
+        }
+        select.val(idTipo);
     }
 
     function <portlet:namespace />actualizarTipoNomencladorDetallePorSector(
@@ -548,84 +530,20 @@ Efectos secundarios:
         );
     }
 
-    function <portlet:namespace />esTipoPrestacionInsumosDetalle(
-            idTipoPrestacion) {
 
+    function <portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(idTipoNomenclador, idTipoPrestacion) {
         if (typeof idTipoPrestacion == 'undefined') {
-            idTipoPrestacion =
-                    <portlet:namespace />obtenerIdTipoPrestacionDetalle();
+            idTipoPrestacion = <portlet:namespace />obtenerIdTipoPrestacionDetalle();
         }
-
-        idTipoPrestacion = idTipoPrestacion == null
-                ? '' : jQuery.trim(String(idTipoPrestacion));
-
-        return idTipoPrestacion
-                == '<%= WebKeysCompras.TIPO_PRESTACION_INSUMOS %>';
-    }
-
-    function <portlet:namespace />esTipoPrestacionProtesisDetalle(
-            idTipoPrestacion) {
-
-        if (typeof idTipoPrestacion == 'undefined') {
-            idTipoPrestacion =
-                    <portlet:namespace />obtenerIdTipoPrestacionDetalle();
+        if (!<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(idTipoPrestacion)) { return false; }
+        var tipos = <portlet:namespace />tiposPrestacionDetalleCache;
+        for (var i = 0; i < tipos.length; i++) {
+            if (String(tipos[i].id) != String(idTipoPrestacion)) { continue; }
+            for (var j = 0; j < tipos[i].nomencladores.length; j++) {
+                if (String(tipos[i].nomencladores[j]) == String(idTipoNomenclador)) { return true; }
+            }
         }
-
-        idTipoPrestacion = idTipoPrestacion == null
-                ? ''
-                : jQuery.trim(
-                        String(idTipoPrestacion)
-                );
-
-        return idTipoPrestacion == '3'
-                || idTipoPrestacion == '4'
-                || idTipoPrestacion == '5';
-    }
-
-    function <portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(
-            idTipoNomenclador,
-            idTipoPrestacion) {
-
-        if (typeof idTipoPrestacion == 'undefined') {
-            idTipoPrestacion =
-                    <portlet:namespace />obtenerIdTipoPrestacionDetalle();
-        }
-
-        idTipoPrestacion = idTipoPrestacion == null
-                ? '' : jQuery.trim(String(idTipoPrestacion));
-
-        if (!<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
-                idTipoPrestacion
-        )) {
-            return false;
-        }
-
-        idTipoNomenclador = idTipoNomenclador == null
-                ? '' : jQuery.trim(String(idTipoNomenclador));
-
-        if (!<portlet:namespace />esTipoNomencladorPrestacionesMedicas(
-                idTipoNomenclador
-        )) {
-            return false;
-        }
-
-        if (<portlet:namespace />esTipoPrestacionInsumosDetalle(
-                idTipoPrestacion
-        )) {
-            return idTipoNomenclador
-                    == '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS %>';
-        }
-
-        if (idTipoNomenclador
-                == '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS %>') {
-
-            return <portlet:namespace />esTipoPrestacionProtesisDetalle(
-                    idTipoPrestacion
-            );
-        }
-
-        return idTipoNomenclador
-                != '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS %>';
+        return false;
     }
 
     function <portlet:namespace />validarTipoNomencladorResultadoDetalle(
@@ -643,21 +561,7 @@ Efectos secundarios:
                     idTipoPrestacion
             )) {
 
-                if (<portlet:namespace />esTipoPrestacionProtesisDetalle(
-                        idTipoPrestacion
-                )) {
-                    alert(
-                            'Para Prótesis debe seleccionar una prestación '
-                            + 'de nomenclador tipo 2, 3, 4, 6 o 14.'
-                    );
-                } else {
-                    alert(
-                            'Para el Tipo seleccionado debe elegir una prestación '
-                            + 'de nomenclador tipo 2, 3, 4 o 6; el tipo 10 '
-                            + 'corresponde exclusivamente a Insumos.'
-                    );
-                }
-
+                alert('Debe buscar y seleccionar una prestación válida.');
                 return false;
             }
 
@@ -694,37 +598,19 @@ Efectos secundarios:
     }
 
     function <portlet:namespace />obtenerTipoNomencladorBusquedaDetalle() {
-
-        if (<portlet:namespace />esSectorFarmaciaTipoNomenclador()) {
-            return '9';
+        var idTipo = <portlet:namespace />obtenerIdTipoPrestacionDetalle();
+        if (!<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(idTipo)) {
+            alert('Debe seleccionar el Tipo.');
+            jQuery('#<portlet:namespace />detalle_id_tipo_prestacion').focus();
+            return null;
         }
-
-        if (<portlet:namespace />esSectorPrestacionesMedicasTipoNomenclador()) {
-            var idTipoPrestacion =
-                    <portlet:namespace />obtenerIdTipoPrestacionDetalle();
-
-            if (!<portlet:namespace />esTipoPrestacionDetalleValidoParaSector(
-                    idTipoPrestacion
-            )) {
-                alert('Debe seleccionar el Tipo.');
-
-                jQuery(
-                        '#<portlet:namespace />detalle_id_tipo_prestacion'
-                ).focus();
-
-                return null;
+        var tipos = <portlet:namespace />tiposPrestacionDetalleCache;
+        for (var i = 0; i < tipos.length; i++) {
+            if (String(tipos[i].id) == String(idTipo)) {
+                return tipos[i].nomencladores.length == 1 ? String(tipos[i].nomencladores[0]) : '';
             }
-
-            return <portlet:namespace />esTipoPrestacionInsumosDetalle()
-                    ? '<%= WebKeysCompras.TIPO_NOMENCLADOR_PROTESIS_INSUMOS %>'
-                    : '';
         }
-
-        /*
-         * Para Odontología, Discapacidad y demás sectores
-         * no agregamos un filtro nuevo: conservan su contrato actual.
-         */
-        return '';
+        return null;
     }
 
     function <portlet:namespace />validarTipoNomencladorDetalleSeleccionado(
@@ -780,21 +666,7 @@ Efectos secundarios:
             if (!<portlet:namespace />esNomencladorValidoParaTipoPrestacionDetalle(
                     tipoTecnico
             )) {
-                if (<portlet:namespace />esTipoPrestacionProtesisDetalle(
-                        idTipoPrestacion
-                )) {
-                    alert(
-                            'Para Prótesis debe seleccionar una prestación '
-                            + 'de nomenclador tipo 2, 3, 4, 6 o 14.'
-                    );
-                } else {
-                    alert(
-                            'Para el Tipo seleccionado debe elegir una prestación '
-                            + 'de nomenclador tipo 2, 3, 4 o 6; el tipo 10 '
-                            + 'corresponde exclusivamente a Insumos.'
-                    );
-                }
-
+                alert('Debe buscar y seleccionar una prestación válida.');
                 return false;
             }
 

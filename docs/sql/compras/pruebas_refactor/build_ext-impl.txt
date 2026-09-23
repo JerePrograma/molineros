@@ -1,0 +1,53 @@
+Buildfile: C:\wsmolineros\ext\ext-impl\build.xml
+
+compile:
+    [javac] C:\wsmolineros\ext\ext-impl\build-parent.xml:33: warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
+    [javac] Compiling 1459 source files to C:\wsmolineros\ext\ext-impl\classes
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\ospim\webservice\proveedoresLPA\ClienteProveedoresLPA.java:51: warning: BASE64Decoder is internal proprietary API and may be removed in a future release
+    [javac] import sun.misc.BASE64Decoder;
+    [javac]                ^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\uoma\facturacion\afip_ws\afip_wsaa_client.java:62: warning: XMLGregorianCalendarImpl is internal proprietary API and may be removed in a future release
+    [javac] import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+    [javac]                                                        ^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\ospim\compras\requerimientos\helper\RequerimientoCompraReclamoPrestacionalHelper.java:517: error: cannot find symbol
+    [javac]                             + BusquedaRequerimientoCompraServiceUtil.getEstadoDescripcion(estadoActual)
+    [javac]                               ^
+    [javac]   symbol:   variable BusquedaRequerimientoCompraServiceUtil
+    [javac]   location: class RequerimientoCompraReclamoPrestacionalHelper
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\ospim\webservice\proveedoresLPA\ClienteProveedoresLPA.java:173: warning: BASE64Decoder is internal proprietary API and may be removed in a future release
+    [javac] 						    	BASE64Decoder decoder = new BASE64Decoder();
+    [javac] 						    	^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\ospim\webservice\proveedoresLPA\ClienteProveedoresLPA.java:173: warning: BASE64Decoder is internal proprietary API and may be removed in a future release
+    [javac] 						    	BASE64Decoder decoder = new BASE64Decoder();
+    [javac] 						    	                            ^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\ospim\webservice\proveedoresLPA\ClienteProveedoresLPA.java:618: warning: BASE64Decoder is internal proprietary API and may be removed in a future release
+    [javac] 					    	BASE64Decoder decoder = new BASE64Decoder();
+    [javac] 					    	^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\ospim\webservice\proveedoresLPA\ClienteProveedoresLPA.java:618: warning: BASE64Decoder is internal proprietary API and may be removed in a future release
+    [javac] 					    	BASE64Decoder decoder = new BASE64Decoder();
+    [javac] 					    	                            ^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\uoma\facturacion\afip_ws\afip_wsaa_client.java:193: warning: XMLGregorianCalendarImpl is internal proprietary API and may be removed in a future release
+    [javac] 			XMLGregorianCalendarImpl XMLGenTime = new XMLGregorianCalendarImpl(gentime);
+    [javac] 			^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\uoma\facturacion\afip_ws\afip_wsaa_client.java:193: warning: XMLGregorianCalendarImpl is internal proprietary API and may be removed in a future release
+    [javac] 			XMLGregorianCalendarImpl XMLGenTime = new XMLGregorianCalendarImpl(gentime);
+    [javac] 			                                          ^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\uoma\facturacion\afip_ws\afip_wsaa_client.java:194: warning: XMLGregorianCalendarImpl is internal proprietary API and may be removed in a future release
+    [javac] 			XMLGregorianCalendarImpl XMLExpTime = new XMLGregorianCalendarImpl(exptime);
+    [javac] 			^
+    [javac] C:\wsmolineros\ext\ext-impl\src\ar\com\uoma\facturacion\afip_ws\afip_wsaa_client.java:194: warning: XMLGregorianCalendarImpl is internal proprietary API and may be removed in a future release
+    [javac] 			XMLGregorianCalendarImpl XMLExpTime = new XMLGregorianCalendarImpl(exptime);
+    [javac] 			                                          ^
+    [javac] Note: Some input files use or override a deprecated API.
+    [javac] Note: Recompile with -Xlint:deprecation for details.
+    [javac] Note: Some input files use unchecked or unsafe operations.
+    [javac] Note: Recompile with -Xlint:unchecked for details.
+    [javac] 1 error
+    [javac] 10 warnings
+
+BUILD FAILED
+C:\wsmolineros\ext\ext-impl\build-parent.xml:71: .
+
+Compile failed; see the compiler error output for details.
+
+Total time: 26 seconds

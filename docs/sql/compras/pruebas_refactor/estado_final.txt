@@ -1,0 +1,112 @@
+Fecha UTC: 2026-09-22T20:56:08.864255+00:00
+
+git status --short --branch
+EXIT 0
+## main...origin/main
+ M docs/sql/compras/20260922_compras_fuente_verdad_produccion.md
+ M ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/action/BuscarItemTecnicoComprasAction.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/NotificacionCotizacionDetalle.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompra.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraEstado.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraSector.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/beans/TipoPrestacionCompra.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/EditarRequerimientoCompraHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NomencladorCompraBusquedaHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NotificarCotizacionPrestadorHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/ReclamoPrestacionalCompraPrecargaHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/helper/RequerimientoCompraReclamoPrestacionalHelper.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceImpl.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceUtil.java
+ M ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java
+ M ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_acciones_componente.jsp
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_datos_basicos_componente.jsp
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_base_componente.jsp
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_edicion_componente.jsp
+ M ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_scripts_edicion_afiliado_componente.jsp
+?? docs/sql/compras/20260922_refactor_normalizacion_compras.md
+?? docs/sql/compras/20260922_refactor_normalizacion_compras.sql
+?? docs/sql/compras/pruebas_refactor/
+
+git diff --check
+EXIT 0
+
+git diff --stat
+EXIT 0
+ .../20260922_compras_fuente_verdad_produccion.md   |   51 +-
+ .../src/ar/com/ospim/compras/WebKeysCompras.java   |  337 +-
+ .../action/BuscarItemTecnicoComprasAction.java     |   57 +-
+ .../action/EditarRequerimientoCompraAction.java    |   10 +-
+ .../beans/NotificacionCotizacionDetalle.java       |    7 +-
+ .../requerimientos/beans/RequerimientoCompra.java  |   41 +-
+ .../beans/RequerimientoCompraEstado.java           |   20 +-
+ .../beans/RequerimientoCompraSector.java           |   32 +
+ .../requerimientos/beans/TipoPrestacionCompra.java |   11 +
+ .../helper/EditarRequerimientoCompraHelper.java    |  131 +-
+ .../helper/NomencladorCompraBusquedaHelper.java    |  252 +-
+ .../helper/NotificarCotizacionPrestadorHelper.java |    2 +-
+ .../ReclamoPrestacionalCompraPrecargaHelper.java   |   94 +-
+ ...querimientoCompraReclamoPrestacionalHelper.java |    4 +-
+ .../BusquedaRequerimientoCompraServiceImpl.java    |   86 +-
+ .../BusquedaRequerimientoCompraServiceUtil.java    |   14 +-
+ ...clamoPrestacionalCompraPrecargaServiceUtil.java |    2 +-
+ .../ar/com/ospim/compras/sql/compras_schema.sql    | 4860 ++++++--------------
+ .../requerimiento_compra_acciones_componente.jsp   |    2 +-
+ ...querimiento_compra_datos_basicos_componente.jsp |    8 +-
+ ...ento_compra_detalle_scripts_base_componente.jsp |   41 +-
+ ...o_compra_detalle_scripts_edicion_componente.jsp |  258 +-
+ ..._compra_scripts_edicion_afiliado_componente.jsp |    4 -
+ 23 files changed, 1879 insertions(+), 4445 deletions(-)
+
+git diff --name-only
+EXIT 0
+docs/sql/compras/20260922_compras_fuente_verdad_produccion.md
+ext-impl/src/ar/com/ospim/compras/WebKeysCompras.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/action/BuscarItemTecnicoComprasAction.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/action/EditarRequerimientoCompraAction.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/NotificacionCotizacionDetalle.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompra.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraEstado.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/RequerimientoCompraSector.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/beans/TipoPrestacionCompra.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/EditarRequerimientoCompraHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NomencladorCompraBusquedaHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/NotificarCotizacionPrestadorHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/ReclamoPrestacionalCompraPrecargaHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/helper/RequerimientoCompraReclamoPrestacionalHelper.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceImpl.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/service/BusquedaRequerimientoCompraServiceUtil.java
+ext-impl/src/ar/com/ospim/compras/requerimientos/service/ReclamoPrestacionalCompraPrecargaServiceUtil.java
+ext-impl/src/ar/com/ospim/compras/sql/compras_schema.sql
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_acciones_componente.jsp
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_datos_basicos_componente.jsp
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_base_componente.jsp
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_edicion_componente.jsp
+ext-web/docroot/html/portlet/compras/requerimientos/partials/requerimiento_compra_scripts_edicion_afiliado_componente.jsp
+
+git rev-parse HEAD
+EXIT 0
+308990e77a909ff49a88f47b33d0b36db2f7519d
+
+git rev-parse origin/main
+EXIT 0
+308990e77a909ff49a88f47b33d0b36db2f7519d
+
+git ls-files --others --exclude-standard
+EXIT 0
+docs/sql/compras/20260922_refactor_normalizacion_compras.md
+docs/sql/compras/20260922_refactor_normalizacion_compras.sql
+docs/sql/compras/pruebas_refactor/ComprasConfiguracionTest.java
+docs/sql/compras/pruebas_refactor/build_ext-impl.txt
+docs/sql/compras/pruebas_refactor/build_final_ext-impl.txt
+docs/sql/compras/pruebas_refactor/build_final_ext-service.txt
+docs/sql/compras/pruebas_refactor/build_final_ext-web.txt
+docs/sql/compras/pruebas_refactor/catalogo_antes.json
+docs/sql/compras/pruebas_refactor/encoding_final.txt
+docs/sql/compras/pruebas_refactor/estado_final.txt
+docs/sql/compras/pruebas_refactor/funciones_instaladas_antes.sql
+docs/sql/compras/pruebas_refactor/probar_migracion_rollback.py
+docs/sql/compras/pruebas_refactor/verificar_contratos.py
+docs/sql/compras/pruebas_refactor/verificar_javascript.js

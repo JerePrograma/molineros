@@ -1,0 +1,6 @@
+Buildfile: C:\wsmolineros\ext\ext-web\build.xml
+
+compile:
+
+BUILD SUCCESSFUL
+Total time: 2 seconds

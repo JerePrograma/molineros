@@ -43,6 +43,7 @@ Efectos secundarios:
         <portlet:namespace />tiposPrestacionDetalleCache.push({
             id: '<%= tipoPrestacion.getIdInt() %>',
             idSector: '<%= tipoPrestacion.getIdSectorInt() %>',
+            nomencladores: <%= tipoPrestacion.getNomencladores().toString() %>,
             descripcion: '<%= jsDetalleCompra(
                     tipoPrestacion.getDescripcionVisible()
             ) %>'
@@ -448,22 +449,21 @@ Efectos secundarios:
     }
 
     function <portlet:namespace />esSectorFarmaciaCompra() {
-        var descripcion =
-                <portlet:namespace />getSectorDescripcionSeleccionadoCompra();
-
-        return <portlet:namespace />normalizarSectorCompra(descripcion)
-                == 'FARMACIA';
+        var sector = jQuery('#<portlet:namespace />sector_id');
+        if (sector.length > 0 && sector.is('select')) {
+            return sector.find('option:selected').attr('data-medicamento-legacy') == 'true';
+        }
+        return <%= req != null && req.getSectorConfiguracion() != null
+                && req.getSectorConfiguracion().isPermiteMedicamentoLegacy() ? "true" : "false" %>;
     }
 
     function <portlet:namespace />esSectorNomencladorCompra() {
-        var descripcion =
-                <portlet:namespace />normalizarSectorCompra(
-                        <portlet:namespace />getSectorDescripcionSeleccionadoCompra()
-                );
-
-        return descripcion == 'PRESTACIONES MEDICAS'
-                || descripcion == 'DISCAPACIDAD'
-                || descripcion == 'ODONTOLOGIA';
+        var sector = jQuery('#<portlet:namespace />sector_id');
+        if (sector.length > 0 && sector.is('select')) {
+            return sector.find('option:selected').attr('data-busqueda-medica') == 'true';
+        }
+        return <%= req != null && req.getSectorConfiguracion() != null
+                && req.getSectorConfiguracion().isBusquedaNomencladorMedica() ? "true" : "false" %>;
     }
 
     function <portlet:namespace />esSectorDetalleConCodigoCompra() {
@@ -487,15 +487,12 @@ Efectos secundarios:
     }
 
     function <portlet:namespace />esSectorDetalleObservacionCompra() {
-        var descripcion =
-                <portlet:namespace />normalizarSectorCompra(
-                        <portlet:namespace />getSectorDescripcionSeleccionadoCompra()
-                );
-
-        return descripcion == 'RRHH'
-                || descripcion == 'LEGALES'
-                || descripcion == 'SISTEMAS'
-                || descripcion == 'OTROS';
+        var sector = jQuery('#<portlet:namespace />sector_id');
+        if (sector.length > 0 && sector.is('select')) {
+            return sector.find('option:selected').attr('data-tipo-item') == 'OBSERVACION';
+        }
+        return <%= req != null && req.getSectorConfiguracion() != null
+                && req.getSectorConfiguracion().isObservacion() ? "true" : "false" %>;
     }
 
     function <portlet:namespace />actualizarVisibilidadColumnasDetalleCompra() {
