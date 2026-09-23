@@ -125,6 +125,92 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
         );
     }
 
+    /**
+     * Entradas de persistencia para el Helper. Los metodos de compatibilidad
+     * anteriores conservan sus validaciones y orquestacion en ese Helper.
+     * Estos nombres evitan volver a entrar en el mismo flujo de validacion.
+     */
+    public static RequerimientoCompraReclamoPrestacional
+    consultarPorRequerimiento(
+            int idRequerimientoCompra) throws Exception {
+
+        return getInstance().obtenerPorRequerimiento(
+                idRequerimientoCompra
+        );
+    }
+
+    public static List<RequerimientoCompraReclamoPrestacional>
+    listarPorReclamoPrestacional(
+            int idReclamoPrestacional,
+            String estado) throws Exception {
+
+        return getInstance().listarPorReclamoPrestacional(
+                idReclamoPrestacional,
+                estado
+        );
+    }
+
+    public static List<RequerimientoCompraReclamoPrestacional>
+    listarVinculadasPorRequerimientos(
+            String estado,
+            List<Integer> idsRequerimientos) throws Exception {
+
+        return getInstance().listarVinculadasPorRequerimientos(
+                estado,
+                idsRequerimientos
+        );
+    }
+
+    public static boolean ejecutarLiberacionReserva(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            String usuario) throws Exception {
+
+        return getInstance().liberarReserva(
+                idRequerimientoCompra,
+                tokenReserva,
+                usuario
+        );
+    }
+
+    public static boolean registrarErrorPosteriorAlInsert(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            int idReclamoPrestacional,
+            String error,
+            String usuario) throws Exception {
+
+        return getInstance().marcarErrorPosteriorAlInsert(
+                idRequerimientoCompra,
+                tokenReserva,
+                idReclamoPrestacional,
+                error,
+                usuario
+        );
+    }
+
+    public static boolean ejecutarFinalizacionCreacion(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            int idReclamoPrestacional,
+            String usuario) throws Exception {
+
+        return getInstance().finalizarCreacion(
+                idRequerimientoCompra,
+                tokenReserva,
+                idReclamoPrestacional,
+                usuario
+        );
+    }
+
+    public static RequerimientoCompraReclamoPrestacionalTransaccion
+    abrirTransaccion() throws Exception {
+
+        return RequerimientoCompraReclamoPrestacionalTransaccion.abrir(
+                getInstance()
+        );
+    }
+
     private RequerimientoCompraReclamoPrestacionalServiceUtil() {
     }
 }

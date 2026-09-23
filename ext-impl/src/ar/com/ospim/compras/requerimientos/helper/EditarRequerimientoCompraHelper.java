@@ -16,7 +16,7 @@ import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.GestorOrdenMedicaDocumento;
 import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
-import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceImpl;
+import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.farmacia.beans.Medicamento;
 import ar.com.ospim.farmacia.services.BusquedaMedicamentoServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  * estados, cotización y asociaciones documentales del requerimiento.
  *
  * No abre conexiones ni conoce JDBC. Toda persistencia se delega en
- * EditarRequerimientoCompraServiceImpl.
+ * EditarRequerimientoCompraServiceUtil.
  */
 public class EditarRequerimientoCompraHelper {
 
@@ -60,9 +60,6 @@ public class EditarRequerimientoCompraHelper {
 
     private static final Pattern DIACRITICOS =
             Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-
-    private final EditarRequerimientoCompraServiceImpl persistence =
-            new EditarRequerimientoCompraServiceImpl();
 
     private final NotificarCotizacionPrestadorHelper notificacionHelper =
             new NotificarCotizacionPrestadorHelper();
@@ -292,7 +289,7 @@ public class EditarRequerimientoCompraHelper {
 
 
             int idGuardado =
-                    persistence.guardarRequerimientoCompra(
+                    EditarRequerimientoCompraServiceUtil.guardarRequerimientoCompra(
                             requerimiento,
                             normalizarUsuario(usuario)
                     );
@@ -343,7 +340,7 @@ public class EditarRequerimientoCompraHelper {
             GestorOrdenMedicaDocumento gestorDocumento,
             String usuario) throws Exception {
 
-        EditarRequerimientoCompraServiceImpl.Transaccion transaccion = null;
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion = null;
 
         List<DocumentoComprasCreado> documentosCreados =
                 new ArrayList<DocumentoComprasCreado>();
@@ -374,7 +371,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            transaccion = persistence.abrirTransaccion();
+            transaccion = EditarRequerimientoCompraServiceUtil.abrirTransaccion();
 
             int idRequerimiento =
                     transaccion.guardarRequerimientoCompra(
@@ -745,7 +742,7 @@ public class EditarRequerimientoCompraHelper {
             }
 
             int idDetalleGuardado =
-                    persistence.guardarDetalle(
+                    EditarRequerimientoCompraServiceUtil.guardarDetalle(
                             detalle,
                             normalizarUsuario(
                                     usuario
@@ -931,7 +928,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            persistence.borrarDetalle(
+            EditarRequerimientoCompraServiceUtil.borrarDetalle(
                     idDetalle,
                     normalizarUsuario(usuario)
             );
@@ -989,7 +986,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            persistence.cambiarEstado(
+            EditarRequerimientoCompraServiceUtil.cambiarEstado(
                     idRequerimientoCompra,
                     idEstadoNuevo,
                     normalizarUsuario(usuario)
@@ -1042,7 +1039,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            persistence.anularRequerimiento(
+            EditarRequerimientoCompraServiceUtil.anularRequerimiento(
                     idRequerimientoCompra,
                     motivoBaja != null ? motivoBaja : "",
                     normalizarUsuario(usuario)
@@ -1134,7 +1131,7 @@ public class EditarRequerimientoCompraHelper {
             }
 
             int estadoFinal =
-                    persistence.confirmarOrdenCompra(
+                    EditarRequerimientoCompraServiceUtil.confirmarOrdenCompra(
                             idRequerimientoCompra,
                             normalizarUsuario(usuario)
                     );
@@ -1191,7 +1188,7 @@ public class EditarRequerimientoCompraHelper {
             }
 
             int estadoFinal =
-                    persistence.confirmarEnvioACotizar(
+                    EditarRequerimientoCompraServiceUtil.confirmarEnvioACotizar(
                             idRequerimientoCompra,
                             normalizarUsuario(
                                     usuario
@@ -1348,7 +1345,7 @@ public class EditarRequerimientoCompraHelper {
             validarPresupuestoParaRegistrar(presupuesto);
 
             int id =
-                    persistence.registrarPresupuesto(
+                    EditarRequerimientoCompraServiceUtil.registrarPresupuesto(
                             presupuesto,
                             normalizarUsuario(usuario)
                     );
@@ -1393,7 +1390,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            return persistence.darDeBajaPresupuesto(
+            return EditarRequerimientoCompraServiceUtil.darDeBajaPresupuesto(
                     idRequerimientoPresupuesto,
                     idRequerimientoCompra,
                     normalizarUsuario(usuario)
@@ -1431,7 +1428,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            return persistence.reactivarPresupuesto(
+            return EditarRequerimientoCompraServiceUtil.reactivarPresupuesto(
                     idRequerimientoPresupuesto,
                     idRequerimientoCompra
             );
@@ -1465,7 +1462,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            return persistence.darDeBajaCotizacionEmpresa(
+            return EditarRequerimientoCompraServiceUtil.darDeBajaCotizacionEmpresa(
                     idRequerimientoPresupuesto,
                     idRequerimientoCompra,
                     normalizarUsuario(usuario)
@@ -1500,7 +1497,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            return persistence.reactivarCotizacionEmpresa(
+            return EditarRequerimientoCompraServiceUtil.reactivarCotizacionEmpresa(
                     idRequerimientoPresupuesto,
                     idRequerimientoCompra
             );
@@ -2613,7 +2610,7 @@ private void prepararDetalleParaGuardar(
             }
 
             int estadoFinal =
-                    persistence.guardarCotizacion(
+                    EditarRequerimientoCompraServiceUtil.guardarCotizacion(
                             idRequerimientoCompra,
                             idsDetalle,
                             preciosUnitarios,
@@ -2954,7 +2951,7 @@ private void prepararDetalleParaGuardar(
             int idRequerimientoCompra,
             String usuario) throws Exception {
 
-        return persistence.confirmarEnvioACotizar(
+        return EditarRequerimientoCompraServiceUtil.confirmarEnvioACotizar(
                 idRequerimientoCompra,
                 normalizarUsuario(usuario)
         );
@@ -3131,7 +3128,7 @@ private void prepararDetalleParaGuardar(
             GestorOrdenMedicaDocumento gestorDocumento,
             String usuario) throws Exception {
 
-        EditarRequerimientoCompraServiceImpl.Transaccion transaccion =
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion =
                 null;
 
         List<DocumentoComprasCreado> documentosCreados =
@@ -3175,7 +3172,7 @@ private void prepararDetalleParaGuardar(
             }
 
             transaccion =
-                    persistence.abrirTransaccion();
+                    EditarRequerimientoCompraServiceUtil.abrirTransaccion();
 
             for (int i = 0;
                  i < ordenesMedicas.size();

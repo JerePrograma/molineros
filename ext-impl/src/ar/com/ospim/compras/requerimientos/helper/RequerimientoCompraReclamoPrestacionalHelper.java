@@ -3,7 +3,7 @@ package ar.com.ospim.compras.requerimientos.helper;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
-import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceImpl;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalTransaccion;
 
 import com.liferay.portal.model.User;
@@ -16,20 +16,16 @@ import java.util.Map;
  * Orquestación y reglas del vinculo Compras / Reclamo Prestacional.
  *
  * No administra JDBC. Las operaciones que deben compartir una misma conexión
- * se ejecutan mediante la fachada transaccional opaca del ServiceImpl.
+ * se ejecutan mediante la infraestructura transaccional del servicio.
  */
 public final class RequerimientoCompraReclamoPrestacionalHelper {
-
-    private final RequerimientoCompraReclamoPrestacionalServiceImpl
-            persistence =
-            new RequerimientoCompraReclamoPrestacionalServiceImpl();
 
     public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(
             int idRequerimientoCompra) throws Exception {
 
         validarIdRequerimiento(idRequerimientoCompra);
 
-        return persistence.obtenerPorRequerimiento(
+        return RequerimientoCompraReclamoPrestacionalServiceUtil.consultarPorRequerimiento(
                 idRequerimientoCompra
         );
     }
@@ -45,7 +41,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         }
 
         List<RequerimientoCompraReclamoPrestacional> relaciones =
-                persistence.listarPorReclamoPrestacional(
+                RequerimientoCompraReclamoPrestacionalServiceUtil.listarPorReclamoPrestacional(
                         idReclamoPrestacional,
                         WebKeysCompras.VINCULO_RECLAMO_VINCULADO
                 );
@@ -86,7 +82,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         }
 
         List<RequerimientoCompraReclamoPrestacional> relaciones =
-                persistence.listarVinculadasPorRequerimientos(
+                RequerimientoCompraReclamoPrestacionalServiceUtil.listarVinculadasPorRequerimientos(
                         WebKeysCompras.VINCULO_RECLAMO_VINCULADO,
                         idsValidos
                 );
@@ -117,7 +113,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         validarToken(tokenReserva);
 
         boolean resultado =
-                persistence.liberarReserva(
+                RequerimientoCompraReclamoPrestacionalServiceUtil.ejecutarLiberacionReserva(
                         idRequerimientoCompra,
                         tokenReserva,
                         normalizarUsuario(usuario)
@@ -149,7 +145,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         }
 
         boolean resultado =
-                persistence.marcarErrorPosteriorAlInsert(
+                RequerimientoCompraReclamoPrestacionalServiceUtil.registrarErrorPosteriorAlInsert(
                         idRequerimientoCompra,
                         tokenReserva,
                         idReclamoPrestacional,
@@ -206,9 +202,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         try {
             transaccion =
-                    RequerimientoCompraReclamoPrestacionalTransaccion.abrir(
-                            persistence
-                    );
+                    RequerimientoCompraReclamoPrestacionalServiceUtil.abrirTransaccion();
 
             bloquearRequerimiento(
                     transaccion,
@@ -341,7 +335,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         }
 
         boolean resultado =
-                persistence.finalizarCreacion(
+                RequerimientoCompraReclamoPrestacionalServiceUtil.ejecutarFinalizacionCreacion(
                         idRequerimientoCompra,
                         tokenReserva,
                         idReclamoPrestacional,
@@ -368,9 +362,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         try {
             transaccion =
-                    RequerimientoCompraReclamoPrestacionalTransaccion.abrir(
-                            persistence
-                    );
+                    RequerimientoCompraReclamoPrestacionalServiceUtil.abrirTransaccion();
 
             bloquearRequerimiento(
                     transaccion,
