@@ -58,17 +58,22 @@ public class RequerimientoCompraComparativaHelper {
     public List<RequerimientoCompraComparativa> cargar(final RequerimientoCompra r)
             throws Exception {
         List<RequerimientoCompraComparativa> lista =
-                RequerimientoCompraComparativaServiceUtil.listar(r.getIdRequerimientoCompra());
+                RequerimientoCompraComparativaServiceUtil.listar(
+                        r.getIdRequerimientoCompra());
+
         if (lista.isEmpty()) {
             throw new IllegalArgumentException(
                     "El requerimiento no tiene presupuestos de prestadores cargados.");
         }
+
         for (RequerimientoCompraComparativa c : lista) {
             completarDetalles(r, c);
         }
+
         Collections.sort(lista, new Comparator<RequerimientoCompraComparativa>() {
             public int compare(RequerimientoCompraComparativa a,
                                RequerimientoCompraComparativa b) {
+
                 int adjudicado = r.getIdPrestadorAdjudicadoInt();
 
                 if (a.getIdPrestador() == adjudicado
@@ -94,6 +99,7 @@ public class RequerimientoCompraComparativaHelper {
 
                 if (totalA != null && totalB != null) {
                     int comparacion = totalA.compareTo(totalB);
+
                     if (comparacion != 0) {
                         return comparacion;
                     }
@@ -103,6 +109,7 @@ public class RequerimientoCompraComparativaHelper {
                         : a.getIdPrestador() == b.getIdPrestador() ? 0 : 1;
             }
         });
+
         return lista;
     }
 

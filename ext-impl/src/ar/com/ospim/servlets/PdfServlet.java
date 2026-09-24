@@ -1325,171 +1325,396 @@ public class PdfServlet extends HttpServlet {
 	}
 
     private void generaComparativaCompra(HttpServletRequest req,
-            HttpServletResponse res) throws IOException {
+                                         HttpServletResponse res) throws IOException {
+
         try {
-            RequerimientoCompraComparativaAction.validarPermiso(PortalUtil.getUser(req), false);
+            RequerimientoCompraComparativaAction.validarPermiso(
+                    PortalUtil.getUser(req), false);
         } catch (Exception e) {
             res.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+
         int id = ParamUtil.getInteger(req, "id_requerimiento", 0);
+
         if (id <= 0) {
             res.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
+
         InputStream in = null;
+
         try {
             RequerimientoCompraComparativaHelper helper =
                     new RequerimientoCompraComparativaHelper();
+
             ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra r =
                     helper.obtenerRequerimiento(id);
+
             in = getClass().getClassLoader().getResourceAsStream(
                     "jasper/compras/requerimiento_comparativa.jrxml");
+
             if (in == null) {
-                throw new IOException("No se encontró el reporte de comparativa.");
+                throw new IOException(
+                        "No se encontró el reporte de comparativa.");
             }
+
             // Reordena para la presentacion los mismos datos que imprimia el reporte.
             LinkedHashMap<String, Map<String, ?>> proveedores =
                     new LinkedHashMap<String, Map<String, ?>>();
+
             TreeMap<Integer, Map<String, ?>> items =
                     new TreeMap<Integer, Map<String, ?>>();
-            for (Map<String, ?> fila : helper.filasPdf(r, helper.cargar(r))) {
-                String prestador = (String) fila.get("idPrestador");
+
+            for (Map<String, ?> fila :
+                    helper.filasPdf(r, helper.cargar(r))) {
+
+                String prestador =
+                        (String) fila.get("idPrestador");
+
                 proveedores.put(prestador, fila);
+
                 if (!"".equals(fila.get("idPrestacion"))) {
-                    Integer orden = Integer.valueOf((String) fila.get("ordenItem"));
+                    Integer orden =
+                            Integer.valueOf(
+                                    (String) fila.get("ordenItem"));
+
                     if (!items.containsKey(orden)) {
-                        Map<String, Object> item = new HashMap<String, Object>();
+                        Map<String, Object> item =
+                                new HashMap<String, Object>();
+
                         item.put("tipo", "detalle");
-                        item.put("etiqueta", fila.get("codigo") + " - " + fila.get("prestacion"));
-                        item.put("unidad", fila.get("unidad"));
-                        item.put("proveedores", new HashMap<String, Map<String, ?>>());
+
+                        item.put(
+                                "etiqueta",
+                                fila.get("codigo")
+                                        + " - "
+                                        + fila.get("prestacion"));
+
+                        item.put(
+                                "unidad",
+                                fila.get("unidad"));
+
+                        item.put(
+                                "proveedores",
+                                new HashMap<String, Map<String, ?>>());
+
                         items.put(orden, item);
                     }
-                    ((Map<String, Map<String, ?>>) items.get(orden).get("proveedores"))
+
+                    ((Map<String, Map<String, ?>>)
+                            items.get(orden).get("proveedores"))
                             .put(prestador, fila);
                 }
             }
-            List<Map<String, ?>> filas = new ArrayList<Map<String, ?>>(items.values());
-            String[] campos = {"neto", "iva", "iibb", "total", "pago", "envio",
-                    "plazo", "fecha", "validez", "dictamen"};
-            String[] etiquetas = {"Subtotal (sin IVA)", "IVA", "IIBB", "Total",
-                    "Forma de pago", "Envío a obra social - Beneficiario - Delegación",
-                    "Plazo de entrega", "Fecha del presupuesto", "Validez del presupuesto (hs)",
-                    "Dictamen de Auditoría Médica/Compras"};
+
+            List<Map<String, ?>> filas =
+                    new ArrayList<Map<String, ?>>(items.values());
+
+            String[] campos = {
+                    "neto",
+                    "iva",
+                    "iibb",
+                    "total",
+                    "pago",
+                    "envio",
+                    "plazo",
+                    "fecha",
+                    "validez",
+                    "dictamen"
+            };
+
+            String[] etiquetas = {
+                    "Subtotal (sin IVA)",
+                    "IVA",
+                    "IIBB",
+                    "Total",
+                    "Forma de pago",
+                    "Envío a obra social - Beneficiario - Delegación",
+                    "Plazo de entrega",
+                    "Fecha del presupuesto",
+                    "Validez del presupuesto (hs)",
+                    "Dictamen de Auditoría Médica/Compras"
+            };
+
             for (int i = 0; i < campos.length; i++) {
-                Map<String, Object> fila = new HashMap<String, Object>();
-                fila.put("tipo", i == 9 ? "dictamen" : i == 3 ? "total"
-                        : i < 4 ? "resumen" : "condicion");
-                fila.put("etiqueta", etiquetas[i]);
-                fila.put("unidad", "");
-                Map<String, Object> valores = new HashMap<String, Object>();
+                Map<String, Object> fila =
+                        new HashMap<String, Object>();
+
+                fila.put(
+                        "tipo",
+                        i == 9 ? "dictamen"
+                                : i == 3 ? "total"
+                                : i < 4 ? "resumen"
+                                : "condicion");
+
+                fila.put(
+                        "etiqueta",
+                        etiquetas[i]);
+
+                fila.put(
+                        "unidad",
+                        "");
+
+                Map<String, Object> valores =
+                        new HashMap<String, Object>();
+
                 for (String prestador : proveedores.keySet()) {
-                    Map<String, ?> proveedor = proveedores.get(prestador);
-                    Map<String, Object> valor = new HashMap<String, Object>();
+                    Map<String, ?> proveedor =
+                            proveedores.get(prestador);
+
+                    Map<String, Object> valor =
+                            new HashMap<String, Object>();
+
                     // No existe un dictamen en el contrato actual: se deja la celda vacia.
-                    valor.put("valor", i == 9 ? "" : proveedor.get(campos[i]));
-                    valor.put("incompleto", proveedor.get("incompleto"));
-                    valores.put(prestador, valor);
+                    valor.put(
+                            "valor",
+                            i == 9 ? "" : proveedor.get(campos[i]));
+
+                    valor.put(
+                            "incompleto",
+                            proveedor.get("incompleto"));
+
+                    valores.put(
+                            prestador,
+                            valor);
                 }
-                fila.put("proveedores", valores);
+
+                fila.put(
+                        "proveedores",
+                        valores);
+
                 filas.add(fila);
             }
-            HashMap<String, Object> parametros = new HashMap<String, Object>();
-            parametros.put("REQUERIMIENTO", String.valueOf(id));
-            parametros.put("PROVEEDORES", proveedores);
-            List<String> ids = new ArrayList<String>(proveedores.keySet());
+
+            HashMap<String, Object> parametros =
+                    new HashMap<String, Object>();
+
+            parametros.put(
+                    "REQUERIMIENTO",
+                    String.valueOf(id));
+
+            parametros.put(
+                    "PROVEEDORES",
+                    proveedores);
+
+            List<String> ids =
+                    new ArrayList<String>(proveedores.keySet());
+
             JasperPrint print = null;
-            int ancho = ids.size() > 4 ? 1151 : 802;
-            int inicioProveedores = 252 * ancho / 802;
-            int bloquesPorHoja = (ancho - inicioProveedores) / 110;
+
+            int ancho =
+                    ids.size() > 4 ? 1151 : 802;
+
+            int inicioProveedores =
+                    252 * ancho / 802;
+
+            int bloquesPorHoja =
+                    (ancho - inicioProveedores) / 110;
+
             // Conserva un ancho minimo legible; los proveedores restantes continuan en otra hoja.
-            for (int desde = 0; desde < ids.size(); desde += bloquesPorHoja) {
-                int hasta = Math.min(desde + bloquesPorHoja, ids.size());
-                int cantidad = hasta - desde;
+            for (int desde = 0;
+                 desde < ids.size();
+                 desde += bloquesPorHoja) {
+
+                int hasta =
+                        Math.min(
+                                desde + bloquesPorHoja,
+                                ids.size());
+
+                int cantidad =
+                        hasta - desde;
+
                 if (desde > 0) {
                     in.close();
+
                     in = getClass().getClassLoader().getResourceAsStream(
                             "jasper/compras/requerimiento_comparativa.jrxml");
+
+                    if (in == null) {
+                        throw new IOException(
+                                "No se encontró el reporte de comparativa.");
+                    }
                 }
-                JasperDesign diseno = JRXmlLoader.load(in);
-                diseno.setPageWidth(ancho + 40);
-                diseno.setPageHeight(ids.size() > 4 ? 842 : 595);
-                diseno.setColumnWidth(ancho);
+
+                JasperDesign diseno =
+                        JRXmlLoader.load(in);
+
+                diseno.setPageWidth(
+                        ancho + 40);
+
+                diseno.setPageHeight(
+                        ids.size() > 4 ? 842 : 595);
+
+                diseno.setColumnWidth(
+                        ancho);
+
                 JRBand[] bandas = {
-                    diseno.getPageHeader(), diseno.getColumnHeader(),
-                    diseno.getDetailSection().getBands()[0], diseno.getPageFooter()};
+                        diseno.getPageHeader(),
+                        diseno.getColumnHeader(),
+                        diseno.getDetailSection().getBands()[0],
+                        diseno.getPageFooter()
+                };
+
                 for (JRBand banda : bandas) {
                     JRDesignBand bandaDiseno =
                             (JRDesignBand) banda;
-                    for (JRElement elemento : banda.getElements()) {
-                        if ("proveedor".equals(elemento.getKey())) {
-                            bandaDiseno.removeElement((JRDesignElement) elemento);
-                            for (int indice = desde; indice < hasta; indice++) {
-                                String prestador = ids.get(indice);
-                                int x = inicioProveedores + (ancho - inicioProveedores)
-                                        * (indice - desde) / cantidad;
-                                int fin = inicioProveedores + (ancho - inicioProveedores)
-                                        * (indice - desde + 1) / cantidad;
+
+                    for (JRElement elemento :
+                            banda.getElements()) {
+
+                        if ("proveedor".equals(
+                                elemento.getKey())) {
+
+                            bandaDiseno.removeElement(
+                                    (JRDesignElement) elemento);
+
+                            for (int indice = desde;
+                                 indice < hasta;
+                                 indice++) {
+
+                                String prestador =
+                                        ids.get(indice);
+
+                                int x =
+                                        inicioProveedores
+                                                + (ancho - inicioProveedores)
+                                                * (indice - desde)
+                                                / cantidad;
+
+                                int fin =
+                                        inicioProveedores
+                                                + (ancho - inicioProveedores)
+                                                * (indice - desde + 1)
+                                                / cantidad;
+
                                 JRDesignFrame bloque =
                                         (JRDesignFrame) elemento.clone();
+
                                 bloque.setX(x);
                                 bloque.setWidth(fin - x);
-                                for (JRElement celda : bloque.getElements()) {
-                                    int derecha = (celda.getX() + celda.getWidth()) * (fin - x) / 550;
-                                    celda.setX(celda.getX() * (fin - x) / 550);
-                                    celda.setWidth(derecha - celda.getX());
-                                    if ("true".equals(proveedores.get(prestador).get("adjudicado"))) {
+
+                                for (JRElement celda :
+                                        bloque.getElements()) {
+
+                                    int derecha =
+                                            (celda.getX()
+                                                    + celda.getWidth())
+                                                    * (fin - x)
+                                                    / 550;
+
+                                    celda.setX(
+                                            celda.getX()
+                                                    * (fin - x)
+                                                    / 550);
+
+                                    celda.setWidth(
+                                            derecha - celda.getX());
+
+                                    if ("true".equals(
+                                            proveedores
+                                                    .get(prestador)
+                                                    .get("adjudicado"))) {
+
                                         ((JRDesignElement) celda)
-                                                .setStyle((JRStyle) diseno.getStylesMap().get("CeldaAdjudicada"));
-                                        celda.setBackcolor(java.awt.Color.CYAN);
+                                                .setStyle(
+                                                        (JRStyle)
+                                                                diseno
+                                                                        .getStylesMap()
+                                                                        .get(
+                                                                                "CeldaAdjudicada"));
+
+                                        celda.setBackcolor(
+                                                java.awt.Color.CYAN);
                                     }
+
                                     if (celda instanceof JRDesignTextField) {
                                         JRDesignExpression expresion =
                                                 (JRDesignExpression)
-                                                ((JRDesignTextField) celda).getExpression();
-                                        expresion.setText(expresion.getText().replace("$P{PROVEEDOR}",
-                                                "\"" + prestador + "\""));
+                                                        ((JRDesignTextField) celda)
+                                                                .getExpression();
+
+                                        expresion.setText(
+                                                expresion
+                                                        .getText()
+                                                        .replace(
+                                                                "$P{PROVEEDOR}",
+                                                                "\""
+                                                                        + prestador
+                                                                        + "\""));
                                     }
                                 }
+
                                 bandaDiseno.addElement(bloque);
                             }
+
                         } else {
-                            int derecha = (elemento.getX() + elemento.getWidth()) * ancho / 802;
-                            elemento.setX(elemento.getX() * ancho / 802);
-                            elemento.setWidth(derecha - elemento.getX());
+                            int derecha =
+                                    (elemento.getX()
+                                            + elemento.getWidth())
+                                            * ancho
+                                            / 802;
+
+                            elemento.setX(
+                                    elemento.getX()
+                                            * ancho
+                                            / 802);
+
+                            elemento.setWidth(
+                                    derecha - elemento.getX());
                         }
                     }
                 }
-                JasperPrint bloque = JasperFillManager.fillReport(
-                        JasperCompileManager.compileReport(diseno), parametros,
-                        new JRMapCollectionDataSource(filas));
+
+                JasperPrint bloque =
+                        JasperFillManager.fillReport(
+                                JasperCompileManager.compileReport(diseno),
+                                parametros,
+                                new JRMapCollectionDataSource(filas));
+
                 if (print == null) {
                     print = bloque;
                 } else {
-                    for (Object pagina : bloque.getPages()) {
-                        print.addPage((JRPrintPage) pagina);
+                    for (Object pagina :
+                            bloque.getPages()) {
+
+                        print.addPage(
+                                (JRPrintPage) pagina);
                     }
                 }
             }
-            crearPdfFromByteArray(req, res,
+
+            crearPdfFromByteArray(
+                    req,
+                    res,
                     JasperExportManager.exportReportToPdf(print),
                     "ComparativaCompra_" + id + ".pdf");
+
         } catch (IllegalArgumentException e) {
-            res.sendError(HttpServletResponse.SC_BAD_REQUEST,
+            res.sendError(
+                    HttpServletResponse.SC_BAD_REQUEST,
                     "No hay una comparativa disponible para imprimir.");
+
         } catch (Exception e) {
-            _log.error("No se pudo generar el PDF de comparativa. Requerimiento=" + id, e);
+            _log.error(
+                    "No se pudo generar el PDF de comparativa. Requerimiento="
+                            + id,
+                    e);
+
             if (!res.isCommitted()) {
-                res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                res.sendError(
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                         "No se pudo generar el PDF de la comparativa.");
             }
+
         } finally {
             if (in != null) {
                 try {
                     in.close();
                 } catch (IOException e) {
-                    _log.warn("No se pudo cerrar el reporte de comparativa.", e);
+                    _log.warn(
+                            "No se pudo cerrar el reporte de comparativa.",
+                            e);
                 }
             }
         }
