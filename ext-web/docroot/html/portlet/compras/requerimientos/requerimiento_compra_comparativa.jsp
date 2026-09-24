@@ -63,11 +63,41 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
             <% } %>
             <table class="lfr-table">
                 <tr>
-                    <td><label for="<portlet:namespace />fecha<%= sufijoComparativa %>">Fecha presupuesto (dd/mm/aaaa)</label>
-                        <% if (comparativaEditable) { %>
-                        <input type="text" id="<portlet:namespace />fecha<%= sufijoComparativa %>"
-                               name="<portlet:namespace />fecha<%= sufijoComparativa %>" size="12" maxlength="10"
-                               value="<%= valorComparativa(comparativaEntrada, "fecha" + sufijoComparativa, comparativa.getFechaPresupuesto()) %>" />
+                    <td><label for="<portlet:namespace />fechaDia<%= sufijoComparativa %>">Fecha presupuesto</label>
+                        <% if (comparativaEditable) {
+                            String valorFechaComparativa = valorComparativa(comparativaEntrada,
+                                    "fecha" + sufijoComparativa, comparativa.getFechaPresupuesto());
+                            SimpleDateFormat formatoFechaComparativa = new SimpleDateFormat("dd/MM/yyyy");
+                            formatoFechaComparativa.setLenient(false);
+                            java.text.ParsePosition posicionFechaComparativa = new java.text.ParsePosition(0);
+                            Date fechaPresupuestoComparativa = formatoFechaComparativa.parse(
+                                    valorFechaComparativa, posicionFechaComparativa);
+                            if (posicionFechaComparativa.getIndex() != valorFechaComparativa.length()) {
+                                fechaPresupuestoComparativa = null;
+                            }
+                            Calendar calendarioFechaComparativa = Calendar.getInstance();
+                            if (fechaPresupuestoComparativa != null) {
+                                calendarioFechaComparativa.setTime(fechaPresupuestoComparativa);
+                            }
+                        %>
+                        <input type="hidden" id="<portlet:namespace />fecha<%= sufijoComparativa %>"
+                               name="<portlet:namespace />fecha<%= sufijoComparativa %>"
+                               value="<%= valorFechaComparativa %>" />
+                        <span class="comparativa-fecha" data-sufijo="<%= sufijoComparativa %>">
+                            <liferay-ui:input-date
+                                dayParam='<%= "fechaDia" + sufijoComparativa %>'
+                                dayValue="<%= fechaPresupuestoComparativa == null ? -1 : calendarioFechaComparativa.get(Calendar.DATE) %>"
+                                dayNullable="<%= true %>"
+                                monthParam='<%= "fechaMes" + sufijoComparativa %>'
+                                monthValue="<%= fechaPresupuestoComparativa == null ? -1 : calendarioFechaComparativa.get(Calendar.MONTH) %>"
+                                monthNullable="<%= true %>"
+                                yearParam='<%= "fechaAnio" + sufijoComparativa %>'
+                                yearValue="<%= fechaPresupuestoComparativa == null ? -1 : calendarioFechaComparativa.get(Calendar.YEAR) %>"
+                                yearNullable="<%= true %>"
+                                yearRangeStart="<%= 2025 %>"
+                                yearRangeEnd="<%= calendarioFechaComparativa.get(Calendar.YEAR) %>"
+                                firstDayOfWeek="<%= calendarioFechaComparativa.getFirstDayOfWeek() - 1 %>" />
+                        </span>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getFechaPresupuesto()) %><% } %>
                     </td>
                     <td><label for="<portlet:namespace />pago<%= sufijoComparativa %>">Forma de pago</label>
@@ -172,7 +202,7 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
         <% if (comparativaEditable) { %>
             <div style="text-align:right;">
                 <input type="button" id="<portlet:namespace />guardarComparativaBoton" value="Guardar"
-                       onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();" />
+                       onclick="<portlet:namespace />actualizarFechaComparativa(); return <portlet:namespace />uploadPresupuestoRequerimientoCompra();" />
                 <input type="button" value="Eliminar"
                        onclick="return <portlet:namespace />limpiarPresupuestoComparativa();" />
             </div>
@@ -181,5 +211,28 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
             <input type="button" value="Imprimir PDF"
                    onclick="window.open('/pdfservlet/?accion=comparativaCompra&amp;id_requerimiento=<%= comparativaReq.getIdRequerimientoCompra() %>');" />
         <% } %>
+<% } %>
+<% if (comparativaEditable) { %>
+<script type="text/javascript">
+function <portlet:namespace />actualizarFechaComparativa() {
+    jQuery('#<portlet:namespace />comparativaPrestadorContenido .comparativa-fecha').each(function() {
+        var sufijo = jQuery(this).attr('data-sufijo');
+        var dia = jQuery('#<portlet:namespace />fechaDia' + sufijo).val();
+        var mes = jQuery('#<portlet:namespace />fechaMes' + sufijo).val();
+        var anio = jQuery('#<portlet:namespace />fechaAnio' + sufijo).val();
+        var fecha = jQuery('#<portlet:namespace />fecha' + sufijo);
+        if (dia == null || dia == '' || mes == null || mes == '' || anio == null || anio == '') {
+            fecha.val('');
+            return;
+        }
+        mes = parseInt(mes, 10) + 1;
+        fecha.val(('0' + dia).slice(-2) + '/' + ('0' + mes).slice(-2) + '/' + anio);
+    });
+}
+jQuery(function() {
+    jQuery('#<portlet:namespace />comparativaPrestadorContenido .comparativa-fecha select')
+            .change(<portlet:namespace />actualizarFechaComparativa);
+});
+</script>
 <% } %>
 </div>
