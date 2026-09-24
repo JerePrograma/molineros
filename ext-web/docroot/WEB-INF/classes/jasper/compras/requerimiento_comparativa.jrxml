@@ -1,87 +1,158 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="requerimiento_comparativa" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+    <style name="Celda" isDefault="true" mode="Opaque" forecolor="#000000" backcolor="#FFFFFF" fontName="Arial" fontSize="9">
+        <box padding="4"><pen lineWidth="0.5" lineColor="#000000"/></box>
+    </style>
+    <style name="CeldaProveedor" style="Celda">
+        <conditionalStyle>
+            <conditionExpression><![CDATA["total".equals($F{tipo})]]></conditionExpression>
+            <style backcolor="#FFFF00" fontSize="11" isBold="true"/>
+        </conditionalStyle>
+        <conditionalStyle>
+            <conditionExpression><![CDATA["dictamen".equals($F{tipo})]]></conditionExpression>
+            <style fontSize="11" isBold="true"/>
+        </conditionalStyle>
+    </style>
+    <style name="CeldaAdjudicada" style="Celda" backcolor="#00FFFF">
+        <conditionalStyle>
+            <conditionExpression><![CDATA["total".equals($F{tipo})]]></conditionExpression>
+            <style fontSize="11" isBold="true"/>
+        </conditionalStyle>
+        <conditionalStyle>
+            <conditionExpression><![CDATA["dictamen".equals($F{tipo})]]></conditionExpression>
+            <style fontSize="11" isBold="true"/>
+        </conditionalStyle>
+    </style>
     <parameter name="REQUERIMIENTO" class="java.lang.String"/>
-    <field name="idPrestador" class="java.lang.String"/>
-    <field name="prestador" class="java.lang.String"/>
-    <field name="condiciones" class="java.lang.String"/>
-    <field name="codigo" class="java.lang.String"/>
-    <field name="prestacion" class="java.lang.String"/>
-    <field name="cantidad" class="java.lang.String"/>
-    <field name="importe" class="java.lang.String"/>
-    <field name="subtotal" class="java.lang.String"/>
-    <field name="totales" class="java.lang.String"/>
-    <group name="Prestador" isReprintHeaderOnEachPage="true">
-        <groupExpression><![CDATA[$F{idPrestador}]]></groupExpression>
-        <groupHeader>
-            <band height="74">
-                <textField isStretchWithOverflow="true">
-                    <reportElement x="0" y="8" width="802" height="18"/>
-                    <textElement><font size="11" isBold="true"/></textElement>
-                    <textFieldExpression class="java.lang.String"><![CDATA[$F{prestador}]]></textFieldExpression>
-                </textField>
-                <textField isStretchWithOverflow="true">
-                    <reportElement positionType="Float" x="0" y="29" width="802" height="26"/>
-                    <textElement><font size="9"/></textElement>
-                    <textFieldExpression class="java.lang.String"><![CDATA[$F{condiciones}]]></textFieldExpression>
-                </textField>
-                <staticText><reportElement positionType="Float" x="0" y="58" width="76" height="16"/><textElement><font size="9" isBold="true"/></textElement><text><![CDATA[Código]]></text></staticText>
-                <staticText><reportElement positionType="Float" x="80" y="58" width="414" height="16"/><textElement><font size="9" isBold="true"/></textElement><text><![CDATA[Prestación]]></text></staticText>
-                <staticText><reportElement positionType="Float" x="500" y="58" width="75" height="16"/><textElement><font size="9" isBold="true"/></textElement><text><![CDATA[Cantidad]]></text></staticText>
-                <staticText><reportElement positionType="Float" x="581" y="58" width="108" height="16"/><textElement><font size="9" isBold="true"/></textElement><text><![CDATA[Unitario neto]]></text></staticText>
-                <staticText><reportElement positionType="Float" x="695" y="58" width="107" height="16"/><textElement><font size="9" isBold="true"/></textElement><text><![CDATA[Subtotal]]></text></staticText>
-            </band>
-        </groupHeader>
-        <groupFooter>
-            <band height="40">
-                <textField isStretchWithOverflow="true">
-                    <reportElement x="0" y="7" width="802" height="26"/>
-                    <textElement textAlignment="Right"><font size="10" isBold="true"/></textElement>
-                    <textFieldExpression class="java.lang.String"><![CDATA[$F{totales}]]></textFieldExpression>
-                </textField>
-            </band>
-        </groupFooter>
+    <parameter name="PROVEEDORES" class="java.util.Map"/>
+    <!-- PdfServlet repite este bloque con el identificador y ancho de cada proveedor real. -->
+    <parameter name="PROVEEDOR" class="java.lang.String"/>
+    <field name="tipo" class="java.lang.String"/>
+    <field name="etiqueta" class="java.lang.String"/>
+    <field name="unidad" class="java.lang.String"/>
+    <field name="proveedores" class="java.util.Map"/>
+    <group name="Cierre" keepTogether="true">
+        <groupExpression><![CDATA[Boolean.valueOf(!"detalle".equals($F{tipo}))]]></groupExpression>
     </group>
     <pageHeader>
-        <band height="32">
+        <band height="24">
             <textField>
-                <reportElement x="0" y="0" width="802" height="25"/>
-                <textElement><font size="14" isBold="true"/></textElement>
+                <reportElement x="0" y="0" width="802" height="22"/>
+                <box padding="0"><pen lineWidth="0.0"/></box>
+                <textElement><font size="12" isBold="true"/></textElement>
                 <textFieldExpression class="java.lang.String"><![CDATA["Comparativa de presupuestos - Requerimiento " + $P{REQUERIMIENTO}]]></textFieldExpression>
             </textField>
         </band>
     </pageHeader>
+    <columnHeader>
+        <band height="82" splitType="Prevent">
+            <staticText>
+                <reportElement x="0" y="0" width="252" height="60" stretchType="RelativeToBandHeight"/>
+                <text><![CDATA[]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="252" y="0" width="550" height="18" backcolor="#EAD1DC"/>
+                <box topPadding="2" bottomPadding="2"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+                <text><![CDATA[Proveedores]]></text>
+            </staticText>
+            <staticText>
+                <reportElement positionType="FixRelativeToBottom" x="0" y="60" width="210" height="22"/>
+                <textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+                <text><![CDATA[Ítem]]></text>
+            </staticText>
+            <staticText>
+                <reportElement positionType="FixRelativeToBottom" x="210" y="60" width="42" height="22"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="8" isBold="true"/></textElement>
+                <text><![CDATA[Unidad]]></text>
+            </staticText>
+            <frame>
+                <reportElement key="proveedor" x="252" y="18" width="550" height="64" stretchType="RelativeToBandHeight"/>
+                <box padding="0"><pen lineWidth="0.0"/></box>
+                <textField isStretchWithOverflow="true">
+                    <reportElement x="0" y="0" width="550" height="42" backcolor="#FFFF00" stretchType="RelativeToBandHeight"/>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+                    <textFieldExpression class="java.lang.String"><![CDATA[(String)((java.util.Map)$P{PROVEEDORES}.get($P{PROVEEDOR})).get("prestador")]]></textFieldExpression>
+                </textField>
+                <staticText>
+                    <reportElement positionType="FixRelativeToBottom" x="0" y="42" width="275" height="22"/>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+                    <text><![CDATA[$/ unit]]></text>
+                </staticText>
+                <staticText>
+                    <reportElement positionType="FixRelativeToBottom" x="275" y="42" width="275" height="22"/>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+                    <text><![CDATA[Subtotal]]></text>
+                </staticText>
+            </frame>
+        </band>
+    </columnHeader>
     <detail>
-        <band height="22" splitType="Stretch">
+        <band height="34" splitType="Prevent">
             <textField isStretchWithOverflow="true">
-                <reportElement x="0" y="0" width="76" height="20"/>
-                <textElement><font size="9"/></textElement>
-                <textFieldExpression class="java.lang.String"><![CDATA[$F{codigo}]]></textFieldExpression>
+                <reportElement x="0" y="0" width="210" height="34" stretchType="RelativeToBandHeight">
+                    <printWhenExpression><![CDATA["detalle".equals($F{tipo})]]></printWhenExpression>
+                </reportElement>
+                <textElement verticalAlignment="Middle"/>
+                <textFieldExpression class="java.lang.String"><![CDATA[$F{etiqueta}]]></textFieldExpression>
             </textField>
             <textField isStretchWithOverflow="true">
-                <reportElement x="80" y="0" width="414" height="20"/>
-                <textElement><font size="9"/></textElement>
-                <textFieldExpression class="java.lang.String"><![CDATA[$F{prestacion}]]></textFieldExpression>
+                <reportElement x="210" y="0" width="42" height="34" stretchType="RelativeToBandHeight">
+                    <printWhenExpression><![CDATA["detalle".equals($F{tipo})]]></printWhenExpression>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                <textFieldExpression class="java.lang.String"><![CDATA[$F{unidad}]]></textFieldExpression>
             </textField>
             <textField isStretchWithOverflow="true">
-                <reportElement x="500" y="0" width="75" height="20"/>
-                <textElement textAlignment="Right"><font size="9"/></textElement>
-                <textFieldExpression class="java.lang.String"><![CDATA[$F{cantidad}]]></textFieldExpression>
+                <reportElement style="CeldaProveedor" x="0" y="0" width="252" height="34" stretchType="RelativeToBandHeight">
+                    <printWhenExpression><![CDATA[!"detalle".equals($F{tipo})]]></printWhenExpression>
+                </reportElement>
+                <textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+                <textFieldExpression class="java.lang.String"><![CDATA[$F{etiqueta}]]></textFieldExpression>
             </textField>
-            <textField isStretchWithOverflow="true">
-                <reportElement x="581" y="0" width="108" height="20"/>
-                <textElement textAlignment="Right"><font size="9"/></textElement>
-                <textFieldExpression class="java.lang.String"><![CDATA[$F{importe}]]></textFieldExpression>
-            </textField>
-            <textField isStretchWithOverflow="true">
-                <reportElement x="695" y="0" width="107" height="20"/>
-                <textElement textAlignment="Right"><font size="9"/></textElement>
-                <textFieldExpression class="java.lang.String"><![CDATA[$F{subtotal}]]></textFieldExpression>
-            </textField>
+            <frame>
+                <reportElement key="proveedor" x="252" y="0" width="550" height="34" stretchType="RelativeToBandHeight"/>
+                <box padding="0"><pen lineWidth="0.0"/></box>
+                <textField isStretchWithOverflow="true">
+                    <reportElement style="CeldaProveedor" x="0" y="0" width="275" height="34" stretchType="RelativeToBandHeight">
+                        <printWhenExpression><![CDATA["detalle".equals($F{tipo})]]></printWhenExpression>
+                    </reportElement>
+                    <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                    <textFieldExpression class="java.lang.String"><![CDATA[$F{proveedores}.get($P{PROVEEDOR}) == null ? "" : (((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("importe")) == null || "".equals((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("importe")) ? "" : "$ " + new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(new java.util.Locale("es", "AR"))).format(new java.math.BigDecimal((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("importe"))))]]></textFieldExpression>
+                </textField>
+                <textField isStretchWithOverflow="true">
+                    <reportElement style="CeldaProveedor" x="275" y="0" width="275" height="34" stretchType="RelativeToBandHeight">
+                        <printWhenExpression><![CDATA["detalle".equals($F{tipo})]]></printWhenExpression>
+                    </reportElement>
+                    <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                    <textFieldExpression class="java.lang.String"><![CDATA[$F{proveedores}.get($P{PROVEEDOR}) == null ? "" : (((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("subtotal")) == null || "".equals((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("subtotal")) ? "" : "$ " + new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(new java.util.Locale("es", "AR"))).format(new java.math.BigDecimal((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("subtotal"))))]]></textFieldExpression>
+                </textField>
+                <textField isStretchWithOverflow="true">
+                    <reportElement style="CeldaProveedor" x="0" y="0" width="550" height="34" stretchType="RelativeToBandHeight">
+                        <printWhenExpression><![CDATA["resumen".equals($F{tipo}) || "total".equals($F{tipo})]]></printWhenExpression>
+                    </reportElement>
+                    <textElement textAlignment="Right" verticalAlignment="Middle"/>
+                    <textFieldExpression class="java.lang.String"><![CDATA[!("resumen".equals($F{tipo}) || "total".equals($F{tipo})) || $F{proveedores}.get($P{PROVEEDOR}) == null ? "" : ("total".equals($F{tipo}) && "true".equals((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("incompleto")) ? "Parcial: " : "") + (((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("valor")) == null || "".equals((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("valor")) ? "" : "$ " + new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(new java.util.Locale("es", "AR"))).format(new java.math.BigDecimal((String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("valor"))))]]></textFieldExpression>
+                </textField>
+                <textField isStretchWithOverflow="true">
+                    <reportElement style="CeldaProveedor" x="0" y="0" width="550" height="34" stretchType="RelativeToBandHeight">
+                        <printWhenExpression><![CDATA["condicion".equals($F{tipo}) || "dictamen".equals($F{tipo})]]></printWhenExpression>
+                    </reportElement>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+                    <textFieldExpression class="java.lang.String"><![CDATA[$F{proveedores}.get($P{PROVEEDOR}) == null ? "" : (String)((java.util.Map)$F{proveedores}.get($P{PROVEEDOR})).get("valor")]]></textFieldExpression>
+                </textField>
+            </frame>
         </band>
     </detail>
     <pageFooter>
-        <band height="20">
-            <staticText><reportElement x="0" y="4" width="802" height="16"/><textElement><font size="8"/></textElement><text><![CDATA[IVA e IIBB: importes adicionales. Un total parcial incluye sólo prestaciones con cantidad e importe cargados.]]></text></staticText>
+        <band height="30">
+            <staticText>
+                <reportElement x="0" y="2" width="802" height="28"/>
+                <box padding="0"><pen lineWidth="0.0"/></box>
+                <textElement><font size="8"/></textElement>
+                <text><![CDATA[Unidad: cantidad solicitada.
+IVA e IIBB: importes adicionales. Un total parcial incluye sólo prestaciones con cantidad e importe cargados.]]></text>
+            </staticText>
         </band>
     </pageFooter>
 </jasperReport>

@@ -68,14 +68,37 @@ public class RequerimientoCompraComparativaHelper {
         }
         Collections.sort(lista, new Comparator<RequerimientoCompraComparativa>() {
             public int compare(RequerimientoCompraComparativa a,
-                    RequerimientoCompraComparativa b) {
+                               RequerimientoCompraComparativa b) {
                 int adjudicado = r.getIdPrestadorAdjudicadoInt();
-                if (a.getIdPrestador() == adjudicado && b.getIdPrestador() != adjudicado) {
+
+                if (a.getIdPrestador() == adjudicado
+                        && b.getIdPrestador() != adjudicado) {
                     return -1;
                 }
-                if (b.getIdPrestador() == adjudicado && a.getIdPrestador() != adjudicado) {
+
+                if (b.getIdPrestador() == adjudicado
+                        && a.getIdPrestador() != adjudicado) {
                     return 1;
                 }
+
+                BigDecimal totalA = a.getTotal();
+                BigDecimal totalB = b.getTotal();
+
+                if (totalA == null && totalB != null) {
+                    return 1;
+                }
+
+                if (totalB == null && totalA != null) {
+                    return -1;
+                }
+
+                if (totalA != null && totalB != null) {
+                    int comparacion = totalA.compareTo(totalB);
+                    if (comparacion != 0) {
+                        return comparacion;
+                    }
+                }
+
                 return a.getIdPrestador() < b.getIdPrestador() ? -1
                         : a.getIdPrestador() == b.getIdPrestador() ? 0 : 1;
             }
@@ -344,6 +367,27 @@ public class RequerimientoCompraComparativaHelper {
         fila.put("cantidad", d == null ? "" : texto(d.getCantidad()));
         fila.put("importe", d == null ? "" : texto(d.getImporteUnitario()));
         fila.put("subtotal", d == null ? "" : texto(d.getSubtotal()));
+        // Datos ya cargados, separados solamente para distribuir el documento.
+        fila.put("idPrestacion", d == null ? "" : String.valueOf(d.getIdPrestacion()));
+        for (int i = 0; d != null && i < r.getDetalles().size(); i++) {
+            RequerimientoCompraDetalle item = r.getDetalles().get(i);
+            if (item.getIdPrestacionInt() == d.getIdPrestacion()) {
+                fila.put("ordenItem", String.valueOf(i));
+                fila.put("unidad", texto(item.getCantidad()));
+                break;
+            }
+        }
+        fila.put("adjudicado", String.valueOf(c.getIdPrestador() == r.getIdPrestadorAdjudicadoInt()));
+        fila.put("neto", texto(c.getNeto()));
+        fila.put("iva", texto(c.getIva()));
+        fila.put("iibb", texto(c.getIibb()));
+        fila.put("total", texto(c.getTotal()));
+        fila.put("incompleto", String.valueOf(c.getIncompleto()));
+        fila.put("pago", texto(c.getFormaPago()) + " días");
+        fila.put("envio", texto(c.getEnvio()));
+        fila.put("plazo", texto(c.getPlazoEntrega()));
+        fila.put("fecha", texto(c.getFechaPresupuesto()));
+        fila.put("validez", texto(c.getValidezPresupuesto()));
         fila.put("totales", "Neto: " + texto(c.getNeto())
                 + "   IVA (importe): " + texto(c.getIva())
                 + "   IIBB (importe): " + texto(c.getIibb())
