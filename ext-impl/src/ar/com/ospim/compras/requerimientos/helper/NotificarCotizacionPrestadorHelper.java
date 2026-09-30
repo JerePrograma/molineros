@@ -1770,122 +1770,42 @@ public class NotificarCotizacionPrestadorHelper {
     private String construirAsunto(
             RequerimientoCompra requerimiento) {
 
-        return "Solicitud de cotización - Requerimiento #"
+        return "Solicitud de cotización #"
                 + requerimiento
-                .getIdRequerimientoCompra();
+                .getIdRequerimientoCompra()
+                + " - " + requerimiento.getAfiliadoNombre()
+                + " " + requerimiento.getAfiliadoApellido();
     }
 
     private String construirCuerpo(
             RequerimientoCompra requerimiento,
             PrestadorCotizacion prestador) {
 
-        String emailRespuesta =
-                resolverEmailRespuestaCotizacion();
+        String emailRespuesta = resolverEmailRespuestaCotizacion();
+        StringBuilder sb = new StringBuilder();
 
-        StringBuilder sb =
-                new StringBuilder();
+        sb.append("Estimado prestador");
 
-        sb.append(
-                "Estimado prestador"
-        );
-
-        if (!WebKeysCompras.isEmpty(
-                prestador.getDescripcion()
-        )) {
-
-            sb.append(
-                    " "
-            );
-
-            sb.append(
-                    prestador
-                            .getDescripcionVisible()
-            );
+        if (!WebKeysCompras.isEmpty(prestador.getDescripcion())) {
+            sb.append(" ");
+            sb.append(prestador.getDescripcionVisible());
         }
 
-        sb.append(
-                ",\n\n"
-        );
+        sb.append(",\n");
 
         sb.append(
                 "OSPIM solicita cotización para el "
-                        + "siguiente requerimiento de compra:"
+                        + "siguiente requerimiento de compra "
+                        + "(cotizar según orden médica):"
         );
 
-        sb.append(
-                "\n\n"
-        );
+        sb.append("\n");
 
-        appendDetalles(
-                sb,
-                requerimiento
-        );
+        agregarDetalles(sb, requerimiento);
 
-        if (!WebKeysCompras.isEmpty(
-                requerimiento.getObservaciones()
-        )) {
-
-            sb.append(
-                    "\nDetalle / observaciones:\n"
-            );
-
-            sb.append(
-                    requerimiento
-                            .getObservacionesVisible()
-            );
-
-            sb.append(
-                    "\n"
-            );
-        }
-
-        sb.append(
-                "\n"
-        );
-
-        sb.append(
-                "Requerimiento: # "
-        );
-
-        sb.append(
-                requerimiento
-                        .getIdRequerimientoCompra()
-        );
-
-        sb.append(
-                "\n"
-        );
-
-        sb.append(
-                "Sector: "
-        );
-
-        sb.append(
-                requerimiento
-                        .getSectorDescripcionVisible()
-        );
-
-        sb.append(
-                "\n"
-        );
-
-        if (!WebKeysCompras.isEmpty(
-                requerimiento
-                        .getAltaFechaAsString()
-        )) {
-
-            sb.append(
-                    "Fecha: "
-            );
-
-            sb.append(
-                    requerimiento
-                            .getAltaFechaAsString()
-            );
-
-            sb.append(
-                    "\n"
-            );
+        if (!WebKeysCompras.isEmpty(requerimiento.getObservaciones())) {
+            sb.append("\nDetalle / observaciones:\n");
+            sb.append(requerimiento.getObservacionesVisible());
         }
 
         sb.append(
@@ -1895,25 +1815,15 @@ public class NotificarCotizacionPrestadorHelper {
                         + "e importe de cotización"
         );
 
-        if (!WebKeysCompras.isEmpty(
-                emailRespuesta
-        )) {
-
-            sb.append(
-                    " a "
-            );
-
-            sb.append(
-                    emailRespuesta
-            );
+        if (!WebKeysCompras.isEmpty(emailRespuesta)) {
+            sb.append(" a ");
+            sb.append(emailRespuesta);
         }
 
-        sb.append(
-                "."
-        );
+        sb.append(".");
 
         sb.append(
-                "\n\nLos presupuestos se deben presentar en formato .PDF, "
+                "\nLos presupuestos se deben presentar en formato .PDF, "
                         + "fijando como plazo límite de entrega "
                         + "las próximas 48 horas, "
                         + "con horario tope de recepción a las 18:00 hs."
@@ -1922,116 +1832,55 @@ public class NotificarCotizacionPrestadorHelper {
         return sb.toString();
     }
 
-    private void appendDetalles(
+    private void agregarDetalles(
             StringBuilder sb,
             RequerimientoCompra requerimiento) {
 
-        List<RequerimientoCompraDetalle> detalles =
-                requerimiento.getDetalles();
+        List<RequerimientoCompraDetalle> detalles = requerimiento.getDetalles();
 
-        if (detalles == null
-                || detalles.isEmpty()) {
-
+        if (detalles == null || detalles.isEmpty()) {
             return;
         }
 
-        sb.append(
-                "\nItems:\n"
-        );
+        sb.append("Items:\n");
 
-        for (int i = 0;
-             i < detalles.size();
-             i++) {
+        for (int i = 0; i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
 
-            RequerimientoCompraDetalle detalle =
-                    detalles.get(i);
+            sb.append("- ");
 
-            sb.append(
-                    "- "
-            );
+            String tipoItem = detalle.getTipoItemNormalizado();
+            String codigoItem = detalle.getCodigoItemVisible();
+            String descripcionItem = detalle.getDescripcionItemVisible();
 
-            String tipoItem =
-                    detalle
-                            .getTipoItemNormalizado();
-
-            String codigoItem =
-                    detalle
-                            .getCodigoItemVisible();
-
-            String descripcionItem =
-                    detalle
-                            .getDescripcionItemVisible();
-
-            if (!WebKeysCompras.isEmpty(
-                    tipoItem
-            )
-                    && !"NOMENCLADOR".equalsIgnoreCase(
-                    tipoItem.trim()
-            )) {
-
-                sb.append(
-                        tipoItem
-                );
-
-                sb.append(
-                        " | "
-                );
+            if (!WebKeysCompras.isEmpty(tipoItem)
+                    && !"NOMENCLADOR".equalsIgnoreCase(tipoItem.trim())) {
+                sb.append(tipoItem);
+                sb.append(" | ");
             }
 
-            if (!WebKeysCompras.isEmpty(
-                    codigoItem
-            )) {
-
-                sb.append(
-                        codigoItem
-                );
-
-                sb.append(
-                        " - "
-                );
+            if (!WebKeysCompras.isEmpty(codigoItem)) {
+                sb.append(codigoItem);
+                sb.append(" - ");
             }
 
-            if (!WebKeysCompras.isEmpty(
-                    descripcionItem
-            )) {
-
-                sb.append(
-                        descripcionItem
-                );
-
+            if (!WebKeysCompras.isEmpty(descripcionItem)) {
+                sb.append(descripcionItem);
             } else {
-
-                sb.append(
-                        "Item sin descripción"
-                );
+                sb.append("Item sin descripción");
             }
 
-            sb.append(
-                    " | Cantidad: "
-            );
+            sb.append(" | Cantidad: ");
+            sb.append(detalle.getCantidadString());
 
-            sb.append(
-                    detalle
-                            .getCantidadString()
-            );
-
-            if (!WebKeysCompras.isEmpty(
-                    detalle.getObservaciones()
-            )) {
-
-                sb.append(
-                        " | Descripción: "
-                );
-
-                sb.append(
-                        detalle
-                                .getObservacionesVisible()
-                );
+            if (!WebKeysCompras.isEmpty(detalle.getObservaciones())) {
+                sb.append(" | Descripción: ");
+                sb.append(detalle.getObservacionesVisible());
             }
 
-            sb.append(
-                    "\n"
-            );
+            if (i < detalles.size() - 1) {
+                sb.append("\n");
+            }
         }
     }
 

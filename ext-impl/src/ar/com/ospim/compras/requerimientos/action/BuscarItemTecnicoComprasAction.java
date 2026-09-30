@@ -10,12 +10,14 @@ import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraSe
 
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
+import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
 
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +49,39 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         detalleHelper.validarPermisoABM(
                 user
         );
+
+        if ("CONSULTAR_DROGA".equals(
+                ParamUtil.getString(
+                        request,
+                        "cmd",
+                        ""
+                )
+        )) {
+            String sector =
+                    resolverSector(
+                            request
+                    );
+
+            String droga =
+                    nomencladorHelper.obtenerDrogaMedicamento(
+                            sector,
+                            ParamUtil.getString(
+                                    request,
+                                    "codigo",
+                                    ""
+                            )
+                    );
+
+            JSONObject resultado = new JSONObject();
+            resultado.put("droga", droga);
+
+            response.setContentType("application/json");
+            response.getWriter().write(resultado.toString());
+
+            return new ActionForward(
+                    ActionConstants.COMMON_NULL
+            );
+        }
 
         request.setAttribute(
                 "COMPRAS_CALLBACK_BUSQUEDA",
@@ -80,17 +115,31 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                         ""
                 ).trim();
 
+        String droga =
+                ParamUtil.getString(
+                        request,
+                        "droga",
+                        ""
+                ).trim();
+
         String sector =
                 resolverSector(
                         request
                 );
 
+        if (!"FARMACIA".equals(sector)) {
+            droga = "";
+        }
+
         if (codigo.length() == 0
-                && descripcion.length() == 0) {
+                && descripcion.length() == 0
+                && droga.length() == 0) {
 
             publicarError(
                     request,
-                    "Ingrese código o descripción."
+                    "FARMACIA".equals(sector)
+                            ? "Ingrese código, descripción o droga."
+                            : "Ingrese código o descripción."
             );
 
             return;
@@ -188,7 +237,8 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                             filtroTipoNomenclador.intValue(),
                             marcaReinLiq,
                             codigo,
-                            descripcion
+                            descripcion,
+                            droga
                     );
 
             request.setAttribute(

@@ -5,17 +5,11 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.liferay.portal.SystemException;
 import com.liferay.portal.model.User;
 import com.sun.star.sdbc.SQLException;
 
 import java.util.Date;
-
-//import com.sun.star.bridge.oleautomation.Date;
-
-import ar.com.ospim.afiliados.beans.Afiliado;
-import ar.com.ospim.autorizaciones.beans.SituacionMedica;
-import ar.com.ospim.autorizaciones.exceptions.ImposibleBorrarReclamoPrestacionalException;
-import ar.com.ospim.autorizaciones.exceptions.ImposibleBorrarSituacionMedicaException;
 
 import ar.com.ospim.farmacia.beans.Medicamento;
 import ar.com.ospim.farmaciaOspim.beans.ItemMedicacionTotal;
@@ -23,7 +17,6 @@ import ar.com.ospim.farmaciaOspim.beans.MedicacionOspimExcel;
 import ar.com.ospim.farmaciaOspim.exceptions.ImposibleBorrarMedicamentoOspimException;
 import ar.com.ospim.farmaciaOspim.reportes.beans.BusquedaReporteMedicamentosFiltro;
 import ar.com.ospim.global.beans.Plan;
-import ar.com.ospim.global.services.TraeListasServiceUtil;
 
 /**
  * <a href="BusquedaMedicamentoServiceUtil.java.html"><b><i>View
@@ -39,7 +32,7 @@ import ar.com.ospim.global.services.TraeListasServiceUtil;
  * 
  * @author Federico Brachi
  * 
- * @see ar.com.ospim.afiliados.services.BusquedaMedicametoServiceImpl
+ * @see ar.com.ospim.farmacia.services.BusquedaMedicamentoServiceImpl
  * 
  */
 public class BusquedaMedicamentoServiceUtil {
@@ -62,6 +55,13 @@ public class BusquedaMedicamentoServiceUtil {
 		return medicamentos;
 	}
 	
+	public static List<Medicamento> getBusquedaMedicamentosDroga(String drogaMedicacion)
+			throws SystemException {
+		List<Medicamento> medicamentos = getInstance().getBusquedaMedicamentosDroga(
+				drogaMedicacion);
+		return medicamentos;
+	}
+
 	public static List<Medicamento> getBusquedaMedicamentosOspim (int troquel,
 			int registro, String nombre, String presentacion,
 			String laboratorio, String cod_barras, Date periodoFecha ,String drogaMedicacion, boolean manualDat  ) {

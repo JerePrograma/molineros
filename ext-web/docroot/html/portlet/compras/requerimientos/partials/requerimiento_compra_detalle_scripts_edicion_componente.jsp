@@ -19,6 +19,7 @@ Efectos secundarios:
 <script type="text/javascript">
     var <portlet:namespace />detalleAccionEnCurso = false;
     var <portlet:namespace />popupNomencladorDetalle = null;
+    var <portlet:namespace />consultaDrogaSecuencia = 0;
 
     var <portlet:namespace />detalleActionURL =
             '<%= detalleActionURL.toString() %>';
@@ -223,12 +224,15 @@ Efectos secundarios:
     }
 
     function <portlet:namespace />limpiarSeleccionNomenclador(limpiarCriterios) {
+        <portlet:namespace />consultaDrogaSecuencia++;
+
         jQuery('#<portlet:namespace />detalle_id_prestacion').val('');
         jQuery('#<portlet:namespace />detalle_id_tipo_nomenclador').val('');
 
         if (limpiarCriterios !== false) {
             jQuery('#<portlet:namespace />detalle_codigo_nomenclador').val('');
             jQuery('#<portlet:namespace />detalle_descripcion_nomenclador').val('');
+            jQuery('#<portlet:namespace />detalle_droga_nomenclador').val('');
         }
 
         return false;
@@ -402,6 +406,23 @@ Efectos secundarios:
 
     function <portlet:namespace />actualizarTipoNomencladorDetallePorSector(
             limpiarSeleccion) {
+
+        var filaDroga =
+                jQuery(
+                        '#<portlet:namespace />detalle_fila_droga_nomenclador'
+                );
+
+        if (<portlet:namespace />esSectorFarmaciaTipoNomenclador()) {
+            filaDroga.show();
+
+        } else {
+            <portlet:namespace />consultaDrogaSecuencia++;
+            filaDroga.hide();
+
+            jQuery(
+                    '#<portlet:namespace />detalle_droga_nomenclador'
+            ).val('');
+        }
 
         var fila =
                 jQuery(
@@ -882,8 +903,21 @@ Efectos secundarios:
                         ).val()
                 );
 
+        var esFarmacia =
+                <portlet:namespace />esSectorFarmaciaTipoNomenclador();
+
+        var droga =
+                esFarmacia
+                        ? jQuery.trim(
+                                jQuery(
+                                        '#<portlet:namespace />detalle_droga_nomenclador'
+                                ).val() || ''
+                        )
+                        : '';
+
         if (codigo == ''
-                && descripcion == '') {
+                && descripcion == ''
+                && droga == '') {
 
             alert(
                     '<liferay-ui:message key="ingrese-parametros-busqueda" />'
@@ -938,6 +972,14 @@ Efectos secundarios:
                 + encodeURIComponent(
                         descripcion
                 );
+
+        if (esFarmacia) {
+            url +=
+                    '&<portlet:namespace />droga='
+                    + encodeURIComponent(
+                            droga
+                    );
+        }
 
         /*
          * Sólo agregamos el parámetro explícito cuando corresponde:
@@ -1029,6 +1071,76 @@ Efectos secundarios:
         ).val(
                 descripcion
         );
+
+        if (<portlet:namespace />esSectorFarmaciaTipoNomenclador()) {
+            jQuery(
+                    '#<portlet:namespace />detalle_droga_nomenclador'
+            ).val('');
+
+            var secuenciaActual =
+                    ++<portlet:namespace />consultaDrogaSecuencia;
+
+            var url =
+                    <portlet:namespace />buscarItemTecnicoURL
+                    + '&<portlet:namespace />cmd=CONSULTAR_DROGA'
+                    + '&<portlet:namespace />id_requerimiento_compra='
+                    + encodeURIComponent(
+                            <portlet:namespace />idRequerimientoCompraDetalle
+                    )
+                    + '&<portlet:namespace />sector_id='
+                    + encodeURIComponent(
+                            jQuery('#<portlet:namespace />sector_id').val() || ''
+                    )
+                    + '&<portlet:namespace />codigo='
+                    + encodeURIComponent(codigo);
+
+            jQuery.ajax({
+                url: url,
+                cache: false,
+                success: function(data) {
+                    if (secuenciaActual
+                            != <portlet:namespace />consultaDrogaSecuencia
+                            || !<portlet:namespace />esSectorFarmaciaTipoNomenclador()
+                            || jQuery(
+                                    '#<portlet:namespace />detalle_codigo_nomenclador'
+                            ).val() != String(codigo)) {
+
+                        return;
+                    }
+
+                    var obj = null;
+
+                    try {
+                        obj = typeof data == 'string'
+                                ? jQuery.parseJSON(data)
+                                : data;
+                    } catch (e) {
+                        alert('No se pudo consultar la droga del medicamento.');
+                        return;
+                    }
+
+                    if (!obj || typeof obj.droga != 'string') {
+                        alert('No se pudo consultar la droga del medicamento.');
+                        return;
+                    }
+
+                    jQuery(
+                            '#<portlet:namespace />detalle_droga_nomenclador'
+                    ).val(obj.droga);
+                },
+                error: function() {
+                    if (secuenciaActual
+                            == <portlet:namespace />consultaDrogaSecuencia
+                            && <portlet:namespace />esSectorFarmaciaTipoNomenclador()
+                            && jQuery(
+                                    '#<portlet:namespace />detalle_codigo_nomenclador'
+                            ).val() == String(codigo)) {
+
+                        alert('No se pudo consultar la droga del medicamento.');
+                    }
+                }
+            });
+        }
 
         if (<portlet:namespace />popupNomencladorDetalle) {
             Liferay.Popup.close(
@@ -2487,10 +2599,22 @@ Efectos secundarios:
 
         jQuery(
                 '#<portlet:namespace />detalle_codigo_nomenclador, '
-                        + '#<portlet:namespace />detalle_descripcion_nomenclador'
+                        + '#<portlet:namespace />detalle_descripcion_nomenclador, '
+                        + '#<portlet:namespace />detalle_droga_nomenclador'
         ).bind(
                 'input keyup change',
                 function() {
+
+                    if (this.id
+                            != '<portlet:namespace />detalle_droga_nomenclador'
+                            && jQuery(
+                                    '#<portlet:namespace />detalle_id_prestacion'
+                            ).val() != '') {
+
+                        jQuery(
+                                '#<portlet:namespace />detalle_droga_nomenclador'
+                        ).val('');
+                    }
 
                     <portlet:namespace />limpiarSeleccionNomenclador(
                             false

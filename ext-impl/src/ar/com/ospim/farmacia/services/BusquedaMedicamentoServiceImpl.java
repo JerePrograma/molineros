@@ -222,6 +222,32 @@ public class BusquedaMedicamentoServiceImpl {
 	}	
 
 	
+	public List<Medicamento> getBusquedaMedicamentosDroga(String drogaMedicacion)
+			throws SystemException {
+		Connection con = null;
+		CallableStatement stmt = null;
+		List<Medicamento> listaMedicamentos = null;
+		try {
+			String sql = "{call farmacia.buscar_medicamentos_droga(?)}";
+			con = ConnectionHelper.getConnection();
+			stmt = con.prepareCall(sql.toString());
+			stmt.setString(1, (null!=drogaMedicacion&&drogaMedicacion.trim().equals(""))?null:drogaMedicacion);
+			ResultSet rs = stmt.executeQuery();
+			listaMedicamentos = new ArrayList<Medicamento>();
+			while (rs.next()) {
+				Medicamento bp = new Medicamento();
+				bp.setTroquel(rs.getInt("troquel"));
+				listaMedicamentos.add(bp);
+			}
+		} catch (Exception e) {
+			_log.error("Error al buscar medicamentos por droga", e);
+			throw new SystemException(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return listaMedicamentos;
+	}
+
 	public List<Medicamento> getBusquedaMedicamentosOspim (int troquel, int registro,
 			String nombre, String presentacion, String laboratorio, String cod_barras , Date periodoFecha ,String drogaMedicacion 
 			, boolean manualDat) {

@@ -199,6 +199,25 @@ Efectos secundarios:
 
             </tr>
 
+            <tr id="<portlet:namespace />detalle_fila_droga_nomenclador"
+                style="display:none;">
+
+                <td>
+                    <label for="<portlet:namespace />detalle_droga_nomenclador">
+                        Droga:
+                    </label>
+                </td>
+
+                <td colspan="3">
+                    <input type="text"
+                           id="<portlet:namespace />detalle_droga_nomenclador"
+                           size="60"
+                           maxlength="500"
+                           value="" />
+                </td>
+
+            </tr>
+
         </tbody>
 
         <tr>
