@@ -118,14 +118,25 @@ boolean puedeCotizarPresupuestos =
                                 WebKeysCompras.ROL_COTIZAR_COMPRAS
                         );
 
-boolean puedeEditarPresupuestos =
-        idRequerimientoCompraPresupuestos > 0
+boolean altaEmpresaPresupuestos =
+        idRequerimientoCompraPresupuestos == 0
+        && Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.esNuevo"))
+        && Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.puedeABM"))
         && puedeCotizarPresupuestos
-        && reqPresupuestos.puedeAdministrarPresupuestos()
         && !soloLecturaPresupuestos;
 
+boolean puedeEditarPresupuestos =
+        altaEmpresaPresupuestos || (idRequerimientoCompraPresupuestos > 0
+        && puedeCotizarPresupuestos
+        && reqPresupuestos.puedeAdministrarPresupuestos()
+        && !soloLecturaPresupuestos);
+
 boolean cotizacionEmpresaPresupuestos =
-        reqPresupuestos.esSectorSinCotizacionPrestador();
+        altaEmpresaPresupuestos || reqPresupuestos.esSectorSinCotizacionPrestador();
+
+int filasEmpresaRecuperadas = altaEmpresaPresupuestos ? Math.min(
+        WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA,
+        Math.max(0, ParamUtil.getInteger(renderRequest, "presupuesto_count", 0))) : 0;
 
 boolean puedeVerPrestadoresEnviadosPresupuestos =
         idRequerimientoCompraPresupuestos > 0
@@ -361,7 +372,7 @@ boolean msgPresupuestoBorrado =
             </div>
         </c:if>
 
-        <c:if test="<%= idRequerimientoCompraPresupuestos <= 0 %>">
+        <c:if test="<%= idRequerimientoCompraPresupuestos <= 0 && !altaEmpresaPresupuestos %>">
             <div class="portlet-msg-info">
                 <%= cotizacionEmpresaPresupuestos
                         ? "Debe guardar el requerimiento antes de subir cotizaciones de empresas."
@@ -710,6 +721,22 @@ boolean msgPresupuestoBorrado =
             </table>
         </c:if>
 
+        <% if (altaEmpresaPresupuestos) { %>
+            <input type="button" value="Agregar cotizaci&#243;n de Empresa"
+                   onclick="return <portlet:namespace />agregarFilaPresupuesto();" />
+            <div class="portlet-msg-info">
+                Las cotizaciones se guardan junto al requerimiento. Puede guardar sin adjudicar.
+                Si vuelve a cargar la pantalla despu&#233;s de un error, seleccione nuevamente los archivos.
+            </div>
+            <div id="<portlet:namespace />empresas_recuperadas" style="display:none;">
+                <% for (int filaEmpresa = 0; filaEmpresa < filasEmpresaRecuperadas; filaEmpresa++) { %>
+                    <span data-cuit="<%= HtmlUtil.escape(ParamUtil.getString(renderRequest, "presupuesto_" + filaEmpresa + "_empresa_cuit", "")) %>"
+                          data-sucursal="<%= HtmlUtil.escape(ParamUtil.getString(renderRequest, "presupuesto_" + filaEmpresa + "_empresa_sucursal", "")) %>"
+                          data-descripcion="<%= HtmlUtil.escape(ParamUtil.getString(renderRequest, "presupuesto_" + filaEmpresa + "_descripcion_empresa", "")) %>"></span>
+                <% } %>
+            </div>
+        <% } %>
+
         <c:if test="<%=
                 idRequerimientoCompraPresupuestos > 0
                 && !puedeEditarPresupuestos
@@ -732,8 +759,8 @@ boolean msgPresupuestoBorrado =
         <br /><br />
 
         <% if (cotizacionEmpresaPresupuestos) { %>
-        - El requerimiento debe estar guardado, pertenecer a RRHH o SISTEMAS
-          y permanecer PENDIENTE.
+        - El requerimiento debe pertenecer a RRHH o SISTEMAS. Puede preparar
+          las cotizaciones durante el alta y editarlas mientras permanezca PENDIENTE.
         <br />
 
         - Debe buscar y seleccionar una Empresa activa del padrón de
@@ -819,6 +846,7 @@ boolean msgPresupuestoBorrado =
            id="<portlet:namespace />modo_presupuesto"
            value="<%= HtmlUtil.escape(modoRetornoPresupuestos) %>" />
 
+    <% if (!altaEmpresaPresupuestos) { %>
     <fieldset class="block-labels cotizaciones-fieldset compras-adjuntos-cotizaciones">
         <legend>
             <%= cotizacionEmpresaPresupuestos
@@ -831,10 +859,102 @@ boolean msgPresupuestoBorrado =
                     page="/html/portlet/compras/requerimientos/requerimiento_compra_documentos_busqueda_resultado.jsp" />
         </div>
     </fieldset>
+    <% } %>
 </form>
 
 <script type="text/javascript">
     <% if (cotizacionEmpresaPresupuestos) { %>
+    function <portlet:namespace />actualizarCotizacionesEmpresaSector(limpiar) {
+        <% if (altaEmpresaPresupuestos) { %>
+        var habilitado = <portlet:namespace />esSectorSinCotizacionPrestadorCompra();
+        var panel = jQuery('#<portlet:namespace />cotizaciones_empresa_panel, #<portlet:namespace />adjudicacion_empresa_panel');
+        if (!habilitado && limpiar) {
+            jQuery('#<portlet:namespace />presupuestos_body').empty();
+            <portlet:namespace />reindexarFilasPresupuesto();
+            if (<portlet:namespace />popupEmpresaCotizacion && typeof Liferay.Popup.close == 'function') {
+                Liferay.Popup.close(<portlet:namespace />popupEmpresaCotizacion);
+            }
+            <portlet:namespace />popupEmpresaCotizacion = null;
+            <portlet:namespace />filaEmpresaCotizacion = null;
+        }
+        if (habilitado) {
+            panel.find(':input').removeAttr('disabled');
+            panel.show();
+        } else {
+            panel.find(':input').attr('disabled', 'disabled');
+            panel.hide();
+        }
+        <portlet:namespace />actualizarEmpresasAdjudicacion();
+        <% } %>
+    }
+
+    function <portlet:namespace />validarCotizacionesEmpresaGuardado() {
+        <% if (altaEmpresaPresupuestos) { %>
+        return !<portlet:namespace />esSectorSinCotizacionPrestadorCompra()
+                || <portlet:namespace />validarFilasPresupuesto(true);
+        <% } else { %>
+        return true;
+        <% } %>
+    }
+
+    function <portlet:namespace />incorporarCotizacionesEmpresa(form) {
+        var contextos = [];
+        <% if (puedeEditarPresupuestos) { %>
+        <% if (altaEmpresaPresupuestos) { %>
+        if (!<portlet:namespace />esSectorSinCotizacionPrestadorCompra()) { return contextos; }
+        <portlet:namespace />reindexarFilasPresupuesto();
+        <% } %>
+        <portlet:namespace />capturarEmpresaAdjudicada();
+        var nodos = jQuery('#<portlet:namespace />empresa_adjudicada_cuit, '
+                + '#<portlet:namespace />empresa_adjudicada_sucursal, '
+                + '#<portlet:namespace />empresa_adjudicacion_informada');
+        <% if (altaEmpresaPresupuestos) { %>
+        nodos = nodos.add('#<portlet:namespace />presupuesto_count')
+                .add('#<portlet:namespace />presupuestos_body input[type="hidden"], '
+                        + '#<portlet:namespace />presupuestos_body input[type="file"]');
+        <% } %>
+        nodos.each(function() {
+            contextos.push({nodo: this, padre: this.parentNode, siguiente: this.nextSibling});
+            form.appendChild(this);
+        });
+        <% } %>
+        return contextos;
+    }
+
+    function <portlet:namespace />restaurarCotizacionesEmpresa(contextos) {
+        if (!contextos) { return; }
+        for (var i = contextos.length - 1; i >= 0; i--) {
+            var contexto = contextos[i];
+            if (contexto.siguiente && contexto.siguiente.parentNode == contexto.padre) {
+                contexto.padre.insertBefore(contexto.nodo, contexto.siguiente);
+            } else {
+                contexto.padre.appendChild(contexto.nodo);
+            }
+        }
+    }
+
+    function <portlet:namespace />guardarEmpresaAdjudicada(boton) {
+        var form = document.getElementById('<portlet:namespace />empresa_adjudicacion_fm');
+        if (!form || boton.disabled) { return false; }
+        var token = jQuery(form).find('input[name="<portlet:namespace />compras_save_token"]');
+        var tokenPrincipal = jQuery('#<portlet:namespace />compras_save_token');
+        if (tokenPrincipal.length > 0 && tokenPrincipal.val()) { token.val(tokenPrincipal.val()); }
+        if (!token.val()) {
+            alert('Debe volver a abrir el requerimiento antes de guardar la adjudicacion.');
+            return false;
+        }
+        <portlet:namespace />capturarEmpresaAdjudicada();
+        jQuery(form).find('input.empresa-adjudicacion-envio').remove();
+        jQuery('#<portlet:namespace />empresa_adjudicada_cuit, '
+                + '#<portlet:namespace />empresa_adjudicada_sucursal, '
+                + '#<portlet:namespace />empresa_adjudicacion_informada').each(function() {
+            jQuery(this).clone().removeAttr('id').addClass('empresa-adjudicacion-envio').appendTo(form);
+        });
+        boton.disabled = true;
+        form.submit();
+        return false;
+    }
+
     var <portlet:namespace />popupEmpresaCotizacion = null;
     var <portlet:namespace />filaEmpresaCotizacion = null;
 
@@ -847,9 +967,14 @@ boolean msgPresupuestoBorrado =
             width: 700
         });
 
-        jQuery(<portlet:namespace />popupEmpresaCotizacion).load(
-                '<%= buscarEmpresasCotizacionURL.toString() %>'
-        );
+        var url = '<%= buscarEmpresasCotizacionURL.toString() %>';
+        <% if (altaEmpresaPresupuestos) { %>
+        if (!<portlet:namespace />esSectorSinCotizacionPrestadorCompra()) {
+            return false;
+        }
+        url += '&modo=alta&id_sector=' + encodeURIComponent(jQuery('#<portlet:namespace />sector_id').val());
+        <% } %>
+        jQuery(<portlet:namespace />popupEmpresaCotizacion).load(url);
 
         return false;
     }
@@ -870,6 +995,26 @@ boolean msgPresupuestoBorrado =
             return false;
         }
 
+        var repetida = false;
+        jQuery('#<portlet:namespace />presupuestos_body tr').each(function() {
+            var otra = jQuery(this);
+            if (otra.get(0) != row.get(0)
+                    && otra.find('input.presupuesto-empresa-cuit').val() == cuit
+                    && otra.find('input.presupuesto-empresa-sucursal').val() == sucursal) {
+                repetida = true;
+            }
+        });
+        <% if (!altaEmpresaPresupuestos) { %>
+        jQuery('#<portlet:namespace />empresa_adjudicada_selector option').each(function() {
+            if (jQuery(this).attr('data-cuit') == cuit
+                    && jQuery(this).attr('data-sucursal') == sucursal) { repetida = true; }
+        });
+        <% } %>
+        if (repetida) {
+            alert('La Empresa ya tiene una cotizacion cargada o seleccionada.');
+            return false;
+        }
+        row.find('input.presupuesto-empresa-descripcion').val(razonSocial);
         row.find('input.presupuesto-empresa-cuit').val(cuit);
         row.find('input.presupuesto-empresa-sucursal').val(sucursal);
         row.find('.presupuesto-empresa-seleccionada').text(
@@ -879,6 +1024,8 @@ boolean msgPresupuestoBorrado =
                         + ' - Sucursal: '
                         + sucursal
         );
+
+        <portlet:namespace />actualizarEmpresasAdjudicacion();
 
         if (<portlet:namespace />popupEmpresaCotizacion
                 && typeof Liferay.Popup.close == 'function') {
@@ -932,6 +1079,8 @@ boolean msgPresupuestoBorrado =
                     );
 
             <% if (cotizacionEmpresaPresupuestos) { %>
+            row.find('input.presupuesto-empresa-descripcion').attr(
+                    'name', '<portlet:namespace />presupuesto_' + index + '_descripcion_empresa');
             empresaCuit.attr(
                     'name',
                     '<portlet:namespace />presupuesto_'
@@ -986,7 +1135,7 @@ boolean msgPresupuestoBorrado =
             );
 
             if (index == 0) {
-                botonSubir.show();
+                <% if (!altaEmpresaPresupuestos) { %>botonSubir.show();<% } %>
 
                 if (rows.length
                         < <%= maxPresupuestosCargaActual %>) {
@@ -1068,6 +1217,7 @@ boolean msgPresupuestoBorrado =
         contraparte.append(empresaSeleccionada);
         contraparte.append(empresaCuit);
         contraparte.append(empresaSucursal);
+        contraparte.append(jQuery('<input type="hidden" class="presupuesto-empresa-descripcion" />'));
         <% } else { %>
         var prestador =
                 jQuery(
@@ -1088,6 +1238,12 @@ boolean msgPresupuestoBorrado =
                                 + 'accept=".pdf,application/pdf" '
                                 + '/>'
                 );
+
+        <% if (altaEmpresaPresupuestos) { %>
+        archivo.change(function() {
+            <portlet:namespace />actualizarEmpresasAdjudicacion();
+        });
+        <% } %>
 
         var ayudaArchivo =
                 jQuery(
@@ -1129,11 +1285,12 @@ boolean msgPresupuestoBorrado =
                     .eq(0)
                     .remove();
 
-            if (tbody.find('tr').length == 0) {
+            if (tbody.find('tr').length == 0 && !<%= altaEmpresaPresupuestos ? "true" : "false" %>) {
                 <portlet:namespace />agregarFilaPresupuesto();
             } else {
                 <portlet:namespace />reindexarFilasPresupuesto();
             }
+            <portlet:namespace />actualizarEmpresasAdjudicacion();
 
             return false;
         });
@@ -1162,7 +1319,7 @@ boolean msgPresupuestoBorrado =
                         '<td class="presupuesto-acciones"></td>'
                 );
 
-        acciones.append(subir);
+        <% if (!altaEmpresaPresupuestos) { %>acciones.append(subir);<% } %>
         acciones.append(document.createTextNode(' '));
         acciones.append(borrar);
         acciones.append(document.createTextNode(' '));
@@ -1195,63 +1352,13 @@ boolean msgPresupuestoBorrado =
         return false;
     }
 
-    function <portlet:namespace />uploadPresupuestoRequerimientoCompra() {
-        var form =
-                document.getElementById(
-                        '<portlet:namespace />compra_presupuesto_fm'
-                );
-
-        var accion =
-                document.getElementById(
-                        '<portlet:namespace />presupuesto_accion'
-                );
-
-        var idPresupuesto =
-                document.getElementById(
-                        '<portlet:namespace />id_requerimiento_presupuesto'
-                );
-
-        if (!form || !accion || !idPresupuesto) {
-            alert(
-                    'No se pudo preparar la subida del presupuesto.'
-            );
-            return false;
-        }
-
-        <% if (!cotizacionEmpresaPresupuestos) { %>
-        var idPrestador = jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val();
-        var seccion = jQuery('#<portlet:namespace />comparativaPrestadorSeccion');
-        var prestadorCargado = seccion.find(
-                'input[name="<portlet:namespace />prestador_' + idPrestador + '"]').val();
-        if (!idPrestador || prestadorCargado != idPrestador) {
-            alert('Seleccione un prestador y espere a que se carguen sus datos.');
-            return false;
-        }
-        var archivo = jQuery('#<portlet:namespace />presupuesto_0').val();
-        if (!archivo && seccion.find('#<portlet:namespace />comparativaTieneArchivo').val() != 'true') {
-            alert('Debe seleccionar el PDF del primer presupuesto.');
-            return false;
-        }
-        if (archivo && !/\.pdf$/i.test(archivo)) {
-            alert('El archivo debe estar en formato PDF.');
-            return false;
-        }
-        var boton = seccion.find('#<portlet:namespace />guardarComparativaBoton');
-        if (boton.attr('disabled')) { return false; }
-        boton.attr('disabled', 'disabled');
-        accion.value = 'guardarComparativa';
-        idPresupuesto.value = '';
-        <portlet:namespace />reindexarFilasPresupuesto();
-        form.submit();
-        return false;
-        <% } %>
-
+    function <portlet:namespace />validarFilasPresupuesto(permitirVacio) {
         var rows =
                 jQuery(
                         '#<portlet:namespace />presupuestos_body tr'
                 );
 
-        if (rows.length <= 0
+        if (rows.length < (permitirVacio ? 0 : 1)
                 || rows.length > <%= maxPresupuestosCargaActual %>) {
             alert('La cantidad de presupuestos no es válida.');
             return false;
@@ -1363,6 +1470,64 @@ boolean msgPresupuestoBorrado =
             return false;
         }
 
+        return true;
+    }
+
+    function <portlet:namespace />uploadPresupuestoRequerimientoCompra() {
+        var form =
+                document.getElementById(
+                        '<portlet:namespace />compra_presupuesto_fm'
+                );
+
+        var accion =
+                document.getElementById(
+                        '<portlet:namespace />presupuesto_accion'
+                );
+
+        var idPresupuesto =
+                document.getElementById(
+                        '<portlet:namespace />id_requerimiento_presupuesto'
+                );
+
+        if (!form || !accion || !idPresupuesto) {
+            alert(
+                    'No se pudo preparar la subida del presupuesto.'
+            );
+            return false;
+        }
+
+        <% if (!cotizacionEmpresaPresupuestos) { %>
+        var idPrestador = jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val();
+        var seccion = jQuery('#<portlet:namespace />comparativaPrestadorSeccion');
+        var prestadorCargado = seccion.find(
+                'input[name="<portlet:namespace />prestador_' + idPrestador + '"]').val();
+        if (!idPrestador || prestadorCargado != idPrestador) {
+            alert('Seleccione un prestador y espere a que se carguen sus datos.');
+            return false;
+        }
+        var archivo = jQuery('#<portlet:namespace />presupuesto_0').val();
+        if (!archivo && seccion.find('#<portlet:namespace />comparativaTieneArchivo').val() != 'true') {
+            alert('Debe seleccionar el PDF del primer presupuesto.');
+            return false;
+        }
+        if (archivo && !/\.pdf$/i.test(archivo)) {
+            alert('El archivo debe estar en formato PDF.');
+            return false;
+        }
+        var boton = seccion.find('#<portlet:namespace />guardarComparativaBoton');
+        if (boton.attr('disabled')) { return false; }
+        boton.attr('disabled', 'disabled');
+        accion.value = 'guardarComparativa';
+        idPresupuesto.value = '';
+        <portlet:namespace />reindexarFilasPresupuesto();
+        form.submit();
+        return false;
+        <% } %>
+
+        if (!<portlet:namespace />validarFilasPresupuesto(false)) {
+            return false;
+        }
+
         accion.value = '<%= Constants.ADD %>';
         idPresupuesto.value = '';
 
@@ -1467,7 +1632,21 @@ boolean msgPresupuestoBorrado =
                         )
                 )) { %>
 
+            <% if (!altaEmpresaPresupuestos) { %>
             <portlet:namespace />agregarFilaPresupuesto();
+            <% } else { %>
+            jQuery('#<portlet:namespace />empresas_recuperadas span').each(function() {
+                <portlet:namespace />agregarFilaPresupuesto();
+                var origen = jQuery(this);
+                var fila = jQuery('#<portlet:namespace />presupuestos_body tr:last');
+                fila.find('input.presupuesto-empresa-cuit').val(origen.attr('data-cuit'));
+                fila.find('input.presupuesto-empresa-sucursal').val(origen.attr('data-sucursal'));
+                fila.find('input.presupuesto-empresa-descripcion').val(origen.attr('data-descripcion'));
+                fila.find('.presupuesto-empresa-seleccionada').text(origen.attr('data-descripcion')
+                        + ' - CUIT: ' + origen.attr('data-cuit') + ' - Sucursal: ' + origen.attr('data-sucursal'));
+            });
+            <portlet:namespace />actualizarCotizacionesEmpresaSector(false);
+            <% } %>
             <% if (!cotizacionEmpresaPresupuestos
                     && ParamUtil.getInteger(renderRequest, "prestador_comparativa") > 0) { %>
             jQuery('#<portlet:namespace />presupuesto_0_id_prestador')

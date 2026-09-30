@@ -81,6 +81,12 @@ buscarEmpresasURL.setParameter(
         WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
         String.valueOf(idRequerimientoCompraEmpresa)
 );
+if (idRequerimientoCompraEmpresa == 0
+        && "alta".equals(ParamUtil.getString(renderRequest, "modo", ""))) {
+    buscarEmpresasURL.setParameter("modo", "alta");
+    buscarEmpresasURL.setParameter("id_sector", String.valueOf(
+            ParamUtil.getInteger(renderRequest, "id_sector", 0)));
+}
 %>
 
 <div class="compras-busqueda-empresa-cotizacion">

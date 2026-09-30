@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.beans.Empresa;
 import ar.com.ospim.util.PermissionUtil;
@@ -44,9 +45,8 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
             RenderRequest renderRequest,
             RenderResponse renderResponse) throws Exception {
 
-        validarPermiso(
-                PortalUtil.getUser(renderRequest)
-        );
+        User user = PortalUtil.getUser(renderRequest);
+        validarPermiso(user);
 
         int idRequerimientoCompra =
                 ParamUtil.getInteger(
@@ -55,9 +55,15 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
                         0
                 );
 
-        validarRequerimientoInterno(
-                idRequerimientoCompra
-        );
+        if (idRequerimientoCompra == 0
+                && "alta".equalsIgnoreCase(ParamUtil.getString(renderRequest, "modo", ""))) {
+            if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+                throw new Exception("No posee permisos para crear requerimientos de compra.");
+            }
+            validarSectorAlta(ParamUtil.getInteger(renderRequest, "id_sector", 0));
+        } else {
+            validarRequerimientoInterno(idRequerimientoCompra);
+        }
 
         boolean buscar =
                 ParamUtil.getBoolean(
@@ -191,6 +197,20 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
         return mapping.findForward(
                 "portlet.compras.empresas.result.search"
         );
+    }
+
+    private void validarSectorAlta(int idSector) throws Exception {
+        List<RequerimientoCompraSector> sectores =
+                BusquedaRequerimientoCompraServiceUtil.listarSectores();
+        for (int i = 0; sectores != null && i < sectores.size(); i++) {
+            RequerimientoCompraSector sector = sectores.get(i);
+            if (sector != null && sector.getIdSector() == idSector
+                    && idSector > 0
+                    && WebKeysCompras.esSectorSinCotizacionPrestador(sector.getDescripcion())) {
+                return;
+            }
+        }
+        throw new Exception("El sector seleccionado no admite cotizaciones de Empresas.");
     }
 
     private void validarRequerimientoInterno(

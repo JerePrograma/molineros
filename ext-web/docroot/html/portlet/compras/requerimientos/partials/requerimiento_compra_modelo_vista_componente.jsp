@@ -134,6 +134,9 @@ boolean puedeEditarCotizacionPantalla =
         && cotizacionEditablePorEstado
         && !soloLecturaSolicitada;
 
+boolean puedePrepararCotizacionEmpresaAlta =
+        esNuevo && puedeABM && puedeCotizar && !soloLecturaSolicitada;
+
 boolean puedeAdministrarCotizacionEmpresaPantalla =
         !esNuevo
         && puedeCotizar

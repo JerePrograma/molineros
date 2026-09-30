@@ -556,6 +556,10 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
     function <portlet:namespace />cambiarSectorCompra(
             limpiarSiNoRequiere) {
 
+        if (typeof <portlet:namespace />actualizarCotizacionesEmpresaSector == 'function') {
+            <portlet:namespace />actualizarCotizacionesEmpresaSector(true);
+        }
+
         <portlet:namespace />actualizarVisibilidadAfiliado(
                 limpiarSiNoRequiere
         );
@@ -1476,6 +1480,12 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
+        if (typeof <portlet:namespace />validarCotizacionesEmpresaGuardado == 'function'
+                && !<portlet:namespace />validarCotizacionesEmpresaGuardado()) {
+            return <portlet:namespace />cancelarGuardadoCompra();
+        }
+
+        var contextosCotizacionesEmpresa = null;
         var contextosOrdenesMedicas =
                 null;
 
@@ -1511,6 +1521,10 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
          *
          * Sólo una respuesta de guardado confirmado permite navegar.
          */
+        if (typeof <portlet:namespace />incorporarCotizacionesEmpresa == 'function') {
+            contextosCotizacionesEmpresa = <portlet:namespace />incorporarCotizacionesEmpresa(form);
+        }
+
         var idAntesGuardado =
                 jQuery(
                         '#<portlet:namespace />id_requerimiento_compra'
@@ -1523,6 +1537,10 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             timeout: 120000,
 
             complete: function(xhr, status) {
+
+                if (typeof <portlet:namespace />restaurarCotizacionesEmpresa == 'function') {
+                    <portlet:namespace />restaurarCotizacionesEmpresa(contextosCotizacionesEmpresa);
+                }
 
                 <c:if test="<%= modoEditableScriptsCompra
                 && puedeEditarEstructuraScriptsCompra %>">
@@ -1739,6 +1757,9 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         if (!<portlet:namespace />submitFormularioCompra(
                 form
         )) {
+            if (typeof <portlet:namespace />restaurarCotizacionesEmpresa == 'function') {
+                <portlet:namespace />restaurarCotizacionesEmpresa(contextosCotizacionesEmpresa);
+            }
 
             <c:if test="<%= modoEditableScriptsCompra
         && puedeEditarEstructuraScriptsCompra %>">

@@ -65,6 +65,9 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_CONFIRMAR_ORDEN_COMPRA =
             "{ ? = call compras.confirmar_orden_compra_requerimiento(?,?) }";
 
+    private static final String SQL_GUARDAR_EMPRESA_ADJUDICADA =
+            "{ ? = call compras.guardar_empresa_adjudicada(?,?,?,?) }";
+
     private static final String SQL_GUARDAR_COTIZACION =
             "{ ? = call compras.guardar_cotizacion_requerimiento_call(?,?,?,?,?,?,?) }";
 
@@ -185,11 +188,23 @@ public class EditarRequerimientoCompraServiceImpl {
             String usuario) throws Exception {
 
         Connection con = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            return guardarDetalle(con, detalle, usuario);
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    private int guardarDetalle(
+            Connection con,
+            RequerimientoCompraDetalle detalle,
+            String usuario) throws Exception {
+
         CallableStatement stmt = null;
         ResultSet rs = null;
 
         try {
-            con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_GUARDAR_REQUERIMIENTO_DETALLE);
 
             setNullableInteger(stmt, 1, detalle.getId());
@@ -223,7 +238,7 @@ public class EditarRequerimientoCompraServiceImpl {
                     : 0;
         } finally {
             cerrar(rs);
-            ConnectionHelper.cerrar(stmt, con);
+            ConnectionHelper.cerrar(stmt);
         }
     }
 
@@ -433,10 +448,22 @@ public class EditarRequerimientoCompraServiceImpl {
             String usuario) throws Exception {
 
         Connection con = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            return registrarCotizacionEmpresa(con, presupuesto, usuario);
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    private int registrarCotizacionEmpresa(
+            Connection con,
+            RequerimientoCompraPresupuesto presupuesto,
+            String usuario) throws Exception {
+
         CallableStatement stmt = null;
 
         try {
-            con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_REGISTRAR_COTIZACION_EMPRESA);
             stmt.registerOutParameter(1, Types.INTEGER);
             stmt.setInt(2, presupuesto.getIdRequerimiento().intValue());
@@ -458,7 +485,7 @@ public class EditarRequerimientoCompraServiceImpl {
 
             return stmt.getInt(1);
         } finally {
-            ConnectionHelper.cerrar(stmt, con);
+            ConnectionHelper.cerrar(stmt);
         }
     }
 
@@ -596,6 +623,51 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
+    public void guardarEmpresaAdjudicada(
+            int idRequerimientoCompra,
+            String empresaCuit,
+            String empresaSucursal,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            guardarEmpresaAdjudicada(
+                    con, idRequerimientoCompra, empresaCuit,
+                    empresaSucursal, usuario);
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    private void guardarEmpresaAdjudicada(
+            Connection con,
+            int idRequerimientoCompra,
+            String empresaCuit,
+            String empresaSucursal,
+            String usuario) throws Exception {
+
+        CallableStatement stmt = null;
+        try {
+            stmt = con.prepareCall(SQL_GUARDAR_EMPRESA_ADJUDICADA);
+            stmt.registerOutParameter(1, Types.INTEGER);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setString(3, empresaCuit);
+            stmt.setString(4, empresaSucursal);
+            stmt.setString(5, usuario);
+            stmt.execute();
+            int idPresupuesto = stmt.getInt(1);
+            if (stmt.wasNull()
+                    || (empresaCuit != null && empresaCuit.trim().length() > 0
+                        ? idPresupuesto <= 0 : idPresupuesto != 0)) {
+                throw new SQLException(
+                        "No se confirmo la persistencia de la Empresa adjudicada.");
+            }
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
     private String construirArrayEnterosPostgreSql(
             Integer[] valores) {
 
@@ -672,6 +744,31 @@ public class EditarRequerimientoCompraServiceImpl {
                     requerimiento,
                     usuario
             );
+        }
+
+        public int guardarDetalle(
+                RequerimientoCompraDetalle detalle,
+                String usuario) throws Exception {
+
+            return service.guardarDetalle(con, detalle, usuario);
+        }
+
+        public int registrarPresupuesto(
+                RequerimientoCompraPresupuesto presupuesto,
+                String usuario) throws Exception {
+
+            return service.registrarCotizacionEmpresa(con, presupuesto, usuario);
+        }
+
+        public void guardarEmpresaAdjudicada(
+                int idRequerimientoCompra,
+                String empresaCuit,
+                String empresaSucursal,
+                String usuario) throws Exception {
+
+            service.guardarEmpresaAdjudicada(
+                    con, idRequerimientoCompra, empresaCuit,
+                    empresaSucursal, usuario);
         }
 
         public int registrarOrdenMedica(

@@ -112,6 +112,16 @@ public class EditarRequerimientoCompraServiceUtil {
         );
     }
 
+    public static void guardarEmpresaAdjudicada(
+            int idRequerimientoCompra,
+            String empresaCuit,
+            String empresaSucursal,
+            String usuario) throws Exception {
+
+        getInstance().guardarEmpresaAdjudicada(
+                idRequerimientoCompra, empresaCuit, empresaSucursal, usuario);
+    }
+
     public static boolean darDeBajaPresupuesto(
             int idRequerimientoPresupuesto,
             int idRequerimientoCompra,
@@ -198,6 +208,31 @@ public class EditarRequerimientoCompraServiceUtil {
                     requerimiento,
                     usuario
             );
+        }
+
+        public int guardarDetalle(
+                RequerimientoCompraDetalle detalle,
+                String usuario) throws Exception {
+
+            return delegate.guardarDetalle(detalle, usuario);
+        }
+
+        public int registrarPresupuesto(
+                RequerimientoCompraPresupuesto presupuesto,
+                String usuario) throws Exception {
+
+            return delegate.registrarPresupuesto(presupuesto, usuario);
+        }
+
+        public void guardarEmpresaAdjudicada(
+                int idRequerimientoCompra,
+                String empresaCuit,
+                String empresaSucursal,
+                String usuario) throws Exception {
+
+            delegate.guardarEmpresaAdjudicada(
+                    idRequerimientoCompra, empresaCuit,
+                    empresaSucursal, usuario);
         }
 
         public int registrarOrdenMedica(

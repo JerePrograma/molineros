@@ -86,10 +86,24 @@ Object botoneraCotizacionesEmpresaAttr =
                         .ATTR_PRESUPUESTOS
         );
 
-boolean botoneraHayCotizacionesEmpresa =
-        botoneraCotizacionesEmpresaAttr instanceof java.util.List
-        && !((java.util.List) botoneraCotizacionesEmpresaAttr)
-                .isEmpty();
+boolean botoneraHayCotizacionesEmpresa = false;
+int botoneraEmpresasAdjudicadas = 0;
+if (botoneraCotizacionesEmpresaAttr instanceof java.util.List) {
+    for (Object documentoEmpresa : (java.util.List) botoneraCotizacionesEmpresaAttr) {
+        if (documentoEmpresa instanceof ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto) {
+            ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto cotizacionEmpresa =
+                    (ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto) documentoEmpresa;
+            if (cotizacionEmpresa.isActivo() && cotizacionEmpresa.isCotizacionEmpresa()
+                    && cotizacionEmpresa.getIdRequerimiento() != null
+                    && cotizacionEmpresa.getIdRequerimiento().intValue() == botoneraIdRequerimientoActual) {
+                botoneraHayCotizacionesEmpresa = true;
+                if (cotizacionEmpresa.isEmpresaAdjudicada()) {
+                    botoneraEmpresasAdjudicadas++;
+                }
+            }
+        }
+    }
+}
 
 Object botoneraRelacionAttr =
         renderRequest.getAttribute(
@@ -120,6 +134,7 @@ boolean botoneraPuedeEnviarACotizar =
 boolean botoneraPuedePasarAOrdenCompra =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
+        && botoneraEmpresasAdjudicadas == 1
         && req.puedePasarAOrdenCompra(
                 botoneraHayCotizacionesEmpresa
         );
@@ -306,7 +321,7 @@ String botoneraReclamoPrestacionalFormId =
             <% if (botoneraPuedePasarAOrdenCompra) { %>
                 <input type="button"
                        id="<portlet:namespace />btnOrdenCompraRequerimientoCompra"
-                       value="Orden de Compra"
+                       value="Crear Orden de Compra"
                        onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
                                '<%= botoneraOrdenCompraFormId %>',
                                '<portlet:namespace />btnOrdenCompraRequerimientoCompra',

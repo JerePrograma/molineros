@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import java.util.TreeMap;
 import net.sf.jasperreports.engine.JRBand;
 import net.sf.jasperreports.engine.JRElement;
 import net.sf.jasperreports.engine.JRPrintPage;
@@ -1342,8 +1341,6 @@ public class PdfServlet extends HttpServlet {
             return;
         }
 
-        InputStream in = null;
-
         try {
             RequerimientoCompraComparativaHelper helper =
                     new RequerimientoCompraComparativaHelper();
@@ -1351,203 +1348,99 @@ public class PdfServlet extends HttpServlet {
             ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra r =
                     helper.obtenerRequerimiento(id);
 
-            in = getClass().getClassLoader().getResourceAsStream(
-                    "jasper/compras/requerimiento_comparativa.jrxml");
-
-            if (in == null) {
-                throw new IOException(
-                        "No se encontró el reporte de comparativa.");
-            }
-
-            // Reordena para la presentacion los mismos datos que imprimia el reporte.
             LinkedHashMap<String, Map<String, ?>> proveedores =
                     new LinkedHashMap<String, Map<String, ?>>();
 
-            TreeMap<Integer, Map<String, ?>> items =
-                    new TreeMap<Integer, Map<String, ?>>();
-
-            for (Map<String, ?> fila :
-                    helper.filasPdf(r, helper.cargar(r))) {
-
-                String prestador =
-                        (String) fila.get("idPrestador");
-
-                proveedores.put(prestador, fila);
-
-                if (!"".equals(fila.get("idPrestacion"))) {
-                    Integer orden =
-                            Integer.valueOf(
-                                    (String) fila.get("ordenItem"));
-
-                    if (!items.containsKey(orden)) {
-                        Map<String, Object> item =
-                                new HashMap<String, Object>();
-
-                        item.put("tipo", "detalle");
-
-                        item.put(
-                                "etiqueta",
-                                fila.get("codigo")
-                                        + " - "
-                                        + fila.get("prestacion"));
-
-                        item.put(
-                                "unidad",
-                                fila.get("unidad"));
-
-                        item.put(
-                                "proveedores",
-                                new HashMap<String, Map<String, ?>>());
-
-                        items.put(orden, item);
-                    }
-
-                    ((Map<String, Map<String, ?>>)
-                            items.get(orden).get("proveedores"))
-                            .put(prestador, fila);
-                }
-            }
-
             List<Map<String, ?>> filas =
-                    new ArrayList<Map<String, ?>>(items.values());
-
-            String[] campos = {
-                    "neto",
-                    "iva",
-                    "iibb",
-                    "total",
-                    "pago",
-                    "envio",
-                    "plazo",
-                    "fecha",
-                    "validez",
-                    "dictamen"
-            };
-
-            String[] etiquetas = {
-                    "Subtotal (sin IVA)",
-                    "IVA",
-                    "IIBB",
-                    "Total",
-                    "Forma de pago",
-                    "Envío a obra social - Beneficiario - Delegación",
-                    "Plazo de entrega",
-                    "Fecha del presupuesto",
-                    "Validez del presupuesto (hs)",
-                    "Dictamen de Auditoría Médica/Compras"
-            };
-
-            for (int i = 0; i < campos.length; i++) {
-                Map<String, Object> fila =
-                        new HashMap<String, Object>();
-
-                fila.put(
-                        "tipo",
-                        i == 9 ? "dictamen"
-                                : i == 3 ? "total"
-                                : i < 4 ? "resumen"
-                                : "condicion");
-
-                fila.put(
-                        "etiqueta",
-                        etiquetas[i]);
-
-                fila.put(
-                        "unidad",
-                        "");
-
-                Map<String, Object> valores =
-                        new HashMap<String, Object>();
-
-                for (String prestador : proveedores.keySet()) {
-                    Map<String, ?> proveedor =
-                            proveedores.get(prestador);
-
-                    Map<String, Object> valor =
-                            new HashMap<String, Object>();
-
-                    // No existe un dictamen en el contrato actual: se deja la celda vacia.
-                    valor.put(
-                            "valor",
-                            i == 9 ? "" : proveedor.get(campos[i]));
-
-                    valor.put(
-                            "incompleto",
-                            proveedor.get("incompleto"));
-
-                    valores.put(
-                            prestador,
-                            valor);
-                }
-
-                fila.put(
-                        "proveedores",
-                        valores);
-
-                filas.add(fila);
-            }
+                    helper.filasReportePdf(
+                            r,
+                            helper.cargar(r),
+                            proveedores);
 
             HashMap<String, Object> parametros =
                     new HashMap<String, Object>();
 
-            parametros.put(
-                    "REQUERIMIENTO",
-                    String.valueOf(id));
+            parametros.put("REQUERIMIENTO", String.valueOf(id));
+            parametros.put("PROVEEDORES", proveedores);
 
-            parametros.put(
-                    "PROVEEDORES",
-                    proveedores);
+            crearPdfFromByteArray(
+                    req,
+                    res,
+                    crearPdfComparativaCompra(
+                            filas,
+                            proveedores,
+                            parametros),
+                    "ComparativaCompra_" + id + ".pdf");
 
+        } catch (IllegalArgumentException e) {
+            res.sendError(
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "No hay una comparativa disponible para imprimir.");
+
+        } catch (Exception e) {
+            _log.error(
+                    "No se pudo generar el PDF de comparativa. Requerimiento=" + id,
+                    e);
+
+            if (!res.isCommitted()) {
+                res.sendError(
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "No se pudo generar el PDF de la comparativa.");
+            }
+        }
+    }
+
+    private byte[] crearPdfComparativaCompra(
+            List<Map<String, ?>> filas,
+            Map<String, Map<String, ?>> proveedores,
+            HashMap<String, Object> parametros) throws Exception {
+
+        InputStream in = null;
+
+        try {
             List<String> ids =
                     new ArrayList<String>(proveedores.keySet());
 
+            if (ids.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "No hay prestadores para imprimir en la comparativa.");
+            }
+
             JasperPrint print = null;
 
-            int ancho =
-                    ids.size() > 4 ? 1151 : 802;
+            int ancho = ids.size() > 4 ? 1151 : 802;
+            int inicioProveedores = 252 * ancho / 802;
+            int bloquesPorHoja = (ancho - inicioProveedores) / 110;
 
-            int inicioProveedores =
-                    252 * ancho / 802;
-
-            int bloquesPorHoja =
-                    (ancho - inicioProveedores) / 110;
-
-            // Conserva un ancho minimo legible; los proveedores restantes continuan en otra hoja.
+            // Conserva un ancho minimo legible; los proveedores restantes
+            // continuan en otra hoja.
             for (int desde = 0;
                  desde < ids.size();
                  desde += bloquesPorHoja) {
 
                 int hasta =
-                        Math.min(
-                                desde + bloquesPorHoja,
-                                ids.size());
+                        Math.min(desde + bloquesPorHoja, ids.size());
 
                 int cantidad =
                         hasta - desde;
 
-                if (desde > 0) {
-                    in.close();
+                in = getClass().getClassLoader().getResourceAsStream(
+                        "jasper/compras/requerimiento_comparativa.jrxml");
 
-                    in = getClass().getClassLoader().getResourceAsStream(
-                            "jasper/compras/requerimiento_comparativa.jrxml");
-
-                    if (in == null) {
-                        throw new IOException(
-                                "No se encontró el reporte de comparativa.");
-                    }
+                if (in == null) {
+                    throw new IOException(
+                            "No se encontró el reporte de comparativa.");
                 }
 
                 JasperDesign diseno =
                         JRXmlLoader.load(in);
 
-                diseno.setPageWidth(
-                        ancho + 40);
+                in.close();
+                in = null;
 
-                diseno.setPageHeight(
-                        ids.size() > 4 ? 842 : 595);
-
-                diseno.setColumnWidth(
-                        ancho);
+                diseno.setPageWidth(ancho + 40);
+                diseno.setPageHeight(ids.size() > 4 ? 842 : 595);
+                diseno.setColumnWidth(ancho);
 
                 JRBand[] bandas = {
                         diseno.getPageHeader(),
@@ -1560,12 +1453,14 @@ public class PdfServlet extends HttpServlet {
                     JRDesignBand bandaDiseno =
                             (JRDesignBand) banda;
 
-                    for (JRElement elemento :
-                            banda.getElements()) {
+                    JRElement[] elementos =
+                            banda.getElements();
 
-                        if ("proveedor".equals(
-                                elemento.getKey())) {
+                    for (int i = 0; i < elementos.length; i++) {
+                        JRElement elemento =
+                                elementos[i];
 
+                        if ("proveedor".equals(elemento.getKey())) {
                             bandaDiseno.removeElement(
                                     (JRDesignElement) elemento);
 
@@ -1618,30 +1513,28 @@ public class PdfServlet extends HttpServlet {
 
                                         ((JRDesignElement) celda)
                                                 .setStyle(
-                                                        (JRStyle)
-                                                                diseno
-                                                                        .getStylesMap()
-                                                                        .get(
-                                                                                "CeldaAdjudicada"));
+                                                        (JRStyle) diseno
+                                                                .getStylesMap()
+                                                                .get("CeldaAdjudicada"));
 
                                         celda.setBackcolor(
                                                 java.awt.Color.CYAN);
                                     }
 
-                                    if (celda instanceof JRDesignTextField) {
+                                    if (celda
+                                            instanceof JRDesignTextField) {
+
                                         JRDesignExpression expresion =
                                                 (JRDesignExpression)
                                                         ((JRDesignTextField) celda)
                                                                 .getExpression();
 
                                         expresion.setText(
-                                                expresion
-                                                        .getText()
-                                                        .replace(
-                                                                "$P{PROVEEDOR}",
-                                                                "\""
-                                                                        + prestador
-                                                                        + "\""));
+                                                expresion.getText().replace(
+                                                        "$P{PROVEEDOR}",
+                                                        "\""
+                                                                + prestador
+                                                                + "\""));
                                     }
                                 }
 
@@ -1675,37 +1568,19 @@ public class PdfServlet extends HttpServlet {
                 if (print == null) {
                     print = bloque;
                 } else {
-                    for (Object pagina :
-                            bloque.getPages()) {
-
+                    for (Object pagina : bloque.getPages()) {
                         print.addPage(
                                 (JRPrintPage) pagina);
                     }
                 }
             }
 
-            crearPdfFromByteArray(
-                    req,
-                    res,
-                    JasperExportManager.exportReportToPdf(print),
-                    "ComparativaCompra_" + id + ".pdf");
-
-        } catch (IllegalArgumentException e) {
-            res.sendError(
-                    HttpServletResponse.SC_BAD_REQUEST,
-                    "No hay una comparativa disponible para imprimir.");
-
-        } catch (Exception e) {
-            _log.error(
-                    "No se pudo generar el PDF de comparativa. Requerimiento="
-                            + id,
-                    e);
-
-            if (!res.isCommitted()) {
-                res.sendError(
-                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        "No se pudo generar el PDF de la comparativa.");
+            if (print == null) {
+                throw new IllegalArgumentException(
+                        "No hay una comparativa disponible para imprimir.");
             }
+
+            return JasperExportManager.exportReportToPdf(print);
 
         } finally {
             if (in != null) {

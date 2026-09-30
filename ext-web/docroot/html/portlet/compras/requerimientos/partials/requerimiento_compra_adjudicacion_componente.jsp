@@ -1,6 +1,6 @@
 <%--
 Responsabilidad:
-    Renderiza la selección y resumen del prestador adjudicado.
+    Renderiza la selección y resumen del prestador o Empresa adjudicada.
 Incluido desde:
     requerimiento_compra_adjudicacion_runtime_componente.jsp
 Pantallas o estados de uso:
@@ -12,7 +12,8 @@ Atributos de request consumidos:
 Parámetros consumidos:
     Ninguno directamente; sólo renderiza names y valores del contrato legacy cuando corresponde.
 IDs o funciones JavaScript expuestos:
-    id_prestador_adjudicado, capturarPrestadorAdjudicado
+    id_prestador_adjudicado, capturarPrestadorAdjudicado, empresa_adjudicada_selector,
+    capturarEmpresaAdjudicada, actualizarEmpresasAdjudicacion
 Efectos secundarios:
     Sólo renderiza o incluye presentación; no ejecuta persistencia.
 --%>
@@ -109,6 +110,71 @@ int idRequerimientoAdjudicacion =
 
 boolean requerimientoPersistidoAdjudicacion =
         idRequerimientoAdjudicacion > 0;
+
+Object puedeCotizarEmpresasAttrAdjudicacion =
+        request.getAttribute("compras.requerimiento.puedeCotizar");
+boolean rolCotizarEmpresasAdjudicacion =
+        puedeCotizarEmpresasAttrAdjudicacion instanceof Boolean
+                ? Boolean.TRUE.equals(puedeCotizarEmpresasAttrAdjudicacion)
+                : user != null && PermissionUtil.userContainsRole(
+                        user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
+boolean altaEmpresaAdjudicacion =
+        !requerimientoPersistidoAdjudicacion
+        && Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.esNuevo"))
+        && Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.puedeABM"))
+        && rolCotizarEmpresasAdjudicacion && !soloLecturaAdjudicacion;
+boolean cotizacionEmpresaAdjudicacion =
+        altaEmpresaAdjudicacion || reqAdjudicacion.esSectorSinCotizacionPrestador();
+boolean puedeEditarEmpresaAdjudicacion = cotizacionEmpresaAdjudicacion
+        && (altaEmpresaAdjudicacion || (requerimientoPersistidoAdjudicacion
+                && rolCotizarEmpresasAdjudicacion
+                && reqAdjudicacion.puedeAdministrarPresupuestos()
+                && !soloLecturaAdjudicacion));
+boolean restaurarEmpresaAdjudicacion = puedeEditarEmpresaAdjudicacion
+        && ParamUtil.getBoolean(renderRequest, "compras_error", false)
+        && "1".equals(ParamUtil.getString(renderRequest, "empresa_adjudicacion_informada", ""));
+String empresaAdjudicadaCuit = restaurarEmpresaAdjudicacion
+        ? ParamUtil.getString(renderRequest, "empresa_adjudicada_cuit", "") : "";
+String empresaAdjudicadaSucursal = restaurarEmpresaAdjudicacion
+        ? ParamUtil.getString(renderRequest, "empresa_adjudicada_sucursal", "") : "";
+String empresaAdjudicadaVisible = "";
+List<RequerimientoCompraPresupuesto> empresasAdjudicacion =
+        new ArrayList<RequerimientoCompraPresupuesto>();
+List<RequerimientoCompraPresupuesto> presupuestosAdjudicacion =
+        (List<RequerimientoCompraPresupuesto>) request.getAttribute("compras.requerimiento.presupuestos");
+if (cotizacionEmpresaAdjudicacion && requerimientoPersistidoAdjudicacion
+        && presupuestosAdjudicacion != null) {
+    for (RequerimientoCompraPresupuesto presupuestoAdjudicacion : presupuestosAdjudicacion) {
+        if (presupuestoAdjudicacion == null || !presupuestoAdjudicacion.isActivo()
+                || !presupuestoAdjudicacion.isCotizacionEmpresa()
+                || WebKeysCompras.isEmpty(presupuestoAdjudicacion.getEmpresaCuit())
+                || WebKeysCompras.isEmpty(presupuestoAdjudicacion.getEmpresaSucursal())
+                || presupuestoAdjudicacion.getIdRequerimiento() == null
+                || presupuestoAdjudicacion.getIdRequerimiento().intValue() != idRequerimientoAdjudicacion) {
+            continue;
+        }
+        empresasAdjudicacion.add(presupuestoAdjudicacion);
+        if (!restaurarEmpresaAdjudicacion && presupuestoAdjudicacion.isEmpresaAdjudicada()) {
+            empresaAdjudicadaCuit = presupuestoAdjudicacion.getEmpresaCuit();
+            empresaAdjudicadaSucursal = presupuestoAdjudicacion.getEmpresaSucursal();
+        }
+    }
+    for (RequerimientoCompraPresupuesto empresaAdjudicacion : empresasAdjudicacion) {
+        if (empresaAdjudicacion.getEmpresaCuit().equals(empresaAdjudicadaCuit)
+                && empresaAdjudicacion.getEmpresaSucursal().equals(empresaAdjudicadaSucursal)) {
+            empresaAdjudicadaVisible = empresaAdjudicacion.getDescripcionEmpresa()
+                    + " - CUIT: " + empresaAdjudicadaCuit + " - Sucursal: " + empresaAdjudicadaSucursal;
+            break;
+        }
+    }
+    if (WebKeysCompras.isEmpty(empresaAdjudicadaVisible)) {
+        empresaAdjudicadaCuit = "";
+        empresaAdjudicadaSucursal = "";
+    }
+}
+PortletURL guardarEmpresaAdjudicadaURL = renderResponse.createActionURL();
+guardarEmpresaAdjudicadaURL.setWindowState(WindowState.MAXIMIZED);
+guardarEmpresaAdjudicadaURL.setParameter("struts_action", "/compras/editar_requerimiento");
 
 boolean restaurarCotizacionAdjudicacion =
         ParamUtil.getBoolean(
@@ -271,8 +337,15 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
         reqAdjudicacion.tienePrestadoresAdjudicadosMixtos();
 %>
 
-<% if (puedeVerCotizacionAdjudicacion) { %>
-<div class="compras-seccion compras-seccion-adjudicacion">
+<% if (puedeVerCotizacionAdjudicacion || cotizacionEmpresaAdjudicacion) { %>
+<div class="compras-seccion compras-seccion-adjudicacion"
+        <% if (cotizacionEmpresaAdjudicacion) { %>
+        id="<portlet:namespace />adjudicacion_empresa_panel"
+        <%= altaEmpresaAdjudicacion && !reqAdjudicacion.esSectorSinCotizacionPrestador()
+                ? "style=\"display: none;\"" : "" %>
+        <% } %>>
+
+    <% if (!cotizacionEmpresaAdjudicacion) { %>
 
     <% if (puedeCotizarAdjudicacion
             && !WebKeysCompras.isEmpty(
@@ -317,19 +390,54 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
         </div>
     <% } %>
 
+    <% } %>
+
     <fieldset class="block-labels compras-adjudicacion">
         <legend>Adjudicación</legend>
 
         <table class="lfr-table">
             <tr>
                 <td>
-                    <label for="<portlet:namespace />id_prestador_adjudicado">
-                        Prestador adjudicado:
+                    <label for="<portlet:namespace /><%= cotizacionEmpresaAdjudicacion
+                            ? "empresa_adjudicada_selector" : "id_prestador_adjudicado" %>">
+                        <%= cotizacionEmpresaAdjudicacion ? "Empresa adjudicada:" : "Prestador adjudicado:" %>
                     </label>
                 </td>
 
                 <td>
-                    <% if (puedeCotizarAdjudicacion) { %>
+                    <% if (cotizacionEmpresaAdjudicacion) { %>
+                        <% if (puedeEditarEmpresaAdjudicacion) { %>
+                            <select id="<portlet:namespace />empresa_adjudicada_selector"
+                                    style="max-width: 520px; width: 100%;"
+                                    onchange="<portlet:namespace />capturarEmpresaAdjudicada();"
+                                    <%= empresasAdjudicacion.isEmpty() ? "disabled=\"disabled\"" : "" %>>
+                                <option value="">Seleccione...</option>
+                                <% for (int i = 0; i < empresasAdjudicacion.size(); i++) {
+                                    RequerimientoCompraPresupuesto empresaAdjudicacion = empresasAdjudicacion.get(i);
+                                %>
+                                    <option value="<%= i %>"
+                                            data-cuit="<%= HtmlUtil.escape(empresaAdjudicacion.getEmpresaCuit()) %>"
+                                            data-sucursal="<%= HtmlUtil.escape(empresaAdjudicacion.getEmpresaSucursal()) %>"
+                                            <%= empresaAdjudicacion.getEmpresaCuit().equals(empresaAdjudicadaCuit)
+                                                    && empresaAdjudicacion.getEmpresaSucursal().equals(empresaAdjudicadaSucursal)
+                                                    ? "selected=\"selected\"" : "" %>>
+                                        <%= HtmlUtil.escape(empresaAdjudicacion.getDescripcionEmpresa()
+                                                + " - CUIT: " + empresaAdjudicacion.getEmpresaCuit()
+                                                + " - Sucursal: " + empresaAdjudicacion.getEmpresaSucursal()) %>
+                                    </option>
+                                <% } %>
+                            </select>
+                            <input type="hidden" name="<portlet:namespace />empresa_adjudicada_cuit"
+                                   id="<portlet:namespace />empresa_adjudicada_cuit" value="<%= HtmlUtil.escape(empresaAdjudicadaCuit) %>" />
+                            <input type="hidden" name="<portlet:namespace />empresa_adjudicada_sucursal"
+                                   id="<portlet:namespace />empresa_adjudicada_sucursal" value="<%= HtmlUtil.escape(empresaAdjudicadaSucursal) %>" />
+                            <input type="hidden" name="<portlet:namespace />empresa_adjudicacion_informada"
+                                   id="<portlet:namespace />empresa_adjudicacion_informada" value="1" />
+                        <% } else { %>
+                            <strong><%= WebKeysCompras.isEmpty(empresaAdjudicadaVisible)
+                                    ? "Sin adjudicar" : HtmlUtil.escape(empresaAdjudicadaVisible) %></strong>
+                        <% } %>
+                    <% } else if (puedeCotizarAdjudicacion) { %>
                         <select
                                 id="<portlet:namespace />id_prestador_adjudicado"
                                 style="max-width: 520px; width: 100%;"
@@ -406,6 +514,67 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
                 </td>
             </tr>
         </table>
+        <% if (puedeEditarEmpresaAdjudicacion && requerimientoPersistidoAdjudicacion) { %>
+            <form action="<%= guardarEmpresaAdjudicadaURL.toString() %>" method="post"
+                  id="<portlet:namespace />empresa_adjudicacion_fm">
+                <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>" value="saveEmpresaAdjudicada" />
+                <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= idRequerimientoAdjudicacion %>" />
+                <input type="hidden" name="<portlet:namespace />compras_save_token"
+                       value="<%= HtmlUtil.escape((String) renderRequest.getAttribute("COMPRAS_SAVE_TOKEN")) %>" />
+                <input type="button" value="Guardar adjudicaci&#243;n"
+                       onclick="return <portlet:namespace />guardarEmpresaAdjudicada(this);" />
+            </form>
+        <% } %>
     </fieldset>
 </div>
+<% } %>
+
+<% if (puedeEditarEmpresaAdjudicacion) { %>
+<script type="text/javascript">
+    function <portlet:namespace />capturarEmpresaAdjudicada() {
+        var opcion = jQuery('#<portlet:namespace />empresa_adjudicada_selector option:selected');
+        var habilitada = opcion.length > 0 && !opcion.attr('disabled');
+        jQuery('#<portlet:namespace />empresa_adjudicada_cuit').val(habilitada ? (opcion.attr('data-cuit') || '') : '');
+        jQuery('#<portlet:namespace />empresa_adjudicada_sucursal').val(habilitada ? (opcion.attr('data-sucursal') || '') : '');
+    }
+
+    function <portlet:namespace />actualizarEmpresasAdjudicacion() {
+        <% if (altaEmpresaAdjudicacion) { %>
+        var selector = jQuery('#<portlet:namespace />empresa_adjudicada_selector');
+        var cuit = jQuery('#<portlet:namespace />empresa_adjudicada_cuit').val() || '';
+        var sucursal = jQuery('#<portlet:namespace />empresa_adjudicada_sucursal').val() || '';
+        var encontrada = false;
+        selector.empty().append(jQuery('<option></option>').val('').text('Seleccione...'));
+        jQuery('#<portlet:namespace />presupuestos_body tr').each(function(i) {
+            var fila = jQuery(this);
+            var cuitFila = fila.find('input.presupuesto-empresa-cuit').val() || '';
+            var sucursalFila = fila.find('input.presupuesto-empresa-sucursal').val() || '';
+            if (!cuitFila || !sucursalFila) { return; }
+            var tieneArchivo = !!fila.find('input.presupuesto-archivo').val();
+            var opcion = jQuery('<option></option>').val(String(i))
+                    .attr('data-cuit', cuitFila).attr('data-sucursal', sucursalFila)
+                    .text(fila.find('.presupuesto-empresa-seleccionada').text()
+                            + (tieneArchivo ? '' : ' (sin presupuesto cargado)'));
+            if (!tieneArchivo) { opcion.attr('disabled', 'disabled'); }
+            selector.append(opcion);
+            if (cuit == cuitFila && sucursal == sucursalFila) {
+                // Conservar la eleccion tras un error; el PDF debe volver a seleccionarse.
+                opcion.attr('selected', 'selected');
+                encontrada = true;
+            }
+        });
+        if (!encontrada) {
+            selector.val('');
+            jQuery('#<portlet:namespace />empresa_adjudicada_cuit').val('');
+            jQuery('#<portlet:namespace />empresa_adjudicada_sucursal').val('');
+        }
+        if (selector.find('option').length > 1
+                && <portlet:namespace />esSectorSinCotizacionPrestadorCompra()) {
+            selector.removeAttr('disabled');
+        } else {
+            selector.attr('disabled', 'disabled');
+        }
+        <% } %>
+    }
+</script>
 <% } %>

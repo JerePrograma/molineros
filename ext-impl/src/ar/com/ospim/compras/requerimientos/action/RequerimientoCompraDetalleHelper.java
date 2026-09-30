@@ -251,6 +251,37 @@ public class RequerimientoCompraDetalleHelper {
         return guardados;
     }
 
+    public java.util.List<RequerimientoCompraDetalle> getDetallesNuevosDesdeRequest(
+            ActionRequest request) throws Exception {
+
+        if (!WebKeysCompras.isEmpty(getParametroTrim(request, "detalle_deleted_ids"))) {
+            errorCampo("detalle_deleted_ids", "El alta no puede eliminar detalles persistidos.");
+        }
+        int count = parseEnteroConDefault(
+                request, "detalle_count", "Cantidad de detalles", 0);
+        if (count <= 0 || count > 1000) {
+            errorCampo("detalle_count", "Debe informar entre 1 y 1000 detalles.");
+        }
+        java.util.List<RequerimientoCompraDetalle> detalles =
+                new java.util.ArrayList<RequerimientoCompraDetalle>();
+        for (int i = 0; i < count; i++) {
+            String prefix = "detalle_" + i + "_";
+            if (filaDetalleTecnicaVacia(request, prefix)) {
+                continue;
+            }
+            RequerimientoCompraDetalle detalle = getDetalleFromRequest(
+                    request, prefix, "Detalle #" + (i + 1), 0);
+            if (detalle.getIdInt() > 0) {
+                errorCampo(prefix + "id", "El alta no puede modificar un detalle persistido.");
+            }
+            detalles.add(detalle);
+        }
+        if (detalles.isEmpty()) {
+            errorCampo("detalles", "Debe informar al menos un detalle.");
+        }
+        return detalles;
+    }
+
     public void guardarDetalleDesdeRequest(
             ActionRequest request,
             ActionResponse response,

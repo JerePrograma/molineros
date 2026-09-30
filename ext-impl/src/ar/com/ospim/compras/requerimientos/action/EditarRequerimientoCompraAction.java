@@ -10,6 +10,10 @@ import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHel
 import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.helper.EditarRequerimientoCompraHelper;
+import ar.com.ospim.compras.requerimientos.helper.PresupuestoCompraHelper.PresupuestoEntrada;
+import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.service.ServiceContextFactory;
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.PermissionUtil;
@@ -120,6 +124,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
     private static final class ContextoGuardadoCompra {
         private boolean tokenConsumido;
         private boolean persistenciaInvocada;
+        private boolean detallesGuardados;
     }
 
     public void processAction(
@@ -162,6 +167,27 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             String usuario = user != null
                     ? user.getScreenName()
                     : "sistema";
+
+            if ("saveEmpresaAdjudicada".equals(cmd)) {
+                validarPermisoCotizar(user);
+                consumirTokenGuardadoCompra(actionRequest);
+                contextoGuardado.tokenConsumido = true;
+                String cuit = getParametroTrim(actionRequest, "empresa_adjudicada_cuit");
+                String sucursal = getParametroTrim(actionRequest, "empresa_adjudicada_sucursal");
+                if (!"1".equals(getParametroTrim(actionRequest, "empresa_adjudicacion_informada"))) {
+                    errorCampo("empresa_adjudicada_cuit", "Debe informar la seleccion de adjudicacion.");
+                }
+                requerimientoHelper.validarEmpresaAdjudicada(idRequerimientoCompra, cuit, sucursal);
+                contextoGuardado.persistenciaInvocada = true;
+                requerimientoHelper.guardarEmpresaAdjudicada(idRequerimientoCompra, cuit, sucursal, usuario);
+                actionResponse.setRenderParameter("compras_guardado", "true");
+                actionResponse.setRenderParameter("compras_operacion", cmd);
+                setIdRequerimientoEnRequest(actionRequest, actionResponse, idRequerimientoCompra);
+                actionResponse.setRenderParameter("struts_action", STRUTS_ACTION_EDITAR_REQUERIMIENTO);
+                SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
+                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO);
+                return;
+            }
 
             if ("saveCotizacion".equals(cmd)
                     || "cerrarCotizacion".equals(cmd)) {
@@ -274,12 +300,16 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         contextoGuardado
                 );
 
-                if (guardarDetallesEstructura) {
+                if (guardarDetallesEstructura && !contextoGuardado.detallesGuardados) {
                     detalleHelper.guardarDetallesDesdeRequest(
                             actionRequest,
                             idRequerimientoCompra,
                             usuario
                     );
+                }
+
+                if (!contextoGuardado.detallesGuardados) {
+                    guardarAdjudicacionInformada(actionRequest, idRequerimientoCompra, usuario);
                 }
 
                 actionResponse.setRenderParameter("compras_guardado", "true");
@@ -332,6 +362,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         usuario,
                         contextoGuardado
                 );
+
+                if (!contextoGuardado.detallesGuardados) {
+                    guardarAdjudicacionInformada(actionRequest, idRequerimientoCompra, usuario);
+                }
 
                 actionResponse.setRenderParameter("compras_guardado", "true");
                 actionResponse.setRenderParameter("compras_operacion", cmd);
@@ -422,6 +456,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     WebKeysCompras.ERROR_PARA_ALERT,
                     mensaje
             );
+
+            copiarParametrosEmpresas(actionRequest, actionResponse);
+            if (altaOriginal && idRequerimientoCompra <= 0) {
+                copiarParametrosAlta(actionRequest, actionResponse);
+                if (uploadRequest != null) {
+                    mensaje += " Si vuelve a cargar la pantalla, debe seleccionar nuevamente los archivos.";
+                    actionRequest.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, mensaje);
+                }
+            }
 
             String campoError =
                     obtenerCampoError(
@@ -517,6 +560,48 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         boolean esNuevo =
                 requerimiento.getIdRequerimientoCompra() <= 0;
+        if (esNuevo) {
+            requerimientoHelper.prepararRequerimientoParaGuardar(requerimiento);
+        }
+        int cantidadCotizaciones = parseEnteroConDefault(
+                actionRequest, "presupuesto_count", "Cantidad de cotizaciones de Empresa", 0);
+        if (cantidadCotizaciones < 0
+                || cantidadCotizaciones > WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA) {
+            errorCampo("presupuesto_count", "La cantidad de cotizaciones de Empresa no es valida.");
+        }
+        for (int i = cantidadCotizaciones; i <= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA; i++) {
+            String prefijo = "presupuesto_" + i;
+            if (!WebKeysCompras.isEmpty(getParametroTrim(actionRequest, prefijo + "_empresa_cuit"))
+                    || !WebKeysCompras.isEmpty(getParametroTrim(actionRequest, prefijo + "_empresa_sucursal"))
+                    || (uploadRequest != null && !WebKeysCompras.isEmpty(uploadRequest.getFileName(prefijo)))) {
+                errorCampo("presupuesto_count", "Hay una fila de cotizacion fuera de la cantidad informada. "
+                        + "Revise las Empresas y sus archivos.");
+            }
+        }
+        String empresaCuit = getParametroTrim(actionRequest, "empresa_adjudicada_cuit");
+        String empresaSucursal = getParametroTrim(actionRequest, "empresa_adjudicada_sucursal");
+        boolean adjudicacionInformada = "1".equals(
+                getParametroTrim(actionRequest, "empresa_adjudicacion_informada"));
+        boolean datosEmpresa = cantidadCotizaciones > 0 || adjudicacionInformada
+                || !WebKeysCompras.isEmpty(empresaCuit) || !WebKeysCompras.isEmpty(empresaSucursal);
+        if (datosEmpresa) {
+            validarPermisoCotizar(PortalUtil.getUser(actionRequestOriginal));
+            RequerimientoCompra contextoEmpresa = esNuevo ? requerimiento
+                    : BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(
+                            requerimiento.getIdRequerimientoCompra());
+            if (contextoEmpresa == null || !contextoEmpresa.esSectorSinCotizacionPrestador()
+                    || (!esNuevo && (!contextoEmpresa.isActivo() || !contextoEmpresa.isPendiente()))) {
+                errorCampo("presupuesto_count",
+                        "Las cotizaciones y la adjudicacion de Empresa solo corresponden a RRHH o Sistemas PENDIENTE.");
+            }
+            if (!esNuevo) {
+                if (cantidadCotizaciones > 0) {
+                    errorCampo("presupuesto_count", "Utilice Subir presupuestos para agregar cotizaciones en edicion.");
+                }
+                requerimientoHelper.validarEmpresaAdjudicada(
+                        requerimiento.getIdRequerimientoCompra(), empresaCuit, empresaSucursal);
+            }
+        }
 
         /*
          * ==========================================================
@@ -589,6 +674,31 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                             ordenesMedicas
                     );
 
+            if (requerimiento.esSectorSinCotizacionPrestador()) {
+                List<RequerimientoCompraDetalle> detalles =
+                        detalleHelper.getDetallesNuevosDesdeRequest(actionRequest);
+                List<PresupuestoEntrada> cotizaciones = new ArrayList<PresupuestoEntrada>();
+                ServiceContext serviceContext = null;
+                if (cantidadCotizaciones > 0) {
+                    if (uploadRequest == null) {
+                        errorCampo("presupuesto_count", "Debe volver a seleccionar los archivos de las cotizaciones.");
+                    }
+                    cotizaciones = UploadPresupuestosComprasAction.leerEntradasPresupuesto(
+                            uploadRequest, cantidadCotizaciones, true);
+                    serviceContext = ServiceContextFactory.getInstance(
+                            DLFileEntry.class.getName(), actionRequestOriginal);
+                }
+                requerimientoHelper.validarNuevoRequerimientoConCotizacionesEmpresa(
+                        requerimiento, detalles, cotizaciones, serviceContext,
+                        empresaCuit, empresaSucursal);
+                contextoGuardado.persistenciaInvocada = true;
+                int id = requerimientoHelper.guardarNuevoRequerimientoCompraConCotizacionesEmpresa(
+                        requerimiento, ordenesMedicas, gestorDocumento, usuario,
+                        detalles, cotizaciones, serviceContext, empresaCuit, empresaSucursal);
+                contextoGuardado.detallesGuardados = true;
+                return id;
+            }
+
             contextoGuardado.persistenciaInvocada = true;
 
             return requerimientoHelper
@@ -660,6 +770,50 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
 
         return idGuardado;
+    }
+
+    private void guardarAdjudicacionInformada(
+            ActionRequest request, int idRequerimiento, String usuario) throws Exception {
+        if ("1".equals(getParametroTrim(request, "empresa_adjudicacion_informada"))) {
+            requerimientoHelper.guardarEmpresaAdjudicada(
+                    idRequerimiento, getParametroTrim(request, "empresa_adjudicada_cuit"),
+                    getParametroTrim(request, "empresa_adjudicada_sucursal"), usuario);
+        }
+    }
+
+    private void copiarParametrosEmpresas(ActionRequest request, ActionResponse response) {
+        int count = ParamUtil.getInteger(request, "presupuesto_count", 0);
+        count = Math.max(0, Math.min(count, WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA));
+        response.setRenderParameter("presupuesto_count", String.valueOf(count));
+        String[] seleccion = {"empresa_adjudicada_cuit", "empresa_adjudicada_sucursal",
+                "empresa_adjudicacion_informada"};
+        for (int i = 0; i < seleccion.length; i++) {
+            response.setRenderParameter(seleccion[i], getParametroTrim(request, seleccion[i]));
+        }
+        String[] campos = {"empresa_cuit", "empresa_sucursal", "descripcion_empresa"};
+        for (int i = 0; i < count; i++) {
+            for (int j = 0; j < campos.length; j++) {
+                String nombre = "presupuesto_" + i + "_" + campos[j];
+                response.setRenderParameter(nombre, getParametroTrim(request, nombre));
+            }
+        }
+    }
+
+    private void copiarParametrosAlta(ActionRequest request, ActionResponse response) {
+        String[] cabecera = {"id_sector", "sector_id", "afiliado_cuil_titular", "afiliado_int",
+                "cargo_ospim", "cargo_tercerizadora", "id_tercerizadora", "surge", "legales", "observaciones"};
+        for (int i = 0; i < cabecera.length; i++) {
+            response.setRenderParameter(cabecera[i], getParametroTrim(request, cabecera[i]));
+        }
+        int count = Math.max(0, Math.min(ParamUtil.getInteger(request, "detalle_count", 0), 1000));
+        response.setRenderParameter("detalle_count", String.valueOf(count));
+        String[] campos = {"id", "tipo_item", "id_tipo_prestacion", "cantidad", "observaciones"};
+        for (int i = 0; i < count; i++) {
+            for (int j = 0; j < campos.length; j++) {
+                String nombre = "detalle_" + i + "_" + campos[j];
+                response.setRenderParameter(nombre, getParametroRaw(request, nombre, ""));
+            }
+        }
     }
 
     private List<Integer> obtenerIdsPrestacionesDesdeRequest(
@@ -1106,8 +1260,34 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 int idSectorParam =
                         ParamUtil.getInteger(renderRequest, "sector_id", 0);
 
+                if (idSectorParam <= 0) {
+                    idSectorParam = ParamUtil.getInteger(renderRequest, "id_sector", 0);
+                }
                 if (idSectorParam > 0) {
                     requerimiento.setIdSector(Integer.valueOf(idSectorParam));
+                    requerimientoHelper.prepararRequerimientoParaGuardar(requerimiento);
+                }
+                if (ParamUtil.getBoolean(renderRequest, "compras_error", false)
+                        && requerimiento.esSectorSinCotizacionPrestador()) {
+                    requerimiento.setObservaciones(ParamUtil.getString(renderRequest, "observaciones", ""));
+                    requerimiento.setSurge("1".equals(ParamUtil.getString(renderRequest, "surge", ""))
+                            || ParamUtil.getBoolean(renderRequest, "surge", false));
+                    requerimiento.setLegales("1".equals(ParamUtil.getString(renderRequest, "legales", ""))
+                            || ParamUtil.getBoolean(renderRequest, "legales", false));
+                    List<RequerimientoCompraDetalle> detallesAlta =
+                            new ArrayList<RequerimientoCompraDetalle>();
+                    int count = Math.max(0, Math.min(ParamUtil.getInteger(renderRequest, "detalle_count", 0), 1000));
+                    for (int i = 0; i < count; i++) {
+                        String prefix = "detalle_" + i + "_";
+                        RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
+                        detalle.setTipoItem(ParamUtil.getString(renderRequest, prefix + "tipo_item", "OBSERVACION"));
+                        int tipo = ParamUtil.getInteger(renderRequest, prefix + "id_tipo_prestacion", 0);
+                        detalle.setIdTipoPrestacion(tipo > 0 ? Integer.valueOf(tipo) : null);
+                        detalle.setCantidad(Integer.valueOf(ParamUtil.getInteger(renderRequest, prefix + "cantidad", 1)));
+                        detalle.setObservaciones(ParamUtil.getString(renderRequest, prefix + "observaciones", ""));
+                        detallesAlta.add(detalle);
+                    }
+                    requerimiento.setDetalles(detallesAlta);
                 }
             }
 

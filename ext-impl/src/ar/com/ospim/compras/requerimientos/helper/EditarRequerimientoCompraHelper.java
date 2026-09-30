@@ -12,6 +12,9 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
+import ar.com.ospim.compras.requerimientos.helper.PresupuestoCompraHelper.PresupuestoEntrada;
+import ar.com.ospim.compras.requerimientos.helper.PresupuestoCompraHelper.DocumentoPresupuestoCreado;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.GestorOrdenMedicaDocumento;
 import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
@@ -340,12 +343,36 @@ public class EditarRequerimientoCompraHelper {
             GestorOrdenMedicaDocumento gestorDocumento,
             String usuario) throws Exception {
 
-        EditarRequerimientoCompraServiceUtil.Transaccion transaccion = null;
+        return guardarNuevoRequerimientoCompraConCotizacionesEmpresa(
+                requerimiento, ordenesMedicas, gestorDocumento, usuario,
+                null, null, null, null, null);
+    }
 
+    public int guardarNuevoRequerimientoCompraConCotizacionesEmpresa(
+            RequerimientoCompra requerimiento,
+            List<OrdenMedicaValidada> ordenesMedicas,
+            GestorOrdenMedicaDocumento gestorDocumento,
+            String usuario,
+            List<RequerimientoCompraDetalle> detalles,
+            List<PresupuestoEntrada> cotizaciones,
+            ServiceContext serviceContext,
+            String empresaCuit,
+            String empresaSucursal) throws Exception {
+
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion = null;
+        boolean commitInvocado = false;
         List<DocumentoComprasCreado> documentosCreados =
                 new ArrayList<DocumentoComprasCreado>();
+        List<DocumentoPresupuestoCreado> cotizacionesCreadas =
+                new ArrayList<DocumentoPresupuestoCreado>();
+        PresupuestoCompraHelper presupuestoHelper = new PresupuestoCompraHelper();
 
         try {
+            if (detalles != null) {
+                validarNuevoRequerimientoConCotizacionesEmpresa(
+                        requerimiento, detalles, cotizaciones, serviceContext,
+                        empresaCuit, empresaSucursal);
+            }
             prepararRequerimientoParaGuardar(requerimiento);
             validarRequerimientoParaGuardar(requerimiento);
 
@@ -413,6 +440,23 @@ public class EditarRequerimientoCompraHelper {
                 }
             }
 
+            if (detalles != null) {
+                for (int i = 0; i < detalles.size(); i++) {
+                    RequerimientoCompraDetalle detalle = detalles.get(i);
+                    detalle.setIdRequerimientoCompra(idRequerimiento);
+                    if (transaccion.guardarDetalle(detalle, normalizarUsuario(usuario)) <= 0) {
+                        throw new IllegalStateException("No se obtuvo el identificador del detalle.");
+                    }
+                }
+                presupuestoHelper.guardarCotizacionesEmpresa(
+                        transaccion, idRequerimiento, cotizaciones, serviceContext,
+                        normalizarUsuario(usuario), cotizacionesCreadas);
+                transaccion.guardarEmpresaAdjudicada(
+                        idRequerimiento, empresaCuit, empresaSucursal,
+                        normalizarUsuario(usuario));
+            }
+
+            commitInvocado = true;
             transaccion.commit();
             return idRequerimiento;
 
@@ -422,7 +466,7 @@ public class EditarRequerimientoCompraHelper {
             if (transaccion != null) {
                 try {
                     transaccion.rollback();
-                    rollbackConfirmado = true;
+                    rollbackConfirmado = !commitInvocado || detalles == null;
                 } catch (Exception rollbackError) {
                     _log.error(
                             "No se pudo confirmar el rollback del alta "
@@ -433,14 +477,26 @@ public class EditarRequerimientoCompraHelper {
                 }
             }
 
+            if (detalles != null && (commitInvocado || !rollbackConfirmado)) {
+                _log.error("Resultado transaccional ambiguo del alta de Empresas; se conservan los documentos.", e);
+                throw errorUsuario("No se pudo confirmar el resultado del guardado. "
+                        + "Consulte el requerimiento antes de reintentar; sus documentos se conservaron.", e);
+            }
+            boolean compensacionCompleta = true;
             if (rollbackConfirmado
                     && gestorDocumento != null
                     && !documentosCreados.isEmpty()) {
-
-                compensarOrdenesMedicasCreadas(
-                        documentosCreados,
-                        gestorDocumento
-                );
+                compensacionCompleta = compensarOrdenesMedicasCreadas(
+                        documentosCreados, gestorDocumento);
+            }
+            if (rollbackConfirmado && !cotizacionesCreadas.isEmpty()) {
+                compensacionCompleta = presupuestoHelper.compensarDocumentosAlta(cotizacionesCreadas)
+                        && compensacionCompleta;
+            }
+            if (detalles != null && !compensacionCompleta) {
+                _log.error("El alta fue revertida pero no se pudieron compensar todos sus documentos.", e);
+                throw errorUsuario("El alta fue revertida. No se pudieron retirar todos los documentos; "
+                        + "informe a Sistemas antes de reintentar.", e);
             }
 
             throw manejarErrorOperacion(
@@ -461,6 +517,98 @@ public class EditarRequerimientoCompraHelper {
             if (transaccion != null) {
                 transaccion.cerrar();
             }
+        }
+    }
+
+    public void validarNuevoRequerimientoConCotizacionesEmpresa(
+            RequerimientoCompra requerimiento,
+            List<RequerimientoCompraDetalle> detalles,
+            List<PresupuestoEntrada> cotizaciones,
+            ServiceContext serviceContext,
+            String empresaCuit,
+            String empresaSucursal) throws Exception {
+
+        prepararRequerimientoParaGuardar(requerimiento);
+        validarRequerimientoParaGuardar(requerimiento);
+        if (requerimiento.getIdRequerimientoCompra() > 0
+                || !requerimiento.esSectorSinCotizacionPrestador()) {
+            throw errorUsuario("Las cotizaciones del alta corresponden solamente a RRHH o Sistemas.");
+        }
+        if (detalles == null || detalles.isEmpty()) {
+            throw errorUsuario("Debe informar al menos un detalle.");
+        }
+        for (int i = 0; i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+            if (detalle == null || detalle.getIdInt() > 0) {
+                throw errorUsuario("El alta contiene un detalle persistido o invalido.");
+            }
+            prepararDetalleParaGuardar(requerimiento, null, detalle);
+            validarTipoPrestacionParaGuardar(requerimiento, null, detalle);
+            normalizarDetalleNuevo(detalle);
+            validarDetalleParaGuardar(requerimiento, detalle, false);
+        }
+        PresupuestoCompraHelper presupuestoHelper = new PresupuestoCompraHelper();
+        presupuestoHelper.validarCotizacionesEmpresaAlta(cotizaciones);
+        if (cotizaciones != null && !cotizaciones.isEmpty()) {
+            DocumentoLibraryComprasHelper.validarContextoDocumentLibrary(serviceContext);
+        }
+        String cuit = WebKeysCompras.trimToNull(empresaCuit);
+        String sucursal = WebKeysCompras.trimToNull(empresaSucursal);
+        if (cuit == null && sucursal == null) {
+            return;
+        }
+        presupuestoHelper.obtenerEmpresaActiva(cuit, sucursal, 1);
+        boolean encontrada = false;
+        for (int i = 0; cotizaciones != null && i < cotizaciones.size(); i++) {
+            PresupuestoEntrada entrada = cotizaciones.get(i);
+            if (cuit.equals(WebKeysCompras.trimToNull(entrada.getEmpresaCuit()))
+                    && sucursal.equals(WebKeysCompras.trimToNull(entrada.getEmpresaSucursal()))) {
+                encontrada = true;
+            }
+        }
+        if (!encontrada) {
+            throw errorUsuario("La Empresa adjudicada debe tener una cotizacion en este requerimiento.");
+        }
+    }
+
+    public void guardarEmpresaAdjudicada(
+            int idRequerimiento, String cuit, String sucursal, String usuario) throws Exception {
+
+        validarEmpresaAdjudicada(idRequerimiento, cuit, sucursal);
+        EditarRequerimientoCompraServiceUtil.guardarEmpresaAdjudicada(
+                idRequerimiento, WebKeysCompras.trimToNull(cuit),
+                WebKeysCompras.trimToNull(sucursal), normalizarUsuario(usuario));
+    }
+
+    public void validarEmpresaAdjudicada(
+            int idRequerimiento, String cuit, String sucursal) throws Exception {
+
+        RequerimientoCompra actual =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimiento);
+        if (actual == null || !actual.isActivo() || !actual.isPendiente()
+                || !actual.esSectorSinCotizacionPrestador()) {
+            throw errorUsuario("La adjudicacion solo puede cambiarse en RRHH o Sistemas PENDIENTE.");
+        }
+        cuit = WebKeysCompras.trimToNull(cuit);
+        sucursal = WebKeysCompras.trimToNull(sucursal);
+        if (cuit == null && sucursal == null) {
+            return;
+        }
+        new PresupuestoCompraHelper().obtenerEmpresaActiva(cuit, sucursal, 1);
+        List<RequerimientoCompraPresupuesto> cotizaciones =
+                BusquedaRequerimientoCompraServiceUtil.listarCotizacionesEmpresa(idRequerimiento);
+        int coincidencias = 0;
+        for (int i = 0; cotizaciones != null && i < cotizaciones.size(); i++) {
+            RequerimientoCompraPresupuesto cotizacion = cotizaciones.get(i);
+            if (cotizacion != null && cotizacion.isActivo() && cotizacion.isCotizacionEmpresa()
+                    && cuit.equals(cotizacion.getEmpresaCuit())
+                    && sucursal.equals(cotizacion.getEmpresaSucursal())) {
+                coincidencias++;
+            }
+        }
+        if (coincidencias != 1) {
+            throw errorUsuario("La Empresa adjudicada debe tener una unica cotizacion activa "
+                    + "en este requerimiento.");
         }
     }
 
@@ -647,10 +795,11 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
-    private void compensarOrdenesMedicasCreadas(
+    private boolean compensarOrdenesMedicasCreadas(
             List<DocumentoComprasCreado> documentosCreados,
             GestorOrdenMedicaDocumento gestorDocumento) {
 
+        boolean completa = true;
         for (int i = documentosCreados.size() - 1; i >= 0; i--) {
             DocumentoComprasCreado documento = documentosCreados.get(i);
 
@@ -661,6 +810,7 @@ public class EditarRequerimientoCompraHelper {
             try {
                 gestorDocumento.eliminarDocumento(documento);
             } catch (Exception cleanupError) {
+                completa = false;
                 _log.error(
                         "No se pudo compensar un adjunto creado "
                                 + "después del rollback. fileEntryId="
@@ -669,6 +819,7 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
         }
+        return completa;
     }
 
     public int guardarDetalle(
@@ -1129,6 +1280,24 @@ public class EditarRequerimientoCompraHelper {
                                 + "a Orden de Compra."
                 );
             }
+
+            RequerimientoCompraPresupuesto adjudicada = null;
+            for (int i = 0; cotizacionesEmpresa != null && i < cotizacionesEmpresa.size(); i++) {
+                RequerimientoCompraPresupuesto cotizacion = cotizacionesEmpresa.get(i);
+                if (cotizacion != null && cotizacion.isActivo()
+                        && cotizacion.isCotizacionEmpresa() && cotizacion.isEmpresaAdjudicada()) {
+                    if (adjudicada != null) {
+                        throw errorUsuario("Debe existir exactamente una Empresa adjudicada.");
+                    }
+                    adjudicada = cotizacion;
+                }
+            }
+            if (adjudicada == null) {
+                throw errorUsuario("Debe seleccionar una Empresa adjudicada con cotizacion activa "
+                        + "antes de Crear Orden de Compra.");
+            }
+            validarEmpresaAdjudicada(idRequerimientoCompra,
+                    adjudicada.getEmpresaCuit(), adjudicada.getEmpresaSucursal());
 
             int estadoFinal =
                     EditarRequerimientoCompraServiceUtil.confirmarOrdenCompra(
@@ -1823,6 +1992,13 @@ private boolean mismoInteger(Integer a, Integer b) {
 private void validarDetalleParaGuardar(
         RequerimientoCompra requerimiento,
         RequerimientoCompraDetalle detalle) throws Exception {
+    validarDetalleParaGuardar(requerimiento, detalle, true);
+}
+
+private void validarDetalleParaGuardar(
+        RequerimientoCompra requerimiento,
+        RequerimientoCompraDetalle detalle,
+        boolean requiereIdPersistido) throws Exception {
 
     if (detalle == null) {
         throw errorUsuario(
@@ -1832,8 +2008,8 @@ private void validarDetalleParaGuardar(
 
     Integer idRequerimiento = getIdRequerimientoDetalle(detalle);
 
-    if (idRequerimiento == null
-            || idRequerimiento.intValue() <= 0) {
+    if (requiereIdPersistido && (idRequerimiento == null
+            || idRequerimiento.intValue() <= 0)) {
 
         throw errorUsuario(
                 "Primero debe guardar los datos generales del requerimiento."

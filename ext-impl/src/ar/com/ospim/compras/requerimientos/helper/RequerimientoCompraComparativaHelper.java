@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class RequerimientoCompraComparativaHelper {
 
@@ -400,5 +401,115 @@ public class RequerimientoCompraComparativaHelper {
                 + "   IIBB (importe): " + texto(c.getIibb())
                 + (c.getIncompleto() ? "   Total parcial: " : "   Total: ") + texto(c.getTotal()));
         return fila;
+    }
+
+    public List<Map<String, ?>> filasReportePdf(
+            RequerimientoCompra r,
+            List<RequerimientoCompraComparativa> lista,
+            Map<String, Map<String, ?>> proveedores) {
+
+        List<Map<String, ?>> datos = filasPdf(r, lista);
+        TreeMap<Integer, Map<String, ?>> items =
+                new TreeMap<Integer, Map<String, ?>>();
+
+        for (Map<String, ?> dato : datos) {
+            String prestador = (String) dato.get("idPrestador");
+            proveedores.put(prestador, dato);
+
+            if (!"".equals(dato.get("idPrestacion"))) {
+                Integer orden =
+                        Integer.valueOf((String) dato.get("ordenItem"));
+
+                if (!items.containsKey(orden)) {
+                    Map<String, Object> item =
+                            new HashMap<String, Object>();
+
+                    item.put("tipo", "detalle");
+                    item.put(
+                            "etiqueta",
+                            dato.get("codigo") + " - " + dato.get("prestacion"));
+                    item.put("unidad", dato.get("unidad"));
+                    item.put(
+                            "proveedores",
+                            new HashMap<String, Map<String, ?>>());
+
+                    items.put(orden, item);
+                }
+
+                ((Map<String, Map<String, ?>>)
+                        items.get(orden).get("proveedores"))
+                        .put(prestador, dato);
+            }
+        }
+
+        List<Map<String, ?>> filas =
+                new ArrayList<Map<String, ?>>(items.values());
+
+        String[] campos = {
+                "neto",
+                "iva",
+                "iibb",
+                "total",
+                "pago",
+                "envio",
+                "plazo",
+                "fecha",
+                "validez",
+                "dictamen"
+        };
+
+        String[] etiquetas = {
+                "Subtotal (sin IVA)",
+                "IVA",
+                "IIBB",
+                "Total",
+                "Forma de pago",
+                "Envío a obra social - Beneficiario - Delegación",
+                "Plazo de entrega",
+                "Fecha del presupuesto",
+                "Validez del presupuesto (hs)",
+                "Dictamen de Auditoría Médica/Compras"
+        };
+
+        for (int i = 0; i < campos.length; i++) {
+            Map<String, Object> fila =
+                    new HashMap<String, Object>();
+
+            fila.put(
+                    "tipo",
+                    i == 9 ? "dictamen"
+                            : i == 3 ? "total"
+                            : i < 4 ? "resumen"
+                            : "condicion");
+
+            fila.put("etiqueta", etiquetas[i]);
+            fila.put("unidad", "");
+
+            Map<String, Object> valores =
+                    new HashMap<String, Object>();
+
+            for (String prestador : proveedores.keySet()) {
+                Map<String, ?> proveedor =
+                        proveedores.get(prestador);
+
+                Map<String, Object> valor =
+                        new HashMap<String, Object>();
+
+                valor.put(
+                        "valor",
+                        i == 9 ? "" : proveedor.get(campos[i]));
+
+                valor.put(
+                        "incompleto",
+                        proveedor.get("incompleto"));
+
+                valores.put(prestador, valor);
+            }
+
+            fila.put("proveedores", valores);
+            filas.add(fila);
+        }
+
+        return filas;
     }
 }

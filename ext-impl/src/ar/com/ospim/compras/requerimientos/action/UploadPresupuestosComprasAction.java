@@ -461,7 +461,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         );
     }
 
-    private List<PresupuestoCompraHelper.PresupuestoEntrada>
+    public static List<PresupuestoCompraHelper.PresupuestoEntrada>
             leerEntradasPresupuesto(
                     UploadPortletRequest uploadReq,
                     int cantidad,

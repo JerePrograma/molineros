@@ -28,6 +28,7 @@ public class RequerimientoCompraPresupuesto {
     private String empresaCuit;
     private String empresaSucursal;
     private String descripcionEmpresa;
+    private boolean empresaAdjudicada;
 
     private Date altaFecha;
     private String altaUsr;
@@ -195,6 +196,14 @@ public class RequerimientoCompraPresupuesto {
 
     public void setDescripcionEmpresa(String descripcionEmpresa) {
         this.descripcionEmpresa = descripcionEmpresa;
+    }
+
+    public boolean isEmpresaAdjudicada() {
+        return empresaAdjudicada && isCotizacionEmpresa() && isActivo();
+    }
+
+    public void setEmpresaAdjudicada(boolean empresaAdjudicada) {
+        this.empresaAdjudicada = empresaAdjudicada;
     }
 
     public Date getAltaFecha() {

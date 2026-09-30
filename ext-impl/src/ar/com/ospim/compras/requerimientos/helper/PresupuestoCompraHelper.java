@@ -7,6 +7,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
 import ar.com.ospim.global.beans.Empresa;
 import ar.com.ospim.util.CuilUtils;
 
@@ -99,6 +100,10 @@ public final class PresupuestoCompraHelper {
                                 .obtenerMaximoTamanoDocumento()
                 );
 
+        if (cotizacionEmpresa) {
+            validarEmpresasNoRepetidas(idRequerimientoCompra, presupuestos);
+        }
+
         RequerimientoCompra actual =
                 BusquedaRequerimientoCompraServiceUtil
                         .getRequerimientoCompra(
@@ -133,6 +138,93 @@ public final class PresupuestoCompraHelper {
         );
 
         return presupuestos.size();
+    }
+
+    public void validarCotizacionesEmpresaAlta(
+            List<PresupuestoEntrada> entradas) throws Exception {
+
+        if (entradas == null || entradas.isEmpty()) {
+            return;
+        }
+        validarCantidadPresupuestos(entradas.size());
+        validarPresupuestos(0, entradas, null, true,
+                DocumentoLibraryComprasHelper.obtenerMaximoTamanoDocumento());
+    }
+
+    /**
+     * El caller controla commit, rollback y compensacion de todos los archivos
+     * del alta. La asociacion usa la misma transaccion de cabecera y detalles.
+     */
+    public void guardarCotizacionesEmpresa(
+            EditarRequerimientoCompraServiceUtil.Transaccion transaccion,
+            int idRequerimientoCompra,
+            List<PresupuestoEntrada> entradas,
+            ServiceContext serviceContext,
+            String usuario,
+            List<DocumentoPresupuestoCreado> documentosCreados) throws Exception {
+
+        if (entradas == null || entradas.isEmpty()) {
+            return;
+        }
+        if (transaccion == null || idRequerimientoCompra <= 0
+                || documentosCreados == null) {
+            throw new IllegalArgumentException(
+                    "No se obtuvo la transaccion del alta de cotizaciones.");
+        }
+        validarCantidadPresupuestos(entradas.size());
+        List<PresupuestoValidado> presupuestos = validarPresupuestos(
+                idRequerimientoCompra, entradas, null, true,
+                DocumentoLibraryComprasHelper.obtenerMaximoTamanoDocumento());
+        DocumentoLibraryComprasHelper.validarContextoDocumentLibrary(serviceContext);
+        DLFolder folder = DocumentoLibraryComprasHelper.obtenerOCrearFolderCompras(serviceContext);
+        try {
+            for (PresupuestoValidado presupuesto : presupuestos) {
+                DocumentoPresupuestoCreado documento = crearArchivoPresupuesto(
+                        serviceContext.getUserId(), folder.getFolderId(), presupuesto, serviceContext);
+                documentosCreados.add(documento);
+                registrarAsociacionPresupuesto(transaccion, idRequerimientoCompra,
+                        presupuesto, documento, normalizarUsuario(usuario));
+            }
+        } catch (Exception e) {
+            throw traducirErrorDocumento(e);
+        }
+    }
+
+    public boolean compensarDocumentosAlta(
+            List<DocumentoPresupuestoCreado> documentosCreados) {
+
+        boolean completa = true;
+        for (int i = documentosCreados.size() - 1; i >= 0; i--) {
+            DocumentoPresupuestoCreado documento = documentosCreados.get(i);
+            try {
+                eliminarArchivoPresupuesto(documento.getFolderId(), documento.getNombre());
+            } catch (Exception error) {
+                completa = false;
+                _log.error("No se pudo compensar la cotizacion del alta. fileEntryId="
+                        + documento.getFileEntryId(), error);
+            }
+        }
+        return completa;
+    }
+
+    private void validarEmpresasNoRepetidas(int idRequerimientoCompra,
+            List<PresupuestoValidado> presupuestos) throws Exception {
+
+        List<RequerimientoCompraPresupuesto> actuales =
+                BusquedaRequerimientoCompraServiceUtil.listarCotizacionesEmpresa(idRequerimientoCompra);
+        if (actuales == null) {
+            throw new IllegalStateException("No se pudieron validar las cotizaciones de Empresas actuales.");
+        }
+        for (PresupuestoValidado presupuesto : presupuestos) {
+            for (RequerimientoCompraPresupuesto actual : actuales) {
+                if (actual != null && actual.isActivo()
+                        && presupuesto.getEmpresaCuit().equals(WebKeysCompras.trimToNull(actual.getEmpresaCuit()))
+                        && presupuesto.getEmpresaSucursal().equals(WebKeysCompras.trimToNull(actual.getEmpresaSucursal()))) {
+                    throw new IllegalArgumentException(
+                            "La Empresa ya tiene una cotizacion activa en este requerimiento.");
+                }
+            }
+        }
     }
 
     public RequerimientoCompraPresupuesto obtenerPresupuesto(int idRequerimiento,
@@ -814,11 +906,10 @@ public final class PresupuestoCompraHelper {
 
         DLFileEntry entry =
                 DLFileEntryLocalServiceUtil
-                        .addOrOverwriteFileEntry(
+                        .addFileEntry(
                                 userId,
                                 folderId,
                                 presupuesto.getNombrePersistido(),
-                                presupuesto.getNombreOriginal(),
                                 presupuesto.getTitulo(),
                                 presupuesto.getDescripcionDocumento(),
                                 "",
@@ -846,6 +937,18 @@ public final class PresupuestoCompraHelper {
     }
 
     private RequerimientoCompraPresupuesto registrarAsociacionPresupuesto(
+            int idRequerimientoCompra,
+            PresupuestoValidado presupuesto,
+            DocumentoPresupuestoCreado documento,
+            String usuario)
+            throws Exception {
+
+        return registrarAsociacionPresupuesto(null, idRequerimientoCompra,
+                presupuesto, documento, usuario);
+    }
+
+    private RequerimientoCompraPresupuesto registrarAsociacionPresupuesto(
+            EditarRequerimientoCompraServiceUtil.Transaccion transaccion,
             int idRequerimientoCompra,
             PresupuestoValidado presupuesto,
             DocumentoPresupuestoCreado documento,
@@ -933,11 +1036,9 @@ public final class PresupuestoCompraHelper {
             );
         }
 
-        int id =
-                requerimientoHelper.registrarPresupuesto(
-                        asociacion,
-                        usuario
-                );
+        int id = transaccion != null
+                ? transaccion.registrarPresupuesto(asociacion, usuario)
+                : requerimientoHelper.registrarPresupuesto(asociacion, usuario);
 
         if (id <= 0) {
             throw new Exception(
@@ -1008,7 +1109,7 @@ public final class PresupuestoCompraHelper {
         }
     }
 
-    private Empresa obtenerEmpresaActiva(
+    public Empresa obtenerEmpresaActiva(
             String empresaCuit,
             String empresaSucursal,
             int numeroPresupuesto) throws Exception {
@@ -1259,20 +1360,16 @@ public final class PresupuestoCompraHelper {
                 WebKeysCompras
                         .getPrefijoDocumentoRequerimientoCompra(
                                 idRequerimientoCompra
-                        );
+                        )
+                        + identificador
+                        + "_";
 
-        String sufijo =
-                "_"
-                        + identificador.substring(
-                        0,
-                        8
-                );
-
+        // Liferay 5.2 recorta desde la extension aun cuando no sea el sufijo.
+        // La identidad completa debe quedar antes del nombre descriptivo.
         int longitudDisponible =
                 WebKeysCompras
                         .DOCUMENT_LIBRARY_MAX_TITLE_LENGTH
-                        - prefijo.length()
-                        - sufijo.length();
+                        - prefijo.length();
 
         String nombre =
                 normalizarComponenteTitulo(
@@ -1294,8 +1391,7 @@ public final class PresupuestoCompraHelper {
         }
 
         return prefijo
-                + nombre
-                + sufijo;
+                + nombre;
     }
 
     private String normalizarComponenteTitulo(
@@ -1633,7 +1729,7 @@ public final class PresupuestoCompraHelper {
         }
     }
 
-    private static final class DocumentoPresupuestoCreado {
+    public static final class DocumentoPresupuestoCreado {
 
         private final long groupId;
         private final long folderId;

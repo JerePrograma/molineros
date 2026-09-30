@@ -1014,6 +1014,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         RequerimientoCompraPresupuesto presupuesto =
                 mapPresupuesto(rs);
 
+        presupuesto.setEmpresaAdjudicada(rs.getBoolean("empresa_adjudicada"));
         presupuesto.setEmpresaCuit(getString(rs, "empresa_cuit"));
         presupuesto.setEmpresaSucursal(
                 getString(rs, "empresa_sucursal")

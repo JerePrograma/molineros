@@ -16,8 +16,10 @@ IDs o funciones JavaScript expuestos:
 Efectos secundarios:
     Sólo renderiza o incluye presentación; no ejecuta persistencia.
 --%>
-<c:if test="<%= !esNuevo && req.puedeVerPresupuestos() %>">
-    <div class="compras-seccion compras-seccion-adjuntos">
+<c:if test="<%= puedePrepararCotizacionEmpresaAlta || (!esNuevo && req.puedeVerPresupuestos()) %>">
+    <div id="<portlet:namespace />cotizaciones_empresa_panel"
+         class="compras-seccion compras-seccion-adjuntos"
+         <%= esNuevo && !req.esSectorSinCotizacionPrestador() ? "style=\"display:none;\"" : "" %>>
         <liferay-util:include
             page="/html/portlet/compras/requerimientos/requerimiento_compra_documentos.jsp">
 
@@ -25,7 +27,8 @@ Efectos secundarios:
                 name="solo_lectura"
                 value="<%= Boolean.toString(
                         !(
-                                puedeEditarCotizacionPantalla
+                                puedePrepararCotizacionEmpresaAlta
+                                || puedeEditarCotizacionPantalla
                                 || puedeAdministrarCotizacionEmpresaPantalla
                         )
                 ) %>" />
