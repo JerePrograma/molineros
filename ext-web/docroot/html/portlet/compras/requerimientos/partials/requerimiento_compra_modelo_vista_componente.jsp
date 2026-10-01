@@ -296,9 +296,20 @@ boolean sectorSeleccionadoValido =
         !WebKeysCompras.isEmpty(reqSectorId)
         && !"0".equals(reqSectorId);
 
+boolean sectorCargosPreseleccionados =
+        sectorSeleccionadoValido
+        && WebKeysCompras.esSectorSinCotizacionPrestador(
+                sectorDescripcionActualString
+        );
+
+if (esNuevo && sectorCargosPreseleccionados) {
+    surgeSeleccionadoCompra = "0";
+}
+
 boolean sectorSinAfiliadoForzaCargoOspim =
         sectorSeleccionadoValido
-        && !sectorRequiereAfiliadoActual;
+        && !sectorRequiereAfiliadoActual
+        && !sectorCargosPreseleccionados;
 
 int cargoOspimActual =
         req.getCargoOspim() != null
@@ -312,11 +323,13 @@ int cargoTercerizadoraActual =
 
 String cargoOspimVisible =
         sectorSinAfiliadoForzaCargoOspim
+                || (esNuevo && sectorCargosPreseleccionados)
                 ? "100"
                 : req.getCargoOspimString();
 
 String cargoTercerizadoraVisible =
         sectorSinAfiliadoForzaCargoOspim
+                || (esNuevo && sectorCargosPreseleccionados)
                 ? "0"
                 : req.getCargoTercerizadoraString();
 

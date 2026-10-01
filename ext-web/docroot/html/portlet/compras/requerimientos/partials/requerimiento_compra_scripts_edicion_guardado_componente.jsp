@@ -1,20 +1,20 @@
 <%--
 Responsabilidad:
-    Declara en ES5 las reglas de sector, sincronizaciÃ³n, validaciÃ³n, guardado y cotizaciÃ³n.
+    Declara en ES5 las reglas de sector, sincronización, validación, guardado y cotización.
 Incluido desde:
     requerimiento_compra_scripts_edicion_runtime_componente.jsp
 Pantallas o estados de uso:
-    Alta, PENDIENTE y ENVIADO A COTIZAR segÃºn las capacidades publicadas.
+    Alta, PENDIENTE y ENVIADO A COTIZAR según las capacidades publicadas.
 Entradas requeridas:
     Atributos compras.requerimiento.* publicados por el Action/Helper.
 Atributos de request consumidos:
-    Contexto de ediciÃ³n, afiliado hidratado, tercerizadora y capacidades de estado.
-ParÃ¡metros consumidos:
-    Ninguno directamente; serializa los parÃ¡metros legacy al formulario.
+    Contexto de edición, afiliado hidratado, tercerizadora y capacidades de estado.
+Parámetros consumidos:
+    Ninguno directamente; serializa los parámetros legacy al formulario.
 IDs o funciones JavaScript expuestos:
     sectorRequiereAfiliado, sincronizarFormularioCompra, guardarCotizacion, guardar.
 Efectos secundarios:
-    Modifica el DOM y envÃ­a el formulario legacy; no ejecuta persistencia directa.
+    Modifica el DOM y envía el formulario legacy; no ejecuta persistencia directa.
 --%>
 <%@ page pageEncoding="ISO-8859-1" %>
 <%@ include file="/html/portlet/init.jsp" %>
@@ -105,7 +105,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         var selected = jQuery('#<portlet:namespace />sector_id option:selected');
         var attr = selected.attr('data-requiere-afiliado');
 
-        return attr == 'true' || attr == '1' || attr == 'SÃ­' || attr == 'S';
+        return attr == 'true' || attr == '1' || attr == 'Sí' || attr == 'S';
     }
 
     function <portlet:namespace />sectorUsaCodigoPrestacion() {
@@ -132,7 +132,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         return attr == 'true'
                 || attr == '1'
-                || attr == 'SÃ­'
+                || attr == 'Sí'
                 || attr == 'S';
     }
 
@@ -181,10 +181,10 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         }
 
         /*
-         * SÃ³lo se limpia cuando el usuario cambia de sector.
+         * Sólo se limpia cuando el usuario cambia de sector.
          *
          * En la carga inicial se oculta, pero se conserva cualquier
-         * valor histÃ³rico que ya estuviera persistido.
+         * valor histórico que ya estuviera persistido.
          */
         if (limpiarSiSeOculta) {
             if (observaciones.length > 0) {
@@ -239,7 +239,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         return sectorId != ''
                 && sectorId != '0'
-                && !<portlet:namespace />sectorRequiereAfiliado();
+                && !<portlet:namespace />sectorRequiereAfiliado()
+                && !<portlet:namespace />esSectorSinCotizacionPrestadorCompra();
     }
 
     function <portlet:namespace />limpiarCargosCompra() {
@@ -254,6 +255,19 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
     function <portlet:namespace />aplicarReglaCargosPorSector(reiniciarCargosSiRequiereAfiliado) {
         var forzarCargoOspim = <portlet:namespace />sectorSinAfiliadoForzaCargoOspim();
+        var cargosPreseleccionados = <portlet:namespace />esSectorSinCotizacionPrestadorCompra();
+
+        if (cargosPreseleccionados) {
+            if (reiniciarCargosSiRequiereAfiliado) {
+                jQuery('#<portlet:namespace />cargo_ospim').val('100');
+                jQuery('#<portlet:namespace />cargo_tercerizadora').val('0');
+            }
+
+            if (<%= esNuevo ? "true" : "false" %>
+                    && <portlet:namespace />trimValue('surge') == '') {
+                jQuery('#<portlet:namespace />surge').val('0');
+            }
+        }
 
         if (forzarCargoOspim) {
             jQuery('#<portlet:namespace />cargo_ospim').val('100');
@@ -271,9 +285,10 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
             /*
              * Solo limpiar cuando el usuario cambia sector.
-             * No limpiar durante el document.ready, porque en ediciÃ³n pisarÃ­a valores existentes.
+             * No limpiar durante el document.ready, porque en edición pisaría valores existentes.
              */
-            if (reiniciarCargosSiRequiereAfiliado) {
+            if (reiniciarCargosSiRequiereAfiliado
+                    && !cargosPreseleccionados) {
                 <portlet:namespace />limpiarCargosCompra();
             }
         }
@@ -292,7 +307,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
          * El sector solo se sincroniza desde la UI durante el alta.
          *
          * Una vez creado el requerimiento, sector_id_hidden conserva
-         * el ID canÃ³nico publicado por servidor y nunca debe ser
+         * el ID canónico publicado por servidor y nunca debe ser
          * sobrescrito desde el control visual.
          */
         if (esNuevo) {
@@ -441,7 +456,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             <portlet:namespace />setAfiliadoValue('secc_seleccionada', '1');
         }
 
-        if ('<%= jsCompra(afiliadoAntecedentes) %>' == 'SÃ­') {
+        if ('<%= jsCompra(afiliadoAntecedentes) %>' == 'Sí') {
             <portlet:namespace />setAfiliadoValue('tieneAntecedentes', '1');
         } else {
             <portlet:namespace />setAfiliadoValue('tieneAntecedentes', '0');
@@ -451,7 +466,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         if (typeof <portlet:namespace />aplicarAntecedentesAfiliado == 'function') {
             <portlet:namespace />aplicarAntecedentesAfiliado(
-                    '<%= jsCompra(afiliadoAntecedentes) %>' == 'SÃ­' ? '1' : '0'
+                    '<%= jsCompra(afiliadoAntecedentes) %>' == 'Sí' ? '1' : '0'
             );
         }
 
@@ -467,9 +482,9 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         );
 
         /*
-         * En ediciÃ³n de un requerimiento existente no se ejecuta
-         * seleccionaCamposAfiliado(), por lo tanto tambiÃ©n debe
-         * inicializarse explÃ­citamente SituaciÃ³n MÃ©dica.
+         * En edición de un requerimiento existente no se ejecuta
+         * seleccionaCamposAfiliado(), por lo tanto también debe
+         * inicializarse explícitamente Situación Médica.
          */
         <portlet:namespace />actualizarSituacionMedicaAfiliado(
                 '<%= jsCompra(afiliadoCuilVisible) %>',
@@ -626,7 +641,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         }
 
         if (!/^[0-9]+$/.test(value)) {
-            alert(label + ': debe ser un nÃºmero entero entre 0 y 100. Valor recibido: "' + value + '".');
+            alert(label + ': debe ser un número entero entre 0 y 100. Valor recibido: "' + value + '".');
             jQuery('#<portlet:namespace />' + id).focus();
             return null;
         }
@@ -664,7 +679,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
      * Control interno del formulario.
      *
      * El usuario no administra este dato ni necesita conocer
-     * su implementaciÃ³n. Ante una falla sÃ³lo se informa que
+     * su implementación. Ante una falla sólo se informa que
      * el guardado no pudo prepararse.
      */
     function <portlet:namespace />validarTokenGuardadoCompra() {
@@ -712,7 +727,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             );
 
             if (!form || filas.length == 0 || !fechaHidden) {
-                alert('No se pudieron preparar los adjuntos para el envÃ­o.');
+                alert('No se pudieron preparar los adjuntos para el envío.');
                 return false;
             }
 
@@ -731,7 +746,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         ).get(0);
 
                 /*
-                 * Este hidden continÃºa siendo el valor que se envÃ­a
+                 * Este hidden continúa siendo el valor que se envía
                  * al backend en formato AAAA-MM-DD.
                  */
                 var fechaValorInput =
@@ -743,9 +758,9 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                  * La fecha visible ya no es un input de texto ni un
                  * calendario JavaScript propio.
                  *
-                 * Se toma de DÃ­a / Mes / AÃ±o.
+                 * Se toma de Día / Mes / Año.
                  *
-                 * Mes conserva la semÃ¡ntica de Calendar.MONTH:
+                 * Mes conserva la semántica de Calendar.MONTH:
                  * enero = 0, diciembre = 11.
                  */
                 var fechaDia =
@@ -795,7 +810,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     alert(
                             'Adjunto '
                                     + numeroOrden
-                                    + ': sÃ³lo se permiten archivos JPG, JPEG, PNG o PDF.'
+                                    + ': sólo se permiten archivos JPG, JPEG, PNG o PDF.'
                     );
 
                     archivo.focus();
@@ -838,7 +853,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         );
 
                 /*
-                 * Los controles nullable utilizan una opciÃ³n vacÃ­a.
+                 * Los controles nullable utilizan una opción vacía.
                  */
                 if (isNaN(dia)
                         || isNaN(mes)
@@ -850,7 +865,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     alert(
                             'Fecha del adjunto '
                                     + numeroOrden
-                                    + ': debe informar dÃ­a, mes y aÃ±o.'
+                                    + ': debe informar día, mes y año.'
                     );
 
                     fechaDia.focus();
@@ -906,8 +921,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         fechaISO;
 
                 /*
-                 * Compatibilidad con el parÃ¡metro histÃ³rico correspondiente
-                 * a la primera Orden mÃ©dica.
+                 * Compatibilidad con el parámetro histórico correspondiente
+                 * a la primera Orden médica.
                  */
                 if (index == 0) {
                     fechaHidden.value =
@@ -925,7 +940,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
             if (!cantidad) {
                 alert(
-                        'No se pudo preparar la cantidad de adjuntos para el envÃ­o.'
+                        'No se pudo preparar la cantidad de adjuntos para el envío.'
                 );
 
                 return false;
@@ -1154,7 +1169,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         if (!form) {
             alert(
-                    'No se encontrÃ³ el formulario de Compras.'
+                    'No se encontró el formulario de Compras.'
             );
 
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -1177,8 +1192,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         if (serializador == null) {
             alert(
-                    'No se encontrÃ³ la funciÃ³n de '
-                            + 'serializaciÃ³n de detalles.'
+                    'No se encontró la función de '
+                            + 'serialización de detalles.'
             );
 
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -1216,7 +1231,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         if (typeof jQuery.fn.ajaxForm != 'function') {
             alert(
-                    'No se pudo preparar el envÃ­o. '
+                    'No se pudo preparar el envío. '
                             + 'Los datos cargados se conservan.'
             );
 
@@ -1234,7 +1249,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         }
 
         /*
-         * Una Ãºnica validaciÃ³n para guardar y guardar cotizaciÃ³n.
+         * Una única validación para guardar y guardar cotización.
          *
          * La existencia del token es un detalle interno y no se
          * expone al usuario.
@@ -1253,7 +1268,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
                 /*
                  * En el alta el adjunto es obligatorio salvo para los
-                 * sectores definidos sin cotizaciÃ³n de prestador.
+                 * sectores definidos sin cotización de prestador.
                  */
                 incorporarNuevasOrdenesMedicas =
                         !<portlet:namespace />esSectorSinCotizacionPrestadorCompra()
@@ -1431,11 +1446,11 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         if (serializadorDetalles == null) {
             alert(
-                    'Detalles: no se encontrÃ³ la funciÃ³n '
+                    'Detalles: no se encontró la función '
                             + '<portlet:namespace />serializarDetallesCompras(). '
-                            + 'El JSP embebido no se estÃ¡ renderizando '
-                            + 'correctamente o Liferay estÃ¡ usando una '
-                            + 'versiÃ³n vieja compilada.'
+                            + 'El JSP embebido no se está renderizando '
+                            + 'correctamente o Liferay está usando una '
+                            + 'versión vieja compilada.'
             );
 
             return <portlet:namespace />cancelarGuardadoCompra();
@@ -1452,8 +1467,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
         if (detalleCountInput.length == 0) {
             alert(
-                    'Detalles: serializarDetallesCompras() se ejecutÃ³, '
-                            + 'pero no dejÃ³ detalle_count dentro del '
+                    'Detalles: serializarDetallesCompras() se ejecutó, '
+                            + 'pero no dejó detalle_count dentro del '
                             + 'formulario principal. Revisar que el JSP '
                             + 'embebido agregue los hidden a '
                             + '#<portlet:namespace />fmCompras.'
@@ -1503,7 +1518,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
                     alert(
                             'No se pudieron incorporar los '
-                                    + 'adjuntos al formulario de envÃ­o.'
+                                    + 'adjuntos al formulario de envío.'
                     );
 
                     return <portlet:namespace />cancelarGuardadoCompra();
@@ -1519,7 +1534,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
          * El iframe multipart conserva la pantalla y los archivos
          * seleccionados.
          *
-         * SÃ³lo una respuesta de guardado confirmado permite navegar.
+         * Sólo una respuesta de guardado confirmado permite navegar.
          */
         if (typeof <portlet:namespace />incorporarCotizacionesEmpresa == 'function') {
             contextosCotizacionesEmpresa = <portlet:namespace />incorporarCotizacionesEmpresa(form);
@@ -1626,9 +1641,9 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
                         /*
                          * El servidor acaba de renderizar otra pantalla
-                         * editable y entregÃ³ un token nuevo.
+                         * editable y entregó un token nuevo.
                          *
-                         * SÃ³lo se copia sobre el formulario actual cuando
+                         * Sólo se copia sobre el formulario actual cuando
                          * seguimos trabajando sobre el mismo ID. De esta
                          * manera un alta que haya avanzado parcialmente no
                          * vuelve a enviarse accidentalmente como un alta nueva.
@@ -1646,8 +1661,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         	    );
 
                         	    /*
-                        	     * ReciÃ©n ahora sabemos que existe un nuevo envÃ­o vÃ¡lido
-                        	     * y que el intento anterior no llegÃ³ a persistencia.
+                             * Recién ahora sabemos que existe un nuevo envío válido
+                             * y que el intento anterior no llegó a persistencia.
                         	     */
                         	    <portlet:namespace />cancelarGuardadoCompra();
 
@@ -1696,9 +1711,9 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                  * Un resultado que no pudo interpretarse no se presenta
                  * como un error funcional del usuario.
                  *
-                 * La informaciÃ³n continÃºa visible en pantalla y no se
-                 * expone ningÃºn concepto tÃ©cnico como token, iframe o
-                 * estado de sesiÃ³n.
+                 * La información continúa visible en pantalla y no se
+                 * expone ningún concepto técnico como token, iframe o
+                 * estado de sesión.
                  */
                 var aviso =
                         jQuery(
@@ -1736,8 +1751,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
 
                 aviso
                         .text(
-                                'No se pudo confirmar automÃ¡ticamente '
-                                        + 'el guardado. La informaciÃ³n '
+                                'No se pudo confirmar automáticamente '
+                                        + 'el guardado. La información '
                                         + 'cargada permanece en pantalla. '
                                         + 'Verifique el requerimiento antes '
                                         + 'de volver a guardar.'

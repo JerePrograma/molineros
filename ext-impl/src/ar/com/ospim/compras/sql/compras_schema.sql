@@ -1420,10 +1420,14 @@ ELSE
         NEW.afiliado_telefono := NULL;
         NEW.afiliado_email := NULL;
 
-        NEW.cargo_ospim := 100;
-        NEW.cargo_tercerizadora := 0;
+        IF compras.normalizar_sector(v_sector_descripcion)
+                NOT IN ('RRHH', 'SISTEMAS') THEN
+            NEW.cargo_ospim := 100;
+            NEW.cargo_tercerizadora := 0;
+        END IF;
+
         NEW.id_tercerizadora := NULL;
-        NEW.recupero := FALSE;
+        NEW.recupero := COALESCE(NEW.cargo_tercerizadora, 0) > 0;
 
 END IF;
 

@@ -1968,9 +1968,15 @@ private void aplicarReglaSectorSinAfiliado(
         requerimiento.setIdTercerizadora(null);
     }
 
-    requerimiento.setCargoOspim(Integer.valueOf(100));
-    requerimiento.setCargoTercerizadora(Integer.valueOf(0));
-    requerimiento.setRecupero(false);
+    if (!requerimiento.esSectorSinCotizacionPrestador()) {
+        requerimiento.setCargoOspim(Integer.valueOf(100));
+        requerimiento.setCargoTercerizadora(Integer.valueOf(0));
+    }
+
+    requerimiento.setRecupero(
+            requerimiento.getCargoTercerizadora() != null
+                    && requerimiento.getCargoTercerizadora().intValue() > 0
+    );
 }
 
 private boolean mismoTexto(String a, String b) {
