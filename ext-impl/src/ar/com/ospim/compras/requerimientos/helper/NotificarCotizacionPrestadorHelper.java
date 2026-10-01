@@ -1791,7 +1791,7 @@ public class NotificarCotizacionPrestadorHelper {
             sb.append(prestador.getDescripcionVisible());
         }
 
-        sb.append(",\n");
+        sb.append(",\n\n");
 
         sb.append(
                 "OSPIM solicita cotización para el "
@@ -1799,17 +1799,13 @@ public class NotificarCotizacionPrestadorHelper {
                         + "(cotizar según orden médica):"
         );
 
-        sb.append("\n");
-
-        agregarDetalles(sb, requerimiento);
-
         if (!WebKeysCompras.isEmpty(requerimiento.getObservaciones())) {
-            sb.append("\nDetalle / observaciones:\n");
+            sb.append("\n\nDetalle / observaciones:\n");
             sb.append(requerimiento.getObservacionesVisible());
         }
 
         sb.append(
-                "\nPor favor responder este correo "
+                "\n\nPor favor responder este correo "
                         + "informando disponibilidad, "
                         + "plazo de entrega "
                         + "e importe de cotización"
@@ -1823,65 +1819,13 @@ public class NotificarCotizacionPrestadorHelper {
         sb.append(".");
 
         sb.append(
-                "\nLos presupuestos se deben presentar en formato .PDF, "
+                "\n\nLos presupuestos se deben presentar en formato .PDF, "
                         + "fijando como plazo límite de entrega "
                         + "las próximas 48 horas, "
                         + "con horario tope de recepción a las 18:00 hs."
         );
 
         return sb.toString();
-    }
-
-    private void agregarDetalles(
-            StringBuilder sb,
-            RequerimientoCompra requerimiento) {
-
-        List<RequerimientoCompraDetalle> detalles = requerimiento.getDetalles();
-
-        if (detalles == null || detalles.isEmpty()) {
-            return;
-        }
-
-        sb.append("Items:\n");
-
-        for (int i = 0; i < detalles.size(); i++) {
-            RequerimientoCompraDetalle detalle = detalles.get(i);
-
-            sb.append("- ");
-
-            String tipoItem = detalle.getTipoItemNormalizado();
-            String codigoItem = detalle.getCodigoItemVisible();
-            String descripcionItem = detalle.getDescripcionItemVisible();
-
-            if (!WebKeysCompras.isEmpty(tipoItem)
-                    && !"NOMENCLADOR".equalsIgnoreCase(tipoItem.trim())) {
-                sb.append(tipoItem);
-                sb.append(" | ");
-            }
-
-            if (!WebKeysCompras.isEmpty(codigoItem)) {
-                sb.append(codigoItem);
-                sb.append(" - ");
-            }
-
-            if (!WebKeysCompras.isEmpty(descripcionItem)) {
-                sb.append(descripcionItem);
-            } else {
-                sb.append("Item sin descripción");
-            }
-
-            sb.append(" | Cantidad: ");
-            sb.append(detalle.getCantidadString());
-
-            if (!WebKeysCompras.isEmpty(detalle.getObservaciones())) {
-                sb.append(" | Descripción: ");
-                sb.append(detalle.getObservacionesVisible());
-            }
-
-            if (i < detalles.size() - 1) {
-                sb.append("\n");
-            }
-        }
     }
 
     private void validarParametros(
