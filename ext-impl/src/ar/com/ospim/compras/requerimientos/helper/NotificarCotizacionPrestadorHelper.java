@@ -1795,8 +1795,8 @@ public class NotificarCotizacionPrestadorHelper {
 
         sb.append(
                 "OSPIM solicita cotización para el "
-                        + "siguiente requerimiento de compra "
-                        + "(cotizar según orden médica):"
+                        + "pedido de presupuesto "
+                        + "(cotizar según orden médica)."
         );
 
         if (!WebKeysCompras.isEmpty(requerimiento.getObservaciones())) {
