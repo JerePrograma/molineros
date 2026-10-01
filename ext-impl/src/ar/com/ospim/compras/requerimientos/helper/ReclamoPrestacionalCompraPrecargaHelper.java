@@ -7,6 +7,7 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.crm.beans.ContactoCRM;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
@@ -1113,6 +1114,13 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 requerimiento
         );
 
+        Date fechaPrestacion =
+                requerimiento.getIdRequerimientoCompra() > 0
+                        ? resolverFechaPrestacionCompra(
+                                requerimiento.getIdRequerimientoCompra()
+                        )
+                        : null;
+
         BigDecimal totalComprobante =
                 BigDecimal.ZERO.setScale(
                         2,
@@ -1138,7 +1146,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                     crearPrestacion(
                             requerimiento,
                             detalle,
-                            idRegistro
+                            idRegistro,
+                            fechaPrestacion
                     );
 
             String cuitDetalle =
@@ -1241,6 +1250,40 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         }
 
         return prestaciones;
+    }
+
+    /*
+     * Criterio provisional, pendiente de QA: fecha del ultimo adjunto cargado.
+     * El mayor ID identifica la ultima alta, sin depender del orden de consulta.
+     * No se elige la fecha de documento mayor: puede ser anterior en ese adjunto.
+     */
+    private static Date resolverFechaPrestacionCompra(
+            int idRequerimientoCompra) throws Exception {
+
+        List<RequerimientoCompraPresupuesto> adjuntos =
+                BusquedaRequerimientoCompraServiceUtil.listarOrdenesMedicas(
+                        idRequerimientoCompra
+                );
+
+        RequerimientoCompraPresupuesto masReciente = null;
+
+        for (RequerimientoCompraPresupuesto adjunto : adjuntos) {
+            if (adjunto == null
+                    || !adjunto.isActivo()
+                    || adjunto.getIdRequerimientoPresupuesto() == null) {
+                continue;
+            }
+
+            if (masReciente == null
+                    || adjunto.getIdRequerimientoPresupuesto().intValue()
+                    > masReciente.getIdRequerimientoPresupuesto().intValue()) {
+                masReciente = adjunto;
+            }
+        }
+
+        return masReciente != null
+                ? masReciente.getFechaDocumento()
+                : null;
     }
 
     public static String mapearSector(
@@ -1385,7 +1428,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     private static PrestacionesReclamo crearPrestacion(
             RequerimientoCompra requerimiento,
             RequerimientoCompraDetalle detalle,
-            int idRegistro) throws Exception {
+            int idRegistro,
+            Date fechaPrestacion) throws Exception {
 
         validarDetalleCotizado(
                 detalle
@@ -1553,9 +1597,11 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                         : 0
         );
 
-        /* Debe ser confirmada por el usuario. */
+        /* Fecha del adjunto de Compras; conserva la edicion manual legacy. */
         prestacion.setFechaPrestacion(
-                null
+                fechaPrestacion != null
+                        ? new Date(fechaPrestacion.getTime())
+                        : null
         );
 
         prestacion.setEstado(
