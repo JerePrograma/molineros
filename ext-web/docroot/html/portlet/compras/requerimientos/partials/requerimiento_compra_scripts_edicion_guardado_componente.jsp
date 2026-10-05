@@ -819,6 +819,11 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     return;
                 }
 
+                if (!<portlet:namespace />validarTamanoOrdenMedica(archivo)) {
+                    valido = false;
+                    return;
+                }
+
                 if (!fechaDia
                         || !fechaMes
                         || !fechaAnio

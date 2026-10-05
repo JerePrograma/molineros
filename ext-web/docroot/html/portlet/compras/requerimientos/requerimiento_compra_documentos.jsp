@@ -19,6 +19,7 @@ Efectos secundarios:
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
@@ -178,6 +179,13 @@ if (prestadoresDisponiblesPresupuestos == null) {
 
 boolean hayPrestadoresDisponiblesPresupuestos =
         !prestadoresDisponiblesPresupuestos.isEmpty();
+
+long maximoTamanoPresupuesto =
+        DocumentoLibraryComprasHelper.obtenerMaximoTamanoDocumento();
+String maximoTamanoPresupuestoTexto =
+        maximoTamanoPresupuesto % 1024L == 0L
+                ? (maximoTamanoPresupuesto / 1024L) + " KB"
+                : maximoTamanoPresupuesto + " bytes";
 
 int maxPresupuestosCargaActual =
         cotizacionEmpresaPresupuestos
@@ -805,8 +813,10 @@ boolean msgPresupuestoBorrado =
           Eliminar limpia la carga actual; la tabla Cotizaciones permite eliminar un presupuesto guardado.
         <br />
 
-        - El archivo debe respetar el tamaño máximo permitido por
-          Document Library.
+        <% if (maximoTamanoPresupuesto != Long.MAX_VALUE) { %>
+            - Cada archivo no debe superar los
+              <%= maximoTamanoPresupuestoTexto %>.
+        <% } %>
         <br />
 
         - La lamparita de la columna PDF indica que el prestador fue
@@ -863,6 +873,29 @@ boolean msgPresupuestoBorrado =
 </form>
 
 <script type="text/javascript">
+    function <portlet:namespace />validarTamanoArchivoPresupuesto(archivo) {
+        var maximo = <%= maximoTamanoPresupuesto == Long.MAX_VALUE
+                ? 0L : maximoTamanoPresupuesto %>;
+
+        if (maximo <= 0 || !archivo
+                || !archivo.files || archivo.files.length == 0) {
+            return true;
+        }
+
+        if (archivo.files[0].size > maximo) {
+            alert(
+                    'El archivo "' + archivo.files[0].name
+                            + '" supera el tamaño máximo permitido de '
+                            + '<%= maximoTamanoPresupuestoTexto %>. '
+                            + 'Seleccione un archivo de menor tamaño.'
+            );
+            archivo.focus();
+            return false;
+        }
+
+        return true;
+    }
+
     <% if (cotizacionEmpresaPresupuestos) { %>
     function <portlet:namespace />actualizarCotizacionesEmpresaSector(limpiar) {
         <% if (altaEmpresaPresupuestos) { %>
@@ -1239,16 +1272,21 @@ boolean msgPresupuestoBorrado =
                                 + '/>'
                 );
 
-        <% if (altaEmpresaPresupuestos) { %>
         archivo.change(function() {
+            <portlet:namespace />validarTamanoArchivoPresupuesto(this);
+            <% if (altaEmpresaPresupuestos) { %>
             <portlet:namespace />actualizarEmpresasAdjudicacion();
+            <% } %>
         });
-        <% } %>
 
         var ayudaArchivo =
                 jQuery(
                         '<div class="compras-ayuda-campo">'
                                 + 'Formatos permitidos: PDF'
+                                <% if (maximoTamanoPresupuesto != Long.MAX_VALUE) { %>
+                                + '<br />Tamaño máximo por archivo: '
+                                + '<%= maximoTamanoPresupuestoTexto %>.'
+                                <% } %>
                                 + '</div>'
                 );
 
@@ -1464,6 +1502,12 @@ boolean msgPresupuestoBorrado =
                 valido = false;
                 return false;
             }
+
+            if (!<portlet:namespace />validarTamanoArchivoPresupuesto(
+                    archivo.get(0))) {
+                valido = false;
+                return false;
+            }
         });
 
         if (!valido) {
@@ -1512,6 +1556,10 @@ boolean msgPresupuestoBorrado =
         }
         if (archivo && !/\.pdf$/i.test(archivo)) {
             alert('El archivo debe estar en formato PDF.');
+            return false;
+        }
+        if (!<portlet:namespace />validarTamanoArchivoPresupuesto(
+                document.getElementById('<portlet:namespace />presupuesto_0'))) {
             return false;
         }
         var boton = seccion.find('#<portlet:namespace />guardarComparativaBoton');

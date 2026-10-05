@@ -17,8 +17,15 @@ Efectos secundarios:
     Sólo modifica el DOM o el modelo JavaScript; no ejecuta persistencia.
 --%>
 <%@ page import="java.util.Calendar" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper" %>
 <%
 final int maxOrdenesMedicasPorCarga = 20;
+long maximoTamanoOrdenMedica =
+        DocumentoLibraryComprasHelper.obtenerMaximoTamanoDocumento();
+String maximoTamanoOrdenMedicaTexto =
+        maximoTamanoOrdenMedica % 1024L == 0L
+                ? (maximoTamanoOrdenMedica / 1024L) + " KB"
+                : maximoTamanoOrdenMedica + " bytes";
 
 Calendar fechaOrdenMedicaReferencia =
         Calendar.getInstance();
@@ -301,10 +308,16 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                                     class="orden-medica-archivo"
                                     id="<portlet:namespace /><%= idCampoArchivo %>"
                                     name="<%= nombreCampoArchivo %>"
-                                    accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" />
+                                    accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                                    onchange="<portlet:namespace />validarTamanoOrdenMedica(this);" />
 
                             <div class="compras-ayuda-campo">
                                 Formatos permitidos: JPG, JPEG, PNG o PDF.
+                                <% if (maximoTamanoOrdenMedica != Long.MAX_VALUE) { %>
+                                    <br />
+                                    Tamaño máximo por archivo:
+                                    <%= maximoTamanoOrdenMedicaTexto %>.
+                                <% } %>
                             </div>
                         </td>
 
@@ -438,8 +451,10 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
           antes de guardar el requerimiento.
         <br />
 
-        - Los archivos deben respetar el tamaño máximo permitido por
-          Document Library.
+        <% if (maximoTamanoOrdenMedica != Long.MAX_VALUE) { %>
+            - Cada archivo no debe superar los
+              <%= maximoTamanoOrdenMedicaTexto %>.
+        <% } %>
         <br />
 
         - Si el guardado falla por una validación, por seguridad del navegador
@@ -448,6 +463,29 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
     </div>
 
     <script type="text/javascript">
+        function <portlet:namespace />validarTamanoOrdenMedica(archivo) {
+            var maximo = <%= maximoTamanoOrdenMedica == Long.MAX_VALUE
+                    ? 0L : maximoTamanoOrdenMedica %>;
+
+            if (maximo <= 0 || !archivo
+                    || !archivo.files || archivo.files.length == 0) {
+                return true;
+            }
+
+            if (archivo.files[0].size > maximo) {
+                alert(
+                        'El archivo "' + archivo.files[0].name
+                                + '" supera el tamaño máximo permitido de '
+                                + '<%= maximoTamanoOrdenMedicaTexto %>. '
+                                + 'Seleccione un archivo de menor tamaño.'
+                );
+                archivo.focus();
+                return false;
+            }
+
+            return true;
+        }
+
         function <portlet:namespace />filasActivasOrdenMedica() {
             return jQuery(
                     '#<portlet:namespace />ordenes_medicas_body '
