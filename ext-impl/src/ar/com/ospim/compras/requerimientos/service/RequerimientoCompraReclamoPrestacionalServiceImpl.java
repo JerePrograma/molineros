@@ -6,6 +6,7 @@ import ar.com.ospim.util.ConnectionHelper;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -47,6 +48,12 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
     private static final String SQL_CAMBIAR_ESTADO_REQUERIMIENTO =
             "{call compras.cambiar_estado_requerimiento(?,?,?)}";
+
+    private static final String SQL_GUARDAR_OBSERVACION_ESTADO_RECLAMO =
+            "UPDATE autorizaciones.reclamos_prestacionales_estados "
+                    + "SET observacion = ? "
+                    + "WHERE id_reclamo_prestacional = ? "
+                    + "AND id_estado = ? AND baja_fecha IS NULL";
 
     public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(
             int idRequerimientoCompra) throws Exception {
@@ -327,6 +334,31 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             stmt.setInt(2, idEstadoNuevo);
             stmt.setString(3, usuario);
             stmt.execute();
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    public void guardarObservacionEstadoReclamo(
+            Connection con,
+            int idReclamoPrestacional,
+            int idEstado,
+            String observacion) throws Exception {
+
+        PreparedStatement stmt = null;
+
+        try {
+            stmt = con.prepareStatement(SQL_GUARDAR_OBSERVACION_ESTADO_RECLAMO);
+            stmt.setString(1, observacion);
+            stmt.setInt(2, idReclamoPrestacional);
+            stmt.setInt(3, idEstado);
+
+            if (stmt.executeUpdate() != 1) {
+                throw new Exception(
+                        "No se pudo registrar la observacion inicial "
+                                + "del Reclamo Prestacional."
+                );
+            }
         } finally {
             ConnectionHelper.cerrar(stmt);
         }

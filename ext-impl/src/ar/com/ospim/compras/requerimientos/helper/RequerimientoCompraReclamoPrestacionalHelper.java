@@ -268,6 +268,12 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                 );
             }
 
+            transaccion.guardarObservacionEstadoReclamo(
+                    idReclamo,
+                    reclamo.getEstado(),
+                    "Requerimiento ID #" + idRequerimientoCompra
+            );
+
             finalizarCreacion(
                     transaccion,
                     idRequerimientoCompra,

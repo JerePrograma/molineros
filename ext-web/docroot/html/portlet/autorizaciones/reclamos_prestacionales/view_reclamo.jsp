@@ -5,8 +5,6 @@
 	import="ar.com.ospim.autorizaciones.services.PreAutorizacionServiceUtil"%>
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto" %>
-<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
-<%@ page import="ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil" %>
 <%
 ReclamoPrestacional reclamoprestacional = (ReclamoPrestacional) request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
 boolean reclamoPersistido = reclamoprestacional != null && reclamoprestacional.getId_reclamo() > 0;
@@ -31,18 +29,6 @@ if (handoffReclamoComprasValido) {
 }
 boolean restringirRecuperableCompras = handoffReclamoComprasValido;
 request.setAttribute("rp.view.restringirRecuperableCompras", Boolean.valueOf(restringirRecuperableCompras));
-int idRequerimientoObservacion = 0;
-if (handoffReclamoComprasValido) {
-    idRequerimientoObservacion = contextoReclamoCompras.getIdRequerimientoCompra();
-} else if (reclamoPersistido) {
-    RequerimientoCompraReclamoPrestacional relacionObservacionCompras =
-            RequerimientoCompraReclamoPrestacionalServiceUtil.getRelacionPorReclamoPrestacional(
-                    reclamoprestacional.getId_reclamo());
-    if (relacionObservacionCompras != null && relacionObservacionCompras.isVinculado()
-            && relacionObservacionCompras.getIdReclamoPrestacionalInt() == reclamoprestacional.getId_reclamo()) {
-        idRequerimientoObservacion = relacionObservacionCompras.getIdRequerimientoCompra();
-    }
-}
 Calendar prestacionFecha = CalendarFactoryUtil.getCalendar();
 String prestacionFechaString = prestacionFecha.get(Calendar.DATE)+"/"+(prestacionFecha.get(Calendar.MONTH) + 1)+"/"+prestacionFecha.get(Calendar.YEAR);
 
@@ -615,7 +601,7 @@ span-fixed-size {
 		<table >
 			<%-- Observacion como Fieldset--%>
 			<%
-			if (reclamoprestacional != null && ((reclamoprestacional.getEstadoObservacion() != null && reclamoprestacional.getEstadoObservacion().length() >0) || idRequerimientoObservacion > 0)) {
+			if (reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null && reclamoprestacional.getEstadoObservacion().length() >0 ) {
 			%>																	
 			<tr>
 				<td colspan="12">
@@ -630,12 +616,7 @@ span-fixed-size {
 									id="<portlet:namespace />estadoObservacion"
 									style="color: red;"> <%=reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null
 				? reclamoprestacional.getEstadoObservacion() : ""%>
-								</span>
-								<% if (idRequerimientoObservacion > 0) { %>
-									<% if (reclamoprestacional.getEstadoObservacion() != null && reclamoprestacional.getEstadoObservacion().length() > 0) { %><br /><% } %>
-									<span>Requerimiento ID #<%=idRequerimientoObservacion%></span>
-								<% } %>
-								</td>
+								</span></td>
 							</tr>
 						</table>
 	

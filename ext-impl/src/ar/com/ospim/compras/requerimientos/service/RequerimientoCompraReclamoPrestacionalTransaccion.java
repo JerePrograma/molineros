@@ -139,6 +139,19 @@ public final class RequerimientoCompraReclamoPrestacionalTransaccion {
         );
     }
 
+    public void guardarObservacionEstadoReclamo(
+            int idReclamoPrestacional,
+            int idEstado,
+            String observacion) throws Exception {
+
+        comprasPersistence.guardarObservacionEstadoReclamo(
+                getConnection(),
+                idReclamoPrestacional,
+                idEstado,
+                observacion
+        );
+    }
+
     public void commit() throws Exception {
         getConnection().commit();
     }
