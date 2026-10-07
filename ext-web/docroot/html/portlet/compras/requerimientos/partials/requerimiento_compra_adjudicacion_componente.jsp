@@ -137,6 +137,10 @@ String empresaAdjudicadaCuit = restaurarEmpresaAdjudicacion
         ? ParamUtil.getString(renderRequest, "empresa_adjudicada_cuit", "") : "";
 String empresaAdjudicadaSucursal = restaurarEmpresaAdjudicacion
         ? ParamUtil.getString(renderRequest, "empresa_adjudicada_sucursal", "") : "";
+int empresaAdjudicadaId = restaurarEmpresaAdjudicacion
+        ? ParamUtil.getInteger(renderRequest, "empresa_adjudicada_id", 0) : 0;
+int empresaAdjudicadaIndice = restaurarEmpresaAdjudicacion
+        ? ParamUtil.getInteger(renderRequest, "empresa_adjudicada_indice", -1) : -1;
 String empresaAdjudicadaVisible = "";
 List<RequerimientoCompraPresupuesto> empresasAdjudicacion =
         new ArrayList<RequerimientoCompraPresupuesto>();
@@ -147,27 +151,30 @@ if (cotizacionEmpresaAdjudicacion && requerimientoPersistidoAdjudicacion
     for (RequerimientoCompraPresupuesto presupuestoAdjudicacion : presupuestosAdjudicacion) {
         if (presupuestoAdjudicacion == null || !presupuestoAdjudicacion.isActivo()
                 || !presupuestoAdjudicacion.isCotizacionEmpresa()
-                || WebKeysCompras.isEmpty(presupuestoAdjudicacion.getEmpresaCuit())
-                || WebKeysCompras.isEmpty(presupuestoAdjudicacion.getEmpresaSucursal())
+                || WebKeysCompras.isEmpty(presupuestoAdjudicacion.getDescripcionEmpresa())
                 || presupuestoAdjudicacion.getIdRequerimiento() == null
                 || presupuestoAdjudicacion.getIdRequerimiento().intValue() != idRequerimientoAdjudicacion) {
             continue;
         }
         empresasAdjudicacion.add(presupuestoAdjudicacion);
         if (!restaurarEmpresaAdjudicacion && presupuestoAdjudicacion.isEmpresaAdjudicada()) {
+            empresaAdjudicadaId = presupuestoAdjudicacion.getIdRequerimientoPresupuesto();
             empresaAdjudicadaCuit = presupuestoAdjudicacion.getEmpresaCuit();
             empresaAdjudicadaSucursal = presupuestoAdjudicacion.getEmpresaSucursal();
         }
     }
     for (RequerimientoCompraPresupuesto empresaAdjudicacion : empresasAdjudicacion) {
-        if (empresaAdjudicacion.getEmpresaCuit().equals(empresaAdjudicadaCuit)
-                && empresaAdjudicacion.getEmpresaSucursal().equals(empresaAdjudicadaSucursal)) {
+        if (empresaAdjudicacion.getIdRequerimientoPresupuesto().intValue() == empresaAdjudicadaId) {
             empresaAdjudicadaVisible = empresaAdjudicacion.getDescripcionEmpresa()
-                    + " - CUIT: " + empresaAdjudicadaCuit + " - Sucursal: " + empresaAdjudicadaSucursal;
+                    + (WebKeysCompras.isEmpty(empresaAdjudicacion.getEmpresaCuit()) ? ""
+                        : " - CUIT: " + empresaAdjudicacion.getEmpresaCuit())
+                    + (WebKeysCompras.isEmpty(empresaAdjudicacion.getEmpresaSucursal()) ? ""
+                        : " - Sucursal: " + empresaAdjudicacion.getEmpresaSucursal());
             break;
         }
     }
     if (WebKeysCompras.isEmpty(empresaAdjudicadaVisible)) {
+        empresaAdjudicadaId = 0;
         empresaAdjudicadaCuit = "";
         empresaAdjudicadaSucursal = "";
     }
@@ -415,18 +422,23 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
                                 <% for (int i = 0; i < empresasAdjudicacion.size(); i++) {
                                     RequerimientoCompraPresupuesto empresaAdjudicacion = empresasAdjudicacion.get(i);
                                 %>
-                                    <option value="<%= i %>"
+                                    <option value="<%= empresaAdjudicacion.getIdRequerimientoPresupuesto() %>"
                                             data-cuit="<%= HtmlUtil.escape(empresaAdjudicacion.getEmpresaCuit()) %>"
                                             data-sucursal="<%= HtmlUtil.escape(empresaAdjudicacion.getEmpresaSucursal()) %>"
-                                            <%= empresaAdjudicacion.getEmpresaCuit().equals(empresaAdjudicadaCuit)
-                                                    && empresaAdjudicacion.getEmpresaSucursal().equals(empresaAdjudicadaSucursal)
+                                            <%= empresaAdjudicacion.getIdRequerimientoPresupuesto().intValue() == empresaAdjudicadaId
                                                     ? "selected=\"selected\"" : "" %>>
                                         <%= HtmlUtil.escape(empresaAdjudicacion.getDescripcionEmpresa()
-                                                + " - CUIT: " + empresaAdjudicacion.getEmpresaCuit()
-                                                + " - Sucursal: " + empresaAdjudicacion.getEmpresaSucursal()) %>
+                                                + (WebKeysCompras.isEmpty(empresaAdjudicacion.getEmpresaCuit()) ? ""
+                                                    : " - CUIT: " + empresaAdjudicacion.getEmpresaCuit())
+                                                + (WebKeysCompras.isEmpty(empresaAdjudicacion.getEmpresaSucursal()) ? ""
+                                                    : " - Sucursal: " + empresaAdjudicacion.getEmpresaSucursal())) %>
                                     </option>
                                 <% } %>
                             </select>
+                            <input type="hidden" name="<portlet:namespace />empresa_adjudicada_id"
+                                   id="<portlet:namespace />empresa_adjudicada_id" value="<%= empresaAdjudicadaId %>" />
+                            <input type="hidden" name="<portlet:namespace />empresa_adjudicada_indice"
+                                   id="<portlet:namespace />empresa_adjudicada_indice" value="<%= empresaAdjudicadaIndice %>" />
                             <input type="hidden" name="<portlet:namespace />empresa_adjudicada_cuit"
                                    id="<portlet:namespace />empresa_adjudicada_cuit" value="<%= HtmlUtil.escape(empresaAdjudicadaCuit) %>" />
                             <input type="hidden" name="<portlet:namespace />empresa_adjudicada_sucursal"
@@ -533,7 +545,12 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
 <script type="text/javascript">
     function <portlet:namespace />capturarEmpresaAdjudicada() {
         var opcion = jQuery('#<portlet:namespace />empresa_adjudicada_selector option:selected');
-        var habilitada = opcion.length > 0 && !opcion.attr('disabled');
+        var habilitada = opcion.length > 0 && !opcion.attr('disabled') && opcion.val() != '';
+        <% if (altaEmpresaAdjudicacion) { %>
+        jQuery('#<portlet:namespace />empresa_adjudicada_indice').val(habilitada ? opcion.val() : '-1');
+        <% } else { %>
+        jQuery('#<portlet:namespace />empresa_adjudicada_id').val(habilitada ? opcion.val() : '0');
+        <% } %>
         jQuery('#<portlet:namespace />empresa_adjudicada_cuit').val(habilitada ? (opcion.attr('data-cuit') || '') : '');
         jQuery('#<portlet:namespace />empresa_adjudicada_sucursal').val(habilitada ? (opcion.attr('data-sucursal') || '') : '');
     }
@@ -541,23 +558,23 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
     function <portlet:namespace />actualizarEmpresasAdjudicacion() {
         <% if (altaEmpresaAdjudicacion) { %>
         var selector = jQuery('#<portlet:namespace />empresa_adjudicada_selector');
-        var cuit = jQuery('#<portlet:namespace />empresa_adjudicada_cuit').val() || '';
-        var sucursal = jQuery('#<portlet:namespace />empresa_adjudicada_sucursal').val() || '';
+        var indice = jQuery('#<portlet:namespace />empresa_adjudicada_indice').val();
         var encontrada = false;
         selector.empty().append(jQuery('<option></option>').val('').text('Seleccione...'));
         jQuery('#<portlet:namespace />presupuestos_body tr').each(function(i) {
             var fila = jQuery(this);
             var cuitFila = fila.find('input.presupuesto-empresa-cuit').val() || '';
             var sucursalFila = fila.find('input.presupuesto-empresa-sucursal').val() || '';
-            if (!cuitFila || !sucursalFila) { return; }
+            var nombreFila = jQuery.trim(fila.find('input.presupuesto-empresa-descripcion').val() || '');
+            if (!nombreFila) { return; }
             var tieneArchivo = !!fila.find('input.presupuesto-archivo').val();
             var opcion = jQuery('<option></option>').val(String(i))
                     .attr('data-cuit', cuitFila).attr('data-sucursal', sucursalFila)
-                    .text(fila.find('.presupuesto-empresa-seleccionada').text()
+                    .text(nombreFila + (cuitFila ? ' - CUIT: ' + cuitFila : '')
                             + (tieneArchivo ? '' : ' (sin presupuesto cargado)'));
             if (!tieneArchivo) { opcion.attr('disabled', 'disabled'); }
             selector.append(opcion);
-            if (cuit == cuitFila && sucursal == sucursalFila) {
+            if (String(i) == indice) {
                 // Conservar la eleccion tras un error; el PDF debe volver a seleccionarse.
                 opcion.attr('selected', 'selected');
                 encontrada = true;
@@ -565,6 +582,7 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
         });
         if (!encontrada) {
             selector.val('');
+            jQuery('#<portlet:namespace />empresa_adjudicada_indice').val('-1');
             jQuery('#<portlet:namespace />empresa_adjudicada_cuit').val('');
             jQuery('#<portlet:namespace />empresa_adjudicada_sucursal').val('');
         }

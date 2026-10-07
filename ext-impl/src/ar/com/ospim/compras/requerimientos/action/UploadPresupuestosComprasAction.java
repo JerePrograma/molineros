@@ -138,7 +138,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
             RequerimientoCompra requerimiento =
                     validarContextoEdicion(
                             idRequerimientoCompra,
-                            modo
+                            modo,
+                            "completarEmpresa".equals(cmd)
                     );
 
             ServiceContext serviceContext =
@@ -152,7 +153,15 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             user
                     );
 
-            if ("guardarComparativa".equals(cmd)) {
+            if ("completarEmpresa".equals(cmd)) {
+                presupuestoHelper.completarEmpresaCotizacion(idRequerimientoCompra,
+                        ParamUtil.getInteger(uploadReq, "id_requerimiento_presupuesto", 0),
+                        ParamUtil.getString(uploadReq, "empresa_cuit", null),
+                        ParamUtil.getString(uploadReq, "empresa_sucursal", null), usuario);
+                actionResponse.setRenderParameter("compras_operacion", cmd);
+                SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
+
+            } else if ("guardarComparativa".equals(cmd)) {
                 RequerimientoCompraComparativaHelper comparativaHelper =
                         new RequerimientoCompraComparativaHelper();
                 int idPrestador = ParamUtil.getInteger(uploadReq, "presupuesto_0_id_prestador");
@@ -499,7 +508,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                                         nombreParametro
                                                 + "_empresa_sucursal",
                                         null
-                                )
+                                ),
+                                ParamUtil.getString(uploadReq,
+                                        nombreParametro + "_descripcion_empresa", null)
                         )
                 );
 
@@ -529,7 +540,8 @@ public class UploadPresupuestosComprasAction extends PortletAction {
 
     private RequerimientoCompra validarContextoEdicion(
             int idRequerimientoCompra,
-            String modo) throws Exception {
+            String modo,
+            boolean completarEmpresa) throws Exception {
 
         if (idRequerimientoCompra <= 0) {
             throw new Exception(
@@ -555,7 +567,10 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         );
 
         if (requerimiento == null
-                || !requerimiento.puedeAdministrarPresupuestos()) {
+                || (completarEmpresa
+                    ? !requerimiento.isActivo() || !requerimiento.esSectorSinCotizacionPrestador()
+                        || (!requerimiento.isPendiente() && !requerimiento.isOrdenCompra())
+                    : !requerimiento.puedeAdministrarPresupuestos())) {
 
             throw new Exception(
                     "El requerimiento no se encuentra disponible "

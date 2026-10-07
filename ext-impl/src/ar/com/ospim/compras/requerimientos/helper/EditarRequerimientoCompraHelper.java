@@ -358,6 +358,22 @@ public class EditarRequerimientoCompraHelper {
             ServiceContext serviceContext,
             String empresaCuit,
             String empresaSucursal) throws Exception {
+        return guardarNuevoRequerimientoCompraConCotizacionesEmpresa(
+                requerimiento, ordenesMedicas, gestorDocumento, usuario,
+                detalles, cotizaciones, serviceContext, empresaCuit, empresaSucursal, -1);
+    }
+
+    public int guardarNuevoRequerimientoCompraConCotizacionesEmpresa(
+            RequerimientoCompra requerimiento,
+            List<OrdenMedicaValidada> ordenesMedicas,
+            GestorOrdenMedicaDocumento gestorDocumento,
+            String usuario,
+            List<RequerimientoCompraDetalle> detalles,
+            List<PresupuestoEntrada> cotizaciones,
+            ServiceContext serviceContext,
+            String empresaCuit,
+            String empresaSucursal,
+            int indiceEmpresaAdjudicada) throws Exception {
 
         EditarRequerimientoCompraServiceUtil.Transaccion transaccion = null;
         boolean commitInvocado = false;
@@ -371,7 +387,7 @@ public class EditarRequerimientoCompraHelper {
             if (detalles != null) {
                 validarNuevoRequerimientoConCotizacionesEmpresa(
                         requerimiento, detalles, cotizaciones, serviceContext,
-                        empresaCuit, empresaSucursal);
+                        empresaCuit, empresaSucursal, indiceEmpresaAdjudicada);
             }
             prepararRequerimientoParaGuardar(requerimiento);
             validarRequerimientoParaGuardar(requerimiento);
@@ -448,12 +464,19 @@ public class EditarRequerimientoCompraHelper {
                         throw new IllegalStateException("No se obtuvo el identificador del detalle.");
                     }
                 }
-                presupuestoHelper.guardarCotizacionesEmpresa(
-                        transaccion, idRequerimiento, cotizaciones, serviceContext,
-                        normalizarUsuario(usuario), cotizacionesCreadas);
-                transaccion.guardarEmpresaAdjudicada(
-                        idRequerimiento, empresaCuit, empresaSucursal,
-                        normalizarUsuario(usuario));
+                List<RequerimientoCompraPresupuesto> guardadas =
+                        presupuestoHelper.guardarCotizacionesEmpresa(
+                                transaccion, idRequerimiento, cotizaciones, serviceContext,
+                                normalizarUsuario(usuario), cotizacionesCreadas);
+                if (indiceEmpresaAdjudicada >= 0) {
+                    transaccion.guardarEmpresaAdjudicada(idRequerimiento,
+                            guardadas.get(indiceEmpresaAdjudicada).getIdRequerimientoPresupuesto(),
+                            normalizarUsuario(usuario));
+                } else {
+                    transaccion.guardarEmpresaAdjudicada(
+                            idRequerimiento, empresaCuit, empresaSucursal,
+                            normalizarUsuario(usuario));
+                }
             }
 
             commitInvocado = true;
@@ -527,6 +550,18 @@ public class EditarRequerimientoCompraHelper {
             ServiceContext serviceContext,
             String empresaCuit,
             String empresaSucursal) throws Exception {
+        validarNuevoRequerimientoConCotizacionesEmpresa(requerimiento, detalles,
+                cotizaciones, serviceContext, empresaCuit, empresaSucursal, -1);
+    }
+
+    public void validarNuevoRequerimientoConCotizacionesEmpresa(
+            RequerimientoCompra requerimiento,
+            List<RequerimientoCompraDetalle> detalles,
+            List<PresupuestoEntrada> cotizaciones,
+            ServiceContext serviceContext,
+            String empresaCuit,
+            String empresaSucursal,
+            int indiceEmpresaAdjudicada) throws Exception {
 
         prepararRequerimientoParaGuardar(requerimiento);
         validarRequerimientoParaGuardar(requerimiento);
@@ -552,6 +587,14 @@ public class EditarRequerimientoCompraHelper {
         if (cotizaciones != null && !cotizaciones.isEmpty()) {
             DocumentoLibraryComprasHelper.validarContextoDocumentLibrary(serviceContext);
         }
+        if (indiceEmpresaAdjudicada < -1
+                || (indiceEmpresaAdjudicada >= 0
+                    && (cotizaciones == null || indiceEmpresaAdjudicada >= cotizaciones.size()))) {
+            throw errorUsuario("La cotizacion adjudicada del alta no es valida.");
+        }
+        if (indiceEmpresaAdjudicada >= 0) {
+            return;
+        }
         String cuit = WebKeysCompras.trimToNull(empresaCuit);
         String sucursal = WebKeysCompras.trimToNull(empresaSucursal);
         if (cuit == null && sucursal == null) {
@@ -569,6 +612,37 @@ public class EditarRequerimientoCompraHelper {
         if (!encontrada) {
             throw errorUsuario("La Empresa adjudicada debe tener una cotizacion en este requerimiento.");
         }
+    }
+
+    public void guardarEmpresaAdjudicada(
+            int idRequerimiento, int idPresupuesto, String usuario) throws Exception {
+
+        validarEmpresaAdjudicada(idRequerimiento, idPresupuesto);
+        EditarRequerimientoCompraServiceUtil.guardarEmpresaAdjudicada(
+                idRequerimiento, idPresupuesto, normalizarUsuario(usuario));
+    }
+
+    public void validarEmpresaAdjudicada(int idRequerimiento, int idPresupuesto) throws Exception {
+        RequerimientoCompra actual =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimiento);
+        if (actual == null || !actual.isActivo() || !actual.isPendiente()
+                || !actual.esSectorSinCotizacionPrestador()) {
+            throw errorUsuario("La adjudicacion solo puede cambiarse en RRHH o Sistemas PENDIENTE.");
+        }
+        if (idPresupuesto < 0) {
+            throw errorUsuario("La cotizacion adjudicada no es valida.");
+        }
+        if (idPresupuesto == 0) {
+            return;
+        }
+        RequerimientoCompraPresupuesto cotizacion =
+                BusquedaRequerimientoCompraServiceUtil.getCotizacionEmpresa(idPresupuesto, idRequerimiento);
+        if (cotizacion == null || !cotizacion.isActivo() || !cotizacion.isCotizacionEmpresa()) {
+            throw errorUsuario("La Empresa adjudicada debe tener una cotizacion activa en este requerimiento.");
+        }
+        new PresupuestoCompraHelper().validarDatosEmpresaCotizacion(
+                cotizacion.getEmpresaCuit(), cotizacion.getEmpresaSucursal(),
+                cotizacion.getDescripcionEmpresa(), 1);
     }
 
     public void guardarEmpresaAdjudicada(
@@ -1297,7 +1371,7 @@ public class EditarRequerimientoCompraHelper {
                         + "antes de Crear Orden de Compra.");
             }
             validarEmpresaAdjudicada(idRequerimientoCompra,
-                    adjudicada.getEmpresaCuit(), adjudicada.getEmpresaSucursal());
+                    adjudicada.getIdRequerimientoPresupuesto());
 
             int estadoFinal =
                     EditarRequerimientoCompraServiceUtil.confirmarOrdenCompra(
@@ -3083,22 +3157,9 @@ private void prepararDetalleParaGuardar(
                 );
             }
 
-            if (WebKeysCompras.isEmpty(presupuesto.getEmpresaCuit())
-                    || presupuesto.getEmpresaCuit().length() > 11
-                    || WebKeysCompras.isEmpty(
-                            presupuesto.getEmpresaSucursal()
-                    )
-                    || presupuesto.getEmpresaSucursal().length() > 6
-                    || WebKeysCompras.isEmpty(
-                            presupuesto.getDescripcionEmpresa()
-                    )
-                    || presupuesto.getDescripcionEmpresa().length() > 200) {
-
-                throw errorUsuario(
-                        "La identidad de la Empresa de la cotización "
-                                + "no es válida."
-                );
-            }
+            new PresupuestoCompraHelper().validarDatosEmpresaCotizacion(
+                    presupuesto.getEmpresaCuit(), presupuesto.getEmpresaSucursal(),
+                    presupuesto.getDescripcionEmpresa(), 1);
 
         } else {
             throw errorUsuario(

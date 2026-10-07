@@ -68,6 +68,12 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_GUARDAR_EMPRESA_ADJUDICADA =
             "{ ? = call compras.guardar_empresa_adjudicada(?,?,?,?) }";
 
+    private static final String SQL_GUARDAR_EMPRESA_ADJUDICADA_POR_PRESUPUESTO =
+            "{ ? = call compras.guardar_empresa_adjudicada(?,?,?) }";
+
+    private static final String SQL_COMPLETAR_EMPRESA_COTIZACION =
+            "{ ? = call compras.completar_empresa_cotizacion(?,?,?,?,?) }";
+
     private static final String SQL_GUARDAR_COTIZACION =
             "{ ? = call compras.guardar_cotizacion_requerimiento_call(?,?,?,?,?,?,?) }";
 
@@ -668,6 +674,75 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
+    public void guardarEmpresaAdjudicada(
+            int idRequerimientoCompra,
+            int idRequerimientoPresupuesto,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            guardarEmpresaAdjudicada(
+                    con, idRequerimientoCompra, idRequerimientoPresupuesto,
+                    usuario);
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    private void guardarEmpresaAdjudicada(
+            Connection con,
+            int idRequerimientoCompra,
+            int idRequerimientoPresupuesto,
+            String usuario) throws Exception {
+
+        CallableStatement stmt = null;
+        try {
+            stmt = con.prepareCall(SQL_GUARDAR_EMPRESA_ADJUDICADA_POR_PRESUPUESTO);
+            stmt.registerOutParameter(1, Types.INTEGER);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setInt(3, idRequerimientoPresupuesto);
+            stmt.setString(4, usuario);
+            stmt.execute();
+            int idPresupuesto = stmt.getInt(1);
+            if (stmt.wasNull() || idPresupuesto != idRequerimientoPresupuesto) {
+                throw new SQLException(
+                        "No se confirmo la persistencia de la Empresa adjudicada.");
+            }
+        } finally {
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    public void completarEmpresaCotizacion(
+            int idRequerimientoCompra,
+            int idRequerimientoPresupuesto,
+            String empresaCuit,
+            String empresaSucursal,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_COMPLETAR_EMPRESA_COTIZACION);
+            stmt.registerOutParameter(1, Types.INTEGER);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setInt(3, idRequerimientoPresupuesto);
+            stmt.setString(4, empresaCuit);
+            stmt.setString(5, empresaSucursal);
+            stmt.setString(6, usuario);
+            stmt.execute();
+            int idPresupuesto = stmt.getInt(1);
+            if (stmt.wasNull() || idPresupuesto != idRequerimientoPresupuesto) {
+                throw new SQLException(
+                        "No se confirmo la persistencia del CUIT de la Empresa cotizada.");
+            }
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
     private String construirArrayEnterosPostgreSql(
             Integer[] valores) {
 
@@ -769,6 +844,16 @@ public class EditarRequerimientoCompraServiceImpl {
             service.guardarEmpresaAdjudicada(
                     con, idRequerimientoCompra, empresaCuit,
                     empresaSucursal, usuario);
+        }
+
+        public void guardarEmpresaAdjudicada(
+                int idRequerimientoCompra,
+                int idRequerimientoPresupuesto,
+                String usuario) throws Exception {
+
+            service.guardarEmpresaAdjudicada(
+                    con, idRequerimientoCompra, idRequerimientoPresupuesto,
+                    usuario);
         }
 
         public int registrarOrdenMedica(

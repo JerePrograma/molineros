@@ -233,8 +233,13 @@ if (cotizacionEmpresaPresupuestos) {
     );
 }
 
+boolean puedeCompletarFiscalPresupuestos = reqPresupuestos.isActivo()
+        && reqPresupuestos.esSectorSinCotizacionPrestador()
+        && reqPresupuestos.isOrdenCompra() && puedeCotizarPresupuestos
+        && !"ver".equalsIgnoreCase(modoPresupuestos)
+        && !"/compras/ver_requerimiento".equals(strutsActionPresupuestos);
 String modoRetornoPresupuestos =
-        soloLecturaPresupuestos
+        soloLecturaPresupuestos && !puedeCompletarFiscalPresupuestos
                 ? "ver"
                 : "editar";
 
@@ -771,12 +776,13 @@ boolean msgPresupuestoBorrado =
           las cotizaciones durante el alta y editarlas mientras permanezca PENDIENTE.
         <br />
 
-        - Debe buscar y seleccionar una Empresa activa del padrón de
-          Empleadores antes de elegir el PDF.
+        - Debe informar el nombre de la Empresa. El CUIT es opcional y puede
+          completarlo después en la cotización guardada. Buscar permite seleccionar
+          una Empresa del padrón de Empleadores.
         <br />
 
-        - Una misma Empresa no puede repetirse dentro de la carga ni tener
-          otra cotización activa para el requerimiento.
+        - Una misma identidad fiscal (CUIT y sucursal) no puede tener otra
+          cotización activa para el requerimiento. El nombre no identifica fiscalmente una Empresa.
         <br />
 
         - Puede utilizar "Agregar otra cotización" para cargar documentos de
@@ -873,6 +879,31 @@ boolean msgPresupuestoBorrado =
 </form>
 
 <script type="text/javascript">
+    function <portlet:namespace />completarEmpresaCotizacion(idPresupuesto, boton) {
+        var fila = jQuery(boton).parents('tr').eq(0);
+        var cuit = jQuery.trim(fila.find('input.cotizacion-empresa-cuit').val() || '');
+        var sucursal = jQuery.trim(fila.find('input.cotizacion-empresa-sucursal').val() || '');
+        if (!/^[0-9]{11}$/.test(cuit)) {
+            alert('Debe informar un CUIT válido de 11 dígitos.');
+            return false;
+        }
+        if (typeof validarCuil == 'function' && !validarCuil(cuit, 'El CUIT no es válido.')) {
+            return false;
+        }
+        var form = document.getElementById('<portlet:namespace />compra_presupuesto_fm');
+        if (!form || boton.disabled) { return false; }
+        jQuery(form).find('input.empresa-fiscal-envio').remove();
+        jQuery('<input type="hidden" class="empresa-fiscal-envio" />')
+                .attr('name', '<portlet:namespace />empresa_cuit').val(cuit).appendTo(form);
+        jQuery('<input type="hidden" class="empresa-fiscal-envio" />')
+                .attr('name', '<portlet:namespace />empresa_sucursal').val(sucursal).appendTo(form);
+        jQuery('#<portlet:namespace />id_requerimiento_presupuesto').val(idPresupuesto);
+        jQuery('#<portlet:namespace />presupuesto_accion').val('completarEmpresa');
+        boton.disabled = true;
+        form.submit();
+        return false;
+    }
+
     function <portlet:namespace />validarTamanoArchivoPresupuesto(archivo) {
         var maximo = <%= maximoTamanoPresupuesto == Long.MAX_VALUE
                 ? 0L : maximoTamanoPresupuesto %>;
@@ -940,11 +971,14 @@ boolean msgPresupuestoBorrado =
         <portlet:namespace />capturarEmpresaAdjudicada();
         var nodos = jQuery('#<portlet:namespace />empresa_adjudicada_cuit, '
                 + '#<portlet:namespace />empresa_adjudicada_sucursal, '
-                + '#<portlet:namespace />empresa_adjudicacion_informada');
+                + '#<portlet:namespace />empresa_adjudicacion_informada, '
+                + '#<portlet:namespace />empresa_adjudicada_id, '
+                + '#<portlet:namespace />empresa_adjudicada_indice');
         <% if (altaEmpresaPresupuestos) { %>
         nodos = nodos.add('#<portlet:namespace />presupuesto_count')
                 .add('#<portlet:namespace />presupuestos_body input[type="hidden"], '
-                        + '#<portlet:namespace />presupuestos_body input[type="file"]');
+                        + '#<portlet:namespace />presupuestos_body input[type="file"], '
+                        + '#<portlet:namespace />presupuestos_body input[type="text"]');
         <% } %>
         nodos.each(function() {
             contextos.push({nodo: this, padre: this.parentNode, siguiente: this.nextSibling});
@@ -980,7 +1014,9 @@ boolean msgPresupuestoBorrado =
         jQuery(form).find('input.empresa-adjudicacion-envio').remove();
         jQuery('#<portlet:namespace />empresa_adjudicada_cuit, '
                 + '#<portlet:namespace />empresa_adjudicada_sucursal, '
-                + '#<portlet:namespace />empresa_adjudicacion_informada').each(function() {
+                + '#<portlet:namespace />empresa_adjudicacion_informada, '
+                + '#<portlet:namespace />empresa_adjudicada_id, '
+                + '#<portlet:namespace />empresa_adjudicada_indice').each(function() {
             jQuery(this).clone().removeAttr('id').addClass('empresa-adjudicacion-envio').appendTo(form);
         });
         boton.disabled = true;
@@ -1217,7 +1253,7 @@ boolean msgPresupuestoBorrado =
         <% if (cotizacionEmpresaPresupuestos) { %>
         var empresaCuit =
                 jQuery(
-                        '<input type="hidden" '
+                        '<input type="text" maxlength="11" '
                                 + 'class="presupuesto-empresa-cuit" />'
                 );
 
@@ -1245,12 +1281,23 @@ boolean msgPresupuestoBorrado =
             return <portlet:namespace />abrirBusquedaEmpresaCotizacion(row);
         });
 
+        var empresaDescripcion = jQuery('<input type="text" maxlength="200" class="presupuesto-empresa-descripcion" />');
+        empresaDescripcion.change(function() {
+            <portlet:namespace />actualizarEmpresasAdjudicacion();
+        });
+        empresaCuit.change(function() {
+            empresaSucursal.val('');
+            empresaSeleccionada.text('');
+            <portlet:namespace />actualizarEmpresasAdjudicacion();
+        });
         contraparte = jQuery('<div></div>');
+        contraparte.append(jQuery('<label>Empresa (obligatoria):</label>'));
+        contraparte.append(empresaDescripcion);
+        contraparte.append(jQuery('<label>CUIT (opcional):</label>'));
+        contraparte.append(empresaCuit);
         contraparte.append(buscarEmpresa);
         contraparte.append(empresaSeleccionada);
-        contraparte.append(empresaCuit);
         contraparte.append(empresaSucursal);
-        contraparte.append(jQuery('<input type="hidden" class="presupuesto-empresa-descripcion" />'));
         <% } else { %>
         var prestador =
                 jQuery(
@@ -1318,6 +1365,9 @@ boolean msgPresupuestoBorrado =
                 );
 
         borrar.click(function() {
+            <% if (altaEmpresaPresupuestos) { %>
+            jQuery('#<portlet:namespace />empresa_adjudicada_indice').val('-1');
+            <% } %>
             jQuery(this)
                     .parents('tr')
                     .eq(0)
@@ -1421,8 +1471,9 @@ boolean msgPresupuestoBorrado =
                             ).val()
                     );
 
-            var claveContraparte =
-                    empresaCuit + '|' + empresaSucursal;
+            var empresaDescripcion = jQuery.trim(row.find('input.presupuesto-empresa-descripcion').val() || '');
+            var claveContraparte = empresaCuit != ''
+                    ? empresaCuit + '|' + empresaSucursal : 'fila|' + index;
             <% } else { %>
             var prestador =
                     jQuery.trim(
@@ -1438,12 +1489,19 @@ boolean msgPresupuestoBorrado =
                     );
 
             <% if (cotizacionEmpresaPresupuestos) { %>
-            if (empresaCuit == '' || empresaSucursal == '') {
+            if (empresaDescripcion == '') {
                 alert(
-                        'Debe buscar y seleccionar la Empresa de la cotización '
+                        'Debe informar el nombre de la Empresa de la cotización '
                                 + (index + 1)
                                 + '.'
                 );
+                valido = false;
+                return false;
+            }
+            if (empresaCuit != '' && (!/^[0-9]{11}$/.test(empresaCuit)
+                    || (typeof validarCuil == 'function'
+                        && !validarCuil(empresaCuit, 'El CUIT no es válido.')))) {
+                alert('El CUIT de la cotización ' + (index + 1) + ' no es válido.');
                 valido = false;
                 return false;
             }

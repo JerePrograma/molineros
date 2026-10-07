@@ -56,7 +56,10 @@ boolean showEditarButton =
                         || req.puedeEliminarDetalle()
                 ))
         || (showCotizarButtons
-                && req.puedeEditarCotizacion());
+                && (req.puedeEditarCotizacion()
+                        || (req.esSectorSinCotizacionPrestador()
+                                && req.isActivo()
+                                && req.isOrdenCompra())));
  
 String idRequerimiento = 
         req.getIdRequerimientoCompraString(); 

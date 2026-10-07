@@ -155,7 +155,7 @@ public final class PresupuestoCompraHelper {
      * El caller controla commit, rollback y compensacion de todos los archivos
      * del alta. La asociacion usa la misma transaccion de cabecera y detalles.
      */
-    public void guardarCotizacionesEmpresa(
+    public List<RequerimientoCompraPresupuesto> guardarCotizacionesEmpresa(
             EditarRequerimientoCompraServiceUtil.Transaccion transaccion,
             int idRequerimientoCompra,
             List<PresupuestoEntrada> entradas,
@@ -163,8 +163,10 @@ public final class PresupuestoCompraHelper {
             String usuario,
             List<DocumentoPresupuestoCreado> documentosCreados) throws Exception {
 
+        List<RequerimientoCompraPresupuesto> guardadas =
+                new ArrayList<RequerimientoCompraPresupuesto>();
         if (entradas == null || entradas.isEmpty()) {
-            return;
+            return guardadas;
         }
         if (transaccion == null || idRequerimientoCompra <= 0
                 || documentosCreados == null) {
@@ -182,12 +184,13 @@ public final class PresupuestoCompraHelper {
                 DocumentoPresupuestoCreado documento = crearArchivoPresupuesto(
                         serviceContext.getUserId(), folder.getFolderId(), presupuesto, serviceContext);
                 documentosCreados.add(documento);
-                registrarAsociacionPresupuesto(transaccion, idRequerimientoCompra,
-                        presupuesto, documento, normalizarUsuario(usuario));
+                guardadas.add(registrarAsociacionPresupuesto(transaccion, idRequerimientoCompra,
+                        presupuesto, documento, normalizarUsuario(usuario)));
             }
         } catch (Exception e) {
             throw traducirErrorDocumento(e);
         }
+        return guardadas;
     }
 
     public boolean compensarDocumentosAlta(
@@ -217,9 +220,9 @@ public final class PresupuestoCompraHelper {
         }
         for (PresupuestoValidado presupuesto : presupuestos) {
             for (RequerimientoCompraPresupuesto actual : actuales) {
-                if (actual != null && actual.isActivo()
+                if (presupuesto.getEmpresaCuit() != null && actual != null && actual.isActivo()
                         && presupuesto.getEmpresaCuit().equals(WebKeysCompras.trimToNull(actual.getEmpresaCuit()))
-                        && presupuesto.getEmpresaSucursal().equals(WebKeysCompras.trimToNull(actual.getEmpresaSucursal()))) {
+                        && String.valueOf(presupuesto.getEmpresaSucursal()).equals(String.valueOf(WebKeysCompras.trimToNull(actual.getEmpresaSucursal())))) {
                     throw new IllegalArgumentException(
                             "La Empresa ya tiene una cotizacion activa en este requerimiento.");
                 }
@@ -607,19 +610,18 @@ public final class PresupuestoCompraHelper {
                     );
                 }
 
-                Empresa empresa =
-                        obtenerEmpresaActiva(
-                                entrada.getEmpresaCuit(),
-                                entrada.getEmpresaSucursal(),
-                                i + 1
-                        );
+                String cuit = WebKeysCompras.trimToNull(entrada.getEmpresaCuit());
+                String sucursal = WebKeysCompras.trimToNull(entrada.getEmpresaSucursal());
+                String descripcion = WebKeysCompras.trimToNull(entrada.getDescripcionEmpresa());
+                validarDatosEmpresaCotizacion(cuit, sucursal, descripcion, i + 1);
+                Empresa empresa = new Empresa(cuit, sucursal, descripcion);
 
                 String claveEmpresa =
                         empresa.getCuit()
                                 + "|"
                                 + empresa.getSucursal();
 
-                if (!empresasSeleccionadas.add(claveEmpresa)) {
+                if (empresa.getCuit() != null && !empresasSeleccionadas.add(claveEmpresa)) {
                     throw new Exception(
                             "La empresa de la cotización "
                                     + (i + 1)
@@ -1109,6 +1111,58 @@ public final class PresupuestoCompraHelper {
         }
     }
 
+    public void validarDatosEmpresaCotizacion(
+            String empresaCuit, String empresaSucursal, String descripcion,
+            int numeroPresupuesto) throws Exception {
+
+        String cuit = WebKeysCompras.trimToNull(empresaCuit);
+        String sucursal = WebKeysCompras.trimToNull(empresaSucursal);
+        String nombre = WebKeysCompras.trimToNull(descripcion);
+        if (nombre == null || nombre.length() > 200) {
+            throw new Exception("Debe informar el nombre de la empresa de la cotización "
+                    + numeroPresupuesto + " (hasta 200 caracteres).");
+        }
+        if (cuit != null && (cuit.length() > 11 || !CuilUtils.validarNum(cuit))) {
+            throw new Exception("El CUIT de la empresa de la cotización "
+                    + numeroPresupuesto + " no es válido.");
+        }
+        if (sucursal != null) {
+            obtenerEmpresaActiva(cuit, sucursal, numeroPresupuesto);
+        }
+    }
+
+    public void completarEmpresaCotizacion(int idRequerimiento, int idPresupuesto,
+            String empresaCuit, String empresaSucursal, String usuario) throws Exception {
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimiento);
+        if (requerimiento == null || !requerimiento.isActivo()
+                || !requerimiento.esSectorSinCotizacionPrestador()
+                || (!requerimiento.isPendiente() && !requerimiento.isOrdenCompra())) {
+            throw new Exception("Solo puede completar el CUIT en RRHH o Sistemas PENDIENTE u ORDEN DE COMPRA.");
+        }
+        RequerimientoCompraPresupuesto presupuesto =
+                BusquedaRequerimientoCompraServiceUtil.getCotizacionEmpresa(idPresupuesto, idRequerimiento);
+        String cuit = WebKeysCompras.trimToNull(empresaCuit);
+        String sucursal = WebKeysCompras.trimToNull(empresaSucursal);
+        if (presupuesto == null || !presupuesto.isActivo() || !presupuesto.isCotizacionEmpresa()) {
+            throw new Exception("No se encontró la cotización de Empresa activa.");
+        }
+        if (cuit == null) {
+            throw new Exception("Debe informar el CUIT real de la Empresa.");
+        }
+        String cuitActual = WebKeysCompras.trimToNull(presupuesto.getEmpresaCuit());
+        if (cuitActual != null && !cuitActual.equals(cuit)) {
+            throw new Exception("No se puede reemplazar el CUIT ya registrado en la cotización.");
+        }
+        if (sucursal == null) {
+            sucursal = WebKeysCompras.trimToNull(presupuesto.getEmpresaSucursal());
+        }
+        validarDatosEmpresaCotizacion(cuit, sucursal, presupuesto.getDescripcionEmpresa(), 1);
+        EditarRequerimientoCompraServiceUtil.completarEmpresaCotizacion(
+                idRequerimiento, idPresupuesto, cuit, sucursal, normalizarUsuario(usuario));
+    }
+
     public Empresa obtenerEmpresaActiva(
             String empresaCuit,
             String empresaSucursal,
@@ -1559,6 +1613,7 @@ public final class PresupuestoCompraHelper {
         private final int idPrestador;
         private final String empresaCuit;
         private final String empresaSucursal;
+        private final String descripcionEmpresa;
 
         public PresupuestoEntrada(
                 int indice,
@@ -1584,6 +1639,15 @@ public final class PresupuestoCompraHelper {
                 String empresaCuit,
                 String empresaSucursal) {
 
+            this(indice, archivo, nombreOriginal, idPrestador,
+                    empresaCuit, empresaSucursal, null);
+        }
+
+        public PresupuestoEntrada(
+                int indice, File archivo, String nombreOriginal, int idPrestador,
+                String empresaCuit, String empresaSucursal, String descripcionEmpresa) {
+
+            this.descripcionEmpresa = descripcionEmpresa;
             this.indice =
                     indice;
 
@@ -1625,6 +1689,10 @@ public final class PresupuestoCompraHelper {
 
         public String getEmpresaSucursal() {
             return empresaSucursal;
+        }
+
+        public String getDescripcionEmpresa() {
+            return descripcionEmpresa;
         }
     }
 

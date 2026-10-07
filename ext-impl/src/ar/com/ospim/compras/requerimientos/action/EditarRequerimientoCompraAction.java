@@ -172,14 +172,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 validarPermisoCotizar(user);
                 consumirTokenGuardadoCompra(actionRequest);
                 contextoGuardado.tokenConsumido = true;
-                String cuit = getParametroTrim(actionRequest, "empresa_adjudicada_cuit");
-                String sucursal = getParametroTrim(actionRequest, "empresa_adjudicada_sucursal");
+                int idCotizacion = ParamUtil.getInteger(actionRequest, "empresa_adjudicada_id", 0);
                 if (!"1".equals(getParametroTrim(actionRequest, "empresa_adjudicacion_informada"))) {
                     errorCampo("empresa_adjudicada_cuit", "Debe informar la seleccion de adjudicacion.");
                 }
-                requerimientoHelper.validarEmpresaAdjudicada(idRequerimientoCompra, cuit, sucursal);
+                requerimientoHelper.validarEmpresaAdjudicada(idRequerimientoCompra, idCotizacion);
                 contextoGuardado.persistenciaInvocada = true;
-                requerimientoHelper.guardarEmpresaAdjudicada(idRequerimientoCompra, cuit, sucursal, usuario);
+                requerimientoHelper.guardarEmpresaAdjudicada(idRequerimientoCompra, idCotizacion, usuario);
                 actionResponse.setRenderParameter("compras_guardado", "true");
                 actionResponse.setRenderParameter("compras_operacion", cmd);
                 setIdRequerimientoEnRequest(actionRequest, actionResponse, idRequerimientoCompra);
@@ -573,6 +572,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             String prefijo = "presupuesto_" + i;
             if (!WebKeysCompras.isEmpty(getParametroTrim(actionRequest, prefijo + "_empresa_cuit"))
                     || !WebKeysCompras.isEmpty(getParametroTrim(actionRequest, prefijo + "_empresa_sucursal"))
+                    || !WebKeysCompras.isEmpty(getParametroTrim(actionRequest, prefijo + "_descripcion_empresa"))
                     || (uploadRequest != null && !WebKeysCompras.isEmpty(uploadRequest.getFileName(prefijo)))) {
                 errorCampo("presupuesto_count", "Hay una fila de cotizacion fuera de la cantidad informada. "
                         + "Revise las Empresas y sus archivos.");
@@ -580,9 +580,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
         String empresaCuit = getParametroTrim(actionRequest, "empresa_adjudicada_cuit");
         String empresaSucursal = getParametroTrim(actionRequest, "empresa_adjudicada_sucursal");
+        int idCotizacionAdjudicada = ParamUtil.getInteger(actionRequest, "empresa_adjudicada_id", 0);
+        int indiceEmpresaAdjudicada = ParamUtil.getInteger(actionRequest, "empresa_adjudicada_indice", -1);
         boolean adjudicacionInformada = "1".equals(
                 getParametroTrim(actionRequest, "empresa_adjudicacion_informada"));
-        boolean datosEmpresa = cantidadCotizaciones > 0 || adjudicacionInformada
+        boolean datosEmpresa = cantidadCotizaciones > 0 || adjudicacionInformada || idCotizacionAdjudicada != 0 || indiceEmpresaAdjudicada != -1
                 || !WebKeysCompras.isEmpty(empresaCuit) || !WebKeysCompras.isEmpty(empresaSucursal);
         if (datosEmpresa) {
             validarPermisoCotizar(PortalUtil.getUser(actionRequestOriginal));
@@ -599,7 +601,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     errorCampo("presupuesto_count", "Utilice Subir presupuestos para agregar cotizaciones en edicion.");
                 }
                 requerimientoHelper.validarEmpresaAdjudicada(
-                        requerimiento.getIdRequerimientoCompra(), empresaCuit, empresaSucursal);
+                        requerimiento.getIdRequerimientoCompra(), idCotizacionAdjudicada);
             }
         }
 
@@ -690,11 +692,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 }
                 requerimientoHelper.validarNuevoRequerimientoConCotizacionesEmpresa(
                         requerimiento, detalles, cotizaciones, serviceContext,
-                        empresaCuit, empresaSucursal);
+                        empresaCuit, empresaSucursal, indiceEmpresaAdjudicada);
                 contextoGuardado.persistenciaInvocada = true;
                 int id = requerimientoHelper.guardarNuevoRequerimientoCompraConCotizacionesEmpresa(
                         requerimiento, ordenesMedicas, gestorDocumento, usuario,
-                        detalles, cotizaciones, serviceContext, empresaCuit, empresaSucursal);
+                        detalles, cotizaciones, serviceContext, empresaCuit, empresaSucursal, indiceEmpresaAdjudicada);
                 contextoGuardado.detallesGuardados = true;
                 return id;
             }
@@ -776,8 +778,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             ActionRequest request, int idRequerimiento, String usuario) throws Exception {
         if ("1".equals(getParametroTrim(request, "empresa_adjudicacion_informada"))) {
             requerimientoHelper.guardarEmpresaAdjudicada(
-                    idRequerimiento, getParametroTrim(request, "empresa_adjudicada_cuit"),
-                    getParametroTrim(request, "empresa_adjudicada_sucursal"), usuario);
+                    idRequerimiento, ParamUtil.getInteger(request, "empresa_adjudicada_id", 0), usuario);
         }
     }
 
@@ -786,7 +787,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         count = Math.max(0, Math.min(count, WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA));
         response.setRenderParameter("presupuesto_count", String.valueOf(count));
         String[] seleccion = {"empresa_adjudicada_cuit", "empresa_adjudicada_sucursal",
-                "empresa_adjudicacion_informada"};
+                "empresa_adjudicacion_informada", "empresa_adjudicada_id", "empresa_adjudicada_indice"};
         for (int i = 0; i < seleccion.length; i++) {
             response.setRenderParameter(seleccion[i], getParametroTrim(request, seleccion[i]));
         }
@@ -1623,7 +1624,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 requerimiento
                                         .esSectorSinCotizacionPrestador()
                                 && requerimiento
-                                        .puedeAdministrarPresupuestos()
+                                        .isActivo()
+                                && (requerimiento.puedeAdministrarPresupuestos()
+                                    || requerimiento.isOrdenCompra())
                         )
         );
     }

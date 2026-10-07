@@ -126,6 +126,14 @@ boolean puedeCotizarPresupuestos =
                                 WebKeysCompras.ROL_COTIZAR_COMPRAS
                         );
 
+boolean puedeCompletarEmpresaPresupuestos =
+        cotizacionEmpresaPresupuestos
+        && puedeCotizarPresupuestos
+        && reqPresupuestos.isActivo()
+        && (reqPresupuestos.isPendiente() || reqPresupuestos.isOrdenCompra())
+        && !"ver".equalsIgnoreCase(modoPresupuestos)
+        && !"/compras/ver_requerimiento".equals(strutsActionPresupuestos);
+
 boolean puedeEliminarPresupuestos =
         idRequerimientoCompraPresupuestos > 0
         && puedeCotizarPresupuestos
@@ -291,6 +299,33 @@ try {
                             presupuesto.getEmpresaSucursal()
                     )
             );
+
+            if (puedeCompletarEmpresaPresupuestos && presupuesto.isActivo()
+                    && WebKeysCompras.isEmpty(presupuesto.getEmpresaCuit())
+                    && presupuesto.getIdRequerimiento() != null
+                    && presupuesto.getIdRequerimiento().intValue()
+                            == idRequerimientoCompraPresupuestos) {
+                String idCuitEmpresa = namespaceAdjuntos + "cotizacion_empresa_cuit_"
+                        + idRequerimientoPresupuesto;
+                String idSucursalEmpresa = namespaceAdjuntos + "cotizacion_empresa_sucursal_"
+                        + idRequerimientoPresupuesto;
+                empresaVisible.append("<br /><label for=\"");
+                empresaVisible.append(HtmlUtil.escape(idCuitEmpresa));
+                empresaVisible.append("\">CUIT:</label> <input type=\"text\" class=\"cotizacion-empresa-cuit\" id=\"");
+                empresaVisible.append(HtmlUtil.escape(idCuitEmpresa));
+                empresaVisible.append("\" maxlength=\"11\" size=\"13\" value=\"\" /> ");
+                empresaVisible.append("<label for=\"");
+                empresaVisible.append(HtmlUtil.escape(idSucursalEmpresa));
+                empresaVisible.append("\">Sucursal:</label> <input type=\"text\" class=\"cotizacion-empresa-sucursal\" id=\"");
+                empresaVisible.append(HtmlUtil.escape(idSucursalEmpresa));
+                empresaVisible.append("\" maxlength=\"6\" size=\"6\" value=\"");
+                empresaVisible.append(HtmlUtil.escape(presupuesto.getEmpresaSucursal()));
+                empresaVisible.append("\" /> <input type=\"button\" value=\"Guardar CUIT\" onclick=\"return ");
+                empresaVisible.append(namespaceAdjuntos);
+                empresaVisible.append("completarEmpresaCotizacion(");
+                empresaVisible.append(idRequerimientoPresupuesto);
+                empresaVisible.append(", this);\" />");
+            }
 
             row.addText(empresaVisible.toString());
 
