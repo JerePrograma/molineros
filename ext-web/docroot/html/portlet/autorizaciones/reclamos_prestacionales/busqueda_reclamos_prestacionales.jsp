@@ -8,6 +8,17 @@
 	response.setDateHeader("Expires", 0); //prevents caching at the proxy server
 	boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_ABM_RECLAM_PREST);
 	boolean showReadOnlyReclamPrestac=PermissionUtil.userContainsRole(user,WebKeysAutorizaciones.ROL_CONSULTA_RECLAMOS_PRESTACIONALES);
+	String nuevoReclamoNonce = "";
+	if (showABMButtons) {
+		synchronized (request.getSession()) {
+			nuevoReclamoNonce = java.util.UUID.randomUUID().toString();
+			request.getSession().setAttribute("rp.nuevoReclamo.nonce", nuevoReclamoNonce);
+			request.getSession().setAttribute("rp.nuevoReclamo.editor",
+					request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION));
+			request.getSession().setAttribute("rp.nuevoReclamo.contextoCompra",
+					request.getSession().getAttribute(ar.com.ospim.compras.WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA));
+		}
+	}
 	
 	PortletURL portletURL = renderResponse.createRenderURL();
 	portletURL.setWindowState(LiferayWindowState.MAXIMIZED);
@@ -1123,7 +1134,7 @@ function editarReclamoPrestacional(id_reclamo) {
 	<portlet:namespace />initDateFields();
 	
 	function <portlet:namespace />altaReclamoPrestacional() {		
-		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /></portlet:renderURL>';		
+		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.MAXIMIZED.toString() %>"><portlet:param name="struts_action" value="/autorizaciones/editar_reclamosprestaciones_entry" /><portlet:param name="nuevoReclamoPrestacional" value="<%= nuevoReclamoNonce %>" /></portlet:renderURL>';
 		document.<portlet:namespace />fm.method = 'post';
 		
 		jQuery('#<portlet:namespace />cuil').val('');

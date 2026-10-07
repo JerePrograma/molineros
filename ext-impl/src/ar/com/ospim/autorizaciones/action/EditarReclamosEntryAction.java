@@ -213,6 +213,17 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 				""
 		);
 
+		String nuevoReclamoNonce = ParamUtil.getString(renderRequest, "nuevoReclamoPrestacional");
+		boolean iniciarNuevoReclamo = !StringUtils.checkEmpty(nuevoReclamoNonce)
+				&& "/autorizaciones/editar_reclamosprestaciones_entry".equals(mapping.getPath())
+				&& StringUtils.checkEmpty(cmd)
+				&& StringUtils.checkEmpty(cmdAction)
+				&& StringUtils.checkEmpty(ParamUtil.getString(renderRequest, "id_reclamosel"))
+				&& StringUtils.checkEmpty(ParamUtil.getString(renderRequest, "origen"))
+				&& StringUtils.checkEmpty(ParamUtil.getString(
+						renderRequest, WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE))
+				&& StringUtils.checkEmpty(recuperacionNonce);
+
 		if (!StringUtils.checkEmpty(recuperacionNonce)) {
 			try {
 				recuperacionEdicion =
@@ -271,6 +282,22 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 			}
 		} else {
 			try {
+				// El boton Nuevo solo puede abandonar el editor que vio la busqueda.
+				if (iniciarNuevoReclamo) {
+					if (!nuevoReclamoNonce.equals(session.getAttribute("rp.nuevoReclamo.nonce"))
+							|| session.getAttribute("rp.nuevoReclamo.editor") != session.getAttribute(
+									WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION)
+							|| session.getAttribute("rp.nuevoReclamo.contextoCompra") != session.getAttribute(
+									WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA)) {
+						throw new Exception("La solicitud de nuevo reclamo ya no corresponde al editor actual. "
+								+ "Vuelva a Reclamos Prestacionales e inicie una nueva carga.");
+					}
+					session.removeAttribute("rp.nuevoReclamo.nonce");
+					session.removeAttribute("rp.nuevoReclamo.editor");
+					session.removeAttribute("rp.nuevoReclamo.contextoCompra");
+					ReclamoPrestacionalCompraPrecargaHelper.limpiarEstadoEditorReclamoPrestacional(session);
+					portletSession.removeAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+				}
 				contextoCompra = resolverContextoCompra(
 						session,
 						renderRequest,
@@ -289,13 +316,13 @@ import com.liferay.portlet.PortletURLFactoryUtil;
 						contextoError.getMessage()
 				);
 				renderRequest.setAttribute(Constants.CMD, Constants.VIEW);
+				renderRequest.setAttribute("ModoConsulta", "si");
                 renderRequest.setAttribute("rp.contextoInvalido", Boolean.TRUE);
 
-				return mapping.findForward(getForward(
-						renderRequest,
-						"portlet.autorizaciones.reclamosprestacionales."
-								+ "editar_reclamos_entry"
-				));
+				return mapping.findForward(
+						"/autorizaciones/editar_reclamosprestaciones_seccional_entry".equals(mapping.getPath())
+								? "portlet.autorizaciones.reclamosprestacionales_seccional.editar_reclamos_entry"
+								: "portlet.autorizaciones.reclamosprestacionales.editar_reclamos_entry");
 			}
 		}
 
