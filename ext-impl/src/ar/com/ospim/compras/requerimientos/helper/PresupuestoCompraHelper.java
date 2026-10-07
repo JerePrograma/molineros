@@ -1163,6 +1163,37 @@ public final class PresupuestoCompraHelper {
                 idRequerimiento, idPresupuesto, cuit, sucursal, normalizarUsuario(usuario));
     }
 
+    public void editarEmpresaCotizacion(int idRequerimiento, int idPresupuesto,
+            String descripcionEmpresa, String empresaCuit, String empresaSucursal,
+            String usuario) throws Exception {
+
+        RequerimientoCompra requerimiento =
+                BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(idRequerimiento);
+        if (requerimiento == null || !requerimiento.isActivo()
+                || !requerimiento.esSectorSinCotizacionPrestador()
+                || (!requerimiento.isPendiente() && !requerimiento.isOrdenCompra())) {
+            throw new Exception("Solo puede editar la Empresa en RRHH o Sistemas PENDIENTE u ORDEN DE COMPRA.");
+        }
+        RequerimientoCompraPresupuesto presupuesto =
+                BusquedaRequerimientoCompraServiceUtil.getCotizacionEmpresa(idPresupuesto, idRequerimiento);
+        if (presupuesto == null || !presupuesto.isActivo() || !presupuesto.isCotizacionEmpresa()) {
+            throw new Exception("No se encontró la cotización de Empresa activa.");
+        }
+        String nombre = WebKeysCompras.trimToNull(descripcionEmpresa);
+        String cuit = WebKeysCompras.trimToNull(empresaCuit);
+        String sucursal = WebKeysCompras.trimToNull(empresaSucursal);
+        String cuitActual = WebKeysCompras.trimToNull(presupuesto.getEmpresaCuit());
+        if (cuitActual != null && !cuitActual.equals(cuit)) {
+            throw new Exception("No se puede reemplazar el CUIT ya registrado en la cotización.");
+        }
+        if (sucursal == null) {
+            sucursal = WebKeysCompras.trimToNull(presupuesto.getEmpresaSucursal());
+        }
+        validarDatosEmpresaCotizacion(cuit, sucursal, nombre, 1);
+        EditarRequerimientoCompraServiceUtil.editarEmpresaCotizacion(
+                idRequerimiento, idPresupuesto, nombre, cuit, sucursal, normalizarUsuario(usuario));
+    }
+
     public Empresa obtenerEmpresaActiva(
             String empresaCuit,
             String empresaSucursal,

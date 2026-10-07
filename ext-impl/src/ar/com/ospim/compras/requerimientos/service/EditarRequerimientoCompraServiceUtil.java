@@ -143,6 +143,19 @@ public class EditarRequerimientoCompraServiceUtil {
                 empresaCuit, empresaSucursal, usuario);
     }
 
+    public static void editarEmpresaCotizacion(
+            int idRequerimientoCompra,
+            int idRequerimientoPresupuesto,
+            String descripcionEmpresa,
+            String empresaCuit,
+            String empresaSucursal,
+            String usuario) throws Exception {
+
+        getInstance().editarEmpresaCotizacion(
+                idRequerimientoCompra, idRequerimientoPresupuesto,
+                descripcionEmpresa, empresaCuit, empresaSucursal, usuario);
+    }
+
     public static boolean darDeBajaPresupuesto(
             int idRequerimientoPresupuesto,
             int idRequerimientoCompra,

@@ -139,7 +139,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     validarContextoEdicion(
                             idRequerimientoCompra,
                             modo,
-                            "completarEmpresa".equals(cmd)
+                            "completarEmpresa".equals(cmd) || "editarEmpresa".equals(cmd)
                     );
 
             ServiceContext serviceContext =
@@ -153,7 +153,16 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                             user
                     );
 
-            if ("completarEmpresa".equals(cmd)) {
+            if ("editarEmpresa".equals(cmd)) {
+                presupuestoHelper.editarEmpresaCotizacion(idRequerimientoCompra,
+                        ParamUtil.getInteger(uploadReq, "id_requerimiento_presupuesto", 0),
+                        ParamUtil.getString(uploadReq, "descripcion_empresa", null),
+                        ParamUtil.getString(uploadReq, "empresa_cuit", null),
+                        ParamUtil.getString(uploadReq, "empresa_sucursal", null), usuario);
+                actionResponse.setRenderParameter("compras_operacion", cmd);
+                SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
+
+            } else if ("completarEmpresa".equals(cmd)) {
                 presupuestoHelper.completarEmpresaCotizacion(idRequerimientoCompra,
                         ParamUtil.getInteger(uploadReq, "id_requerimiento_presupuesto", 0),
                         ParamUtil.getString(uploadReq, "empresa_cuit", null),

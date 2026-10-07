@@ -757,7 +757,7 @@ boolean msgPresupuestoBorrado =
         %>">
             <div class="portlet-msg-info">
                 <%= cotizacionEmpresaPresupuestos
-                        ? "Las cotizaciones de empresas solo pueden administrarse mientras el requerimiento está PENDIENTE y con rol de cotización."
+                        ? "La carga de cotizaciones de empresas requiere estado PENDIENTE y rol de cotización. Los datos de Empresa también pueden editarse en ORDEN DE COMPRA."
                         : "Los presupuestos solo pueden administrarse en estado A COTIZAR y con rol de cotización." %>
             </div>
         </c:if>
@@ -773,11 +773,12 @@ boolean msgPresupuestoBorrado =
 
         <% if (cotizacionEmpresaPresupuestos) { %>
         - El requerimiento debe pertenecer a RRHH o SISTEMAS. Puede preparar
-          las cotizaciones durante el alta y editarlas mientras permanezca PENDIENTE.
+          las cotizaciones durante el alta y cargarlas mientras permanezca PENDIENTE.
         <br />
 
         - Debe informar el nombre de la Empresa. El CUIT es opcional y puede
-          completarlo después en la cotización guardada. Buscar permite seleccionar
+          completarlo después desde Editar en la cotización guardada, también en
+          ORDEN DE COMPRA. Buscar permite seleccionar
           una Empresa del padrón de Empleadores.
         <br />
 
@@ -879,26 +880,51 @@ boolean msgPresupuestoBorrado =
 </form>
 
 <script type="text/javascript">
-    function <portlet:namespace />completarEmpresaCotizacion(idPresupuesto, boton) {
-        var fila = jQuery(boton).parents('tr').eq(0);
-        var cuit = jQuery.trim(fila.find('input.cotizacion-empresa-cuit').val() || '');
-        var sucursal = jQuery.trim(fila.find('input.cotizacion-empresa-sucursal').val() || '');
-        if (!/^[0-9]{11}$/.test(cuit)) {
-            alert('Debe informar un CUIT válido de 11 dígitos.');
+    function <portlet:namespace />editarEmpresaCotizacion(idPresupuesto) {
+        jQuery('#<portlet:namespace />cotizacion_empresa_datos_' + idPresupuesto).hide();
+        var editor = jQuery('#<portlet:namespace />cotizacion_empresa_edicion_' + idPresupuesto);
+        editor.show();
+        editor.find('input.cotizacion-empresa-nombre').focus();
+        return false;
+    }
+
+    function <portlet:namespace />cancelarEdicionEmpresaCotizacion(idPresupuesto) {
+        var editor = jQuery('#<portlet:namespace />cotizacion_empresa_edicion_' + idPresupuesto);
+        editor.find('input[type="text"]').each(function() {
+            this.value = this.defaultValue;
+        });
+        editor.hide();
+        jQuery('#<portlet:namespace />cotizacion_empresa_datos_' + idPresupuesto).show();
+        return false;
+    }
+
+    function <portlet:namespace />guardarEmpresaCotizacion(idPresupuesto, boton) {
+        var editor = jQuery('#<portlet:namespace />cotizacion_empresa_edicion_' + idPresupuesto);
+        var nombre = jQuery.trim(editor.find('input.cotizacion-empresa-nombre').val() || '');
+        var cuit = jQuery.trim(editor.find('input.cotizacion-empresa-cuit').val() || '');
+        var sucursal = jQuery.trim(editor.find('input.cotizacion-empresa-sucursal').val() || '');
+        if (nombre == '' || nombre.length > 200) {
+            alert('Debe informar el nombre de la Empresa (hasta 200 caracteres).');
+            editor.find('input.cotizacion-empresa-nombre').focus();
             return false;
         }
-        if (typeof validarCuil == 'function' && !validarCuil(cuit, 'El CUIT no es válido.')) {
+        if (cuit != '' && (!/^[0-9]{11}$/.test(cuit)
+                || (typeof validarCuil == 'function' && !validarCuil(cuit, 'El CUIT no es válido.')))) {
+            alert('El CUIT informado no es válido.');
+            editor.find('input.cotizacion-empresa-cuit').focus();
             return false;
         }
         var form = document.getElementById('<portlet:namespace />compra_presupuesto_fm');
         if (!form || boton.disabled) { return false; }
         jQuery(form).find('input.empresa-fiscal-envio').remove();
         jQuery('<input type="hidden" class="empresa-fiscal-envio" />')
+                .attr('name', '<portlet:namespace />descripcion_empresa').val(nombre).appendTo(form);
+        jQuery('<input type="hidden" class="empresa-fiscal-envio" />')
                 .attr('name', '<portlet:namespace />empresa_cuit').val(cuit).appendTo(form);
         jQuery('<input type="hidden" class="empresa-fiscal-envio" />')
                 .attr('name', '<portlet:namespace />empresa_sucursal').val(sucursal).appendTo(form);
         jQuery('#<portlet:namespace />id_requerimiento_presupuesto').val(idPresupuesto);
-        jQuery('#<portlet:namespace />presupuesto_accion').val('completarEmpresa');
+        jQuery('#<portlet:namespace />presupuesto_accion').val('editarEmpresa');
         boton.disabled = true;
         form.submit();
         return false;
@@ -1065,7 +1091,7 @@ boolean msgPresupuestoBorrado =
         }
 
         var repetida = false;
-        jQuery('#<portlet:namespace />presupuestos_body tr').each(function() {
+        jQuery('#<portlet:namespace />presupuestos_body > tr').each(function() {
             var otra = jQuery(this);
             if (otra.get(0) != row.get(0)
                     && otra.find('input.presupuesto-empresa-cuit').val() == cuit
@@ -1086,13 +1112,7 @@ boolean msgPresupuestoBorrado =
         row.find('input.presupuesto-empresa-descripcion').val(razonSocial);
         row.find('input.presupuesto-empresa-cuit').val(cuit);
         row.find('input.presupuesto-empresa-sucursal').val(sucursal);
-        row.find('.presupuesto-empresa-seleccionada').text(
-                razonSocial
-                        + ' - CUIT: '
-                        + cuit
-                        + ' - Sucursal: '
-                        + sucursal
-        );
+        row.find('.presupuesto-empresa-seleccionada').text('Sucursal: ' + sucursal);
 
         <portlet:namespace />actualizarEmpresasAdjudicacion();
 
@@ -1114,7 +1134,7 @@ boolean msgPresupuestoBorrado =
     function <portlet:namespace />reindexarFilasPresupuesto() {
         var rows =
                 jQuery(
-                        '#<portlet:namespace />presupuestos_body tr'
+                        '#<portlet:namespace />presupuestos_body > tr'
                 );
 
         rows.each(function(index) {
@@ -1234,7 +1254,7 @@ boolean msgPresupuestoBorrado =
         }
 
         var cantidad =
-                tbody.find('tr').length;
+                tbody.children('tr').length;
 
         if (cantidad >= <%= maxPresupuestosCargaActual %>) {
             alert(
@@ -1253,7 +1273,7 @@ boolean msgPresupuestoBorrado =
         <% if (cotizacionEmpresaPresupuestos) { %>
         var empresaCuit =
                 jQuery(
-                        '<input type="text" maxlength="11" '
+                        '<input type="text" maxlength="11" size="13" '
                                 + 'class="presupuesto-empresa-cuit" />'
                 );
 
@@ -1265,9 +1285,7 @@ boolean msgPresupuestoBorrado =
 
         var empresaSeleccionada =
                 jQuery(
-                        '<div class="presupuesto-empresa-seleccionada">'
-                                + 'Sin Empresa seleccionada.'
-                                + '</div>'
+                        '<div class="presupuesto-empresa-seleccionada"></div>'
                 );
 
         var buscarEmpresa =
@@ -1281,7 +1299,7 @@ boolean msgPresupuestoBorrado =
             return <portlet:namespace />abrirBusquedaEmpresaCotizacion(row);
         });
 
-        var empresaDescripcion = jQuery('<input type="text" maxlength="200" class="presupuesto-empresa-descripcion" />');
+        var empresaDescripcion = jQuery('<input type="text" maxlength="200" size="30" class="presupuesto-empresa-descripcion" />');
         empresaDescripcion.change(function() {
             <portlet:namespace />actualizarEmpresasAdjudicacion();
         });
@@ -1290,12 +1308,15 @@ boolean msgPresupuestoBorrado =
             empresaSeleccionada.text('');
             <portlet:namespace />actualizarEmpresasAdjudicacion();
         });
+        var datosEmpresa = jQuery('<table class="lfr-table"></table>');
+        var filaNombre = jQuery('<tr><td><label>Nombre (obligatorio):</label></td><td></td></tr>');
+        filaNombre.children('td').eq(1).append(empresaDescripcion);
+        datosEmpresa.append(filaNombre);
+        var filaCuit = jQuery('<tr><td><label>CUIT (opcional):</label></td><td></td></tr>');
+        filaCuit.children('td').eq(1).append(empresaCuit).append(' ').append(buscarEmpresa);
+        datosEmpresa.append(filaCuit);
         contraparte = jQuery('<div></div>');
-        contraparte.append(jQuery('<label>Empresa (obligatoria):</label>'));
-        contraparte.append(empresaDescripcion);
-        contraparte.append(jQuery('<label>CUIT (opcional):</label>'));
-        contraparte.append(empresaCuit);
-        contraparte.append(buscarEmpresa);
+        contraparte.append(datosEmpresa);
         contraparte.append(empresaSeleccionada);
         contraparte.append(empresaSucursal);
         <% } else { %>
@@ -1373,7 +1394,7 @@ boolean msgPresupuestoBorrado =
                     .eq(0)
                     .remove();
 
-            if (tbody.find('tr').length == 0 && !<%= altaEmpresaPresupuestos ? "true" : "false" %>) {
+            if (tbody.children('tr').length == 0 && !<%= altaEmpresaPresupuestos ? "true" : "false" %>) {
                 <portlet:namespace />agregarFilaPresupuesto();
             } else {
                 <portlet:namespace />reindexarFilasPresupuesto();
@@ -1443,7 +1464,7 @@ boolean msgPresupuestoBorrado =
     function <portlet:namespace />validarFilasPresupuesto(permitirVacio) {
         var rows =
                 jQuery(
-                        '#<portlet:namespace />presupuestos_body tr'
+                        '#<portlet:namespace />presupuestos_body > tr'
                 );
 
         if (rows.length < (permitirVacio ? 0 : 1)
@@ -1744,12 +1765,13 @@ boolean msgPresupuestoBorrado =
             jQuery('#<portlet:namespace />empresas_recuperadas span').each(function() {
                 <portlet:namespace />agregarFilaPresupuesto();
                 var origen = jQuery(this);
-                var fila = jQuery('#<portlet:namespace />presupuestos_body tr:last');
+                var fila = jQuery('#<portlet:namespace />presupuestos_body > tr:last');
                 fila.find('input.presupuesto-empresa-cuit').val(origen.attr('data-cuit'));
                 fila.find('input.presupuesto-empresa-sucursal').val(origen.attr('data-sucursal'));
                 fila.find('input.presupuesto-empresa-descripcion').val(origen.attr('data-descripcion'));
-                fila.find('.presupuesto-empresa-seleccionada').text(origen.attr('data-descripcion')
-                        + ' - CUIT: ' + origen.attr('data-cuit') + ' - Sucursal: ' + origen.attr('data-sucursal'));
+                var sucursalRecuperada = origen.attr('data-sucursal') || '';
+                fila.find('.presupuesto-empresa-seleccionada').text(
+                        sucursalRecuperada ? 'Sucursal: ' + sucursalRecuperada : '');
             });
             <portlet:namespace />actualizarCotizacionesEmpresaSector(false);
             <% } %>

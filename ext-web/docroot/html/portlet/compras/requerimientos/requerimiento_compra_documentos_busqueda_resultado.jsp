@@ -126,7 +126,7 @@ boolean puedeCotizarPresupuestos =
                                 WebKeysCompras.ROL_COTIZAR_COMPRAS
                         );
 
-boolean puedeCompletarEmpresaPresupuestos =
+boolean puedeEditarEmpresaPresupuestos =
         cotizacionEmpresaPresupuestos
         && puedeCotizarPresupuestos
         && reqPresupuestos.isActivo()
@@ -157,9 +157,7 @@ headerNames.add(
                         : "Prestador"
 );
 headerNames.add("Descargar");
-if (!cotizacionEmpresaPresupuestos) {
-    headerNames.add("Editar");
-}
+headerNames.add("Editar");
 headerNames.add("Eliminar");
 
 String mensajeSinResultados =
@@ -277,58 +275,53 @@ try {
         );
 
         if (cotizacionEmpresaPresupuestos) {
-            StringBuilder empresaVisible =
-                    new StringBuilder();
+            String nombreEmpresa = WebKeysCompras.isEmpty(presupuesto.getDescripcionEmpresa())
+                    ? "" : presupuesto.getDescripcionEmpresa();
+            String cuitEmpresa = WebKeysCompras.isEmpty(presupuesto.getEmpresaCuit())
+                    ? "" : presupuesto.getEmpresaCuit();
+            String sucursalEmpresa = WebKeysCompras.isEmpty(presupuesto.getEmpresaSucursal())
+                    ? "" : presupuesto.getEmpresaSucursal();
+            String idDatosEmpresa = namespaceAdjuntos + "cotizacion_empresa_datos_"
+                    + idRequerimientoPresupuesto;
+            String idEdicionEmpresa = namespaceAdjuntos + "cotizacion_empresa_edicion_"
+                    + idRequerimientoPresupuesto;
+            StringBuilder empresaVisible = new StringBuilder();
+            empresaVisible.append("<div id=\"").append(HtmlUtil.escape(idDatosEmpresa)).append("\">");
+            empresaVisible.append(HtmlUtil.escape(nombreEmpresa));
+            if (!WebKeysCompras.isEmpty(cuitEmpresa)) {
+                empresaVisible.append("<br />CUIT: ").append(HtmlUtil.escape(cuitEmpresa));
+            }
+            if (!WebKeysCompras.isEmpty(sucursalEmpresa)) {
+                empresaVisible.append(" - Sucursal: ").append(HtmlUtil.escape(sucursalEmpresa));
+            }
+            empresaVisible.append("</div>");
 
-            empresaVisible.append(
-                    HtmlUtil.escape(
-                            presupuesto.getDescripcionEmpresa()
-                    )
-            );
-
-            empresaVisible.append("<br />CUIT: ");
-            empresaVisible.append(
-                    HtmlUtil.escape(
-                            presupuesto.getEmpresaCuit()
-                    )
-            );
-
-            empresaVisible.append(" - Sucursal: ");
-            empresaVisible.append(
-                    HtmlUtil.escape(
-                            presupuesto.getEmpresaSucursal()
-                    )
-            );
-
-            if (puedeCompletarEmpresaPresupuestos && presupuesto.isActivo()
-                    && WebKeysCompras.isEmpty(presupuesto.getEmpresaCuit())
+            if (puedeEditarEmpresaPresupuestos && presupuesto.isActivo()
                     && presupuesto.getIdRequerimiento() != null
                     && presupuesto.getIdRequerimiento().intValue()
                             == idRequerimientoCompraPresupuestos) {
-                String idCuitEmpresa = namespaceAdjuntos + "cotizacion_empresa_cuit_"
-                        + idRequerimientoPresupuesto;
-                String idSucursalEmpresa = namespaceAdjuntos + "cotizacion_empresa_sucursal_"
-                        + idRequerimientoPresupuesto;
-                empresaVisible.append("<br /><label for=\"");
-                empresaVisible.append(HtmlUtil.escape(idCuitEmpresa));
-                empresaVisible.append("\">CUIT:</label> <input type=\"text\" class=\"cotizacion-empresa-cuit\" id=\"");
-                empresaVisible.append(HtmlUtil.escape(idCuitEmpresa));
-                empresaVisible.append("\" maxlength=\"11\" size=\"13\" value=\"\" /> ");
-                empresaVisible.append("<label for=\"");
-                empresaVisible.append(HtmlUtil.escape(idSucursalEmpresa));
-                empresaVisible.append("\">Sucursal:</label> <input type=\"text\" class=\"cotizacion-empresa-sucursal\" id=\"");
-                empresaVisible.append(HtmlUtil.escape(idSucursalEmpresa));
-                empresaVisible.append("\" maxlength=\"6\" size=\"6\" value=\"");
-                empresaVisible.append(HtmlUtil.escape(presupuesto.getEmpresaSucursal()));
-                empresaVisible.append("\" /> <input type=\"button\" value=\"Guardar CUIT\" onclick=\"return ");
-                empresaVisible.append(namespaceAdjuntos);
-                empresaVisible.append("completarEmpresaCotizacion(");
-                empresaVisible.append(idRequerimientoPresupuesto);
-                empresaVisible.append(", this);\" />");
+                empresaVisible.append("<div id=\"").append(HtmlUtil.escape(idEdicionEmpresa));
+                empresaVisible.append("\" style=\"display:none;\"><table class=\"lfr-table\">");
+                empresaVisible.append("<tr><td><label>Nombre (obligatorio):</label></td><td>");
+                empresaVisible.append("<input type=\"text\" class=\"cotizacion-empresa-nombre\" maxlength=\"200\" size=\"30\" value=\"");
+                empresaVisible.append(HtmlUtil.escape(nombreEmpresa)).append("\" /></td></tr>");
+                empresaVisible.append("<tr><td><label>CUIT (opcional):</label></td><td>");
+                empresaVisible.append("<input type=\"text\" class=\"cotizacion-empresa-cuit\" maxlength=\"11\" size=\"13\" value=\"");
+                empresaVisible.append(HtmlUtil.escape(cuitEmpresa)).append("\"");
+                if (!WebKeysCompras.isEmpty(cuitEmpresa)) {
+                    empresaVisible.append(" readonly=\"readonly\"");
+                }
+                empresaVisible.append(" />");
+                empresaVisible.append("<input type=\"hidden\" class=\"cotizacion-empresa-sucursal\" value=\"");
+                empresaVisible.append(HtmlUtil.escape(sucursalEmpresa)).append("\" /></td></tr>");
+                empresaVisible.append("<tr><td></td><td><input type=\"button\" value=\"Guardar\" onclick=\"return ");
+                empresaVisible.append(namespaceAdjuntos).append("guardarEmpresaCotizacion(");
+                empresaVisible.append(idRequerimientoPresupuesto).append(", this);\" /> ");
+                empresaVisible.append("<input type=\"button\" value=\"Cancelar\" onclick=\"return ");
+                empresaVisible.append(namespaceAdjuntos).append("cancelarEdicionEmpresaCotizacion(");
+                empresaVisible.append(idRequerimientoPresupuesto).append(");\" /></td></tr></table></div>");
             }
-
             row.addText(empresaVisible.toString());
-
         } else {
             row.addText(
                     HtmlUtil.escape(
@@ -382,7 +375,19 @@ try {
 
         row.addText(descargar.toString());
 
-        if (!cotizacionEmpresaPresupuestos) {
+        if (cotizacionEmpresaPresupuestos) {
+            StringBuilder editar = new StringBuilder();
+            if (puedeEditarEmpresaPresupuestos && presupuesto.isActivo()
+                    && presupuesto.getIdRequerimiento() != null
+                    && presupuesto.getIdRequerimiento().intValue()
+                            == idRequerimientoCompraPresupuestos) {
+                editar.append("<a href=\"#\" title=\"Editar empresa\" onclick=\"return ");
+                editar.append(namespaceAdjuntos).append("editarEmpresaCotizacion(");
+                editar.append(idRequerimientoPresupuesto).append(");\"><img alt=\"Editar empresa\" src=\"");
+                editar.append(themeDisplay.getPathThemeImages()).append("/common/edit.png\" /></a>");
+            }
+            row.addText(editar.toString());
+        } else {
             StringBuilder editar = new StringBuilder();
             if (puedeEliminarPresupuestos && presupuesto.isActivo()
                     && presupuesto.getIdPrestador() != null

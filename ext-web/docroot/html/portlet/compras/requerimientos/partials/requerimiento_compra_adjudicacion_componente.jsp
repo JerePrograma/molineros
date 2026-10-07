@@ -423,8 +423,8 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
                                     RequerimientoCompraPresupuesto empresaAdjudicacion = empresasAdjudicacion.get(i);
                                 %>
                                     <option value="<%= empresaAdjudicacion.getIdRequerimientoPresupuesto() %>"
-                                            data-cuit="<%= HtmlUtil.escape(empresaAdjudicacion.getEmpresaCuit()) %>"
-                                            data-sucursal="<%= HtmlUtil.escape(empresaAdjudicacion.getEmpresaSucursal()) %>"
+                                            data-cuit="<%= HtmlUtil.escape(WebKeysCompras.isEmpty(empresaAdjudicacion.getEmpresaCuit()) ? "" : empresaAdjudicacion.getEmpresaCuit()) %>"
+                                            data-sucursal="<%= HtmlUtil.escape(WebKeysCompras.isEmpty(empresaAdjudicacion.getEmpresaSucursal()) ? "" : empresaAdjudicacion.getEmpresaSucursal()) %>"
                                             <%= empresaAdjudicacion.getIdRequerimientoPresupuesto().intValue() == empresaAdjudicadaId
                                                     ? "selected=\"selected\"" : "" %>>
                                         <%= HtmlUtil.escape(empresaAdjudicacion.getDescripcionEmpresa()
@@ -440,9 +440,9 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
                             <input type="hidden" name="<portlet:namespace />empresa_adjudicada_indice"
                                    id="<portlet:namespace />empresa_adjudicada_indice" value="<%= empresaAdjudicadaIndice %>" />
                             <input type="hidden" name="<portlet:namespace />empresa_adjudicada_cuit"
-                                   id="<portlet:namespace />empresa_adjudicada_cuit" value="<%= HtmlUtil.escape(empresaAdjudicadaCuit) %>" />
+                                   id="<portlet:namespace />empresa_adjudicada_cuit" value="<%= HtmlUtil.escape(WebKeysCompras.isEmpty(empresaAdjudicadaCuit) ? "" : empresaAdjudicadaCuit) %>" />
                             <input type="hidden" name="<portlet:namespace />empresa_adjudicada_sucursal"
-                                   id="<portlet:namespace />empresa_adjudicada_sucursal" value="<%= HtmlUtil.escape(empresaAdjudicadaSucursal) %>" />
+                                   id="<portlet:namespace />empresa_adjudicada_sucursal" value="<%= HtmlUtil.escape(WebKeysCompras.isEmpty(empresaAdjudicadaSucursal) ? "" : empresaAdjudicadaSucursal) %>" />
                             <input type="hidden" name="<portlet:namespace />empresa_adjudicacion_informada"
                                    id="<portlet:namespace />empresa_adjudicacion_informada" value="1" />
                         <% } else { %>
@@ -561,7 +561,7 @@ boolean prestadoresAdjudicadosMixtosAdjudicacion =
         var indice = jQuery('#<portlet:namespace />empresa_adjudicada_indice').val();
         var encontrada = false;
         selector.empty().append(jQuery('<option></option>').val('').text('Seleccione...'));
-        jQuery('#<portlet:namespace />presupuestos_body tr').each(function(i) {
+        jQuery('#<portlet:namespace />presupuestos_body > tr').each(function(i) {
             var fila = jQuery(this);
             var cuitFila = fila.find('input.presupuesto-empresa-cuit').val() || '';
             var sucursalFila = fila.find('input.presupuesto-empresa-sucursal').val() || '';

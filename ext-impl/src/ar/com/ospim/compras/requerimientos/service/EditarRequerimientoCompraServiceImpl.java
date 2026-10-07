@@ -74,6 +74,9 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_COMPLETAR_EMPRESA_COTIZACION =
             "{ ? = call compras.completar_empresa_cotizacion(?,?,?,?,?) }";
 
+    private static final String SQL_EDITAR_EMPRESA_COTIZACION =
+            "{ ? = call compras.editar_empresa_cotizacion(?,?,?,?,?,?) }";
+
     private static final String SQL_GUARDAR_COTIZACION =
             "{ ? = call compras.guardar_cotizacion_requerimiento_call(?,?,?,?,?,?,?) }";
 
@@ -737,6 +740,37 @@ public class EditarRequerimientoCompraServiceImpl {
             if (stmt.wasNull() || idPresupuesto != idRequerimientoPresupuesto) {
                 throw new SQLException(
                         "No se confirmo la persistencia del CUIT de la Empresa cotizada.");
+            }
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public void editarEmpresaCotizacion(
+            int idRequerimientoCompra,
+            int idRequerimientoPresupuesto,
+            String descripcionEmpresa,
+            String empresaCuit,
+            String empresaSucursal,
+            String usuario) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_EDITAR_EMPRESA_COTIZACION);
+            stmt.registerOutParameter(1, Types.INTEGER);
+            stmt.setInt(2, idRequerimientoCompra);
+            stmt.setInt(3, idRequerimientoPresupuesto);
+            stmt.setString(4, descripcionEmpresa);
+            stmt.setString(5, empresaCuit);
+            stmt.setString(6, empresaSucursal);
+            stmt.setString(7, usuario);
+            stmt.execute();
+            int idPresupuesto = stmt.getInt(1);
+            if (stmt.wasNull() || idPresupuesto != idRequerimientoPresupuesto) {
+                throw new SQLException(
+                        "No se confirmo la persistencia de la Empresa cotizada.");
             }
         } finally {
             ConnectionHelper.cerrar(stmt, con);
