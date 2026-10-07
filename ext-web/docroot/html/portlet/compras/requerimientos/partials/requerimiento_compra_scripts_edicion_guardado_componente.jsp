@@ -93,6 +93,8 @@ String afiliadoNumeroAmtima = (String) request.getAttribute("compras.requerimien
 String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimiento.afiliadoAntecedentes");
 %>
 <script type="text/javascript">
+    var <portlet:namespace />secuenciaGuardadoCompra = 0;
+
     function <portlet:namespace />sectorRequiereAfiliado() {
         var sectorId = jQuery.trim(jQuery('#<portlet:namespace />sector_id').val());
 
@@ -1234,15 +1236,6 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        if (typeof jQuery.fn.ajaxForm != 'function') {
-            alert(
-                    'No se pudo preparar el envío. '
-                            + 'Los datos cargados se conservan.'
-            );
-
-            return <portlet:namespace />cancelarGuardadoCompra();
-        }
-
         var cmdInput =
                 document.getElementById(
                         '<portlet:namespace />compras_cmd'
@@ -1533,13 +1526,11 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         </c:if>
 
         /*
-         * Liquidaciones: editar_orden_pago_ospim.jsp,
-         * submitFormNotSavePOP.
-         *
-         * El iframe multipart conserva la pantalla y los archivos
-         * seleccionados.
-         *
-         * Sólo una respuesta de guardado confirmado permite navegar.
+         * Liquidaciones: editar_orden_pago_ospim.jsp, submitFormNotSavePOP.
+         * Autorizaciones: view_reclamo.jsp, agregarRevision.
+         * Se conserva el POST y se exige la confirmación del servidor.
+         * El iframe de este envío ignora su carga inicial about:blank;
+         * el plugin Form 2.07 finaliza en el primer load, aun si está vacío.
          */
         if (typeof <portlet:namespace />incorporarCotizacionesEmpresa == 'function') {
             contextosCotizacionesEmpresa = <portlet:namespace />incorporarCotizacionesEmpresa(form);
@@ -1550,11 +1541,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                         '#<portlet:namespace />id_requerimiento_compra'
                 ).val();
 
-        jQuery(form).ajaxForm({
-            type: 'POST',
-            iframe: true,
-            dataType: 'html',
-            timeout: 120000,
+        var opcionesGuardado = {
 
             complete: function(xhr, status) {
 
@@ -1570,8 +1557,6 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     );
 
                 </c:if>
-
-                jQuery(form).ajaxFormUnbind();
 
                 var token =
                         jQuery(
@@ -1615,6 +1600,8 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                                 'data-compras-editar-url'
                         );
 
+                var mensajeServidor = '';
+
                 if (status == 'success'
                         && formularioRespuesta.length == 1) {
 
@@ -1637,12 +1624,24 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     }
 
                     if (errorServidor) {
-                        var mensajeServidor =
-                                jQuery.trim(
-                                        respuesta.find(
-                                                '.portlet-msg-error'
-                                        ).first().text()
-                                );
+                        mensajeServidor = jQuery.trim(
+                                formularioRespuesta.attr(
+                                        'data-compras-error-mensaje'
+                                ) || ''
+                        );
+
+                        if (mensajeServidor == '') {
+                            mensajeServidor = jQuery.trim(
+                                    respuesta.find(
+                                            '.portlet-msg-error'
+                                    ).eq(0).text()
+                            );
+                        }
+
+                        if (mensajeServidor == '') {
+                            mensajeServidor = 'No se pudo guardar el requerimiento. '
+                                    + 'Verifique el requerimiento antes de volver a guardar.';
+                        }
 
                         /*
                          * El servidor acaba de renderizar otra pantalla
@@ -1712,71 +1711,96 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     );
                 }
                 
-                /*
-                 * Un resultado que no pudo interpretarse no se presenta
-                 * como un error funcional del usuario.
-                 *
-                 * La información continúa visible en pantalla y no se
-                 * expone ningún concepto técnico como token, iframe o
-                 * estado de sesión.
-                 */
-                var aviso =
-                        jQuery(
-                                '#<portlet:namespace />resultado_guardado'
-                        );
+                /* Sólo una respuesta incierta requiere el aviso de verificación. */
+                var aviso = jQuery('#<portlet:namespace />resultado_guardado');
 
                 if (aviso.length == 0) {
-                    aviso =
-                            jQuery(
-                                    '<div class="portlet-msg-info" '
-                                            + 'role="status"></div>'
-                            );
-
-                    aviso.attr(
-                            'id',
-                            '<portlet:namespace />resultado_guardado'
-                    );
-
-                    aviso.insertBefore(
-                            '#<portlet:namespace />compras_layout'
-                    );
-                } else {
-                    aviso
-                            .removeClass(
-                                    'portlet-msg-error'
-                            )
-                            .addClass(
-                                    'portlet-msg-info'
-                            )
-                            .attr(
-                                    'role',
-                                    'status'
-                            );
+                    aviso = jQuery('<div></div>');
+                    aviso.attr('id', '<portlet:namespace />resultado_guardado');
+                    aviso.insertBefore('#<portlet:namespace />compras_layout');
                 }
 
                 aviso
-                        .text(
+                        .removeClass('portlet-msg-error portlet-msg-info')
+                        .addClass(errorServidor ? 'portlet-msg-error' : 'portlet-msg-info')
+                        .attr('role', errorServidor ? 'alert' : 'status')
+                        .text(mensajeServidor != '' ? mensajeServidor :
                                 'No se pudo confirmar automáticamente '
                                         + 'el guardado. La información '
                                         + 'cargada permanece en pantalla. '
                                         + 'Verifique el requerimiento antes '
                                         + 'de volver a guardar.'
                         )
-                        .attr(
-                                'tabindex',
-                                '-1'
-                        )
+                        .attr('tabindex', '-1')
                         .show();
 
                 <portlet:namespace />focusSeguroCompra(
                         '#<portlet:namespace />resultado_guardado'
                 );
             }
-        });
+        };
 
-        if (!<portlet:namespace />submitFormularioCompra(
-                form
-        )) {
+        var nombreIframeGuardado = '<portlet:namespace />iframeGuardadoCompras_'
+                + (++<portlet:namespace />secuenciaGuardadoCompra);
+        var iframeGuardado = jQuery(
+                '<iframe name="' + nombreIframeGuardado + '" '
+                        + 'src="about:blank" title="Guardado de compras" '
+                        + 'style="display:none;"></iframe>'
+        );
+        var envioFinalizado = false;
+        var timeoutGuardado = null;
+        var destinoAnterior = jQuery(form).attr('target');
+
+        function cerrarEnvioGuardado() {
+            envioFinalizado = true;
+            window.clearTimeout(timeoutGuardado);
+            iframeGuardado.unbind('load');
+            window.setTimeout(function() { iframeGuardado.remove(); }, 100);
+        }
+
+        function finalizarEnvioGuardado(xhr, status) {
+            if (envioFinalizado) {
+                return;
+            }
+            cerrarEnvioGuardado();
+            opcionesGuardado.complete(xhr, status);
+        }
+
+        iframeGuardado.bind('load', function() {
+            var documentoRespuesta;
+            try {
+                documentoRespuesta = this.contentWindow
+                        ? this.contentWindow.document : this.contentDocument;
+                if (!documentoRespuesta
+                        || documentoRespuesta.location.href == 'about:blank') {
+                    return;
+                }
+            } catch (e) {
+                finalizarEnvioGuardado(null, 'error');
+                return;
+            }
+
+            finalizarEnvioGuardado({ responseXML: documentoRespuesta }, 'success');
+        });
+        timeoutGuardado = window.setTimeout(function() {
+            finalizarEnvioGuardado(null, 'timeout');
+        }, 120000);
+        iframeGuardado.appendTo('body');
+        jQuery(form).attr('target', nombreIframeGuardado);
+
+        var envioIniciado;
+        try {
+            envioIniciado = <portlet:namespace />submitFormularioCompra(form);
+        } finally {
+            if (destinoAnterior) {
+                jQuery(form).attr('target', destinoAnterior);
+            } else {
+                jQuery(form).removeAttr('target');
+            }
+        }
+
+        if (!envioIniciado) {
+            cerrarEnvioGuardado();
             if (typeof <portlet:namespace />restaurarCotizacionesEmpresa == 'function') {
                 <portlet:namespace />restaurarCotizacionesEmpresa(contextosCotizacionesEmpresa);
             }
