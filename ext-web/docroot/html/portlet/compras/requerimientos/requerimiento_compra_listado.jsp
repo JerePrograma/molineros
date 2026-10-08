@@ -916,6 +916,9 @@ if (tercerizadoras == null) {
         <portlet:namespace />limpiarCampoSiExiste('incapacidad_af');
         <portlet:namespace />limpiarCampoSiExiste('secc_seleccionada');
         <portlet:namespace />limpiarCampoSiExiste('tieneAntecedentes');
+        <portlet:namespace />limpiarCampoSiExiste('colorAntecedente');
+        <portlet:namespace />limpiarCampoSiExiste('codigoAntecedente');
+        <portlet:namespace />aplicarAntecedentesAfiliado('0','','');
         <portlet:namespace />limpiarCampoSiExiste('nroSocioPrevencion');
         <portlet:namespace />limpiarCampoSiExiste('nroCredencialPrevencion');
 
@@ -1219,7 +1222,9 @@ if (tercerizadoras == null) {
             nroSocioPrev,
             nroCredenPrev,
             fechaRecepcion,
-            tieneAntecedentes) {
+            tieneAntecedentes,
+            colorAntecedente,
+            codigoAntecedente) {
 
         jQuery('#<portlet:namespace />cuil').val(cuil);
         jQuery('#<portlet:namespace />inte').val(inte);
@@ -1231,6 +1236,8 @@ if (tercerizadoras == null) {
         jQuery('#<portlet:namespace />nombre').val(nombre);
         jQuery('#<portlet:namespace />secc_seleccionada').val('1');
 
+        <portlet:namespace />aplicarAntecedentesAfiliado(tieneAntecedentes,colorAntecedente,codigoAntecedente);
+        
         var entidadSeleccionada =
                 jQuery('#<portlet:namespace />entidad').val();
 
@@ -1354,6 +1361,15 @@ if (tercerizadoras == null) {
                     tieneAntecedentes == '1'
                             ? '1'
                             : '0'
+            );
+        }
+        
+        if (jQuery('#<portlet:namespace />colorAntecedente').length > 0) {
+            jQuery('#<portlet:namespace />colorAntecedente').val(
+                colorAntecedente != null
+                && colorAntecedente != 'null'
+                    ? colorAntecedente
+                    : ''
             );
         }
 

@@ -415,6 +415,80 @@ public void generarFormularioSiNoExiste(
     }
 }
 
+public boolean tieneDiabetesVigente(
+        String cuil,
+        int inte) throws SystemException {
+
+    Connection con = null;
+    CallableStatement stmt = null;
+    ResultSet rs = null;
+
+    boolean tieneDiabetes = false;
+
+    try {
+
+        String sql = "{call tiene_diabetes_vigente(?,?)}";
+
+        con = ConnectionHelper.getConnection();
+        stmt = con.prepareCall(sql);
+
+        stmt.setString(1, cuil);
+        stmt.setInt(2, inte);
+
+        rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            tieneDiabetes = rs.getBoolean(1);
+        }
+
+    } catch (Exception e) {
+
+        _log.error(
+            "Error verificando diabetes vigente",
+            e
+        );
+
+    } finally {
+        ConnectionHelper.cerrar(stmt, con);
+    }
+
+    return tieneDiabetes;
+}
+
+public int insertarDiabetes(String cuil, int inte, User user) throws SystemException {
+
+    Connection con = null;
+    CallableStatement stmt = null;
+
+    int idSituacionMedica = 0;
+
+    try {
+
+        con = ConnectionHelper.getConnection();
+
+        stmt = con.prepareCall("{? = call insertar_situacion_medica_diabetes(?,?,?)}");
+
+        stmt.registerOutParameter(1, Types.INTEGER);
+        stmt.setString(2, cuil);
+        stmt.setInt(3, inte);
+        stmt.setString(4, user.getScreenName());
+
+        stmt.execute();
+
+        idSituacionMedica = stmt.getInt(1);
+
+    } catch (SQLException e) {
+        _log.error("Error al insertar situacion medica Diabetes",e);
+        
+        throw new SystemException(e);
+
+    } finally {
+        ConnectionHelper.cerrar(stmt, con);
+    }
+
+    return idSituacionMedica;
+}
+
 }
 
 

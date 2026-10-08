@@ -116,129 +116,41 @@
 	<fieldset class="block-labels"> 
 		<legend>Preautorizaci&oacute;n</legend>
 		
-		<table class="lfr-table">
-		   <tr>
-		      <td>
-				   <div id="divAlertaRojaAlta" <%if(!rolAlertaRoja){%> hidden='hidden' style="visibility: hidden;" <%}%>  >
-				      <table style="background-color:#AEB6BF">
-				         <tr>
-				           <td>
-				             &nbsp;&nbsp; <label>Alerta Roja:</label>
-				           </td>
-				           <td><input type="checkbox" id="<portlet:namespace />alertaRoja" name="<portlet:namespace />alertaRoja" <%=preautorizacion.isAlertaRoja() ?"checked=\"checked\"":"" %>/></td>
-				         </tr>
-				      </table>
-				   </div>
-				   
-				   <div id="divAlertaRojaMuestra" <%if(rolAlertaRoja || !preautorizacion.isAlertaRoja()){%> hidden='hidden' style="visibility: hidden;" <%}%>  >
-				    <table >
-				         <tr>
-				           <td>
-				              <label style="font-size:18px;background-color:#FF0000;color:white" > Alerta Roja </label>
-				           </td>
-				           
-				         </tr>
-				    </table>
-				   </div>
-				   
-				  
-			    </td>
-			    
-			    <td>
-			        <table style="background-color:#AEB6BF">
-				         <tr>
-				           <td>
-				              &nbsp;&nbsp;<label><liferay-ui:message key="discapacidad" /> :</label>
-				           </td>
-				           <td><input type="checkbox" id="<portlet:namespace />discapacidadChk" name="<portlet:namespace />discapacidadChk" <%=preautorizacion.isDiscapacidad() ?"checked=\"checked\"":"" %>
-				                 onclick="javascript:<portlet:namespace />manejoDiscapacidad();"
-				                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
-				         </tr>
-				      </table>
-			    </td>
-			    <!--  <td>&nbsp;</td> -->
-			     <td>
-			        <table style="background-color:#AEB6BF">
-				         <tr>
-				           <td>
-				              &nbsp;&nbsp; <label><liferay-ui:message key="medicamentos" />:</label>
-				           </td>
-				           <td><input type="checkbox" id="<portlet:namespace />medicamentoChk" name="<portlet:namespace />medicamentoChk" <%=preautorizacion.isMedicamento() ?"checked=\"checked\"":"" %>
-				                 onclick="javascript:<portlet:namespace />manejoMedicamento();"
-				                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
-				         </tr>
-				      </table>
-			    </td>
-			    
-			     <td>
-			        <table style="background-color:#AEB6BF">
-				         <tr>
-				           <td>
-				              &nbsp;&nbsp;<label><liferay-ui:message key="alojamiento" />:</label>
-				           </td>
-				           <td><input type="checkbox" id="<portlet:namespace />alojamientoChk" name="<portlet:namespace />alojamientoChk" <%=preautorizacion.isAlojamiento() ?"checked=\"checked\"":"" %>
-				                 onclick="javascript:<portlet:namespace />manejoAlojamiento();"
-				                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
-				         </tr>
-				      </table>
-			    </td>
-			    <td>
-			        <table style="background-color:#AEB6BF">
-				         <tr>
-				           <td>
-				              &nbsp;&nbsp;<label><liferay-ui:message key="prot-ort" />:</label>
-				           </td>
-				           <td><input type="checkbox" id="<portlet:namespace />protesisOrtChk" 
-				           		name="<portlet:namespace />protesisOrtChk" <%=preautorizacion.isProtesisOrtesis() ?"checked=\"checked\"":"" %>
-				                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
-				         </tr>
-				      </table>
-			    </td>
-			    
-			    <td>
-			        <table style="background-color:#AEB6BF">
-				         <tr>
-				           <td>
-				              &nbsp;&nbsp;<label>Posible A.R.T:</label>
-				           </td>
-				           <td><input type="checkbox" id="<portlet:namespace />artChk" 
-				           		name="<portlet:namespace />artChk" <%=preautorizacion.isART() ?"checked=\"checked\"":"" %>
-				                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
-				         </tr>
-				      </table>
-			    </td>
-			    
-<%
-    id_preautorizacion = 0;
-    int idPedidoApp = 0;
-
-    if (preautorizacion != null && preautorizacion.getId() != null) {
-        id_preautorizacion = preautorizacion.getId();
-
-        try {
-            idPedidoApp = PreAutorizacionServiceUtil.obtenerIdPreautorizacionAPP(id_preautorizacion);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    if (idPedidoApp != 0) {
-%>
-        <td>
-            <table style="font-weight: bold; color: blue; font-size: 18px">
+		<table class="lfr-table" style="width:100%;">			    
+			<%
+			    id_preautorizacion = 0;
+			    int idPedidoApp = 0;
+			
+			    if (preautorizacion != null && preautorizacion.getId() != null) {
+			        id_preautorizacion = preautorizacion.getId();
+			
+			        try {
+			            idPedidoApp = PreAutorizacionServiceUtil.obtenerIdPreautorizacionAPP(id_preautorizacion);
+			        } catch (Exception e) {
+			            e.printStackTrace();
+			        }
+			    }
+			
+			    if (idPedidoApp != 0) {
+			%>
                 <tr>
-                    <td>
-                        &nbsp;&nbsp;<label>ID APP </label>
-                    </td>
-                    <td>
-                        <input id="<portlet:namespace />nroPreautorizacionApp"
-                            name="<portlet:namespace />nroPreautorizacionApp" size="5"
-                            maxlength="20" type="text" readonly="readonly" tabindex="-1"
-                            value="<%= idPedidoApp %>" />
-                    </td>
+	                <td style="text-align:right;">
+			            <table style="font-weight:bold; color:blue; font-size:18px; display:inline-table;">
+			                <tr>
+			                    <td>
+			                        &nbsp;&nbsp;<label>ID APP </label>
+			                    </td>
+			                    <td>
+			                        <input id="<portlet:namespace />nroPreautorizacionApp"
+			                            name="<portlet:namespace />nroPreautorizacionApp" size="5"
+			                            maxlength="20" type="text" readonly="readonly" tabindex="-1"
+			                            value="<%= idPedidoApp %>" />
+			                    </td>
+			                 </tr>
+            			</table>
+                	</td>
                 </tr>
-            </table>
-        </td>
+           
 <%
     }
 %>
@@ -334,6 +246,114 @@
                                 Vto. Certificado:
                             </label>
 						</fieldset>
+						
+						<table class="lfr-table" style="width:98%; margin-left:12px; margin-top:10px; margin-bottom:10px;">
+							<tr>
+						      <td>
+								   <div id="divAlertaRojaAlta" <%if(!rolAlertaRoja){%> hidden='hidden' style="visibility: hidden;" <%}%>  >
+								      <table style="background-color:#AEB6BF">
+								         <tr>
+								           <td>
+								             &nbsp;&nbsp; <label style="font-size:12px;">Alerta Roja:</label>
+								           </td>
+								           <td><input type="checkbox" id="<portlet:namespace />alertaRoja" name="<portlet:namespace />alertaRoja" <%=preautorizacion.isAlertaRoja() ?"checked=\"checked\"":"" %>/></td>
+								         </tr>
+								      </table>
+								   </div>
+								   
+								   <div id="divAlertaRojaMuestra" <%if(rolAlertaRoja || !preautorizacion.isAlertaRoja()){%> hidden='hidden' style="visibility: hidden;" <%}%>  >
+								    <table >
+								         <tr>
+								           <td>
+								              <label style="font-size:18px;background-color:#FF0000;color:white" > Alerta Roja </label>
+								           </td>
+								           
+								         </tr>
+								    </table>
+								   </div>								   								  
+							    </td>
+				    
+							    <td>
+							        <table style="background-color:#AEB6BF">
+								         <tr>
+								           <td>
+								              &nbsp;&nbsp;<label style="font-size:12px;"><liferay-ui:message key="discapacidad" /> :</label>
+								           </td>
+								           <td><input type="checkbox" id="<portlet:namespace />discapacidadChk" name="<portlet:namespace />discapacidadChk" <%=preautorizacion.isDiscapacidad() ?"checked=\"checked\"":"" %>
+								                 onclick="javascript:<portlet:namespace />manejoDiscapacidad();"
+								                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
+								         </tr>
+								      </table>
+							    </td>
+							    <td>
+								    <table style="background-color:#AEB6BF">
+								        <tr>
+								            <td>
+								                &nbsp;&nbsp;<label style="font-size:12px;">Diabetes:</label>
+								            </td>
+								            <td>
+								                <input type="checkbox"
+								                       id="<portlet:namespace />diabetesChk"
+								                       name="<portlet:namespace />diabetesChk"
+								                       <%=preautorizacion.isDiabetes() ? "checked=\"checked\"" : "" %>
+								                />
+								            </td>
+								        </tr>
+								    </table>
+								</td>
+							    <!--  <td>&nbsp;</td> -->
+							     <td>
+							        <table style="background-color:#AEB6BF">
+								         <tr>
+								           <td>
+								              &nbsp;&nbsp; <label style="font-size:12px;"><liferay-ui:message key="medicamentos" />:</label>
+								           </td>
+								           <td><input type="checkbox" id="<portlet:namespace />medicamentoChk" name="<portlet:namespace />medicamentoChk" <%=preautorizacion.isMedicamento() ?"checked=\"checked\"":"" %>
+								                 onclick="javascript:<portlet:namespace />manejoMedicamento();"
+								                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
+								         </tr>
+								      </table>
+							    </td>
+							    
+							     <td>
+							        <table style="background-color:#AEB6BF">
+								         <tr>
+								           <td>
+								              &nbsp;&nbsp;<label style="font-size:12px;"><liferay-ui:message key="alojamiento" />:</label>
+								           </td>
+								           <td><input type="checkbox" id="<portlet:namespace />alojamientoChk" name="<portlet:namespace />alojamientoChk" <%=preautorizacion.isAlojamiento() ?"checked=\"checked\"":"" %>
+								                 onclick="javascript:<portlet:namespace />manejoAlojamiento();"
+								                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
+								         </tr>
+								      </table>
+							    </td>
+							    <td>
+							        <table style="background-color:#AEB6BF">
+								         <tr>
+								           <td>
+								              &nbsp;&nbsp;<label style="font-size:12px;"><liferay-ui:message key="prot-ort" />:</label>
+								           </td>
+								           <td><input type="checkbox" id="<portlet:namespace />protesisOrtChk" 
+								           		name="<portlet:namespace />protesisOrtChk" <%=preautorizacion.isProtesisOrtesis() ?"checked=\"checked\"":"" %>
+								                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
+								         </tr>
+								      </table>
+							    </td>
+							    
+							    <td>
+							        <table style="background-color:#AEB6BF">
+								         <tr>
+								           <td>
+								              &nbsp;&nbsp;<label style="font-size:12px;">Posible A.R.T:</label>
+								           </td>
+								           <td><input type="checkbox" id="<portlet:namespace />artChk" 
+								           		name="<portlet:namespace />artChk" <%=preautorizacion.isART() ?"checked=\"checked\"":"" %>
+								                 <%if(preautorizacion.getId()!=null && preautorizacion.getUltimoEstado()!=null && !"AP".equals(preautorizacion.getUltimoEstado().getId())){%> disabled="disabled" <%}%>/></td>
+								         </tr>
+								      </table>
+							    </td>
+							     </tr>
+			    </table>
 					</div>
 				</td>
 				<td>
@@ -1079,6 +1099,7 @@ function <portlet:namespace />initDateFields(){
 	   var esRecuperableSURStr = ('<%=preautorizacion.isRecuperableSUR()%>');
 	   var esReclamoPrestacional = (('<%=preautorizacion.getIdReclamoPrestacional()==null || preautorizacion.getIdReclamoPrestacional()==0?false:true %>')==='true');
 	   <portlet:namespace />buscarAfiliados();
+	   <portlet:namespace />verificarDiabetesVigente();
 	   var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliado_fecha_vto_documentacion&cuil_titular=';
 		   url += jQuery("#<portlet:namespace />cuil").val();
 		   url +='&inte=';
@@ -2387,6 +2408,46 @@ function <portlet:namespace />manejoAlojamiento(){
 		jQuery('#<portlet:namespace />divAlojamiento').hide();
 	}
 }
+
+function <portlet:namespace />verificarDiabetesVigente() {
+
+    var cuil = jQuery("#<portlet:namespace />cuil").val();
+    var inte = jQuery("#<portlet:namespace />inte").val();
+
+    if (cuil == null || cuil == "" || inte == null || inte == "") {
+        return;
+    }
+
+    var url =
+        '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>' +
+        '&struts_action=/autorizaciones/buscar_afiliado_datos' +
+        '&cuil_titular=' + cuil +
+        '&inte=' + inte;
+
+    jQuery.ajax({
+        url: url,
+        async: false,
+        success: function(data) {
+
+            var obj = jQuery.parseJSON(data);
+
+            if (obj.diabetesVigente === true) {
+
+                jQuery('#<portlet:namespace />diabetesChk')
+                    .attr('checked', true);
+
+                jQuery('#<portlet:namespace />diabetesChk')
+                    .attr('disabled', true);
+
+            } else {
+
+                jQuery('#<portlet:namespace />diabetesChk')
+                    .attr('disabled', false);
+            }
+        }
+    });
+}
+
 </script>
 
 

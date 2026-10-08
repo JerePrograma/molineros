@@ -22,58 +22,33 @@
 </p>
 
 <style type="text/css">
-	/* Visual real: toda la fila en rojo fuerte cuando tiene antecedentes */
-	tr.afiliado-antecedentes td {
-		background: #ff4d4d !important;
-		color: #ffffff !important;
-	}
 
-	tr.afiliado-antecedentes td a,
-	tr.afiliado-antecedentes td a:visited,
-	tr.afiliado-antecedentes td a:hover,
-	tr.afiliado-antecedentes td a:active {
-		color: #ffffff !important;
-		font-weight: bold;
-	}
+    tr[class*="afiliado-color-"] td {
+        color: #333333 !important;
+    }
 
-	/* SOLO editar-borrar siempre en negro */
-	tr.afiliado-antecedentes td:last-child a,
-	tr.afiliado-antecedentes td:last-child a:visited,
-	tr.afiliado-antecedentes td:last-child a:hover,
-	tr.afiliado-antecedentes td:last-child a:active,
-	tr.afiliado-antecedentes td:last-child span,
-	tr.afiliado-antecedentes td:last-child .taglib-text,
-	tr.afiliado-antecedentes td:last-child .lfr-menu-list a {
-		color: #000000 !important;
-	}
+    tr[class*="afiliado-color-"] td a,
+    tr[class*="afiliado-color-"] td a:visited,
+    tr[class*="afiliado-color-"] td a:hover,
+    tr[class*="afiliado-color-"] td a:active {
+        color: #333333 !important;
+        font-weight: bold;
+    }
 
-	tr.afiliado-antecedentes:hover td {
-		background: #e60000 !important;
-		color: #ffffff !important;
-	}
+    tr[class*="afiliado-color-"] td:last-child a,
+    tr[class*="afiliado-color-"] td:last-child a:visited,
+    tr[class*="afiliado-color-"] td:last-child a:hover,
+    tr[class*="afiliado-color-"] td:last-child a:active,
+    tr[class*="afiliado-color-"] td:last-child span,
+    tr[class*="afiliado-color-"] td:last-child .taglib-text,
+    tr[class*="afiliado-color-"] td:last-child .lfr-menu-list a {
+        color: #000000 !important;
+    }
 
-	tr.afiliado-antecedentes img {
-		vertical-align: middle;
-	}
-
-	.afiliados-leyenda-antecedentes {
-		margin: 0 0 10px 0;
-		padding: 8px 12px;
-		background: #fff4f4;
-		border: 1px solid #f0b3b3;
-		color: #8a1f1f;
-		font-weight: bold;
-	}
-
-	.afiliados-leyenda-antecedentes-color {
-		display: inline-block;
-		width: 12px;
-		height: 12px;
-		margin-right: 8px;
-		background: #ff4d4d;
-		border: 1px solid #cc0000;
-		vertical-align: middle;
-	}
+    tr[class*="afiliado-color-"] img {
+        vertical-align: middle;
+    }
+    
 </style>
 
 <portlet:defineObjects/>
@@ -147,10 +122,12 @@
 			headerNames,
 			LanguageUtil.get(pageContext, "no-afiliados-were-found")
 	);
+	
+		StringBuilder estilosColoresAntecedentes = new StringBuilder();
 
-	String leyendaAntecedentes = "Las filas en rojo indican que el grupo familiar posee antecedentes judiciales en al menos uno de sus integrantes.";
+		java.util.Set<String> clasesColoresAntecedentes = new java.util.HashSet<String>();
 
-	if(null != afiliadosList){
+		if(null != afiliadosList){
 
 		int total = afiliadosList.size();
 		searchContainer.setTotal(total);
@@ -169,13 +146,43 @@
 			rowURL.setParameter("cuil_titular", afiliado.getCuil_titular());
 			rowURL.setParameter("inte", afiliado.getInteAsString());
 
-			boolean tieneAntecedentes = (afiliado != null && afiliado.getTieneAntecedentesJudiciales() == 1);
+			String colorAntecedente = afiliado != null ? afiliado.getColorAntecedenteJudicial() : null;
 
-			// Pinta toda la fila de rojo fuerte solo si realmente tiene antecedentes
-			if (tieneAntecedentes) {
-				row.setClassName("afiliado-antecedentes");
-			}
+				if (colorAntecedente != null && !colorAntecedente.trim().equals("")) {
+				    colorAntecedente =colorAntecedente.trim();
 
+				    if (colorAntecedente.matches("^#[0-9a-fA-F]{6}$")) {
+
+				        String codigoColor = colorAntecedente.substring(1);
+				        String claseColor = "afiliado-color-" + codigoColor;
+				        row.setClassName(claseColor);
+
+				        if (!clasesColoresAntecedentes.contains(claseColor)) {
+
+				            clasesColoresAntecedentes.add(claseColor);
+
+				            estilosColoresAntecedentes
+				                .append("tr.")
+				                .append(claseColor)
+				                .append(" td {")
+				                .append("background:")
+				                .append(colorAntecedente)
+				                .append(" !important;")
+				                .append("}");
+
+				            estilosColoresAntecedentes
+				                .append("tr.")
+				                .append(claseColor)
+				                .append(":hover td {")
+				                .append("background:")
+				                .append(colorAntecedente)
+				                .append(" !important;")
+				                .append("}");
+				        }
+				    }
+				}
+
+				
 			if(!"CAI".equalsIgnoreCase(portlet_name)){
 
 				row.addText(afiliado.getCuil_titularMasked(), rowURL);
@@ -361,11 +368,20 @@
 	}
 %>
 
+<%
+if(estilosColoresAntecedentes.length() > 0){
+%>
+
+<style type="text/css">
+    <%=estilosColoresAntecedentes.toString()%>
+</style>
+
+<%
+}
+%>
+
 <% if (afiliadosList != null && afiliadosList.size() > 0) { %>
-<div class="afiliados-leyenda-antecedentes">
-	<span class="afiliados-leyenda-antecedentes-color"></span>
-	<%= leyendaAntecedentes %>
-</div>
+	<liferay-util:include page="/html/portlet/crm/leyenda_antecedentes_judiciales.jsp"/>
 <% } %>
 
 <div class="afiliados-resultados">

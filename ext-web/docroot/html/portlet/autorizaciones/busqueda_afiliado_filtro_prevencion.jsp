@@ -1,4 +1,5 @@
 <%@ include file="/html/portlet/liquidaciones/init.jsp" %>
+<%@ page import="ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%
 	String edit_mode = ParamUtil.getString(request, "edit_mode", null);
@@ -29,6 +30,45 @@
 	String cuil = ParamUtil.getString(request, "cuil", "");
 	String inte = ParamUtil.getString(request, "inte", "");
 
+	int tieneAntecedentesInicial = 0;
+	String colorAntecedenteInicial = "";
+	String codigoAntecedenteInicial = "";
+
+	if (cuil != null && !cuil.trim().equals("")) {
+
+	    try {
+
+	        tieneAntecedentesInicial =
+	            BusquedaAfiliadoServiceUtil
+	                .getInstance()
+	                .buscarTieneAntecedentesGrupoFamiliar(cuil);
+
+	        String colorTmp =
+	            BusquedaAfiliadoServiceUtil
+	                .getInstance()
+	                .buscarColorAntecedenteGrupoFamiliar(cuil);
+
+	        String codigoTmp =
+	            BusquedaAfiliadoServiceUtil
+	                .getInstance()
+	                .buscarCodigoAntecedenteGrupoFamiliar(cuil);
+
+	        if (colorTmp != null) {
+	            colorAntecedenteInicial = colorTmp.trim();
+	        }
+
+	        if (codigoTmp != null) {
+	            codigoAntecedenteInicial = codigoTmp.trim();
+	        }
+
+	    } catch (Exception e) {
+
+	        tieneAntecedentesInicial = 0;
+	        colorAntecedenteInicial = "";
+	        codigoAntecedenteInicial = "";
+	    }
+	}
+	
 %>
 
 <portlet:defineObjects/>
@@ -38,9 +78,6 @@
 		position: relative;
 	}
 	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel {
-		background: #fdeaea !important;
-		border: 1px solid #d9a3a3 !important;
-		border-left: 6px solid #c62828 !important;
 		border-radius: 4px;
 		padding: 6px;
 		padding-top: 34px;
@@ -53,8 +90,8 @@
 	}
 
 	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel label {
-		color: #7a1f1f !important;
-		font-weight: bold;
+		color: #333333 !important;
+    	font-weight: bold;
 	}
 
 	#<portlet:namespace />panelDatosAfiliado<%=prefijo%>.afiliado-con-antecedentes-panel input,
@@ -86,10 +123,7 @@
 		display: inline-block;
 		vertical-align: middle;
 		padding: 2px 8px;
-		background: #c62828;
-		border: 1px solid #8e0000;
 		border-radius: 4px;
-		color: #ffffff !important;
 		line-height: 1.2;
 	}
 
@@ -109,10 +143,26 @@
 
 <div id="<portlet:namespace />panelDatosAfiliado<%=prefijo%>">
 	<div id="<portlet:namespace />antecedentesJudicialesBox<%=prefijo%>">
-		<span id="<portlet:namespace />antecedentesJudicialesLabel<%=prefijo%>">
-			Antecedentes Judiciales
-		</span>
+
+	    <span id="<portlet:namespace />antecedentesJudicialesLabel<%=prefijo%>">
+	        Antecedentes Judiciales
+	    </span>
+	
+	    <a href="javascript:void(0)"
+	       onclick="help(event, '<portlet:namespace />helpAntecedentesJudiciales<%=prefijo%>')"
+	       style="display:inline-block; margin-left:4px; vertical-align:middle;">
+	
+	        <img
+	            style="height:16px; width:16px; vertical-align:middle;"
+	            src="/html/images/help.png"
+	            title="Referencia de antecedentes judiciales"
+	            alt="Ayuda"
+	        />
+	
+	    </a>
+	
 	</div>
+	
 	<table class="lfr-table" style="border-collapse: separate; border-spacing: 5px;">
 		<tr>
 			<td><label><liferay-ui:message key="entidad" />:</label></td>
@@ -247,8 +297,20 @@
 <input id="<portlet:namespace />fecha_alta_af<%=prefijo%>" value="" type="hidden" name="<portlet:namespace />fecha_alta_af<%=prefijo%>"/>
 <input id="<portlet:namespace />incapacidad_af<%=prefijo%>" value="" type="hidden" name="<portlet:namespace />incapacidad_af<%=prefijo%>"/>
 <input id="<portlet:namespace />id_tercerizadora<%=prefijo%>" value="" type="hidden" name="<portlet:namespace />id_tercerizadora<%=prefijo%>"/>
-<input id="<portlet:namespace />tieneAntecedentes<%=prefijo%>" value="0" type="hidden" name="<portlet:namespace />tieneAntecedentes<%=prefijo%>"/>
+<input id="<portlet:namespace />tieneAntecedentes<%=prefijo%>" value="<%=tieneAntecedentesInicial%>" type="hidden" name="<portlet:namespace />tieneAntecedentes<%=prefijo%>"/>
+<input id="<portlet:namespace />colorAntecedente<%=prefijo%>" value="<%=colorAntecedenteInicial%>" type="hidden" name="<portlet:namespace />colorAntecedente<%=prefijo%>"/>
+<input id="<portlet:namespace />codigoAntecedente<%=prefijo%>" value="<%=codigoAntecedenteInicial%>" type="hidden" name="<portlet:namespace />codigoAntecedente<%=prefijo%>"/>
 
+<div
+    id="<portlet:namespace />helpAntecedentesJudiciales<%=prefijo%>"
+    class="containerPlus draggable {buttons:'c', skin:'default', width:'650',title:'Ayuda',closed:'true'}"
+    style="top:100px; left:250px;">
+
+    <liferay-util:include
+        page="/html/portlet/crm/leyenda_antecedentes_judiciales.jsp"
+    />
+
+</div>
 
 <script type="text/javascript">
 	var popupAfill;
@@ -256,18 +318,93 @@
 	jQuery('#<portlet:namespace />incidente').hide();
 	jQuery('#<portlet:namespace />fechaIncidente').text('');
 
-	function <portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(tieneAntecedentes){
-		var flag = (String(tieneAntecedentes) == '1');
-		jQuery('#<portlet:namespace />tieneAntecedentes<%=prefijo%>').val(flag ? '1' : '0');
+	function <portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(tieneAntecedentes,colorAntecedente,codigoAntecedente){
 
-		if (flag) {
-			jQuery('#<portlet:namespace />panelDatosAfiliado<%=prefijo%>').addClass('afiliado-con-antecedentes-panel');
-			jQuery('#<portlet:namespace />antecedentesJudicialesBox<%=prefijo%>').show();
-		} else {
-			jQuery('#<portlet:namespace />panelDatosAfiliado<%=prefijo%>').removeClass('afiliado-con-antecedentes-panel');
-			jQuery('#<portlet:namespace />antecedentesJudicialesBox<%=prefijo%>').hide();
+		    var flag = (String(tieneAntecedentes) == '1');
+		    var color = colorAntecedente != null ? String(colorAntecedente).replace(/^\s+|\s+$/g, '') : '';
+		    var tieneColor = /^#[0-9a-fA-F]{6}$/.test(color);
+		    var mostrarAntecedente = flag || tieneColor;
+
+		    jQuery('#<portlet:namespace />tieneAntecedentes<%=prefijo%>').val(flag ? '1' : '0');
+		    jQuery('#<portlet:namespace />colorAntecedente<%=prefijo%>').val(color);
+
+		    var codigo =
+		        codigoAntecedente != null
+		            ? String(codigoAntecedente).replace(/^\s+|\s+$/g, '')
+		            : '';
+
+		    if (codigo == 'null') {
+		        codigo = '';
+		    }
+
+		    jQuery('#<portlet:namespace />codigoAntecedente<%=prefijo%>')
+		        .val(codigo);
+
+		    var textoAntecedente = 'Antecedentes Judiciales';
+
+		    if (codigo != '') {
+		        textoAntecedente += ' - ' + codigo;
+		    }
+
+		    jQuery(
+		        '#<portlet:namespace />antecedentesJudicialesLabel<%=prefijo%>'
+		    ).text(textoAntecedente);
+		    
+		    var panel = jQuery('#<portlet:namespace />panelDatosAfiliado<%=prefijo%>');
+		    
+		    if (mostrarAntecedente) {
+
+		        panel.addClass('afiliado-con-antecedentes-panel');
+		        jQuery('#<portlet:namespace />antecedentesJudicialesBox<%=prefijo%>').show();
+
+		        if (tieneColor) {
+
+		            var r = parseInt(color.substring(1, 3),16);
+		            var g = parseInt(color.substring(3, 5),16);
+		            var b = parseInt(color.substring(5, 7),16);
+		            var colorSuave = 'rgba(' + r + ',' + g + ',' + b + ',0.16)';
+		            var colorBorde = 'rgba(' + r + ',' + g + ',' + b + ',0.45)';
+		            var luminosidad = (r * 299 + g * 587 + b * 114) / 1000;
+		            var colorTextoBadge = luminosidad > 160 ? '#333333' : '#ffffff';
+
+		            panel.css('background-color',colorSuave);
+		            panel.css('border','1px solid ' + colorBorde);
+		            panel.css('border-left','6px solid ' + color);
+
+		            jQuery('#<portlet:namespace />antecedentesJudicialesLabel<%=prefijo%>').css({
+		                'background-color': color,
+		                'border': '1px solid ' + colorBorde,
+		                'color': colorTextoBadge
+		            });
+
+		        } else {
+		            panel.css('background-color','');
+		            panel.css('border','');
+		            panel.css('border-left','');
+
+		            jQuery('#<portlet:namespace />antecedentesJudicialesLabel<%=prefijo%>').css({
+		                'background-color': '',
+		                'border': '',
+		                'color': ''
+		            });
+		        }
+
+		    } else {
+
+		        panel.removeClass('afiliado-con-antecedentes-panel');
+		        panel.css('background-color','');
+		        panel.css('border','');
+		        panel.css('border-left','');
+
+		        jQuery('#<portlet:namespace />antecedentesJudicialesLabel<%=prefijo%>').css({
+		            'background-color': '',
+		            'border': '',
+		            'color': ''
+		        });
+
+		        jQuery('#<portlet:namespace />antecedentesJudicialesBox<%=prefijo%>').hide();
+		    }
 		}
-	}
 
 	function <portlet:namespace />buscarAfiliados<%=prefijo%>(){
 		var cuil=jQuery('#<portlet:namespace />cuil<%=prefijo%>').val();
@@ -450,7 +587,7 @@
 		}
 	}
 
-	function seleccionaAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora ,afi_tercerizadora, reclamoPrestacional,nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes){
+	function seleccionaAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora ,afi_tercerizadora, reclamoPrestacional,nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes, colorAntecedente, codigoAntecedente){
 		var clase=jQuery("#<portlet:namespace />claseExpediente").val();
 		if(clase!=null && clase=='DI'){
 			if (incapacidad_af != '1'){
@@ -460,11 +597,11 @@
 			}
 		}
 
-		seleccionaCamposAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora ,afi_tercerizadora, reclamoPrestacional ,nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes);
+		seleccionaCamposAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora ,afi_tercerizadora, reclamoPrestacional ,nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes, colorAntecedente, codigoAntecedente);
 		Liferay.Popup.close(popupAfill);
 	}
 
-	function seleccionaCamposAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora,afi_tercerizadora,reclamoPrestacional, nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes){
+	function seleccionaCamposAfiliado<%=prefijo%>(cuil,inte,docu_tipo,docu_nro,nombre,apellido,id_secc,desc_secc,ospim,uoma,amtima,bajaFecha,nombre_plan,id_plan,fecha_alta_af,incapacidad_af,id_tercerizadora,afi_tercerizadora,reclamoPrestacional, nroSocioPrev, nroCredenPrev, fechaRecepcion, tieneAntecedentes, colorAntecedente, codigoAntecedente){
 		jQuery('#<portlet:namespace />cuil<%=prefijo%>').val(cuil);
 		jQuery('#<portlet:namespace />inte<%=prefijo%>').val(inte);
 		jQuery('#<portlet:namespace />tipoDoc<%=prefijo%>').val(docu_tipo);
@@ -523,7 +660,7 @@
 
 		jQuery("#<portlet:namespace />incapacidad_af<%=prefijo%>").val(incapacidad_af);
 		jQuery("#<portlet:namespace />id_tercerizadora<%=prefijo%>").val(id_tercerizadora);
-		<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(tieneAntecedentes);
+		<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(tieneAntecedentes, colorAntecedente, codigoAntecedente);
 
 		try {
 			if (jQuery("#<portlet:namespace />incapacidad_af<%=prefijo%>").val() == '1') {
@@ -591,7 +728,10 @@
 	}
 
 	<portlet:namespace />resetValid<%=prefijo%>();
-	<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(jQuery('#<portlet:namespace />tieneAntecedentes<%=prefijo%>').val());
+	<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>(
+			jQuery('#<portlet:namespace />tieneAntecedentes<%=prefijo%>').val(),
+			jQuery('#<portlet:namespace />colorAntecedente<%=prefijo%>').val(),
+			jQuery('#<portlet:namespace />codigoAntecedente<%=prefijo%>').val());
 
 	function <portlet:namespace />limpiarCamposAfiliado<%=prefijo%>() {
 		jQuery('#<portlet:namespace />cuil<%=prefijo%>').val('');
@@ -618,11 +758,13 @@
 		jQuery("#<portlet:namespace />nroCredencialPrevencion<%=prefijo%>").val('');
 		jQuery("#<portlet:namespace />nroSocioPrevencion<%=prefijo%>").val('');
 		jQuery("#<portlet:namespace />tieneAntecedentes<%=prefijo%>").val('0');
+		jQuery("#<portlet:namespace />colorAntecedente<%=prefijo%>").val('');
+		jQuery("#<portlet:namespace />codigoAntecedente<%=prefijo%>").val('');
 		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.background="white";
 		document.getElementById("<portlet:namespace />baja_fecha<%=prefijo%>").style.color="black";
 		jQuery('#<portlet:namespace />fechaIncidente').text('');
 		jQuery('#<portlet:namespace />incidente').hide();
-		<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>('0');
+		<portlet:namespace />aplicarAntecedentesAfiliado<%=prefijo%>('0','','');
 
 	}
 

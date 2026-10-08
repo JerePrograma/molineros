@@ -415,6 +415,17 @@
 
 </form>
 
+<div
+    id="<portlet:namespace />helpAntecedentesJudiciales"
+    class="containerPlus draggable {buttons:'c', skin:'default', width:'650',title:'Ayuda',closed:'true'}"
+    style="top:100px; left:250px;">
+
+    <liferay-util:include
+        page="/html/portlet/crm/leyenda_antecedentes_judiciales.jsp"
+    />
+
+</div>
+
 <script type="text/javascript" >
 jQuery('#<portlet:namespace />divResultadoActualizarOK').hide();
 jQuery('#<portlet:namespace />divRadicacionEimporteReclamado').hide();

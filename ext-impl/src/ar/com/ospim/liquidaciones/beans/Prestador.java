@@ -481,10 +481,7 @@ public class Prestador implements Serializable {
 		prestador.setCiaSeguro(rs.getString(prefix + "cia_seguro"));
 		prestador.setFechaVtoSeguro(rs.getDate(prefix + "vto_cobertura_seguro"));
 		prestador.setOtorgaCertificacion(rs.getString(prefix + "otorga_cert"));
-		prestador.setSolicitarCotizacion(getBooleanIfPresent(
-				rs,
-				prefix + "solicitar_cotizacion"
-		));
+		prestador.setSolicitarCotizacion(getBooleanIfPresent(rs,prefix + "solicitar_cotizacion"));
 		prestador.setEmpresaCaiCaeNumero(rs.getString(prefix +"cai_cae_numero_completo"));
 
 		return prestador;
@@ -581,6 +578,7 @@ public class Prestador implements Serializable {
 	public static class TipoPrestador {
 		private int id;
 		private String descripcion;
+		private boolean puedeCotizar;
 
 		public TipoPrestador(int idTipoPrestador, String desc) {
 			this.id = idTipoPrestador;
@@ -605,7 +603,15 @@ public class Prestador implements Serializable {
 		public void setDescripcion(String descripcion) {
 			this.descripcion = descripcion;
 		}
+		
+		public boolean isPuedeCotizar() {
+			return puedeCotizar;
+	    }
 
+	    public void setPuedeCotizar(boolean puedeCotizar) {
+	        this.puedeCotizar = puedeCotizar;
+	    }
+	    
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -633,6 +639,7 @@ public class Prestador implements Serializable {
 			TipoPrestador tipo = new TipoPrestador();
 			tipo.setDescripcion(rs.getString("descripcion"));
 			tipo.setId(rs.getInt("id_tipo_prestador"));
+			tipo.setPuedeCotizar(rs.getBoolean("puede_cotizar"));
 			return tipo;
 		}
 

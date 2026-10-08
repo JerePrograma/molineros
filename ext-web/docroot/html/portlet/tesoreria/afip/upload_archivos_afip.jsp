@@ -183,7 +183,7 @@ Los archivos que comienzan con ORGANS_TRANSFER, DJ, DDJJ, 0DK2, 0DJU y terminan 
 Archivos Zip</br>
 Los siguientes archivos de texto deben ser comprimidos (zipeados) con mismo nombre y extensión .zip
 Los nombres que comienzan con: DESEMPLEO, SO, EB, EX, B2, A112608, AM112608, 00005782, RENDICION RECAUDACIONES-MR,
-00005783, 00005784, 00005785, 00005652, AMTIMA, CONSTA, SUMARTE_, SUMA70_, SUMA_, SUBASI_, RG830N1
+00005783, 00005784, 00005785, 00005652, AMTIMA, CONSTA, SUMARTE_, SUMA70_, SUMA_, SUBASI_, RG830N1,REPORTE(Comprobantes de Interbanking)
 
 </div>
 <div id="helpArchivoUOMA" class="containerPlus draggable {buttons:'c', skin:'default', width:'500',title:'Ayuda',closed:'true'}" style="top: 20px; left: 150px">

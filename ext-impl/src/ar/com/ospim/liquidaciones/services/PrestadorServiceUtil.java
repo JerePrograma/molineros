@@ -3,7 +3,7 @@ package ar.com.ospim.liquidaciones.services;
 import java.sql.SQLException;
 import java.util.List;
 
-
+import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.global.beans.Empresa;
 import ar.com.ospim.global.beans.Regimen;
@@ -60,8 +60,8 @@ public class PrestadorServiceUtil {
 		return getInstance().getPrestador(id);
 	}
 
-	public static List<String> getRubrosPrestador(int idPrestador) throws Exception {
-		return getInstance().getRubrosPrestador(idPrestador);
+	public static List<Integer> getRubrosPrestador(int idPrestador) throws Exception {
+	    return getInstance().getRubrosPrestador(idPrestador);
 	}
 	
 	public static void update(Prestador prestador, User user)
@@ -82,14 +82,8 @@ public class PrestadorServiceUtil {
 	    );
 	}
 	
-	public static void actualizarRubrosPrestador(int idPrestador, List<String> rubros, User user) 
-	        		throws Exception {
-
-	    getInstance().actualizarRubrosPrestador(
-	            idPrestador,
-	            rubros,
-	            user.getScreenName()
-	    );
+	public static void actualizarRubrosPrestador(int idPrestador, List<Integer> rubros, User user) throws Exception {
+	    getInstance().actualizarRubrosPrestador(idPrestador, rubros, user.getScreenName());
 	}
 
 	public static void borrar(int id, User user)
@@ -166,5 +160,9 @@ public class PrestadorServiceUtil {
 		return getInstance().getPrestadores(id, cuit, descripcion, provincia, localidad,
 				soloVigentes, profesion, especialidad, subEspecialidad, tipoPrestador,
 				hospital, soloHabilitadosCotizar);
+	}
+	
+	public static List<TipoPrestacionCompra> getTiposPrestacion() throws Exception {
+	    return getInstance().getTiposPrestacion();
 	}
 }

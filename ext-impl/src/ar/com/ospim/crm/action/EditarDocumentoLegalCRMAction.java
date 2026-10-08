@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
+import com.liferay.portal.model.UserGroup;
 import com.liferay.portal.service.persistence.UserUtil;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
@@ -135,33 +136,39 @@ public class EditarDocumentoLegalCRMAction extends PortletAction {
 				renderRequest.setAttribute(Constants.CMD, Constants.ADD);
 			}
 			
-			if(cmd.equalsIgnoreCase(Constants.SAVE) ){ // inserta nuevo 
-				logger.debug("Usuario: " + usuario.getScreenName() + " cmd: " + cmd );
-				
-				 dlCRM = this.getDocumentoLegalFromRequest(renderRequest);
-				 
-				 id = CrmServiceUtil.insertaDocumentoLegal(dlCRM, usuario.getScreenName(),
-						 String.valueOf(UserUtil.getUserGroups(usuario.getUserId()).get(0).getUserGroupId()) );
-						 
-				 
-				 dlCRM = CrmServiceUtil.buscarReclamoCRM(id);
-				  
-				 msg = LanguageUtil.get(defaultLocale, "insert-crm-doc-legal");
-				 
-				 msg = msg + " " + dlCRM.getId();
-				 
-				 SessionMessages.add(renderRequest, "insertReclamoOk");
-				
-				 logger.debug("Usuario: " + usuario.getScreenName() 
-							+ " cmd: " + cmd 
-							+ " id corr: " + id);
+			if(cmd.equalsIgnoreCase(Constants.SAVE) ){ // inserta nuevo
 
-				 esNoAfiliado = (dlCRM.getAfiliado() == null);
-				 renderRequest.setAttribute(WebKeysCrm.CRM_ES_AFILIADO, !esNoAfiliado);
-				 renderRequest.setAttribute("msgReclamoOk", msg);
-				 
-				 renderRequest.setAttribute(Constants.CMD, Constants.UPDATE);
+			    dlCRM = this.getDocumentoLegalFromRequest(renderRequest);
 
+			    List<UserGroup> gruposUsuario = UserUtil.getUserGroups(usuario.getUserId());
+
+			    if (gruposUsuario == null || gruposUsuario.isEmpty()) {
+
+			        logger.error("El usuario "+ usuario.getScreenName()+ " no pertenece a ningún grupo.");
+			        throw new SystemException("El usuario no pertenece a ningún grupo.");
+			    }
+
+			    String grupoUsuario = String.valueOf(gruposUsuario.get(0).getUserGroupId());
+
+			    id = CrmServiceUtil.insertaDocumentoLegal(
+			        dlCRM,
+			        usuario.getScreenName(),
+			        grupoUsuario
+			    );
+
+			    dlCRM = CrmServiceUtil.buscarReclamoCRM(id);
+
+			    msg = LanguageUtil.get(defaultLocale,"insert-crm-doc-legal");
+			    msg = msg + " " + dlCRM.getId();
+
+			    SessionMessages.add(renderRequest,"insertReclamoOk");
+
+			    logger.debug("Usuario: " + usuario.getScreenName()+ " cmd: " + cmd+ " id corr: " + id);
+
+			    esNoAfiliado = (dlCRM.getAfiliado() == null);
+			    renderRequest.setAttribute(WebKeysCrm.CRM_ES_AFILIADO,!esNoAfiliado);
+			    renderRequest.setAttribute("msgReclamoOk",msg);
+			    renderRequest.setAttribute(Constants.CMD,Constants.UPDATE);
 			}
 	
 			if(cmd.equalsIgnoreCase(Constants.UPDATE) 

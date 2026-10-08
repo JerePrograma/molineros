@@ -3320,4 +3320,27 @@ public class TraeListasServiceImpl {
 
 		    return cuits;
 		}
+	 
+	 public List<MotivoExcepcion> getMotivosEstadosAutorizacionPrestacional(int id_estado) {
+			Connection con = null;
+			List<MotivoExcepcion> listaTipos = null;
+			CallableStatement stmt = null;
+			try {
+				String sql = "{call autorizaciones.trae_motivos_cambio_estado_autorizacion_prestacional(?)}";
+				con = ConnectionHelper.getConnection();
+				stmt = con.prepareCall(sql.toString());
+				stmt.setInt(1, id_estado);
+				ResultSet rs = stmt.executeQuery();
+				listaTipos = new ArrayList<MotivoExcepcion>();
+				while (rs.next()) {
+					MotivoExcepcion tipo = MotivoExcepcion.getMapping(rs);
+					listaTipos.add(tipo);
+				}
+			} catch (Exception e) {
+				_log.debug("error al traer motivos cambio estado autorizacion prestacional", e);
+			} finally {
+				ConnectionHelper.cerrar(stmt, con);
+			}
+			return listaTipos;
+		}
 }

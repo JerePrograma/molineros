@@ -17,6 +17,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
 import ar.com.ospim.global.beans.ContactoElectronico;
 import ar.com.ospim.global.beans.Plan;
 import ar.com.ospim.global.beans.Telefono;
@@ -92,45 +93,31 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		    }
 		    
 			// NUEVO
-		    if (puedeSolicitarCotizacion) {	
-			    	
-		        boolean solicitarCotizacion = ParamUtil.getBoolean(actionRequest, "solicitar_cotizacion");
-		        session.setAttribute(SESSION_SOLICITAR_COTIZACION, solicitarCotizacion);
-		        
-		        List<String> rubros = new ArrayList<String>();
-	
+		    if (puedeSolicitarCotizacion) {
+
+		        boolean solicitarCotizacion = ParamUtil.getBoolean(actionRequest,"solicitar_cotizacion");
+		        session.setAttribute(SESSION_SOLICITAR_COTIZACION,solicitarCotizacion);
+
+		        List<Integer> rubros = new ArrayList<Integer>();
+
 		        if (solicitarCotizacion) {
-	
-		        	if (ParamUtil.getBoolean(actionRequest, "prov_insumos")) {
-		        	    rubros.add("INSUMOS");
+
+		        	String[] tiposPrestacion = actionRequest.getParameterValues("tipo_prestacion");
+
+		        	if (tiposPrestacion == null) {
+		        	    tiposPrestacion = new String[0];
 		        	}
 
-		        	if (ParamUtil.getBoolean(actionRequest, "prov_leches")) {
-		        	    rubros.add("ALIMENTACION");
-		        	}
-
-		        	if (ParamUtil.getBoolean(actionRequest, "prov_paniales")) {
-		        	    rubros.add("PAÑALES");
-		        	}
-
-		        	if (ParamUtil.getBoolean(actionRequest, "prov_medicamentos")) {
-		        	    rubros.add("MEDICAMENTOS");
-		        	}
-
-		        	if (ParamUtil.getBoolean(actionRequest, "protesis_cardiologia")) {
-		        	    rubros.add("PROTESIS_CARDIOLOGIA");
-		        	}
-
-		        	if (ParamUtil.getBoolean(actionRequest, "protesis_general")) {
-		        	    rubros.add("PROTESIS_GENERAL");
-		        	}
-
-		        	if (ParamUtil.getBoolean(actionRequest, "protesis_traumatologia")) {
-		        	    rubros.add("PROTESIS_TRAUMATOLOGIA");
-		        	}
+		            for (int i = 0; i < tiposPrestacion.length; i++) {
+		                try {
+		                    rubros.add(Integer.valueOf(tiposPrestacion[i]));
+		                } catch (NumberFormatException e) {
+		                    _log.warn("Id de tipo de prestacion invalido: " + tiposPrestacion[i]);
+		                }
+		            }
 		        }
-		        session.setAttribute("RUBROS_PRESTADOR", rubros);	        		
-			 }		   
+		        session.setAttribute("RUBROS_PRESTADOR",rubros);
+		    }	   
 			    session.setAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION, prestador);
 		}
 	}
@@ -143,6 +130,9 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		
 		String cmd = ParamUtil.getString(renderRequest, Constants.CMD);
 		User user = PortalUtil.getUser(renderRequest);
+		
+		List<TipoPrestacionCompra> tiposPrestacion = PrestadorServiceUtil.getTiposPrestacion();
+		renderRequest.setAttribute("tiposPrestacion", tiposPrestacion);
 		
 		boolean puedeSolicitarCotizacion =
 			    PermissionUtil.userContainsRole(
@@ -342,8 +332,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 						    );
 						}
 						
-						List<String> rubros =
-						        (List<String>) session.getAttribute("RUBROS_PRESTADOR");
+						List<Integer> rubros = (List<Integer>) session.getAttribute("RUBROS_PRESTADOR");
 	
 						if (rubros != null) {
 						    PrestadorServiceUtil.actualizarRubrosPrestador(
@@ -540,15 +529,10 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 						    );
 						}
 						
-						List<String> rubros =
-						        (List<String>) session.getAttribute("RUBROS_PRESTADOR");
+						List<Integer> rubros = (List<Integer>) session.getAttribute("RUBROS_PRESTADOR");
 	
 						if (rubros != null) {
-						    PrestadorServiceUtil.actualizarRubrosPrestador(
-						            prestador.getId_prestador(),
-						            rubros,
-						            user
-						    );
+						    PrestadorServiceUtil.actualizarRubrosPrestador(prestador.getId_prestador(), rubros, user);
 						}
 					}	
 					prestador = PrestadorServiceUtil.getPrestador(prestador.getId_prestador());
@@ -721,7 +705,7 @@ public class EditarPrestadoresEntryAction extends PrestadoresBaseAction {
 		TraeListasServiceUtil.getProfesion(renderRequest);
 		TraeListasServiceUtil.getEspecialidadPrestador(renderRequest);
 		TraeListasServiceUtil.getSubEspecialidadPrestador(renderRequest);
-		
+		    
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
 		if(session.getAttribute(WebKeysLiquidaciones.PLANES_EN_SESSION)== null ){
 			List<Plan> planes = TraeListasServiceUtil.getPlanesOspim();

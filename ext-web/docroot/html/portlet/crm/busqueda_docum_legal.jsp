@@ -23,6 +23,9 @@ if(renderResponse.getNamespace().equals("_JUD_1_")){
  		session.removeAttribute(WebKeysCrm.CRM_DOCUM_LEGAL_EN_EDICION);
  		session.removeAttribute("cmd");
 		
+ 		session.removeAttribute(WebKeysCrm.FILTRO_BUSQUEDA_DOC_LEGAL);
+ 		renderRequest.getPortletSession().removeAttribute(WebKeysCrm.CRM_AFILIADO);
+ 		
  		boolean estanPreCargadasLasListas = session.getAttribute(WebKeysCrm.CRM_LISTA_TIPOS_RECLAMO)!=null 
 				&& session.getAttribute(WebKeysCrm.CRM_LISTA_MOTIVOS)!=null;
 		
@@ -119,15 +122,42 @@ if(renderResponse.getNamespace().equals("_JUD_1_")){
 							firstDayOfWeek="<%= fechaHasta.getFirstDayOfWeek() - 1 %>"
 							disabled="<%= false %>" /></td>			
 					</tr>
+					
 					<tr>
 						<td colspan="6">
 							<div id="<portlet:namespace />divBuscarAfiliado" name="<portlet:namespace />divBuscarAfiliado">
 								<fieldset class="block-labels"><legend><liferay-ui:message key="datos-afiliado" /></legend>
+								
+								<%
+								    String cuilAfiliadoBusq =
+								        cuilTitularSel != null
+								            ? cuilTitularSel
+								            : "";
+								
+								    String inteAfiliadoBusq =
+								        inteSel != null
+								            ? inteSel
+								            : "";
+								%>
+
 								<liferay-util:include page='/html/portlet/liquidaciones/busqueda_afiliado.jsp'>
-									<liferay-util:param value="<%= String.valueOf(true) %>" name="edit_mode" />
-									<liferay-util:param name="cuil" value='' />
-									<liferay-util:param name="inte" value='' />
-								</liferay-util:include>
+
+							    <liferay-util:param
+							        value="<%= String.valueOf(true) %>"
+							        name="edit_mode"
+							    />
+							
+							    <liferay-util:param
+							        name="cuil"
+							        value="<%=cuilAfiliadoBusq%>"
+							    />
+							
+							    <liferay-util:param
+							        name="inte"
+							        value="<%=inteAfiliadoBusq%>"
+							    />
+							
+							</liferay-util:include>
 								</fieldset>	
 							</div>
 						</td>

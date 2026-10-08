@@ -85,4 +85,12 @@ public class SituacionesMedicasServiceUtil {
 	        usuario
 	    );
 	}
+	
+	public static boolean tieneDiabetesVigente(String cuil, int inte) throws Exception {
+	    return getInstance().tieneDiabetesVigente(cuil,inte);
+	}
+	
+	public static int insertarDiabetes(String cuil, int inte, User user) throws SystemException {
+	    return getInstance().insertarDiabetes(cuil, inte, user);
+	}
 }

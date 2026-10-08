@@ -82,6 +82,8 @@ public class PreAutorizacion implements Serializable{
 	private int idPedidoApp;
 	private Integer nroAutorizacionPrestacional;
 	
+	private boolean diabetes;
+	
 	public Integer getDiasParaAlertaGerencial() {
 		return diasParaAlertaGerencial;
 	}
@@ -180,7 +182,7 @@ public class PreAutorizacion implements Serializable{
 		preAut.setAlojamiento(rs.getBoolean("alojamiento"));
 		preAut.setAlojamientoDesde(rs.getDate("alojamiento_desde"));
 		preAut.setAlojamientoHasta(rs.getDate("alojamiento_hasta"));
-		
+		preAut.setDiabetes(rs.getBoolean("diabetes"));
 		preAut.setProtesisOrtesis(rs.getBoolean("protesis_ortesis"));
 		preAut.setCirugia(rs.getBoolean("cirugia"));
 		preAut.setART(rs.getBoolean("posible_art"));
@@ -742,6 +744,12 @@ public class PreAutorizacion implements Serializable{
 		this.nroAutorizacionPrestacional = nroAutorizacionPrestacional;
 	}
 	
-	
+	public boolean isDiabetes() {
+	    return diabetes;
+	}
+
+	public void setDiabetes(boolean diabetes) {
+	    this.diabetes = diabetes;
+	}
 }
 

@@ -1,4 +1,5 @@
 <%@ include file="/html/portlet/prestadores/init.jsp"%>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra" %>
 
 <%
 Prestador prestador  = (Prestador)request.getSession().getAttribute(WebKeysLiquidaciones.PRESTADOR_EN_EDICION);
@@ -7,32 +8,23 @@ String cmd = (String) request.getAttribute(Constants.CMD);
 
 Boolean solicitarCotizacionSession = (Boolean) session.getAttribute("SOLICITAR_COTIZACION_PRESTADOR");
 
-List<String> rubrosSession = (List<String>) session.getAttribute("RUBROS_PRESTADOR");
+List<Integer> rubrosSession = (List<Integer>) session.getAttribute("RUBROS_PRESTADOR");
 
 if (rubrosSession == null) {
-    rubrosSession = new java.util.ArrayList<String>();
+	rubrosSession = new java.util.ArrayList<Integer>();
 }
 
-boolean tieneProtesis =
-        rubrosSession.contains("PROTESIS_CARDIOLOGIA") ||
-        rubrosSession.contains("PROTESIS_GENERAL") ||
-        rubrosSession.contains("PROTESIS_TRAUMATOLOGIA");
+List<TipoPrestacionCompra> tiposPrestacion = (List<TipoPrestacionCompra>) request.getAttribute("tiposPrestacion");
 
-boolean todasProtesis =
-        rubrosSession.contains("PROTESIS_CARDIOLOGIA") &&
-        rubrosSession.contains("PROTESIS_GENERAL") &&
-        rubrosSession.contains("PROTESIS_TRAUMATOLOGIA");
+if (tiposPrestacion == null) {
+	tiposPrestacion = new java.util.ArrayList<TipoPrestacionCompra>();
+}
 
-boolean showSolicitarCotizacion =
-PermissionUtil.userContainsRole(
-    user,
-    WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR
-);
-
+boolean showSolicitarCotizacion = PermissionUtil.userContainsRole(user, WebKeysPrestadores.ROL_SOLICITAR_COTIZACION_PRESTADOR);
 boolean esEdicion = false;
 
 if (prestador == null  ||
-   (  cmd!=null  && cmd.length() > 0  && !request.getAttribute(Constants.CMD).equals(Constants.VIEW)   ) ) {
+   (cmd!=null  && cmd.length() > 0  && !request.getAttribute(Constants.CMD).equals(Constants.VIEW))) {
 	esEdicion = true;
 }
 
@@ -77,10 +69,21 @@ SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 				onchange="manejarTipo();">
 					<option value=""></option>
 					<% for (TipoPrestador tipo : tiposPrestador) { %>
-					<option
-						<%= prestador != null && prestador.getTipo() != null && prestador.getTipo().getId() == tipo.getId() ? "selected" : ""  %>
-						value="<%= tipo.getId() %>"><%=tipo.getDescripcion()%></option>
-					<% } %>
+				    <option
+				        <%= prestador != null
+				            && prestador.getTipo() != null
+				            && prestador.getTipo().getId() == tipo.getId()
+				                ? "selected"
+				                : "" %>
+				
+				        value="<%= tipo.getId() %>"
+				        data-puede-cotizar="<%= tipo.isPuedeCotizar() %>">
+				
+				        <%= tipo.getDescripcion() %>
+				
+				    </option>
+				
+				<% } %>
 			</select></td>
 			  <td><label><liferay-ui:message key="cuit" />:</label></td>
 			  <td colspan="1"><input id="<portlet:namespace />cuit"
@@ -391,211 +394,49 @@ SimpleDateFormat sdf2 = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 <div id="<portlet:namespace />bloque_rubros" style="display:none;">
 
     <fieldset class="block-labels">
+
         <legend>Tipo de cotización</legend>
 
         <table class="lfr-table"
-               style="border-collapse: separate; border-spacing: 3px;">
+               style="border-collapse: separate; border-spacing: 10px;">
 
             <tr>
 
-                <td>
-                    <label>
-                        <input type="checkbox"
-                               id="<portlet:namespace />prov_insumos"
-                               name="<portlet:namespace />prov_insumos"
+                <% for (TipoPrestacionCompra tipoPrestacion : tiposPrestacion) { %>
 
-                               <% if (rubrosSession.contains("INSUMOS")) { %>
-                                   checked="checked"
-                               <% } %>
+                    <td>
+                        <label>
 
-                               <% if (!esEdicion) { %>
-                                   disabled="disabled"
-                               <% } %> />
+                            <input type="checkbox"
+                                   class="tipoPrestacionCotizacion"
 
-                        Insumos
-                    </label>
-                </td>
+                                   id="<portlet:namespace />tipo_prestacion_<%= tipoPrestacion.getIdInt() %>"
 
+                                   name="<portlet:namespace />tipo_prestacion"
 
-                <td>
-                    <label>
-                        <input type="checkbox"
-                               id="<portlet:namespace />prov_protesis"
-                               name="<portlet:namespace />prov_protesis"
-                               onclick="<portlet:namespace />manejarProtesis();"
+                                   value="<%= tipoPrestacion.getIdInt() %>"
 
-                               <% if (tieneProtesis) { %>
-                                   checked="checked"
-                               <% } %>
+                                   <% if (rubrosSession.contains(tipoPrestacion.getId())) { %>
+                                       checked="checked"
+                                   <% } %>
 
-                               <% if (!esEdicion) { %>
-                                   disabled="disabled"
-                               <% } %> />
+                                   <% if (!esEdicion) { %>
+                                       disabled="disabled"
+                                   <% } %>
+                            />
 
-                        Prótesis
-                    </label>
-                </td>
+                            <span style="text-transform: capitalize;">
+							    <%= tipoPrestacion.getDescripcionVisible().toLowerCase() %>
+							</span>
 
+                        </label>
+                    </td>
 
-                <td>
-                    <label>
-                        <input type="checkbox"
-                               id="<portlet:namespace />prov_leches"
-                               name="<portlet:namespace />prov_leches"
+                <% } %>
 
-                               <% if (rubrosSession.contains("ALIMENTACION")) { %>
-                                   checked="checked"
-                               <% } %>
-
-                               <% if (!esEdicion) { %>
-                                   disabled="disabled"
-                               <% } %> />
-
-                        Alimentación
-                    </label>
-                </td>
-
-
-                <td>
-                    <label>
-                        <input type="checkbox"
-                               id="<portlet:namespace />prov_paniales"
-                               name="<portlet:namespace />prov_paniales"
-
-                               <% if (rubrosSession.contains("PAÑALES")) { %>
-                                   checked="checked"
-                               <% } %>
-
-                               <% if (!esEdicion) { %>
-                                   disabled="disabled"
-                               <% } %> />
-
-                        Pañales
-                    </label>
-                </td>
-
-				<td>
-				    <label>
-				        <input type="checkbox"
-				               id="<portlet:namespace />prov_medicamentos"
-				               name="<portlet:namespace />prov_medicamentos"
-				
-				               <% if (rubrosSession.contains("MEDICAMENTOS")) { %>
-				                   checked="checked"
-				               <% } %>
-				
-				               <% if (!esEdicion) { %>
-				                   disabled="disabled"
-				               <% } %> />		
-				        Medicamentos
-				    </label>
-				</td>
             </tr>
 
         </table>
-
-
-        <div id="<portlet:namespace />tipos_protesis"
-             style="display:none; margin-top:10px; margin-left:20px;">
-
-            <table class="lfr-table"
-                   style="border-collapse: separate; border-spacing: 3px;">
-
-                <tr>
-                    <td colspan="4">
-                        <strong>Tipos de Prótesis</strong>
-                    </td>
-                </tr>
-
-
-                <tr>
-
-                    <td>
-                        <label>
-                            <input type="checkbox"
-                                   id="<portlet:namespace />protesis_todas"
-                                   onclick="<portlet:namespace />seleccionarTodasProtesis();"
-
-                                   <% if (todasProtesis) { %>
-                                       checked="checked"
-                                   <% } %>
-
-                                   <% if (!esEdicion) { %>
-                                       disabled="disabled"
-                                   <% } %> />
-
-                            Todas
-                        </label>
-                    </td>
-
-
-                    <td>
-                        <label>
-                            <input type="checkbox"
-                                   class="tipoProtesis"
-                                   id="<portlet:namespace />protesis_cardiologia"
-                                   name="<portlet:namespace />protesis_cardiologia"
-                                   onclick="<portlet:namespace />actualizarTodasProtesis();"
-
-                                   <% if (rubrosSession.contains("PROTESIS_CARDIOLOGIA")) { %>
-                                       checked="checked"
-                                   <% } %>
-
-                                   <% if (!esEdicion) { %>
-                                       disabled="disabled"
-                                   <% } %> />
-
-                            Cardiología
-                        </label>
-                    </td>
-
-
-                    <td>
-                        <label>
-                            <input type="checkbox"
-                                   class="tipoProtesis"
-                                   id="<portlet:namespace />protesis_general"
-                                   name="<portlet:namespace />protesis_general"
-                                   onclick="<portlet:namespace />actualizarTodasProtesis();"
-
-                                   <% if (rubrosSession.contains("PROTESIS_GENERAL")) { %>
-                                       checked="checked"
-                                   <% } %>
-
-                                   <% if (!esEdicion) { %>
-                                       disabled="disabled"
-                                   <% } %> />
-
-                            General
-                        </label>
-                    </td>
-
-
-                    <td>
-                        <label>
-                            <input type="checkbox"
-                                   class="tipoProtesis"
-                                   id="<portlet:namespace />protesis_traumatologia"
-                                   name="<portlet:namespace />protesis_traumatologia"
-                                   onclick="<portlet:namespace />actualizarTodasProtesis();"
-
-                                   <% if (rubrosSession.contains("PROTESIS_TRAUMATOLOGIA")) { %>
-                                       checked="checked"
-                                   <% } %>
-
-                                   <% if (!esEdicion) { %>
-                                       disabled="disabled"
-                                   <% } %> />
-
-                            Traumatología
-                        </label>
-                    </td>
-
-                </tr>
-
-            </table>
-
-        </div>
 
     </fieldset>
 
@@ -824,58 +665,21 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 			return false;
 		}
 		
-		var tipoSelectPrestador =
-		    document.getElementById("tipo_prestador");
+		var tipoSelectPrestador = document.getElementById("tipo_prestador");
+		var opcionTipo = tipoSelectPrestador.options[tipoSelectPrestador.selectedIndex];
+		var puedeCotizar = opcionTipo != null && opcionTipo.getAttribute("data-puede-cotizar") == "true";
+		var solicitarCotizacion = jQuery('#<portlet:namespace />solicitar_cotizacion').is(':checked');
 
-		var tipoPrestador =
-		    trim(
-		        tipoSelectPrestador.options[
-		            tipoSelectPrestador.selectedIndex
-		        ].innerHTML
-		    );
-		
-		var solicitarCotizacion =
-		    jQuery('#<portlet:namespace />solicitar_cotizacion').is(':checked');
+		if (solicitarCotizacion && puedeCotizar) {
 
-		if(solicitarCotizacion &&
-		   (tipoPrestador == "PROVEEDOR" || tipoPrestador == "FARMACIA" || tipoPrestador == "ORTOPEDIA E INSUMOS")) {
+		    var tieneRubro =jQuery('input[name="<portlet:namespace />tipo_prestacion"]:checked').length > 0;
 
-		    var tieneRubro =
-		        jQuery('#<portlet:namespace />prov_insumos').is(':checked')
-		        ||
-		        jQuery('#<portlet:namespace />prov_protesis').is(':checked')
-		        ||
-		        jQuery('#<portlet:namespace />prov_leches').is(':checked')
-		        ||
-		        jQuery('#<portlet:namespace />prov_paniales').is(':checked')
-		        ||
-		        jQuery('#<portlet:namespace />prov_medicamentos').is(':checked');
-
-		    if(!tieneRubro){
+		    if (!tieneRubro) {
 		        alert("Debe seleccionar al menos un tipo de cotización.");
 		        return false;
 		    }
-
-		    var protesis =
-		        jQuery('#<portlet:namespace />prov_protesis').is(':checked');
-
-		    if(protesis){
-
-		        var cardiologia =
-		            jQuery('#<portlet:namespace />protesis_cardiologia').is(':checked');
-
-		        var general =
-		            jQuery('#<portlet:namespace />protesis_general').is(':checked');
-
-		        var traumatologia =
-		            jQuery('#<portlet:namespace />protesis_traumatologia').is(':checked');
-
-		        if(!cardiologia && !general && !traumatologia){
-		            alert("Debe seleccionar al menos un tipo de Prótesis.");
-		            return false;
-		        }
-		    }
 		}
+		
 		return true;
 	}
 
@@ -883,49 +687,51 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 		
 		var tipoSelect = document.getElementById("tipo_prestador");
 
-	    if (!tipoSelect) {
-	        return;
-	    }
+		if (!tipoSelect) {
+		    return;
+		}
 
-	    var tipo = trim(tipoSelect.options[tipoSelect.selectedIndex].innerHTML);
+		var opcionTipo = tipoSelect.options[tipoSelect.selectedIndex];
 
-	    if (tipo == "PROVEEDOR" || tipo == "FARMACIA" || tipo == "ORTOPEDIA E INSUMOS") {
+		var tipo = trim(opcionTipo.innerHTML);
 
-	        jQuery('#<portlet:namespace />bloque_profesion').hide();
-	        jQuery('#<portlet:namespace />bloque_matricula').hide();
-	        jQuery('#<portlet:namespace />separador_profesion').hide();
-	        jQuery('#<portlet:namespace />separador_matricula').hide();
+		var puedeCotizar = opcionTipo.getAttribute("data-puede-cotizar") == "true";
 
-	    } else {
+		if (puedeCotizar) {
 
-	        jQuery('#<portlet:namespace />bloque_profesion').show();
-	        jQuery('#<portlet:namespace />bloque_matricula').show();
-	        jQuery('#<portlet:namespace />separador_profesion').show();
-	        jQuery('#<portlet:namespace />separador_matricula').show();
-	    }
-	    
-	    if (tipo == "PROVEEDOR" || tipo == "FARMACIA" || tipo == "ORTOPEDIA E INSUMOS") {
-	        jQuery('#<portlet:namespace />bloque_rubros').show();
-	    } else {
-	        jQuery('#<portlet:namespace />bloque_rubros').hide();
-	    }
-	    
-	 	// SOLICITAR COTIZACIÓN
-	    if (tipo == "PROVEEDOR" || tipo == "FARMACIA" || tipo == "ORTOPEDIA E INSUMOS") {
-	        jQuery('#<portlet:namespace />bloque_cotizacion').show();
-	    } else {
+		    jQuery('#<portlet:namespace />bloque_profesion').hide();
+		    jQuery('#<portlet:namespace />bloque_matricula').hide();
+		    jQuery('#<portlet:namespace />separador_profesion').hide();
+		    jQuery('#<portlet:namespace />separador_matricula').hide();
 
-	        jQuery('#<portlet:namespace />bloque_cotizacion').hide();
+		} else {
 
-	        var chkSolicitar = document.getElementById("<portlet:namespace />solicitar_cotizacion");
+		    jQuery('#<portlet:namespace />bloque_profesion').show();
+		    jQuery('#<portlet:namespace />bloque_matricula').show();
+		    jQuery('#<portlet:namespace />separador_profesion').show();
+		    jQuery('#<portlet:namespace />separador_matricula').show();
+		}
 
-	        if (chkSolicitar) {
-	            chkSolicitar.checked = false;
-	        }
-	    }
+
+		if (puedeCotizar) {
+
+		    jQuery('#<portlet:namespace />bloque_rubros').show();
+		    jQuery('#<portlet:namespace />bloque_cotizacion').show();
+
+		} else {
+
+		    jQuery('#<portlet:namespace />bloque_rubros').hide();
+		    jQuery('#<portlet:namespace />bloque_cotizacion').hide();
+
+		    var chkSolicitar = document.getElementById("<portlet:namespace />solicitar_cotizacion");
+
+		    if (chkSolicitar) {
+		        chkSolicitar.checked = false;
+		    }
+		}
 	 
 		if ("<%=esEdicion%>" == "true"){
-			if (trim(tipoSelect.options[tipoSelect.selectedIndex].innerHTML) == "PROFESIONAL"){
+			if (tipo == "PROFESIONAL"){
  				document.getElementById("<portlet:namespace/>profesion").disabled = "";
  				document.getElementById("<portlet:namespace/>especialidad").disabled = "";
 				document.getElementById("<portlet:namespace/>sub-especialidad").disabled = "";
@@ -938,53 +744,13 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 				document.getElementById("<portlet:namespace/>sub-especialidad").disabled = "disabled";
 				document.getElementById("<portlet:namespace/>sub-especialidad").selectedIndex = 0;
 			};
-			if (trim(tipoSelect.options[tipoSelect.selectedIndex].innerHTML) == "HOSPITAL"){
+			if (tipo == "HOSPITAL"){
 				document.getElementById("<portlet:namespace />codigo_hospital").disabled = "";
 			}else{
 				document.getElementById("<portlet:namespace />codigo_hospital").disabled = "disabled";
 				document.getElementById("<portlet:namespace />codigo_hospital").value = "";
 			}
 		}
-	}
-	
-	function <portlet:namespace />manejarProtesis(){
-
-		var chkProtesis = document.getElementById("<portlet:namespace />prov_protesis");
-
-	    if (!chkProtesis) {
-	        return;
-	    }
-
-	    var seleccionada = chkProtesis.checked;
-
-	    if(seleccionada){
-	        jQuery('#<portlet:namespace />tipos_protesis').show();
-	    } else {
-	        jQuery('#<portlet:namespace />tipos_protesis').hide();
-
-	        document.getElementById("<portlet:namespace />protesis_todas").checked = false;
-	        document.getElementById("<portlet:namespace />protesis_cardiologia").checked = false;
-	        document.getElementById("<portlet:namespace />protesis_general").checked = false;
-	        document.getElementById("<portlet:namespace />protesis_traumatologia").checked = false;
-	    }
-	}
-	
-	function <portlet:namespace />seleccionarTodasProtesis(){
-
-	    var marcar = jQuery('#<portlet:namespace />protesis_todas').is(':checked');
-
-	    document.getElementById("<portlet:namespace />protesis_cardiologia").checked = marcar;
-	    document.getElementById("<portlet:namespace />protesis_general").checked = marcar;
-	    document.getElementById("<portlet:namespace />protesis_traumatologia").checked = marcar;
-	}
-	
-	function <portlet:namespace />actualizarTodasProtesis(){
-
-	    var cardiologia = jQuery('#<portlet:namespace />protesis_cardiologia').is(':checked');
-	    var general = jQuery('#<portlet:namespace />protesis_general').is(':checked');
-	    var traumatologia = jQuery('#<portlet:namespace />protesis_traumatologia').is(':checked');
-
-	    document.getElementById("<portlet:namespace />protesis_todas").checked = cardiologia && general && traumatologia;
 	}
 	
 	function manejarCertificacion(){
@@ -1165,53 +931,37 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	
 	function <portlet:namespace />manejarCotizacion(){
 
-		var chkSolicitar = document.getElementById("<portlet:namespace />solicitar_cotizacion");
+	    var chkSolicitar = document.getElementById("<portlet:namespace />solicitar_cotizacion");
 
 	    if (!chkSolicitar) {
 	        return;
 	    }
-	    
-	    var tipoSelect = document.getElementById("tipo_prestador");
 
-	    var tipo = trim(tipoSelect.options[tipoSelect.selectedIndex].innerHTML);
+	    var tipoSelect =document.getElementById("tipo_prestador");
 
-	    var solicitarCotizacion = chkSolicitar.checked;
-	    
-	    var editable = "<%=esEdicion%>" == "true";
-
-	    var rubrosCotizacion = [
-	        "<portlet:namespace />prov_insumos",
-	        "<portlet:namespace />prov_protesis",
-	        "<portlet:namespace />prov_leches",
-	        "<portlet:namespace />prov_paniales",
-	        "<portlet:namespace />prov_medicamentos"
-	    ];
-
-	    for(var i = 0; i < rubrosCotizacion.length; i++){
-	        document.getElementById(
-	            rubrosCotizacion[i]
-	        ).disabled = true;
+	    if (!tipoSelect) {
+	        return;
 	    }
 
-	    if(editable &&
-	       solicitarCotizacion &&
-	       (tipo == "PROVEEDOR" || tipo == "FARMACIA" || tipo == "ORTOPEDIA E INSUMOS")) {
+	    var opcionTipo =tipoSelect.options[tipoSelect.selectedIndex];
+	    var puedeCotizar = opcionTipo != null && opcionTipo.getAttribute("data-puede-cotizar") == "true";
+	    var solicitarCotizacion =chkSolicitar.checked;
+	    var editable ="<%= esEdicion %>" == "true";
+	    var rubrosCotizacion = jQuery('.tipoPrestacionCotizacion');
 
-	        for(var i = 0; i < rubrosCotizacion.length; i++){
-	            document.getElementById(
-	                rubrosCotizacion[i]
-	            ).disabled = false;
-	        }
+	    rubrosCotizacion.each(function(){
+	        this.disabled = true;
+	    });
 
-	    } else if(editable && !solicitarCotizacion) {
+	    if (editable && solicitarCotizacion && puedeCotizar) {
+	        rubrosCotizacion.each(function(){
+	            this.disabled = false;
+	        });
 
-	        for(var i = 0; i < rubrosCotizacion.length; i++){
-	            document.getElementById(
-	                rubrosCotizacion[i]
-	            ).checked = false;
-	        }
-
-	        <portlet:namespace />manejarProtesis();
+	    } else if (editable && !solicitarCotizacion) {
+	        rubrosCotizacon.each(function(){
+	            this.checked = false;
+	        });
 	    }
 	}
 	
@@ -1241,9 +991,8 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	}
 	
 	manejarTipo();
-	<portlet:namespace />manejarProtesis();
 	<portlet:namespace />manejarCotizacion();
 	manejarCertificacion();
-	manejarTipoMatricula();	
+	manejarTipoMatricula();
 	
 </script>

@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
+import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
 import ar.com.ospim.global.beans.ContactoElectronico;
 import ar.com.ospim.global.beans.Telefono;
 import ar.com.ospim.liquidaciones.ImposibleBorrarPrestadorException;
@@ -649,28 +650,37 @@ public class PrestadorServiceImpl {
 		return planesPrest;
 	}
 
-	public List<String> getRubrosPrestador(int idPrestador) throws SystemException {
+	public List<Integer> getRubrosPrestador(int idPrestador)throws SystemException {
 
-		List<String> rubros = new ArrayList<String>();
-		Connection con = null;
-		PreparedStatement stmt = null;
-		try {
-			String sql = "SELECT rubro FROM public.prestador_rubro "
-					+ "WHERE id_prestador = ? ORDER BY rubro";
-			con = ConnectionHelper.getConnection();
-			stmt = con.prepareStatement(sql);
-			stmt.setInt(1, idPrestador);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				rubros.add(rs.getString("rubro"));
-			}
-		} catch (Exception e) {
-			_log.error("Error al buscar rubros del prestador", e);
-			throw new SystemException(e);
-		} finally {
-			ConnectionHelper.cerrar(stmt, con);
-		}
-		return rubros;
+	    List<Integer> rubros = new ArrayList<Integer>();
+
+	    Connection con = null;
+	    CallableStatement stmt = null;
+
+	    try {
+	        String sql =  "{call autorizaciones.trae_rubros_prestador(?)}";
+
+	        con = ConnectionHelper.getConnection();
+	        stmt = con.prepareCall(sql);
+	        stmt.setInt(1, idPrestador);
+
+	        ResultSet rs = stmt.executeQuery();
+
+	        while (rs.next()) {
+	            rubros.add(Integer.valueOf(rs.getInt("id_tipo_prestacion")));
+	        }
+
+	    } catch (Exception e) {
+	        _log.error("Error al buscar rubros del prestador",e);
+
+	        throw new SystemException(e);
+
+	    } finally {
+
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
+
+	    return rubros;
 	}
 
 	public List<ProfesionPrestador> getProfesionesEspecialidadesySubEspecialidades(int idPrestador) {
@@ -1228,8 +1238,7 @@ public class PrestadorServiceImpl {
 	    }
 	}
 	
-	public void actualizarRubrosPrestador(int idPrestador, List<String> rubros, String screenName) 
-			throws SystemException {
+	public void actualizarRubrosPrestador(int idPrestador, List<Integer> rubros, String screenName) throws SystemException {
 
 	    Connection con = null;
 	    CallableStatement stmtBorrar = null;
@@ -1253,11 +1262,11 @@ public class PrestadorServiceImpl {
 
 	            stmtInsertar = con.prepareCall(sqlInsertar);
 
-	            for (String rubro : rubros) {
+	            for (Integer idTipoPrestacion : rubros) {
 
 	                stmtInsertar.registerOutParameter(1, Types.INTEGER);
 	                stmtInsertar.setInt(2, idPrestador);
-	                stmtInsertar.setString(3, rubro);
+	                stmtInsertar.setInt(3, idTipoPrestacion.intValue());
 
 	                stmtInsertar.execute();
 	            }
@@ -1281,6 +1290,46 @@ public class PrestadorServiceImpl {
 	        ConnectionHelper.cerrar(stmtInsertar, null);
 	        ConnectionHelper.cerrar(stmtBorrar, con);
 	    }
+	}
+	
+	public List<TipoPrestacionCompra> getTiposPrestacion() throws SystemException {
+
+	    List<TipoPrestacionCompra> lista = new ArrayList<TipoPrestacionCompra>();
+
+	    Connection con = null;
+	    CallableStatement stmt = null;
+
+	    try {
+
+	        String sql = "{call compras.trae_tipos_prestacion()}";
+
+	        con = ConnectionHelper.getConnection();
+	        stmt = con.prepareCall(sql);
+
+	        ResultSet rs = stmt.executeQuery();
+
+	        while (rs.next()) {
+
+	            TipoPrestacionCompra tipo = new TipoPrestacionCompra();
+
+	            tipo.setId(rs.getInt("id_tipo_prestacion"));
+	            tipo.setDescripcion(rs.getString("descripcion"));
+	            tipo.setIdSector(rs.getInt("id_sector"));
+	            tipo.setSectorDescripcion(rs.getString("sector_descripcion"));
+
+	            lista.add(tipo);
+	        }
+
+	    } catch (Exception e) {
+	        _log.error("Error al buscar tipos de prestacion",e);
+
+	        throw new SystemException(e);
+
+	    } finally {
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
+
+	    return lista;
 	}
 }
 

@@ -186,4 +186,9 @@ public class BusquedaAfiliadoServiceUtil {
 	    return getInstance().getCredencialAfiliadoPlan(tipoDoc, nroDoc);
 	}
 	
+	public static String buscarCodigoAntecedenteGrupoFamiliar(String cuilTitular) throws Exception {
+	    return getInstance().buscarCodigoAntecedenteGrupoFamiliar(cuilTitular);
+	}
+	
+	
 }

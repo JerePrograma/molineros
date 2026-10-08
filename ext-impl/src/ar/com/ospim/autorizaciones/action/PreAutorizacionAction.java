@@ -612,6 +612,8 @@ public class PreAutorizacionAction extends PortletAction {
 						    throw new SystemException("El usuario no pertenece a ningún grupo.");
 						}
 					   preautorizacion.setId((Integer) idPreautorizacion);
+					   insertarDiabetesSiCorresponde(preautorizacion,user);
+					   
 					   try{
 					     preautorizacion.setAlta_usr(user.getScreenName());
 					     preautorizacion.setAlta_fecha( new Timestamp(new Date().getTime()));
@@ -700,6 +702,7 @@ public class PreAutorizacionAction extends PortletAction {
 						 }
     
 						updatePreautorizacion(preautorizacion, user.getScreenName());
+						insertarDiabetesSiCorresponde(preautorizacion,user);
 						
 						String estadoNuevo = preautorizacion.getUltimoEstado() != null 
 							    ? preautorizacion.getUltimoEstado().getId() 
@@ -773,6 +776,26 @@ public class PreAutorizacionAction extends PortletAction {
 		return id;
 	}
 	
+	private void insertarDiabetesSiCorresponde(PreAutorizacion preautorizacion, User user) {
+
+	    try {
+
+	        if (preautorizacion == null || preautorizacion.getAfiliado() == null || !preautorizacion.isDiabetes()) {
+	            return;
+	        }
+
+	        String cuil = preautorizacion.getAfiliado().getCuil_titular();
+	        int inte = preautorizacion.getAfiliado().getInte();
+	        boolean tieneDiabetesVigente = SituacionesMedicasServiceUtil.tieneDiabetesVigente(cuil,inte);
+
+	        if (!tieneDiabetesVigente) {
+	            SituacionesMedicasServiceUtil.insertarDiabetes(cuil,inte,user);
+	        }
+
+	    } catch (Exception e) {
+	        _log.error("Error al crear situacion medica Diabetes",e);
+	    }
+	}
 //----
 //----	
 	
@@ -798,6 +821,22 @@ public class PreAutorizacionAction extends PortletAction {
 		
 		String cuilTitular=ParamUtil.getString(renderRequest,"cuil",null);
 		Integer integrante=ParamUtil.getInteger(renderRequest, "inte",0);
+		
+		boolean tieneDiabetesVigente = false;
+
+		if (cuilTitular != null && !"".equals(cuilTitular)) {
+
+		    try {
+				tieneDiabetesVigente =
+				    SituacionesMedicasServiceUtil
+				        .tieneDiabetesVigente(
+				            cuilTitular,
+				            integrante
+				        );
+			} catch (Exception e1) {
+				_log.error("Error al verificar diabetes vigente", e1);
+			}
+		}
 		
 		try{
 			_log.debug("Cuil titular: "+ cuilTitular );
@@ -904,10 +943,15 @@ public class PreAutorizacionAction extends PortletAction {
 		
 		boolean alertaRoja = ParamUtil.getBoolean(renderRequest, "alertaRoja");
 		boolean esDiscapacidad=ParamUtil.getBoolean(renderRequest, "discapacidadChk");
+		boolean esDiabetes = ParamUtil.getBoolean(renderRequest, "diabetesChk");
 		
 		preautorizacion.setAlertaRoja(alertaRoja);
 		preautorizacion.setDiscapacidad(esDiscapacidad);
 		
+		if (tieneDiabetesVigente) {
+		    esDiabetes = true;
+		}
+		preautorizacion.setDiabetes(esDiabetes);
 		
 		String fechaEnvioTercerizadoraDia = ParamUtil.getString(renderRequest,"fechaEnvioTercerizadoraDia");
 		String fechaEnvioTercerizadoraMes = ParamUtil.getString(renderRequest,"fechaEnvioTercerizadoraMes");

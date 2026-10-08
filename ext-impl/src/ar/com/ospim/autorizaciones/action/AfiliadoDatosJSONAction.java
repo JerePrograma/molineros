@@ -18,6 +18,7 @@ import ar.com.ospim.afiliados.services.SeccionalServiceUtil;
 import ar.com.ospim.afiliados.services.TelefonoServiceUtil;
 import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
+import ar.com.ospim.autorizaciones.services.SituacionesMedicasServiceUtil;
 import ar.com.ospim.crm.WebKeysCrm;
 import ar.com.ospim.crm.action.ActualizaDomicilioAfiliadoAction;
 import ar.com.ospim.global.beans.Domicilio;
@@ -45,6 +46,7 @@ public class AfiliadoDatosJSONAction extends JSONAction {
 		String actualizaDomicilio = "";
 		String actualizaTelefono = "";
 		String qDiasAValidar="";
+		boolean diabetesVigente = false;
 		
 		try {
 	            Afiliado afiliado = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuil_titular, inte);
@@ -53,6 +55,8 @@ public class AfiliadoDatosJSONAction extends JSONAction {
 	            } else {
 	                log.warn("Afiliado nulo para cuil=" + cuil_titular + " inte=" + inte);
 	            }
+	            
+	            diabetesVigente = SituacionesMedicasServiceUtil.tieneDiabetesVigente(cuil_titular,inte);
 	            
 	            if (StringUtils.checkEmpty(email) || email.equalsIgnoreCase("null")) {
 	                Afiliado titular = EditarAfiliadoServiceUtil.getAfiliadoEntry(cuil_titular, 0);
@@ -122,7 +126,8 @@ public class AfiliadoDatosJSONAction extends JSONAction {
 		return "{"
 		    + "\"email\":\"" + (email != null ? email : "") + "\","
 		    + "\"actualizadomicilio\":" + actualizaDomicilio + ","
-		    + "\"actualizatelefono\":" + actualizaTelefono
+		    + "\"actualizatelefono\":" + actualizaTelefono + ","
+		    + "\"diabetesVigente\":" + diabetesVigente
 		    + "}";
 	}	
 }

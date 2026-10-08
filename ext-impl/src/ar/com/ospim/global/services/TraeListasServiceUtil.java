@@ -1791,4 +1791,8 @@ public class TraeListasServiceUtil {
 
 	    return false;
 	}
+	
+	public static List<MotivoExcepcion> getMotivosEstadosAutorizacionPrestacional(int estadoId){
+		return getInstance().getMotivosEstadosAutorizacionPrestacional(estadoId) ;
+	}
 }

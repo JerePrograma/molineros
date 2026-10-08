@@ -110,6 +110,9 @@ public class Afiliado implements Comparable<Afiliado> , Serializable {
 	private List<AfiSuspencionCobertura> suspencionCobertura;
 	private Integer edad;
 	
+	private String colorAntecedenteJudicial;
+	private String codigoAntecedenteJudicial;
+	
 	public Afiliado() {
 	}
 			
@@ -1642,6 +1645,20 @@ public class Afiliado implements Comparable<Afiliado> , Serializable {
 		this.edad = edad;
 	}
 	
-	
+	public String getColorAntecedenteJudicial() {
+	    return colorAntecedenteJudicial;
+	}
+
+	public void setColorAntecedenteJudicial(String colorAntecedenteJudicial) {
+	    this.colorAntecedenteJudicial = colorAntecedenteJudicial;
+	}
+
+	public String getCodigoAntecedenteJudicial() {
+		return codigoAntecedenteJudicial;
+	}
+
+	public void setCodigoAntecedenteJudicial(String codigoAntecedenteJudicial) {
+		this.codigoAntecedenteJudicial = codigoAntecedenteJudicial;
+	}
 	
 }

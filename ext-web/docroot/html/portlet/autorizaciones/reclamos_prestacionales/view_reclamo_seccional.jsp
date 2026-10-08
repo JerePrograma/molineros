@@ -392,6 +392,8 @@ span-fixed-size {
 						<%
 						}
 						%>
+					</table>
+						
 					<table class="lfr-table">	
 					<tr>
 							<td colspan="12">
@@ -468,7 +470,7 @@ span-fixed-size {
 									
 						</tr>
 						</table>
-					</table>
+					
 
 				</td>
 				<td></td>

@@ -1,4 +1,5 @@
 <%@ include file="/html/portlet/farmacia/init.jsp"%>
+<link rel="stylesheet" type="text/css" href="/html/jquery.mb.containerPlus/css/mbContainer.css"/>
 <%
 
 	String portlet_name = ParamUtil.getString(request, "portlet_name");
@@ -166,6 +167,7 @@
 	<tr>
 		<td colspan="10">&nbsp;</td>
 	</tr>
+	
 	<tr>
 		<td colspan="10">
 		<fieldset class="block-labels"><legend> <liferay-ui:message
@@ -289,6 +291,18 @@
 </table>
 
 </form>
+
+<div
+    id="<portlet:namespace />helpAntecedentesJudiciales"
+    class="containerPlus draggable {buttons:'c', skin:'default', width:'650',title:'Ayuda',closed:'true'}"
+    style="top:100px; left:250px;">
+
+    <liferay-util:include
+        page="/html/portlet/crm/leyenda_antecedentes_judiciales.jsp"
+    />
+
+</div>
+
 <script><!--
  
 

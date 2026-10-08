@@ -67,7 +67,7 @@ public class PreAutorizacionServiceImpl implements Serializable {
 				con = connectionParameter;
 			}
 
-			String sql = "{call autorizaciones.inserta_preautorizacion(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call autorizaciones.inserta_preautorizacion(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 			stmt = con.prepareCall(sql.toString());
 			
 
@@ -167,6 +167,8 @@ public class PreAutorizacionServiceImpl implements Serializable {
 			}else {
 			   stmt.setNull(26,Types.INTEGER);	
 			}
+			
+			stmt.setBoolean(27, preautorizacion.isDiabetes());
 			
 			ResultSet rs = stmt.executeQuery();
 
@@ -630,7 +632,7 @@ public class PreAutorizacionServiceImpl implements Serializable {
 				con = connectionParameter;
 			}
 	
-			String sql = "{call autorizaciones.update_preautorizacion(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+			String sql = "{call autorizaciones.update_preautorizacion(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 
 			stmt = con.prepareCall(sql.toString());
 			
@@ -708,6 +710,7 @@ public class PreAutorizacionServiceImpl implements Serializable {
 			}else {
 			   stmt.setNull(23,Types.INTEGER);	
 			}			
+			stmt.setBoolean(24, preautorizacion.isDiabetes());
 			
 			ResultSet rs = stmt.executeQuery();
 

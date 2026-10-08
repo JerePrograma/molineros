@@ -32,6 +32,10 @@
 			SearchContainer.DEFAULT_CUR_PARAM,Integer.MAX_VALUE, portletURL, headerNames,
 			LanguageUtil.get(pageContext, "no-afiliados-were-found"));
 
+	StringBuilder estilosColoresAntecedentes = new StringBuilder();
+
+	java.util.Set<String> clasesColoresAntecedentes = new java.util.HashSet<String>();
+	
 	if(null!=afiliadosList){
 
 		//Seteo el total de la lista.
@@ -40,6 +44,8 @@
 			Afiliado afiliado = (Afiliado) afiliadosList.get(0);
 			String fechaRecepcion =  null;
 			int antecedentesSeleccion = (afiliado != null && afiliado.getTieneAntecedentesJudiciales() == 1) ? 1 : 0;
+			String colorAntecedenteSeleccion = afiliado != null && afiliado.getColorAntecedenteJudicial() != null ? afiliado.getColorAntecedenteJudicial() : "";
+			String codigoAntecedenteSeleccion = afiliado != null && afiliado.getCodigoAntecedenteJudicial() != null ? afiliado.getCodigoAntecedenteJudicial() : "";
 %>
 <script type="text/javascript">
 
@@ -65,7 +71,7 @@
 			,'<%= afiliado != null  && afiliado.getPrevencion() != null ? afiliado.getPrevencion().getNroSocio() : 0 %>'
 			,'<%= afiliado != null  && afiliado.getPrevencion() != null ? afiliado.getPrevencion().getNroCredencial() : 0 %>'
 			,'<%= afiliado.getIncidentes() != null ? fechaRecepcion : 0 %>'
-			,'<%= antecedentesSeleccion %>');
+			,'<%= antecedentesSeleccion %>','<%= colorAntecedenteSeleccion %>','<%= codigoAntecedenteSeleccion %>');
 	<%}else{%>
 	seleccionaAfiliado<%=prefijo%>('<%=afiliado.getCuil_titular()%>','<%=afiliado.getInte()%>','<%=afiliado.getDocumento_tipo()%>'
 			,'<%= afiliado.getDocu_numero() %>',"<%= afiliado.getNombre().replaceAll("'","\\'")%>","<%= afiliado.getApellido().replaceAll("'","\\'")%>"
@@ -76,7 +82,7 @@
 			,'<%= afiliado != null  && afiliado.getPrevencion() != null ? afiliado.getPrevencion().getNroSocio() : 0 %>'
 			,'<%= afiliado != null  && afiliado.getPrevencion() != null ? afiliado.getPrevencion().getNroCredencial() : 0 %>'
 			,'<%= afiliado.getIncidentes() != null ? fechaRecepcion : 0 %>'
-			,'<%= antecedentesSeleccion %>');
+			,'<%= antecedentesSeleccion %>','<%= colorAntecedenteSeleccion %>','<%= codigoAntecedenteSeleccion %>');
 	<%}%>
 </script>
 <%
@@ -89,10 +95,53 @@
 				Afiliado afiliado = (Afiliado) afiliadosList.get(i);
 				int antecedentesSeleccion = (afiliado != null && afiliado.getTieneAntecedentesJudiciales() == 1) ? 1 : 0;
 				ResultRow row = new ResultRow(afiliado,afiliado.getCuil_titular(), i);
-				boolean tieneAntecedentes = (afiliado != null && afiliado.getTieneAntecedentesJudiciales() == 1);
-				if (tieneAntecedentes) {
-					row.setClassName("afiliado-antecedentes");
-				}
+
+				String colorAntecedente = afiliado != null ? afiliado.getColorAntecedenteJudicial() : null;
+
+					if (colorAntecedente != null && !colorAntecedente.trim().equals("")) {
+					    colorAntecedente = colorAntecedente.trim();
+
+					    if (colorAntecedente.matches("^#[0-9a-fA-F]{6}$")) {
+
+					        String codigoColor = colorAntecedente.substring(1);
+					        String claseColor = "afiliado-color-" + codigoColor;
+					        row.setClassName(claseColor);
+
+					        if (!clasesColoresAntecedentes.contains(claseColor)) {
+					            clasesColoresAntecedentes.add(claseColor);
+
+					            int rojo = Integer.parseInt( codigoColor.substring(0, 2),16);
+					            int verde = Integer.parseInt(codigoColor.substring(2, 4),16);
+					            int azul = Integer.parseInt(codigoColor.substring(4, 6),16);
+					            int luminosidad =(rojo * 299 + verde * 587 + azul * 114) / 1000;
+
+					            String colorTexto = luminosidad < 150 ? "#ffffff" : "#333333";
+
+					            estilosColoresAntecedentes
+					                .append("tr.")
+					                .append(claseColor)
+					                .append(" td {")
+					                .append("background:")
+					                .append(colorAntecedente)
+					                .append(" !important;")
+					                .append("color:")
+					                .append(colorTexto)
+					                .append(" !important;")
+					                .append("}");
+
+					            estilosColoresAntecedentes
+					                .append("tr.")
+					                .append(claseColor)
+					                .append(" td a {")
+					                .append("color:")
+					                .append(colorTexto)
+					                .append(" !important;")
+					                .append("font-weight:bold;")
+					                .append("}");
+					        }
+					    }
+					}
+					
 				row.addText(afiliado.getCuil_titularMasked());
 				row.addText(afiliado.getInteAsString());
 				row.addText(afiliado.getApellido());
@@ -188,7 +237,13 @@
 						}
 						sb.append("','");
 						sb.append(antecedentesSeleccion);
+						sb.append("','");
+						sb.append(afiliado.getColorAntecedenteJudicial() != null ? afiliado.getColorAntecedenteJudicial() : "");				
+						
+						sb.append("','");
+						sb.append(afiliado.getCodigoAntecedenteJudicial() != null ? afiliado.getCodigoAntecedenteJudicial() : "");
 						sb.append("');\" />");
+						
 						row.addText(sb.toString());
 					}
 				}
@@ -199,20 +254,19 @@
 
 %>
 
-<style type="text/css">
-	tr.afiliado-antecedentes td {
-		background: #ff4d4d !important;
-		color: #ffffff !important;
-	}
 
-	tr.afiliado-antecedentes td a,
-	tr.afiliado-antecedentes td a:visited,
-	tr.afiliado-antecedentes td a:hover,
-	tr.afiliado-antecedentes td a:active {
-		color: #ffffff !important;
-		font-weight: bold;
-	}
+<%
+if(estilosColoresAntecedentes.length() > 0){
+%>
+
+<style type="text/css">
+    <%= estilosColoresAntecedentes.toString() %>
 </style>
+
+<%
+}
+%>
+
 <liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
 <%if(null!=checkbox && !checkbox.trim().equals("")){ %>
 <div align="right">

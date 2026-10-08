@@ -13,6 +13,7 @@ public class TipoReclamo implements Serializable {
 	
 	private Integer id;
 	private String descripcion;
+	private String color;
 	
 	public TipoReclamo (Integer id, String descripcion){
 		
@@ -45,7 +46,16 @@ public class TipoReclamo implements Serializable {
 		
 		TipoReclamo cc = new TipoReclamo(rs.getInt(prefix + "id"), rs.getString(prefix + "descripcion"));
 		
+		cc.setColor(rs.getString(prefix + "color"));
+		
 		return cc;
 	}
 	
+	public String getColor() {
+	    return color;
+	}
+
+	public void setColor(String color) {
+	    this.color = color;
+	}
 }

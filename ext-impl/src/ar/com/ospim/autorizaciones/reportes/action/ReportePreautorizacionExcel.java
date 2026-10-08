@@ -211,7 +211,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		cell.setCellValue(new HSSFRichTextString("Reporte Preautorizaciones"));
 		cell.setCellStyle(styleHeaderEnca);
 
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 27));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 28));
 
 		HSSFRow row1 = sheet.createRow(index++);
 		HSSFCell cell1 = row1.createCell(0);
@@ -219,7 +219,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		
 		cell1.setCellValue(new HSSFRichTextString("Fecha: " +sdf.format(hoy.getTime() )));
 		
-		sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 27));
+		sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 28));
 		
 		HSSFRow rowSeparador = sheet.createRow(index++);
 		
@@ -304,7 +304,7 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		cell2.setCellValue(new HSSFRichTextString(aux.toString()));
 		cell2.setCellStyle(styleHeaderEnca2);
 
-		sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 27));
+		sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 28));
 
 		HSSFRow rowHeader = sheet.createRow(index++);
 
@@ -393,6 +393,10 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		HSSFCell cell9_3H = rowHeader.createCell(col++);
 		cell9_3H.setCellValue(new HSSFRichTextString("Medicamento"));
 		cell9_3H.setCellStyle(styleBold);
+		
+		HSSFCell cellDiabetesH = rowHeader.createCell(col++);
+		cellDiabetesH.setCellValue(new HSSFRichTextString("Diabetes"));
+		cellDiabetesH.setCellStyle(styleBold);
 		
 		HSSFCell cell9_4H = rowHeader.createCell(col++);
 		cell9_4H.setCellValue(new HSSFRichTextString("Cirugía"));
@@ -588,6 +592,10 @@ public class ReportePreautorizacionExcel extends ReporteXLS {
 		HSSFCell cell023 = rowHeader.createCell(col++);
 		cell023.setCellValue(new HSSFRichTextString(pre.isMedicamento()?"SI":"NO"));
 		cell023.setCellStyle(styleAll);
+		
+		HSSFCell cellDiabetes = rowHeader.createCell(col++);
+		cellDiabetes.setCellValue(new HSSFRichTextString(pre.isDiabetes() ? "SI" : "NO"));
+		cellDiabetes.setCellStyle(styleAll);
 		
 		HSSFCell cell024 = rowHeader.createCell(col++);
 		cell024.setCellValue(new HSSFRichTextString(cirugia));

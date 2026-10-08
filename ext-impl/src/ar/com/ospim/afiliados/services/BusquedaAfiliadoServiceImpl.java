@@ -200,10 +200,10 @@ public class BusquedaAfiliadoServiceImpl {
 				afi.setId_tercerizadora("");
 				afi.setDesc_tercerizadora("");
 				afi.setDetalleFechasSuperintendencia(DetalleFechasSuper.getMapping("", rs));
-				afi.setTieneAntecedentesJudiciales(
-						buscarTieneAntecedentesGrupoFamiliar(afi.getCuil_titular())
-				);
-
+				afi.setTieneAntecedentesJudiciales(buscarTieneAntecedentesGrupoFamiliar(afi.getCuil_titular()));
+				afi.setColorAntecedenteJudicial(buscarColorAntecedenteGrupoFamiliar(afi.getCuil_titular()));
+				afi.setCodigoAntecedenteJudicial(buscarCodigoAntecedenteGrupoFamiliar(afi.getCuil_titular()));
+				
 				AfiSuspencionCobertura asc = new AfiSuspencionCobertura(rs.getInt(prefixAsc+"id"),
 						rs.getDate(prefixAsc+"vigen_desde"),rs.getDate(prefixAsc+"vigen_hasta"));
 				afi.addUltimaSuspCobertura(asc);
@@ -301,7 +301,24 @@ public class BusquedaAfiliadoServiceImpl {
 				afi.setId_tercerizadora("");
 				afi.setDesc_tercerizadora("");
 				afi.setDetalleFechasSuperintendencia(DetalleFechasSuper.getMapping("", rs));
-				
+				afi.setTieneAntecedentesJudiciales(
+					    buscarTieneAntecedentesGrupoFamiliar(
+					        afi.getCuil_titular()
+					    )
+					);
+
+					afi.setColorAntecedenteJudicial(
+					    buscarColorAntecedenteGrupoFamiliar(
+					        afi.getCuil_titular()
+					    )
+					);
+
+					afi.setCodigoAntecedenteJudicial(
+					    buscarCodigoAntecedenteGrupoFamiliar(
+					        afi.getCuil_titular()
+					    )
+					);
+					
 				AfiSuspencionCobertura asc = new AfiSuspencionCobertura(rs.getInt(prefixAsc+"id"),
 						rs.getDate(prefixAsc+"vigen_desde"),rs.getDate(prefixAsc+"vigen_hasta"));
 				afi.addUltimaSuspCobertura(asc);
@@ -391,6 +408,10 @@ public class BusquedaAfiliadoServiceImpl {
 				bp.setIdCorrespondencia(rs.getInt("id_correspondencia"));
 				bp.setProyecto(rs.getString("proyecto"));
 				bp.setConReclamoPrestacional(rs.getBoolean("conreclamo_prestacional"));
+				bp.setTieneAntecedentesJudiciales(buscarTieneAntecedentesGrupoFamiliar(bp.getCuil_titular()));
+				bp.setColorAntecedenteJudicial(buscarColorAntecedenteGrupoFamiliar(bp.getCuil_titular()));
+				bp.setCodigoAntecedenteJudicial(buscarCodigoAntecedenteGrupoFamiliar(bp.getCuil_titular()));
+				
 				listaAfiliados.add(bp);
 			}
 
@@ -541,7 +562,7 @@ public class BusquedaAfiliadoServiceImpl {
 				bp.setId_amtima_baja_fecha(rs.getDate("id_amtima_baja_fecha"));
 				bp.setNaci_fecha(rs.getDate("fecha_nacimiento"));
 				bp.setConReclamoPrestacional(rs.getBoolean("conreclamo_prestacional"));
-				bp.setTieneAntecedentesJudiciales(rs.getInt("tiene_antecedentes_judiciales"));
+				
 				AfiliacionPrevencion pre = new AfiliacionPrevencion();
 				pre.setNroSocio(rs.getInt("nrosocioprev"));
 				pre.setNroCredencial(rs.getBigDecimal("nrocredenprev"));
@@ -550,11 +571,11 @@ public class BusquedaAfiliadoServiceImpl {
 				incidente = buscarUltimoIncidente(rs.getString("cuil"), rs.getInt("inte"));
 				if (incidente != null) {
 					bp.addIncidente(incidente);
-				}
+				}			
 				
-				
-				
-				
+				bp.setTieneAntecedentesJudiciales(buscarTieneAntecedentesGrupoFamiliar(bp.getCuil_titular()));
+				bp.setColorAntecedenteJudicial(buscarColorAntecedenteGrupoFamiliar(bp.getCuil_titular()));
+				bp.setCodigoAntecedenteJudicial(buscarCodigoAntecedenteGrupoFamiliar(bp.getCuil_titular()));
 				
 				listaAfiliados.add(bp);
 			}
@@ -638,9 +659,10 @@ public class BusquedaAfiliadoServiceImpl {
 				bp.setId_uoma_baja_fecha(rs.getDate("id_uoma_baja_fecha"));
 				bp.setId_amtima_baja_fecha(rs.getDate("id_amtima_baja_fecha"));
 				bp.setNaci_fecha(rs.getDate("fecha_nacimiento"));
-				bp.setTieneAntecedentesJudiciales(
-						buscarTieneAntecedentesGrupoFamiliar(bp.getCuil_titular())
-				);
+				bp.setTieneAntecedentesJudiciales(buscarTieneAntecedentesGrupoFamiliar(bp.getCuil_titular()));
+				bp.setColorAntecedenteJudicial(buscarColorAntecedenteGrupoFamiliar(bp.getCuil_titular()));
+				bp.setCodigoAntecedenteJudicial(buscarCodigoAntecedenteGrupoFamiliar(bp.getCuil_titular()));
+				
 				listaAfiliados.add(bp);
 			}
 
@@ -991,5 +1013,80 @@ public class BusquedaAfiliadoServiceImpl {
 	    }
 
 	    return credencial;
+	}
+	
+	public String buscarColorAntecedenteGrupoFamiliar(String cuilTitular) {
+
+	    Connection con = null;
+	    CallableStatement stmt = null;
+	    ResultSet rs = null;
+
+	    try {
+	        String sql = "select public.buscar_color_antecedente_grupo_familiar(?) as color_antecedente_judicial";
+	        con = ConnectionHelper.getConnection();
+	        stmt = con.prepareCall(sql);
+	        stmt.setString(1, cuilTitular);
+	        rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            return rs.getString("color_antecedente_judicial");
+	        }
+	    } catch (Exception e) {
+	        _log.error("Error buscando color antecedente judicial para cuilTitular="+ cuilTitular,e);
+	    } finally {
+	        try {
+	            if (rs != null) {
+	                rs.close();
+	            }
+	        } catch (Exception e) {
+	            _log.error("Error cerrando ResultSet - buscarColorAntecedenteGrupoFamiliar",e);
+	        }
+
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
+
+	    return null;
+	}
+	
+	public String buscarCodigoAntecedenteGrupoFamiliar(String cuilTitular) {
+
+	    Connection con = null;
+	    CallableStatement stmt = null;
+	    ResultSet rs = null;
+
+	    try {
+
+	        String sql =
+	            "select public.buscar_codigo_antecedente_grupo_familiar(?) " +
+	            "as codigo_antecedente_judicial";
+
+	        con = ConnectionHelper.getConnection();
+	        stmt = con.prepareCall(sql);
+	        stmt.setString(1, cuilTitular);
+	        rs = stmt.executeQuery();
+
+	        if (rs.next()) {
+	            return rs.getString(
+	                "codigo_antecedente_judicial"
+	            );
+	        }
+
+	    } catch (Exception e) {
+	        _log.error("Error buscando codigo antecedente judicial para cuilTitular="+ cuilTitular,e);
+
+	    } finally {
+
+	        try {
+	            if (rs != null) {
+	                rs.close();
+	            }
+	        } catch (Exception e) {
+	            _log.error("Error cerrando ResultSet - buscarCodigoAntecedenteGrupoFamiliar",e);
+	        }
+
+	        ConnectionHelper.cerrar(stmt, con);
+	    }
+
+	    return null;
 	}
 }
