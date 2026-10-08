@@ -105,6 +105,11 @@ String tokenGuardadoCompra =
            value="<%= HtmlUtil.escape(req.getObservacionesVisible()) %>" />
 
     <input type="hidden"
+           name="<portlet:namespace />observacion_interna"
+           id="<portlet:namespace />observacion_interna_hidden"
+           value="<%= HtmlUtil.escape(req.getObservacionInternaVisible()) %>" />
+
+    <input type="hidden"
            name="<portlet:namespace />fecha_orden_medica"
            id="<portlet:namespace />fecha_orden_medica_hidden"
            value="<%= HtmlUtil.escape(

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.List;
@@ -31,7 +32,9 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?,?)}";
 
     private static final String SQL_GET_REQUERIMIENTO =
-            "{call compras.get_requerimiento(?)}";
+            "SELECT rb.*, r.observacion_interna "
+                    + "FROM compras.get_requerimiento(?) rb "
+                    + "JOIN compras.requerimiento r ON r.id_requerimiento = rb.id";
 
     private static final String SQL_GET_REQUERIMIENTO_DETALLE =
             "{call compras.get_requerimiento_detalle_clasificado(?)}";
@@ -154,16 +157,22 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_REQUERIMIENTO);
+            stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
-            return rs.next() ? mapRequerimiento(rs) : null;
+            if (!rs.next()) {
+                return null;
+            }
+
+            RequerimientoCompra requerimiento = mapRequerimiento(rs);
+            requerimiento.setObservacionInterna(rs.getString("observacion_interna"));
+            return requerimiento;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);

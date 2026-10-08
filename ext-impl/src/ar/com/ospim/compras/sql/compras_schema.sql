@@ -18,7 +18,8 @@
 --   99 ANULADO
 --
 -- Contratos incorporados:
---   - guardar_requerimiento con 23 argumentos de entrada.
+--   - guardar_requerimiento con 23 argumentos de entrada y variante de 24
+--     para persistir observacion_interna.
 --   - persistencia de afiliado_id_ospim como snapshot.
 --   - persistencia de surge como cabecera del requerimiento.
 --   - PDF con afiliado_id_ospim, integrante y documento.
@@ -283,6 +284,7 @@ CREATE TABLE compras.requerimiento (
                                        legales BOOLEAN NOT NULL DEFAULT FALSE,
 
                                        observaciones TEXT,
+                                       observacion_interna TEXT,
 
                                        alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
                                        alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
@@ -2554,6 +2556,64 @@ BEGIN
     IF v_id IS NULL THEN
         RAISE EXCEPTION
             'La estructura solo puede modificarse en estado PENDIENTE.';
+    END IF;
+
+    RETURN v_id;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION compras.guardar_requerimiento(
+    p_id INTEGER,
+    p_afiliado_cuil_titular VARCHAR,
+    p_afiliado_int INTEGER,
+    p_afiliado_id_ospim INTEGER,
+    p_afiliado_nombre VARCHAR,
+    p_afiliado_apellido VARCHAR,
+    p_afiliado_documento_tipo VARCHAR,
+    p_afiliado_documento_nro VARCHAR,
+    p_afiliado_direccion VARCHAR,
+    p_afiliado_localidad VARCHAR,
+    p_afiliado_provincia VARCHAR,
+    p_afiliado_celular VARCHAR,
+    p_afiliado_telefono VARCHAR,
+    p_afiliado_email VARCHAR,
+    p_id_sector INTEGER,
+    p_cargo_ospim INTEGER,
+    p_cargo_tercerizadora INTEGER,
+    p_id_tercerizadora VARCHAR,
+    p_recupero BOOLEAN,
+    p_surge BOOLEAN,
+    p_legales BOOLEAN,
+    p_observaciones TEXT,
+    p_usuario VARCHAR,
+    p_observacion_interna TEXT
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_id INTEGER;
+BEGIN
+    v_id := compras.guardar_requerimiento(
+        p_id, p_afiliado_cuil_titular, p_afiliado_int,
+        p_afiliado_id_ospim, p_afiliado_nombre, p_afiliado_apellido,
+        p_afiliado_documento_tipo, p_afiliado_documento_nro,
+        p_afiliado_direccion, p_afiliado_localidad, p_afiliado_provincia,
+        p_afiliado_celular, p_afiliado_telefono, p_afiliado_email,
+        p_id_sector, p_cargo_ospim, p_cargo_tercerizadora,
+        p_id_tercerizadora, p_recupero, p_surge, p_legales,
+        p_observaciones, p_usuario
+    );
+
+    UPDATE compras.requerimiento
+       SET observacion_interna = NULLIF(btrim(p_observacion_interna), '')
+     WHERE id_requerimiento = v_id
+       AND estado = 1
+       AND baja_fecha IS NULL;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'La observacion interna solo puede modificarse en estado PENDIENTE.';
     END IF;
 
     RETURN v_id;

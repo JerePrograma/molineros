@@ -12,7 +12,7 @@ Atributos de request consumidos:
 Parámetros consumidos:
     Ninguno directamente; sólo renderiza names y valores del contrato legacy cuando corresponde.
 IDs o funciones JavaScript expuestos:
-    observaciones
+    observaciones, observacion_interna
 Efectos secundarios:
     Sólo renderiza o incluye presentación; no ejecuta persistencia.
 --%>
@@ -39,3 +39,20 @@ Efectos secundarios:
         </div>
     <% } %>
 </fieldset>
+
+<% if (puedeEditarEstructuraPantalla) { %>
+    <fieldset class="block-labels compras-observaciones">
+        <legend>Observación interna</legend>
+        <table class="lfr-table">
+            <tr>
+                <td>
+                    <textarea id="<portlet:namespace />observacion_interna"
+                              cols="100"
+                              rows="4"><%= HtmlUtil.escape(
+                                      req.getObservacionInternaVisible()
+                              ) %></textarea>
+                </td>
+            </tr>
+        </table>
+    </fieldset>
+<% } %>

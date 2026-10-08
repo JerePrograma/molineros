@@ -24,7 +24,7 @@ import java.sql.Types;
 public class EditarRequerimientoCompraServiceImpl {
 
     private static final String SQL_GUARDAR_REQUERIMIENTO =
-            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
+            "{ ? = call compras.guardar_requerimiento(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) }";
 
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
             "{call compras.guardar_requerimiento_detalle_clasificado(?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
@@ -144,6 +144,7 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setBoolean(22, requerimiento.isLegales());
             stmt.setString(23, requerimiento.getObservaciones());
             stmt.setString(24, usuario);
+            stmt.setString(25, requerimiento.getObservacionInterna());
 
             stmt.execute();
             return stmt.getInt(1);

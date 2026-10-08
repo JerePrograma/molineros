@@ -35,6 +35,7 @@ public class RequerimientoCompra {
     private Boolean surge;
     private Boolean legales;
     private String observaciones;
+    private String observacionInterna;
 
     private Integer idEstado;
     private String estadoDescripcion;
@@ -378,6 +379,18 @@ public class RequerimientoCompra {
 
     public void setObservaciones(String observaciones) {
         this.observaciones = WebKeysCompras.trimToNull(observaciones);
+    }
+
+    public String getObservacionInterna() {
+        return observacionInterna;
+    }
+
+    public String getObservacionInternaVisible() {
+        return observacionInterna != null ? observacionInterna : "";
+    }
+
+    public void setObservacionInterna(String observacionInterna) {
+        this.observacionInterna = WebKeysCompras.trimToNull(observacionInterna);
     }
 
     public Integer getIdEstado() {

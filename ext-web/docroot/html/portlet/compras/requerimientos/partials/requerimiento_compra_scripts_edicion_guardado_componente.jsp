@@ -348,6 +348,19 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             );
         }
 
+        var observacionInternaInput =
+                jQuery(
+                        '#<portlet:namespace />observacion_interna'
+                );
+
+        if (observacionInternaInput.length > 0) {
+            jQuery(
+                    '#<portlet:namespace />observacion_interna_hidden'
+            ).val(
+                    observacionInternaInput.val() || ''
+            );
+        }
+
         if (cargoForzadoPorSector) {
             <portlet:namespace />actualizarRecuperoPorCargoTercerizadora(0);
         } else {
@@ -1884,14 +1897,16 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         <% } %>
 
         jQuery(
-                '#<portlet:namespace />observaciones'
+                '#<portlet:namespace />observaciones, '
+                        + '#<portlet:namespace />observacion_interna'
         ).change(function() {
 
             <portlet:namespace />sincronizarFormularioCompra();
         });
 
         jQuery(
-                '#<portlet:namespace />observaciones'
+                '#<portlet:namespace />observaciones, '
+                        + '#<portlet:namespace />observacion_interna'
         ).keyup(function() {
 
             <portlet:namespace />sincronizarFormularioCompra();

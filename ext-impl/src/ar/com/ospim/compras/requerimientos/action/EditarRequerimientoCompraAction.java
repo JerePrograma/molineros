@@ -802,7 +802,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private void copiarParametrosAlta(ActionRequest request, ActionResponse response) {
         String[] cabecera = {"id_sector", "sector_id", "afiliado_cuil_titular", "afiliado_int",
-                "cargo_ospim", "cargo_tercerizadora", "id_tercerizadora", "surge", "legales", "observaciones"};
+                "cargo_ospim", "cargo_tercerizadora", "id_tercerizadora", "surge", "legales", "observaciones", "observacion_interna"};
         for (int i = 0; i < cabecera.length; i++) {
             response.setRenderParameter(cabecera[i], getParametroTrim(request, cabecera[i]));
         }
@@ -1267,6 +1267,11 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 if (idSectorParam > 0) {
                     requerimiento.setIdSector(Integer.valueOf(idSectorParam));
                     requerimientoHelper.prepararRequerimientoParaGuardar(requerimiento);
+                }
+                if (ParamUtil.getBoolean(renderRequest, "compras_error", false)) {
+                    requerimiento.setObservacionInterna(
+                            ParamUtil.getString(renderRequest, "observacion_interna", "")
+                    );
                 }
                 if (ParamUtil.getBoolean(renderRequest, "compras_error", false)
                         && requerimiento.esSectorSinCotizacionPrestador()) {
@@ -1809,6 +1814,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         );
         requerimiento.setObservaciones(
                 getParametroRaw(request, "observaciones", null)
+        );
+        requerimiento.setObservacionInterna(
+                getParametroRaw(request, "observacion_interna", null)
         );
 
         return requerimiento;
