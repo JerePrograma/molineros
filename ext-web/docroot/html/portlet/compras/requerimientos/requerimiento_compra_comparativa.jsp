@@ -20,6 +20,22 @@ boolean comparativaExiste = Boolean.TRUE.equals(renderRequest.getAttribute("comp
 String comparativaError = (String) renderRequest.getAttribute("comparativaError");
 String comparativaArchivoActual = (String) renderRequest.getAttribute("comparativaArchivoActual");
 %>
+<style type="text/css">
+    .compras-comparativa-campos > tbody > tr > td {
+        padding: 6px 8px 6px 0;
+        vertical-align: middle;
+    }
+    .compras-comparativa-campos > tbody > tr > .compras-celda-label {
+        white-space: nowrap;
+    }
+    .compras-comparativa-campos > tbody > tr > .compras-celda-control {
+        padding-right: 20px;
+    }
+    .compras-comparativa-campos > tbody > tr > td label {
+        display: inline;
+        margin: 0;
+    }
+</style>
 <div id="<portlet:namespace /><%= comparativaEditable ? "comparativaPrestadorContenido" : "comparativaContenido" %>">
 <% if (comparativaError != null) { %>
     <div class="portlet-msg-error"><%= HtmlUtil.escape(comparativaError) %></div>
@@ -34,15 +50,9 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
         <div class="portlet-msg-info">Todavía no hay datos de comparativa guardados.</div>
         <% } %>
     <% } %>
-    <% if (comparativaEditable) { %>
-        <p>Ingrese cantidades e importes netos sin separador de miles. IVA e IIBB son importes adicionales del presupuesto completo.</p>
-    <% } %>
         <% if (comparativaEditable) { %>
             <input type="hidden" id="<portlet:namespace />comparativaTieneArchivo"
                    value="<%= comparativaArchivoActual != null %>" />
-            <% if (comparativaArchivoActual != null) { %>
-            <p>Archivo actual: <%= HtmlUtil.escape(comparativaArchivoActual) %></p>
-            <% } %>
         <% } %>
         <div <%= comparativaEditable ? "" : "style=\"max-height:550px;overflow:auto;\"" %>>
         <% for (RequerimientoCompraComparativa comparativa : comparativas) {
@@ -61,9 +71,10 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
             <input type="hidden" name="<portlet:namespace />prestador<%= sufijoComparativa %>"
                    value="<%= comparativa.getIdPrestador() %>" />
             <% } %>
-            <table class="lfr-table">
+            <table class="lfr-table compras-comparativa-campos" width="100%">
                 <tr>
-                    <td><label for="<portlet:namespace />fechaDia<%= sufijoComparativa %>">Fecha presupuesto</label>
+                    <td class="compras-celda-label"><label for="<portlet:namespace />fechaDia<%= sufijoComparativa %>">Fecha presupuesto</label></td>
+                    <td class="compras-celda-control">
                         <% if (comparativaEditable) {
                             String valorFechaComparativa = valorComparativa(comparativaEntrada,
                                     "fecha" + sufijoComparativa, comparativa.getFechaPresupuesto());
@@ -100,7 +111,8 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                         </span>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getFechaPresupuesto()) %><% } %>
                     </td>
-                    <td><label for="<portlet:namespace />pago<%= sufijoComparativa %>">Forma de pago</label>
+                    <td class="compras-celda-label"><label for="<portlet:namespace />pago<%= sufijoComparativa %>">Forma de pago</label></td>
+                    <td class="compras-celda-control">
                         <% if (comparativaEditable) { %>
                         <select id="<portlet:namespace />pago<%= sufijoComparativa %>" name="<portlet:namespace />pago<%= sufijoComparativa %>">
                             <% for (String opcion : new String[] {"30", "45", "60"}) { %>
@@ -109,7 +121,8 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                         </select>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getFormaPago()) %> días<% } %>
                     </td>
-                    <td><label for="<portlet:namespace />plazo<%= sufijoComparativa %>">Plazo de entrega</label>
+                    <td class="compras-celda-label"><label for="<portlet:namespace />plazo<%= sufijoComparativa %>">Plazo de entrega</label></td>
+                    <td class="compras-celda-control">
                         <% if (comparativaEditable) { %>
                         <select id="<portlet:namespace />plazo<%= sufijoComparativa %>" name="<portlet:namespace />plazo<%= sufijoComparativa %>">
                             <option value=""></option>
@@ -119,7 +132,8 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                         </select>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getPlazoEntrega()) %><% } %>
                     </td>
-                    <td><label for="<portlet:namespace />validez<%= sufijoComparativa %>">Validez (horas)</label>
+                    <td class="compras-celda-label"><label for="<portlet:namespace />validez<%= sufijoComparativa %>">Validez (horas)</label></td>
+                    <td class="compras-celda-control">
                         <% if (comparativaEditable) { %>
                         <select id="<portlet:namespace />validez<%= sufijoComparativa %>" name="<portlet:namespace />validez<%= sufijoComparativa %>">
                             <option value=""></option>
@@ -131,7 +145,8 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                     </td>
                 </tr>
                 <tr>
-                    <td><label for="<portlet:namespace />envio<%= sufijoComparativa %>">Envío</label>
+                    <td class="compras-celda-label"><label for="<portlet:namespace />envio<%= sufijoComparativa %>">Envío</label></td>
+                    <td class="compras-celda-control">
                         <% if (comparativaEditable) { %>
                         <select id="<portlet:namespace />envio<%= sufijoComparativa %>" name="<portlet:namespace />envio<%= sufijoComparativa %>">
                             <option value=""></option>
@@ -141,18 +156,21 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                         </select>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getEnvio()) %><% } %>
                     </td>
-                    <td><label for="<portlet:namespace />iva<%= sufijoComparativa %>">IVA (importe)</label>
+                    <td class="compras-celda-label"><label for="<portlet:namespace />iva<%= sufijoComparativa %>">IVA (importe)</label></td>
+                    <td class="compras-celda-control">
                         <% if (comparativaEditable) { %>
                         <input type="text" id="<portlet:namespace />iva<%= sufijoComparativa %>" name="<portlet:namespace />iva<%= sufijoComparativa %>"
                                size="16" maxlength="20" value="<%= valorComparativa(comparativaEntrada, "iva" + sufijoComparativa, comparativa.getIva()) %>" />
                         <% } else { %><%= valorComparativa(null, "", comparativa.getIva()) %><% } %>
                     </td>
-                    <td><label for="<portlet:namespace />iibb<%= sufijoComparativa %>">IIBB (importe)</label>
+                    <td class="compras-celda-label"><label for="<portlet:namespace />iibb<%= sufijoComparativa %>">IIBB (importe)</label></td>
+                    <td class="compras-celda-control">
                         <% if (comparativaEditable) { %>
                         <input type="text" id="<portlet:namespace />iibb<%= sufijoComparativa %>" name="<portlet:namespace />iibb<%= sufijoComparativa %>"
                                size="16" maxlength="20" value="<%= valorComparativa(comparativaEntrada, "iibb" + sufijoComparativa, comparativa.getIibb()) %>" />
                         <% } else { %><%= valorComparativa(null, "", comparativa.getIibb()) %><% } %>
                     </td>
+                    <td colspan="2"></td>
                 </tr>
             </table>
             <table class="lfr-table" width="100%">

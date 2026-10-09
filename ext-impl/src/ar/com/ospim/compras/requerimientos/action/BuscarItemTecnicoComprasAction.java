@@ -241,6 +241,14 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                             droga
                     );
 
+            if ("FARMACIA".equals(sector)) {
+                request.setAttribute(
+                        "COMPRAS_DROGAS_NOMENCLADOR",
+                        BusquedaRequerimientoCompraServiceUtil
+                                .obtenerDrogasNomencladorFarmacia(resultados)
+                );
+            }
+
             request.setAttribute(
                     "COMPRAS_RESULTADOS_NOMENCLADOR",
                     resultados != null

@@ -126,155 +126,163 @@ Efectos secundarios:
 
     <% } %>
 
-    <table class="lfr-table"
-           style="border-collapse: separate; border-spacing: 5px;"
+    <style type="text/css">
+        .compras-detalle-editor .compras-detalle-campos {
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 5px;
+        }
+
+        .compras-detalle-editor .compras-detalle-campos label {
+            display: inline-block;
+            width: 45%;
+            margin-right: 2%;
+        }
+
+        .compras-detalle-editor .compras-detalle-columna-centro label {
+            width: 18%;
+        }
+
+        .compras-detalle-editor .compras-detalle-columna-centro input[type="text"] {
+            width: 75%;
+        }
+
+        .compras-detalle-editor .compras-detalle-columna-izquierda input[type="text"],
+        .compras-detalle-editor .compras-detalle-columna-izquierda select,
+        .compras-detalle-editor .compras-detalle-columna-derecha input[type="text"] {
+            max-width: 50%;
+        }
+
+        .compras-detalle-editor .compras-detalle-acciones a,
+        .compras-detalle-editor .compras-detalle-acciones input {
+            margin-right: 8px;
+        }
+    </style>
+
+    <table class="lfr-table compras-detalle-campos"
+           id="<portlet:namespace />detalle_campos_editor"
            width="100%">
 
-        <% if (reqDetalle == null
-                || reqDetalle.getIdRequerimientoCompra() <= 0
-                || !reqDetalle.esSectorSinCotizacionPrestador()) { %>
-        <tr id="<portlet:namespace />detalle_fila_tipo_prestacion">
-            <td>
-                <label for="<portlet:namespace />detalle_id_tipo_prestacion">
-                    Tipo de cotización:
-                </label>
-            </td>
-            <td colspan="3">
-                <select id="<portlet:namespace />detalle_id_tipo_prestacion">
-                    <option value="">Seleccione...</option>
-                </select>
-                <span id="<portlet:namespace />detalle_tipo_prestacion_ayuda"
-                      class="portlet-msg-info"
-                      style="display:none;">
-                </span>
-            </td>
-        </tr>
-        <% } %>
-
-        <tbody id="<portlet:namespace />detalle_bloque_nomenclador">
-
-            <tr>
-
-                <td>
-                    <label for="<portlet:namespace />detalle_codigo_nomenclador">
-                        <liferay-ui:message key="codigo-presentado" />:
-                    </label>
-                </td>
-
-                <td>
-                    <input type="text"
-                           id="<portlet:namespace />detalle_codigo_nomenclador"
-                           size="10"
-                           maxlength="100"
-                           value="" />
-                </td>
-
-                <td>
-                    <label for="<portlet:namespace />detalle_descripcion_nomenclador">
-                        Descripción:
-                    </label>
-
-                    <input type="text"
-                           id="<portlet:namespace />detalle_descripcion_nomenclador"
-                           size="60"
-                           maxlength="500"
-                           value="" />
-                </td>
-
-                <td>
-                    <div id="<portlet:namespace />detalle_div_btn_busca_nomenclador">
-
-                        <a href="javascript:void(0);"
-                           onclick="return <portlet:namespace />buscarNomencladorDetalle();"
-                           tabindex="-1">Buscar</a>
-
-                        &nbsp;
-
-                        <a href="javascript:void(0);"
-                           onclick="return <portlet:namespace />limpiarSeleccionNomenclador();"
-                           tabindex="-1">Limpiar</a>
-
-                    </div>
-                </td>
-
-            </tr>
-
-            <tr id="<portlet:namespace />detalle_fila_droga_nomenclador"
-                style="display:none;">
-
-                <td>
-                    <label for="<portlet:namespace />detalle_droga_nomenclador">
-                        Droga:
-                    </label>
-                </td>
-
-                <td colspan="3">
-                    <input type="text"
-                           id="<portlet:namespace />detalle_droga_nomenclador"
-                           size="60"
-                           maxlength="500"
-                           value="" />
-                </td>
-
-            </tr>
-
-        </tbody>
+        <colgroup>
+            <col style="width: 30%;" />
+            <col style="width: 50%;" />
+            <col style="width: 20%;" />
+        </colgroup>
 
         <tr>
+            <td class="compras-detalle-columna-izquierda">
+                <% if (reqDetalle == null
+                        || reqDetalle.getIdRequerimientoCompra() <= 0
+                        || !reqDetalle.esSectorSinCotizacionPrestador()) { %>
+                <div id="<portlet:namespace />detalle_fila_tipo_prestacion">
+                    <label for="<portlet:namespace />detalle_id_tipo_prestacion">
+                        Tipo de cotización:
+                    </label>
+                    <select id="<portlet:namespace />detalle_id_tipo_prestacion">
+                        <option value="">Seleccione...</option>
+                    </select>
+                    <span id="<portlet:namespace />detalle_tipo_prestacion_ayuda"
+                          class="portlet-msg-info"
+                          style="display:none;">
+                    </span>
+                </div>
+                <% } %>
+            </td>
 
-            <td>
+            <td class="compras-detalle-columna-centro">
+                <div class="compras-detalle-campo-nomenclador">
+                    <div id="<portlet:namespace />detalle_fila_droga_nomenclador"
+                         style="display:none;">
+                        <label for="<portlet:namespace />detalle_droga_nomenclador">
+                            Droga:
+                        </label>
+                        <input type="text"
+                               id="<portlet:namespace />detalle_droga_nomenclador"
+                               size="60"
+                               maxlength="500"
+                               value="" />
+                    </div>
+                </div>
+            </td>
+
+            <td class="compras-detalle-columna-derecha">
                 <label for="<portlet:namespace />detalle_cantidad">
                     Cantidad:
                 </label>
-            </td>
-
-            <td>
                 <input type="text"
                        id="<portlet:namespace />detalle_cantidad"
                        size="8"
                        value="1" />
             </td>
-
-        </tr>
-
-        <tr id="<portlet:namespace />detalle_fila_observaciones">
-
-            <td>
-                <label for="<portlet:namespace />detalle_observaciones">
-                    Descripción:
-                </label>
-            </td>
-
-            <td colspan="3">
-                <input type="text"
-                       id="<portlet:namespace />detalle_observaciones"
-                       size="80"
-                       maxlength="500"
-                       value="" />
-            </td>
-
         </tr>
 
         <tr>
+            <td class="compras-detalle-columna-izquierda">
+                <div id="<portlet:namespace />detalle_bloque_nomenclador"
+                     class="compras-detalle-campo-nomenclador">
+                    <label for="<portlet:namespace />detalle_codigo_nomenclador">
+                        <liferay-ui:message key="codigo-presentado" />:
+                    </label>
+                    <input type="text"
+                           id="<portlet:namespace />detalle_codigo_nomenclador"
+                           size="10"
+                           maxlength="100"
+                           value="" />
+                </div>
+            </td>
 
-            <td colspan="4"
-                align="center">
+            <td class="compras-detalle-columna-centro">
+                <div class="compras-detalle-campo-nomenclador">
+                    <label for="<portlet:namespace />detalle_descripcion_nomenclador">
+                        Descripción:
+                    </label>
+                    <input type="text"
+                           id="<portlet:namespace />detalle_descripcion_nomenclador"
+                           size="60"
+                           maxlength="500"
+                           value="" />
+                </div>
 
+                <div id="<portlet:namespace />detalle_fila_observaciones">
+                    <label for="<portlet:namespace />detalle_observaciones">
+                        Descripción:
+                    </label>
+                    <input type="text"
+                           id="<portlet:namespace />detalle_observaciones"
+                           size="80"
+                           maxlength="500"
+                           value="" />
+                </div>
+            </td>
+
+            <td class="compras-detalle-columna-derecha">
+                <div class="compras-detalle-campo-nomenclador compras-detalle-acciones">
+                    <div id="<portlet:namespace />detalle_div_btn_busca_nomenclador">
+                        <a href="javascript:void(0);"
+                           onclick="return <portlet:namespace />buscarNomencladorDetalle();"
+                           tabindex="-1">Buscar</a>
+                        <a href="javascript:void(0);"
+                           onclick="return <portlet:namespace />limpiarSeleccionNomenclador();"
+                           tabindex="-1">Limpiar</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="3"
+                align="center"
+                class="compras-detalle-acciones">
                 <input type="button"
                        id="<portlet:namespace />detalle_submit"
                        value="Agregar detalle"
                        onclick="return <portlet:namespace />agregarOActualizarDetalle();" />
-
-                &nbsp;&nbsp;
-
                 <input type="button"
                        id="<portlet:namespace />detalle_cancelar"
                        value="Cancelar edición"
                        style="display:none;"
                        onclick="return <portlet:namespace />cancelarEdicionDetalle();" />
-
             </td>
-
         </tr>
 
     </table>

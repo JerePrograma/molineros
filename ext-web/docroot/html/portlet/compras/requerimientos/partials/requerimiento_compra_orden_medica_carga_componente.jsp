@@ -23,9 +23,11 @@ final int maxOrdenesMedicasPorCarga = 20;
 long maximoTamanoOrdenMedica =
         DocumentoLibraryComprasHelper.obtenerMaximoTamanoDocumento();
 String maximoTamanoOrdenMedicaTexto =
-        maximoTamanoOrdenMedica % 1024L == 0L
-                ? (maximoTamanoOrdenMedica / 1024L) + " KB"
-                : maximoTamanoOrdenMedica + " bytes";
+        maximoTamanoOrdenMedica >= 1000000L
+                ? Math.round(maximoTamanoOrdenMedica / 1000000.0d) + " MB"
+                : maximoTamanoOrdenMedica % 1024L == 0L
+                        ? (maximoTamanoOrdenMedica / 1024L) + " KB"
+                        : maximoTamanoOrdenMedica + " bytes";
 
 Calendar fechaOrdenMedicaReferencia =
         Calendar.getInstance();
@@ -66,7 +68,21 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         }
 
         #<portlet:namespace />tabla_ordenes_medicas td {
-            vertical-align: middle;
+            vertical-align: top;
+        }
+
+        #<portlet:namespace />tabla_ordenes_medicas .orden-medica-archivo,
+        #<portlet:namespace />tabla_ordenes_medicas .orden-medica-fecha-liferay,
+        #<portlet:namespace />tabla_ordenes_medicas .orden-medica-acciones input {
+            margin-top: 0;
+        }
+
+        #<portlet:namespace />tabla_ordenes_medicas .compras-ayuda-campo {
+            white-space: normal;
+        }
+
+        #<portlet:namespace />tabla_ordenes_medicas .orden-medica-ayuda-tamano {
+            margin-left: 8px;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
@@ -85,13 +101,14 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
         td.orden-medica-acciones {
 
             width: 30%;
-            white-space: nowrap;
+            white-space: normal;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
         input.orden-medica-archivo {
 
             width: 98%;
+            max-width: 100%;
         }
 
         #<portlet:namespace />tabla_ordenes_medicas
@@ -314,9 +331,10 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                             <div class="compras-ayuda-campo">
                                 Formatos permitidos: JPG, JPEG, PNG o PDF.
                                 <% if (maximoTamanoOrdenMedica != Long.MAX_VALUE) { %>
-                                    <br />
-                                    Tamaño máximo por archivo:
-                                    <%= maximoTamanoOrdenMedicaTexto %>.
+                                    <span class="orden-medica-ayuda-tamano">
+                                        Tamaño máximo por archivo:
+                                        <%= maximoTamanoOrdenMedicaTexto %>.
+                                    </span>
                                 <% } %>
                             </div>
                         </td>

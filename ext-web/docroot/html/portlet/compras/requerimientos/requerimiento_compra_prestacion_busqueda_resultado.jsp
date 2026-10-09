@@ -18,6 +18,7 @@ Efectos secundarios:
 --%>
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ page import="ar.com.ospim.autorizaciones.beans.Nomenclador" %>
+<%@ page import="java.util.Map" %>
 
 <%!
 private String comprasNomencladorJs(String value) {
@@ -167,6 +168,12 @@ if (errorBusqueda == null
                 new ArrayList<Nomenclador>();
     }
 
+    boolean mostrarDrogas = "FARMACIA".equals(sectorBusqueda);
+    Map<Integer, String> drogasNomenclador =
+            (Map<Integer, String>) request.getAttribute(
+                    "COMPRAS_DROGAS_NOMENCLADOR"
+            );
+
     PortletURL portletURL =
             renderResponse.createRenderURL();
 
@@ -185,6 +192,9 @@ if (errorBusqueda == null
     headerNames.add("Tipo");
     headerNames.add("Código");
     headerNames.add("Descripción");
+    if (mostrarDrogas) {
+        headerNames.add("DROGAS");
+    }
     headerNames.add("Especialidad");
     headerNames.add("Recupera SUR");
     headerNames.add("Fecha Baja");
@@ -306,6 +316,18 @@ if (errorBusqueda == null
                 );
                 descripcion.append("</a>");
                 row.addText(descripcion.toString());
+
+                if (mostrarDrogas) {
+                    String droga = drogasNomenclador != null
+                            ? drogasNomenclador.get(
+                                    Integer.valueOf(nomenclador.getId_prestacion())
+                            )
+                            : null;
+                    StringBuilder drogaTexto = new StringBuilder(inicioEnlace);
+                    drogaTexto.append(HtmlUtil.escape(droga != null ? droga : ""));
+                    drogaTexto.append("</a>");
+                    row.addText(drogaTexto.toString());
+                }
 
                 StringBuilder especialidad =
                         new StringBuilder(inicioEnlace);

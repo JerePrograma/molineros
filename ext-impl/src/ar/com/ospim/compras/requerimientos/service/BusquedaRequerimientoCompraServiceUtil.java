@@ -1,10 +1,15 @@
 package ar.com.ospim.compras.requerimientos.service;
 
+import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.global.beans.Empresa;
 
+import com.liferay.portal.kernel.util.GetterUtil;
+
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -172,6 +177,61 @@ public class BusquedaRequerimientoCompraServiceUtil {
         }
 
         return items;
+    }
+
+    public static Map<Integer, String> obtenerDrogasNomencladorFarmacia(
+            List<Nomenclador> nomencladores) throws Exception {
+
+        List<Integer> troqueles = new ArrayList<Integer>();
+        Map<Integer, Integer> troquelesPorPrestacion =
+                new HashMap<Integer, Integer>();
+
+        for (int i = 0;
+                nomencladores != null && i < nomencladores.size();
+                i++) {
+
+            Nomenclador nomenclador = nomencladores.get(i);
+
+            if (nomenclador == null
+                    || nomenclador.getId_tipo_nomenclador()
+                    != WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA) {
+                continue;
+            }
+
+            String codigo = nomenclador.getCodigo() != null
+                    ? nomenclador.getCodigo().trim()
+                    : "";
+            int troquel = codigo.matches("^[0-9]+$")
+                    ? GetterUtil.getInteger(codigo, 0)
+                    : 0;
+
+            if (troquel > 0) {
+                Integer claveTroquel = Integer.valueOf(troquel);
+                if (!troqueles.contains(claveTroquel)) {
+                    troqueles.add(claveTroquel);
+                }
+                troquelesPorPrestacion.put(
+                        Integer.valueOf(nomenclador.getId_prestacion()),
+                        claveTroquel
+                );
+            }
+        }
+
+        Map<Integer, String> drogasPorTroquel =
+                getInstance().listarDrogasMedicamentosBatch(troqueles);
+        Map<Integer, String> drogasPorPrestacion =
+                new HashMap<Integer, String>();
+
+        for (Map.Entry<Integer, Integer> item
+                : troquelesPorPrestacion.entrySet()) {
+            String droga = drogasPorTroquel.get(item.getValue());
+            drogasPorPrestacion.put(
+                    item.getKey(),
+                    droga != null ? droga : ""
+            );
+        }
+
+        return drogasPorPrestacion;
     }
 
     public static List<RequerimientoCompraEstado> listarEstados()

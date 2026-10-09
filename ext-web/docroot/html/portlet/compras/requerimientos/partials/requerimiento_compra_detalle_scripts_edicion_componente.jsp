@@ -182,7 +182,9 @@ Efectos secundarios:
         );
 
         jQuery(
-                '#<portlet:namespace />detalle_bloque_nomenclador'
+                '#<portlet:namespace />detalle_bloque_nomenclador, '
+                        + '#<portlet:namespace />detalle_campos_editor '
+                        + '.compras-detalle-campo-nomenclador'
         ).css(
                 'display',
                 esHistorico || tipoItem == 'NOMENCLADOR'

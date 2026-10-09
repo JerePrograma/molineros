@@ -40,16 +40,17 @@
                 <reportElement x="0" y="0" width="802" height="22"/>
                 <box padding="0"><pen lineWidth="0.0"/></box>
                 <textElement><font size="12" isBold="true"/></textElement>
-                <textFieldExpression class="java.lang.String"><![CDATA["Comparativa de presupuestos - Requerimiento " + $P{REQUERIMIENTO}]]></textFieldExpression>
+                <textFieldExpression class="java.lang.String"><![CDATA["Comparativa de presupuestos"]]></textFieldExpression>
             </textField>
         </band>
     </pageHeader>
     <columnHeader>
         <band height="82" splitType="Prevent">
-            <staticText>
+            <textField>
                 <reportElement x="0" y="0" width="252" height="60" stretchType="RelativeToBandHeight"/>
-                <text><![CDATA[]]></text>
-            </staticText>
+                <textElement verticalAlignment="Middle"><font isBold="true"/></textElement>
+                <textFieldExpression class="java.lang.String"><![CDATA["Requerimiento #" + $P{REQUERIMIENTO}]]></textFieldExpression>
+            </textField>
             <staticText>
                 <reportElement x="252" y="0" width="550" height="18" backcolor="#EAD1DC"/>
                 <box topPadding="2" bottomPadding="2"/>

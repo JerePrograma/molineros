@@ -205,6 +205,62 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
+    public Map<Integer, String> listarDrogasMedicamentosBatch(
+            List<Integer> troqueles) throws Exception {
+
+        Map<Integer, String> resultado = new HashMap<Integer, String>();
+        if (troqueles == null || troqueles.isEmpty()) {
+            return resultado;
+        }
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT m.troquel, m.droga FROM public.medicamentos m "
+                        + "WHERE m.troquel IN ("
+        );
+        for (int i = 0; i < troqueles.size(); i++) {
+            if (i > 0) {
+                sql.append(',');
+            }
+            sql.append('?');
+        }
+        sql.append(
+                ") AND m.fecha <= current_date AND m.baja_fecha IS NULL "
+                        + "AND m.fecha = (SELECT max(m2.fecha) "
+                        + "FROM public.medicamentos m2 "
+                        + "WHERE m2.nro_registro = m.nro_registro)"
+        );
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(sql.toString());
+            for (int i = 0; i < troqueles.size(); i++) {
+                stmt.setInt(i + 1, troqueles.get(i).intValue());
+            }
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Integer troquel = Integer.valueOf(rs.getInt("troquel"));
+                String droga = rs.getString("droga");
+                droga = droga != null ? droga.trim() : "";
+
+                if (!resultado.containsKey(troquel)) {
+                    resultado.put(troquel, droga);
+                } else if (!resultado.get(troquel).equals(droga)) {
+                    // Una asociacion ambigua usa la convencion de dato ausente.
+                    resultado.put(troquel, "");
+                }
+            }
+
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
     public List<RequerimientoCompraDetalle> buscarItemsHistoricosAfiliado(
             String cuilTitular,
             int inte,

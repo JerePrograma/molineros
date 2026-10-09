@@ -344,7 +344,7 @@ String botoneraReclamoPrestacionalFormId =
 
             <% if (botoneraPuedeImprimir && botoneraHayPresupuestoPrestador) { %>
                 <input type="button" id="<portlet:namespace />btnCrearComparativa"
-                       value="Crear comparativa"
+                       value="Ver Comparativa"
                        onclick="return <portlet:namespace />abrirComparativaCompra();" />
             <% } %>
 
