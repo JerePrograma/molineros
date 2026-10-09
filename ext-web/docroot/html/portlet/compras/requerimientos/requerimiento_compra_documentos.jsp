@@ -183,9 +183,11 @@ boolean hayPrestadoresDisponiblesPresupuestos =
 long maximoTamanoPresupuesto =
         DocumentoLibraryComprasHelper.obtenerMaximoTamanoDocumento();
 String maximoTamanoPresupuestoTexto =
-        maximoTamanoPresupuesto % 1024L == 0L
-                ? (maximoTamanoPresupuesto / 1024L) + " KB"
-                : maximoTamanoPresupuesto + " bytes";
+        maximoTamanoPresupuesto >= 1000000L
+                ? Math.round(maximoTamanoPresupuesto / 1000000.0d) + " MB"
+                : maximoTamanoPresupuesto % 1024L == 0L
+                        ? (maximoTamanoPresupuesto / 1024L) + " KB"
+                        : maximoTamanoPresupuesto + " bytes";
 
 int maxPresupuestosCargaActual =
         cotizacionEmpresaPresupuestos
@@ -281,11 +283,25 @@ boolean msgPresupuestoBorrado =
 
     #<portlet:namespace />tabla_carga_presupuestos th {
         text-align: left;
-        vertical-align: middle;
+        vertical-align: top;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos td {
-        vertical-align: middle;
+        vertical-align: top;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos select.presupuesto-prestador,
+    #<portlet:namespace />tabla_carga_presupuestos input.presupuesto-archivo,
+    #<portlet:namespace />tabla_carga_presupuestos td.presupuesto-acciones input {
+        margin-top: 0;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos .compras-ayuda-campo {
+        white-space: normal;
+    }
+
+    #<portlet:namespace />tabla_carga_presupuestos .presupuesto-ayuda-tamano {
+        margin-left: 8px;
     }
 
     #<portlet:namespace />tabla_carga_presupuestos
@@ -1350,10 +1366,11 @@ boolean msgPresupuestoBorrado =
         var ayudaArchivo =
                 jQuery(
                         '<div class="compras-ayuda-campo">'
-                                + 'Formatos permitidos: PDF'
+                                + 'Formatos permitidos: PDF.'
                                 <% if (maximoTamanoPresupuesto != Long.MAX_VALUE) { %>
-                                + '<br />Tamaño máximo por archivo: '
-                                + '<%= maximoTamanoPresupuestoTexto %>.'
+                                + ' <span class="presupuesto-ayuda-tamano">'
+                                + 'Tamaño máximo por archivo: '
+                                + '<%= maximoTamanoPresupuestoTexto %>.</span>'
                                 <% } %>
                                 + '</div>'
                 );

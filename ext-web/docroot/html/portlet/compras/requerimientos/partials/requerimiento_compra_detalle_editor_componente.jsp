@@ -153,6 +153,20 @@ Efectos secundarios:
             max-width: 50%;
         }
 
+        .compras-detalle-editor .compras-detalle-formato-empresa .compras-detalle-columna-izquierda label {
+            width: 12%;
+        }
+
+        .compras-detalle-editor .compras-detalle-formato-empresa .compras-detalle-columna-izquierda input[type="text"] {
+            width: 80%;
+            max-width: 80%;
+        }
+
+        .compras-detalle-editor .compras-detalle-formato-medico .compras-detalle-columna-derecha label {
+            width: 13%;
+            margin-right: 1.5%;
+        }
+
         .compras-detalle-editor .compras-detalle-acciones a,
         .compras-detalle-editor .compras-detalle-acciones input {
             margin-right: 8px;
@@ -169,8 +183,9 @@ Efectos secundarios:
             <col style="width: 20%;" />
         </colgroup>
 
-        <tr>
-            <td class="compras-detalle-columna-izquierda">
+        <tr id="<portlet:namespace />detalle_fila_campos_superiores">
+            <td id="<portlet:namespace />detalle_celda_tipo"
+                class="compras-detalle-columna-izquierda">
                 <% if (reqDetalle == null
                         || reqDetalle.getIdRequerimientoCompra() <= 0
                         || !reqDetalle.esSectorSinCotizacionPrestador()) { %>
@@ -189,7 +204,8 @@ Efectos secundarios:
                 <% } %>
             </td>
 
-            <td class="compras-detalle-columna-centro">
+            <td id="<portlet:namespace />detalle_celda_droga"
+                class="compras-detalle-columna-centro">
                 <div class="compras-detalle-campo-nomenclador">
                     <div id="<portlet:namespace />detalle_fila_droga_nomenclador"
                          style="display:none;">
@@ -205,7 +221,8 @@ Efectos secundarios:
                 </div>
             </td>
 
-            <td class="compras-detalle-columna-derecha">
+            <td id="<portlet:namespace />detalle_celda_cantidad"
+                class="compras-detalle-columna-derecha">
                 <label for="<portlet:namespace />detalle_cantidad">
                     Cantidad:
                 </label>
@@ -216,7 +233,7 @@ Efectos secundarios:
             </td>
         </tr>
 
-        <tr>
+        <tr id="<portlet:namespace />detalle_fila_campos_inferiores">
             <td class="compras-detalle-columna-izquierda">
                 <div id="<portlet:namespace />detalle_bloque_nomenclador"
                      class="compras-detalle-campo-nomenclador">
@@ -231,7 +248,8 @@ Efectos secundarios:
                 </div>
             </td>
 
-            <td class="compras-detalle-columna-centro">
+            <td id="<portlet:namespace />detalle_celda_descripcion"
+                class="compras-detalle-columna-centro">
                 <div class="compras-detalle-campo-nomenclador">
                     <label for="<portlet:namespace />detalle_descripcion_nomenclador">
                         Descripción:

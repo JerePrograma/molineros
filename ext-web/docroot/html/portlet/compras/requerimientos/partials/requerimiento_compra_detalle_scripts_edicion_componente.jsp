@@ -222,6 +222,40 @@ Efectos secundarios:
                 esHistorico
         );
 
+        var sectorEditor = <portlet:namespace />normalizarSectorCompra(
+                <portlet:namespace />getSectorDescripcionSeleccionadoCompra()
+        );
+        var formatoEmpresa = !esHistorico
+                && (sectorEditor == 'RRHH' || sectorEditor == 'SISTEMAS');
+        var formatoMedico = sectorEditor == 'PRESTACIONES MEDICAS';
+        var tablaEditor = jQuery('#<portlet:namespace />detalle_campos_editor');
+        tablaEditor.removeClass('compras-detalle-formato-empresa compras-detalle-formato-medico');
+        if (formatoEmpresa) {
+            tablaEditor.addClass('compras-detalle-formato-empresa');
+        } else if (formatoMedico) {
+            tablaEditor.addClass('compras-detalle-formato-medico');
+        }
+
+        var celdaDescripcion = document.getElementById(
+                '<portlet:namespace />detalle_celda_descripcion'
+        );
+        var celdaTipo = document.getElementById('<portlet:namespace />detalle_celda_tipo');
+        var observaciones = document.getElementById('<portlet:namespace />detalle_fila_observaciones');
+        var destinoObservaciones = formatoEmpresa ? celdaTipo : celdaDescripcion;
+        if (observaciones && destinoObservaciones
+                && observaciones.parentNode != destinoObservaciones) {
+            destinoObservaciones.appendChild(observaciones);
+        }
+
+        jQuery('#<portlet:namespace />detalle_celda_tipo').attr('colspan', formatoEmpresa ? 2 : 1);
+        jQuery('#<portlet:namespace />detalle_celda_cantidad').attr('colspan', formatoMedico ? 2 : 1);
+        jQuery('#<portlet:namespace />detalle_celda_droga').css(
+                'display', formatoEmpresa || formatoMedico ? 'none' : ''
+        );
+        jQuery('#<portlet:namespace />detalle_fila_campos_inferiores').css(
+                'display', formatoEmpresa ? 'none' : ''
+        );
+
         return tipoItem;
     }
 
