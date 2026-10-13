@@ -4,8 +4,10 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.helper.PresupuestoCompraHelper;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -82,6 +84,31 @@ public class RequerimientoCompraComparativaAction extends PortletAction {
             for (RequerimientoCompraComparativa c : lista) {
                 guardada = guardada || c.getIdComparativa() > 0;
             }
+            boolean puedeEnviarAAutorizar = !editar && r.isActivo()
+                    && WebKeysCompras.puedeEnviarAAutorizar(r.getEstado())
+                    && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
+            boolean puedeAutorizar = !editar && r.isActivo()
+                    && r.getEstado() == WebKeysCompras.ESTADO_PARA_AUTORIZAR
+                    && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
+            if (puedeEnviarAAutorizar || puedeAutorizar) {
+                try {
+                    RequerimientoCompraReclamoPrestacional relacion =
+                            new RequerimientoCompraReclamoPrestacionalHelper()
+                                    .obtenerPorRequerimiento(r.getIdRequerimientoCompra());
+                    boolean vinculado = relacion != null && relacion.isVinculado();
+                    puedeEnviarAAutorizar = puedeEnviarAAutorizar && vinculado;
+                    puedeAutorizar = puedeAutorizar && vinculado;
+                } catch (Exception e) {
+                    puedeEnviarAAutorizar = false;
+                    puedeAutorizar = false;
+                    _log.warn("No se pudo consultar el Reclamo Prestacional. "
+                            + "Las acciones de autorizacion permaneceran ocultas. Requerimiento="
+                            + r.getIdRequerimientoCompra(), e);
+                }
+            }
+            request.setAttribute("comparativaPuedeEnviarAAutorizar",
+                    Boolean.valueOf(puedeEnviarAAutorizar));
+            request.setAttribute("comparativaPuedeAutorizar", Boolean.valueOf(puedeAutorizar));
             request.setAttribute("comparativaRequerimiento", r);
             request.setAttribute("comparativas", lista);
             request.setAttribute("comparativaEditable", Boolean.valueOf(editar));

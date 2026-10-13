@@ -48,7 +48,7 @@ Efectos secundarios:
             <th>Total</th>
         <% } %>
 
-        <% if (puedeABMDetalle || puedeEliminarDetalle) { %>
+        <% if (puedeABMDetalle || puedeEliminarDetalle || puedeCorregirItemDetalle) { %>
             <th>Acciones</th>
         <% } %>
     </tr>

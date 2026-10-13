@@ -59,14 +59,26 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                             actionRequest
                     );
 
-            detalleHelper.validarPermisoABM(
-                    user
-            );
+            if ("corregirItem".equals(cmd)) {
+                detalleHelper.validarPermisoCorregirItem(user);
+            } else {
+                detalleHelper.validarPermisoABM(user);
+            }
 
             String usuario =
                     detalleHelper.getUsuario(
                             user
                     );
+
+            if ("corregirItem".equals(cmd)) {
+                detalleHelper.corregirItemDesdeRequest(actionRequest, usuario);
+                actionResponse.setRenderParameter("id_requerimiento_compra",
+                        String.valueOf(idRequerimientoCompra));
+                actionResponse.setRenderParameter("struts_action", "/compras/ver_requerimiento");
+                SessionMessages.add(actionRequest, "requerimiento-compra-item-guardado");
+                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
+                return;
+            }
 
             if ("addItem".equals(cmd)
                     || "updateItem".equals(cmd)) {
@@ -167,6 +179,9 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                     actionResponse,
                     idRequerimientoCompra
             );
+            if ("corregirItem".equals(cmd)) {
+                actionResponse.setRenderParameter("struts_action", "/compras/ver_requerimiento");
+            }
 
             actionResponse.setRenderParameter(
                     "compras_error",
@@ -182,7 +197,9 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
 
             setForward(
                     actionRequest,
-                    WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
+                    "corregirItem".equals(cmd)
+                            ? WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO
+                            : WebKeysCompras.FORWARD_COMPRAS_EDITAR_REQUERIMIENTO
             );
         }
     }

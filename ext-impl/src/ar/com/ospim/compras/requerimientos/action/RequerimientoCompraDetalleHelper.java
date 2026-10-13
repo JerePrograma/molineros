@@ -282,6 +282,16 @@ public class RequerimientoCompraDetalleHelper {
         return detalles;
     }
 
+    public void corregirItemDesdeRequest(
+            ActionRequest request,
+            String usuario) throws Exception {
+        RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
+        detalle.setId(Integer.valueOf(getIdDetalleFromRequest(request)));
+        detalle.setIdRequerimientoCompra(getIdRequerimientoCompraFromRequest(request));
+        cargarDetalleTecnicoDesdeRequest(request, "", "Detalle", detalle);
+        requerimientoHelper.corregirItem(detalle, usuario);
+    }
+
     public void guardarDetalleDesdeRequest(
             ActionRequest request,
             ActionResponse response,
@@ -632,6 +642,13 @@ public class RequerimientoCompraDetalleHelper {
                 && WebKeysCompras.isEmpty(
                 getParametroTrim(request, prefix + "nombre_medicamento")
         );
+    }
+
+    public void validarPermisoCorregirItem(User user) throws Exception {
+        if (user == null || (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS))) {
+            errorCampo("permisos", "No posee permisos para corregir medicamentos o prestaciones de compras.");
+        }
     }
 
     public void validarPermisoABM(

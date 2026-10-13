@@ -6,6 +6,10 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
+import ar.com.ospim.util.PermissionUtil;
+import com.liferay.portal.model.User;
+import com.liferay.portal.util.PortalUtil;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 
 import com.liferay.portal.kernel.util.HttpUtil;
@@ -26,6 +30,9 @@ import javax.portlet.RenderRequest;
 
 /** Publica el contexto de presentación requerido por los JSP de Compras. */
 public final class RequerimientoCompraRenderActionUtil {
+
+    public static final String ATTR_PUEDE_CORREGIR_ITEM =
+            "compras.requerimiento.puedeCorregirItem";
 
     public static final String ATTR_PRESTADORES_ENVIADOS =
             "compras.requerimiento.prestadoresEnviados";
@@ -67,6 +74,26 @@ public final class RequerimientoCompraRenderActionUtil {
         if (renderRequest == null) {
             return;
         }
+
+        boolean puedeCorregirItem = false;
+        if (requerimiento != null && requerimiento.getIdRequerimientoCompra() > 0
+                && requerimiento.isActivo()
+                && WebKeysCompras.puedeCorregirItem(requerimiento.getEstado())
+                && !WebKeysCompras.esSectorDetalleObservacionCompras(requerimiento.getSectorDescripcion())) {
+            try {
+                User user = PortalUtil.getUser(renderRequest);
+                boolean permiso = user != null
+                        && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
+                        || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS));
+                puedeCorregirItem = permiso && new RequerimientoCompraReclamoPrestacionalHelper()
+                        .obtenerPorRequerimiento(requerimiento.getIdRequerimientoCompra()) == null;
+            } catch (Exception e) {
+                LogFactoryUtil.getLog(RequerimientoCompraRenderActionUtil.class).warn(
+                        "No se pudo habilitar la corrección de medicamentos o prestaciones. Requerimiento="
+                                + requerimiento.getIdRequerimientoCompra(), e);
+            }
+        }
+        renderRequest.setAttribute(ATTR_PUEDE_CORREGIR_ITEM, Boolean.valueOf(puedeCorregirItem));
 
         List<PrestadorCotizacion> prestadoresEnviados =
                 new ArrayList<PrestadorCotizacion>();

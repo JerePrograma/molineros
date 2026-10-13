@@ -501,7 +501,9 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             );
         }
 
-        if (estadoActual == WebKeysCompras.ESTADO_RECLAMO_RP) {
+        if (WebKeysCompras.esReclamoRP(estadoActual)
+                || WebKeysCompras.esParaAutorizar(estadoActual)
+                || WebKeysCompras.esAutorizado(estadoActual)) {
             return;
         }
 

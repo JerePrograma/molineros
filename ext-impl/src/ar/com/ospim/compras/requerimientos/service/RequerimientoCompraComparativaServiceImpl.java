@@ -5,6 +5,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativaD
 import ar.com.ospim.util.ConnectionHelper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -112,6 +113,7 @@ public class RequerimientoCompraComparativaServiceImpl {
         }
         try {
             for (RequerimientoCompraComparativa c : comparativas) {
+                bloquearGuardado(con, c);
                 guardarCabecera(con, c, usuario);
                 for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
                     guardarDetalle(con, c.getIdComparativa(), d, usuario);
@@ -137,6 +139,19 @@ public class RequerimientoCompraComparativaServiceImpl {
             throw e;
         } finally {
             ConnectionHelper.cerrar(con);
+        }
+    }
+
+    private void bloquearGuardado(Connection con,
+            RequerimientoCompraComparativa c) throws Exception {
+        CallableStatement stmt = con.prepareCall(
+                "{call compras.bloquear_guardado_comparativa(?,?)}");
+        try {
+            stmt.setInt(1, c.getIdRequerimiento());
+            stmt.setString(2, c.getPrestacionesEsperadas());
+            stmt.execute();
+        } finally {
+            stmt.close();
         }
     }
 

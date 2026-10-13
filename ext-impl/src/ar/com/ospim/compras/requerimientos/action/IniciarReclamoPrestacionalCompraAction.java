@@ -1043,10 +1043,7 @@ public class IniciarReclamoPrestacionalCompraAction
 
         if (requerimiento == null
                 || (
-                        !WebKeysCompras.esCotizado(
-                                requerimiento.getEstado()
-                        )
-                        && !WebKeysCompras.esReclamoRP(
+                        !WebKeysCompras.puedeConsultarReclamoPrestacional(
                                 requerimiento.getEstado()
                         )
                 )) {

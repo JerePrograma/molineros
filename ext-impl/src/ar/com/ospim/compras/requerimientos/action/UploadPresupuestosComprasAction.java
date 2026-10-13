@@ -184,6 +184,10 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                 }
                 for (RequerimientoCompraComparativaDetalle detalle : comparativa.getDetalles()) {
                     String clave = sufijo + "_" + detalle.getIdPrestacion();
+                    if (uploadReq.getParameter("cantidad" + clave) == null
+                            || uploadReq.getParameter("importe" + clave) == null) {
+                        throw new IllegalArgumentException("El medicamento o prestación cambió. Actualice la pantalla antes de guardar el presupuesto.");
+                    }
                     entrada.put("cantidad" + clave, ParamUtil.getString(uploadReq, "cantidad" + clave));
                     entrada.put("importe" + clave, ParamUtil.getString(uploadReq, "importe" + clave));
                 }

@@ -10,6 +10,7 @@ public class RequerimientoCompraComparativa {
     private int idComparativa;
     private int idRequerimiento;
     private int idPrestador;
+    private String prestacionesEsperadas;
     private String prestador;
     private Date fechaPresupuesto;
     private Integer formaPago = Integer.valueOf(30);
@@ -31,6 +32,9 @@ public class RequerimientoCompraComparativa {
 
     public int getIdRequerimiento() { return idRequerimiento; }
     public void setIdRequerimiento(int idRequerimiento) { this.idRequerimiento = idRequerimiento; }
+
+    public String getPrestacionesEsperadas() { return prestacionesEsperadas; }
+    public void setPrestacionesEsperadas(String prestacionesEsperadas) { this.prestacionesEsperadas = prestacionesEsperadas; }
 
     public int getIdPrestador() { return idPrestador; }
     public void setIdPrestador(int idPrestador) { this.idPrestador = idPrestador; }

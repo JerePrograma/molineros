@@ -23,6 +23,7 @@ Efectos secundarios:
 <%@ page import="com.liferay.portal.kernel.util.GetterUtil" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.action.RequerimientoCompraRenderActionUtil" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 
 <%!
@@ -146,6 +147,10 @@ boolean puedeABMDetalle =
 boolean puedeCotizarDetalle =
         usuarioPuedeCotizarDetalle
         && !soloLecturaDetalle;
+
+boolean puedeCorregirItemDetalle =
+        Boolean.TRUE.equals(request.getAttribute(
+                RequerimientoCompraRenderActionUtil.ATTR_PUEDE_CORREGIR_ITEM));
 
 boolean puedeVerCotizacionDetalle =
         reqDetalle.puedeVerCotizacion();
@@ -434,5 +439,5 @@ int detalleColspan =
         4
         + (mostrarTipoCotizacionDetalle ? 1 : 0)
         + (puedeVerCotizacionDetalle ? 2 : 0)
-        + ((puedeABMDetalle || puedeEliminarDetalle) ? 1 : 0);
+        + ((puedeABMDetalle || puedeEliminarDetalle || puedeCorregirItemDetalle) ? 1 : 0);
 %>

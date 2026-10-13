@@ -667,7 +667,7 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                 <% } %>
             <% } %>
 
-            <% if (puedeABMDetalle || puedeEliminarDetalle) { %>
+            <% if (puedeABMDetalle || puedeEliminarDetalle || puedeCorregirItemDetalle) { %>
                 html += '<td>';
 
                 <% if (puedeABMDetalle) { %>
@@ -680,7 +680,20 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                     html += '</a>';
                 <% } %>
 
-                <% if (puedeABMDetalle && puedeEliminarDetalle) { %>
+                <% if (puedeCorregirItemDetalle) { %>
+                    if ((detalle.tipoItem == 'NOMENCLADOR' || detalle.tipoItem == 'MEDICAMENTO')
+                            && /^[0-9]+$/.test(String(detalle.id))
+                            && parseInt(detalle.id, 10) > 0) {
+                        <% if (puedeABMDetalle) { %>
+                            html += '&nbsp;';
+                        <% } %>
+                        html += '<a href="#" title="Corregir medicamento / prestación" '
+                                + 'onclick="<portlet:namespace />corregirDetalleEnPantalla('
+                                + i + '); return false;">Corregir medicamento / prestación</a>';
+                    }
+                <% } %>
+
+                <% if ((puedeABMDetalle || puedeCorregirItemDetalle) && puedeEliminarDetalle) { %>
                     html += '&nbsp;';
                 <% } %>
 

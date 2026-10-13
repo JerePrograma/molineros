@@ -24,7 +24,7 @@ Efectos secundarios:
 <fieldset class="block-labels compras-seccion compras-seccion-detalle">
     <legend>Detalle del requerimiento</legend>
 
-    <% if (puedeABMDetalle) { %>
+    <% if (puedeABMDetalle || puedeCorregirItemDetalle) { %>
         <%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_editor_componente.jsp" %>
     <% } %>
 
@@ -42,7 +42,8 @@ Efectos secundarios:
 
 <% if (puedeABMDetalle
         || puedeCotizarDetalle
-        || puedeEliminarDetalle) { %>
+        || puedeEliminarDetalle
+        || puedeCorregirItemDetalle) { %>
 
     <%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_detalle_scripts_edicion_componente.jsp" %>
 

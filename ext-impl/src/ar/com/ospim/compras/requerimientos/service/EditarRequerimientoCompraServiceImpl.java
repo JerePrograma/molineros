@@ -29,11 +29,17 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
             "{call compras.guardar_requerimiento_detalle_clasificado(?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 
+    private static final String SQL_CORREGIR_ITEM =
+            "{call compras.corregir_item_requerimiento(?,?,?,?,?,?,?)}";
+
     private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
             "{call compras.borrar_requerimiento_detalle(?,?)}";
 
     private static final String SQL_CAMBIAR_ESTADO =
             "{call compras.cambiar_estado_requerimiento(?,?,?)}";
+
+    private static final String SQL_CAMBIAR_ESTADO_AUTORIZACION =
+            "{call compras.cambiar_estado_autorizacion_requerimiento(?,?,?)}";
 
     private static final String SQL_ANULAR_REQUERIMIENTO =
             "{call compras.anular_requerimiento(?,?,?)}";
@@ -193,6 +199,30 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
+    public int corregirItem(
+            RequerimientoCompraDetalle detalle,
+            String usuario) throws Exception {
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_CORREGIR_ITEM);
+            stmt.setInt(1, detalle.getIdRequerimientoCompra());
+            stmt.setInt(2, detalle.getIdInt());
+            setNullableInteger(stmt, 3, detalle.getIdPrestacion());
+            setNullableInteger(stmt, 4, detalle.getIdTipoNomenclador());
+            stmt.setString(5, detalle.getCodigoNomenclador());
+            stmt.setString(6, detalle.getDescripcionNomenclador());
+            stmt.setString(7, usuario);
+            rs = stmt.executeQuery();
+            return rs.next() ? rs.getInt(1) : 0;
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
     public int guardarDetalle(
             RequerimientoCompraDetalle detalle,
             String usuario) throws Exception {
@@ -330,7 +360,12 @@ public class EditarRequerimientoCompraServiceImpl {
         CallableStatement stmt = null;
 
         try {
-            stmt = con.prepareCall(SQL_CAMBIAR_ESTADO);
+            stmt = con.prepareCall(
+                    WebKeysCompras.esParaAutorizar(idEstadoNuevo)
+                            || WebKeysCompras.esAutorizado(idEstadoNuevo)
+                            ? SQL_CAMBIAR_ESTADO_AUTORIZACION
+                            : SQL_CAMBIAR_ESTADO
+            );
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, idEstadoNuevo);
             stmt.setString(3, usuario);

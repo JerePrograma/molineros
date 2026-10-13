@@ -295,7 +295,7 @@ CREATE TABLE compras.requerimiento (
                                        motivo_baja TEXT,
 
                                        CONSTRAINT ck_compras_requerimiento_estado
-                                           CHECK (estado IN (1, 2, 3, 4, 5, 99)),
+                                           CHECK (estado IN (1, 2, 3, 4, 5, 6, 7, 99)),
 
                                        CONSTRAINT ck_compras_requerimiento_afiliado_int
                                            CHECK (afiliado_int IS NULL OR afiliado_int >= 0),
@@ -1021,6 +1021,8 @@ RETURN CASE p_estado
            WHEN 3 THEN 'COTIZADO'
            WHEN 4 THEN 'RECLAMO (RP)'
            WHEN 5 THEN 'ORDEN DE COMPRA'
+           WHEN 6 THEN 'PARA AUTORIZAR'
+           WHEN 7 THEN 'AUTORIZADO'
            WHEN 99 THEN 'ANULADO'
            ELSE 'DESCONOCIDO'
     END;
@@ -1046,6 +1048,8 @@ FROM (
              (3, 'COTIZADO'::VARCHAR),
              (4, 'RECLAMO (RP)'::VARCHAR),
              (5, 'ORDEN DE COMPRA'::VARCHAR),
+             (6, 'PARA AUTORIZAR'::VARCHAR),
+             (7, 'AUTORIZADO'::VARCHAR),
              (99, 'ANULADO'::VARCHAR)
      ) estados(id, descripcion);
 END;
@@ -1065,6 +1069,7 @@ DECLARE
     v_sector_descripcion VARCHAR(120);
     v_cambio_estructura BOOLEAN;
     v_usuario VARCHAR(100);
+    v_fila_transicion compras.requerimiento%ROWTYPE;
 BEGIN
 SELECT
     s.requiere_afiliado,
@@ -1092,15 +1097,34 @@ END IF;
 ELSE
 
         /*
-         * RECLAMO_RP, ORDEN_COMPRA y ANULADO son completamente
+         * ORDEN_COMPRA, AUTORIZADO y ANULADO son completamente
          * inmutables una vez alcanzados.
          */
-        IF OLD.estado IN (4, 5, 99)
+        IF OLD.estado IN (5, 7, 99)
            AND NEW IS DISTINCT FROM OLD THEN
 
             RAISE EXCEPTION
                 'El requerimiento no puede modificarse en el estado actual.';
 END IF;
+
+        IF OLD.estado IN (4, 6)
+           AND NEW IS DISTINCT FROM OLD THEN
+
+            v_fila_transicion := NEW;
+            v_fila_transicion.estado := OLD.estado;
+            v_fila_transicion.modi_fecha := OLD.modi_fecha;
+            v_fila_transicion.modi_usr := OLD.modi_usr;
+
+            IF NOT (
+                    (OLD.estado = 4 AND NEW.estado = 6)
+                 OR (OLD.estado = 6 AND NEW.estado = 7)
+               )
+               OR v_fila_transicion IS DISTINCT FROM OLD THEN
+
+                RAISE EXCEPTION
+                    'El requerimiento no puede modificarse en el estado actual.';
+            END IF;
+        END IF;
 
         /*
          * COTIZADO también permanece bloqueado, salvo por la transición
@@ -1200,11 +1224,15 @@ END IF;
              * 2 A_COTIZAR -> 3 COTIZADO
              * 2 A_COTIZAR -> 99 ANULADO
              * 3 COTIZADO -> 4 RECLAMO_RP
+             * 4 RECLAMO_RP -> 6 PARA_AUTORIZAR
+             * 6 PARA_AUTORIZAR -> 7 AUTORIZADO
              */
             IF NOT (
                     (OLD.estado = 1 AND NEW.estado IN (2, 5, 99))
                  OR (OLD.estado = 2 AND NEW.estado IN (3, 99))
                  OR (OLD.estado = 3 AND NEW.estado = 4)
+                 OR (OLD.estado = 4 AND NEW.estado = 6)
+                 OR (OLD.estado = 6 AND NEW.estado = 7)
             ) THEN
 
                 RAISE EXCEPTION
@@ -1456,6 +1484,8 @@ v_estado INTEGER;
     v_tipo_item_esperado VARCHAR(20);
     v_id_tipo_nomenclador_real INTEGER;
     v_total_detalles_activos INTEGER;
+    v_id_sector_correccion INTEGER;
+    v_fila_correccion compras.requerimiento_detalle%ROWTYPE;
 BEGIN
 SELECT
     r.estado,
@@ -1473,6 +1503,69 @@ IF v_estado IS NULL THEN
         RAISE EXCEPTION
             'No existe un requerimiento activo para el detalle.';
 END IF;
+
+    IF TG_OP = 'UPDATE'
+       AND OLD.baja_fecha IS NULL AND NEW.baja_fecha IS NULL
+       AND OLD.tipo_item IN ('NOMENCLADOR', 'MEDICAMENTO')
+       AND NEW.tipo_item = 'NOMENCLADOR'
+       AND (v_estado IN (2, 3) OR OLD.tipo_item = 'MEDICAMENTO')
+       AND (NEW.tipo_item IS DISTINCT FROM OLD.tipo_item
+            OR NEW.id_prestacion IS DISTINCT FROM OLD.id_prestacion
+            OR NEW.id_tipo_nomenclador IS DISTINCT FROM OLD.id_tipo_nomenclador
+            OR NEW.codigo_nomenclador IS DISTINCT FROM OLD.codigo_nomenclador
+            OR NEW.descripcion_nomenclador IS DISTINCT FROM OLD.descripcion_nomenclador) THEN
+
+        PERFORM compras.bloquear_requerimiento_reclamo_prestacional(NEW.id_requerimiento);
+        SELECT r.estado, r.id_sector INTO v_estado, v_id_sector_correccion
+          FROM compras.requerimiento r
+         WHERE r.id_requerimiento = NEW.id_requerimiento AND r.baja_fecha IS NULL
+         FOR UPDATE;
+        IF NOT FOUND OR v_estado NOT IN (1, 2, 3)
+           OR EXISTS (SELECT 1 FROM compras.requerimiento_reclamo_prestacional rr
+                      WHERE rr.id_requerimiento = NEW.id_requerimiento) THEN
+            RAISE EXCEPTION 'El item no puede corregirse despues de iniciar el RP.';
+        END IF;
+        v_fila_correccion := NEW;
+        v_fila_correccion.tipo_item := OLD.tipo_item;
+        v_fila_correccion.id_prestacion := OLD.id_prestacion;
+        v_fila_correccion.id_tipo_nomenclador := OLD.id_tipo_nomenclador;
+        v_fila_correccion.codigo_nomenclador := OLD.codigo_nomenclador;
+        v_fila_correccion.descripcion_nomenclador := OLD.descripcion_nomenclador;
+        v_fila_correccion.id_medicamento := OLD.id_medicamento;
+        v_fila_correccion.troquel := OLD.troquel;
+        v_fila_correccion.nombre_medicamento := OLD.nombre_medicamento;
+        v_fila_correccion.modi_fecha := OLD.modi_fecha;
+        v_fila_correccion.modi_usr := OLD.modi_usr;
+        IF v_fila_correccion IS DISTINCT FROM OLD THEN
+            RAISE EXCEPTION 'La correccion del item debe conservar cantidades, observaciones e importes.';
+        END IF;
+        PERFORM compras.validar_nomenclador_configurado(
+            v_id_sector_correccion, OLD.id_tipo_prestacion,
+            NEW.id_prestacion, NEW.id_tipo_nomenclador);
+        IF NEW.id_medicamento IS NOT NULL OR NEW.troquel IS NOT NULL
+           OR NEW.nombre_medicamento IS NOT NULL OR NOT EXISTS (
+            SELECT 1 FROM autorizaciones.nomenclador n
+            WHERE n.id_prestacion = NEW.id_prestacion AND n.baja_fecha IS NULL
+              AND btrim(n.codigo) = NEW.codigo_nomenclador
+              AND btrim(n.descripcion) = NEW.descripcion_nomenclador
+        ) THEN
+            RAISE EXCEPTION 'La correccion debe conservar una referencia canonica de nomenclador.';
+        END IF;
+        IF NEW.id_prestacion IS DISTINCT FROM OLD.id_prestacion AND EXISTS (
+            SELECT 1 FROM compras.requerimiento_comparativa_detalle cd
+            JOIN compras.requerimiento_comparativa c ON c.id_comparativa = cd.id_comparativa
+            WHERE c.id_requerimiento = NEW.id_requerimiento
+              AND cd.id_prestacion = OLD.id_prestacion
+        ) THEN
+            RAISE EXCEPTION 'La correccion debe actualizar la comparativa en la misma transaccion.';
+        END IF;
+        IF EXISTS (SELECT 1 FROM compras.requerimiento_detalle d
+                   WHERE d.id_requerimiento = NEW.id_requerimiento AND d.baja_fecha IS NULL
+                     AND d.id_detalle <> NEW.id_detalle AND d.id_prestacion = NEW.id_prestacion) THEN
+            RAISE EXCEPTION 'El requerimiento ya contiene la prestacion seleccionada.';
+        END IF;
+        RETURN NEW;
+    END IF;
 
     IF TG_OP = 'UPDATE'
        AND OLD.baja_fecha IS NOT NULL
@@ -2680,6 +2773,78 @@ END;
 $func$
 LANGUAGE plpgsql;
 
+CREATE FUNCTION compras.cambiar_estado_autorizacion_requerimiento(
+    p_id_requerimiento INTEGER,
+    p_estado_nuevo INTEGER,
+    p_usuario VARCHAR
+)
+RETURNS VOID
+AS $func$
+DECLARE
+    v_estado_actual INTEGER;
+    v_id_reclamo INTEGER;
+    v_usuario VARCHAR(100);
+BEGIN
+    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
+        RAISE EXCEPTION 'Debe informar el requerimiento de compra.';
+    END IF;
+
+    IF p_estado_nuevo IS NULL OR p_estado_nuevo NOT IN (6, 7) THEN
+        RAISE EXCEPTION 'El estado de autorizacion seleccionado no es valido.';
+    END IF;
+
+    v_usuario := compras.normalizar_usuario(p_usuario);
+
+    SELECT r.estado
+      INTO v_estado_actual
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento
+       AND r.baja_fecha IS NULL
+     FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No se encontro el requerimiento activo.';
+    END IF;
+
+    IF NOT (
+            (v_estado_actual = 4 AND p_estado_nuevo = 6)
+         OR (v_estado_actual = 6 AND p_estado_nuevo = 7)
+    ) THEN
+        RAISE EXCEPTION
+            'El requerimiento no puede pasar al estado seleccionado desde su estado actual.';
+    END IF;
+
+    SELECT rr.id_reclamo_prestacional
+      INTO v_id_reclamo
+      FROM compras.requerimiento_reclamo_prestacional rr
+      JOIN autorizaciones.reclamos_prestacionales rp
+        ON rp.id = rr.id_reclamo_prestacional
+       AND rp.baja_fecha IS NULL
+     WHERE rr.id_requerimiento = p_id_requerimiento
+       AND rr.estado = 'VINCULADO'
+       AND rr.id_reclamo_prestacional > 0
+     FOR UPDATE OF rr, rp;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'El requerimiento debe tener un Reclamo Prestacional activo y vinculado.';
+    END IF;
+
+    UPDATE compras.requerimiento
+       SET estado = p_estado_nuevo,
+           modi_fecha = now(),
+           modi_usr = v_usuario
+     WHERE id_requerimiento = p_id_requerimiento
+       AND estado = v_estado_actual
+       AND baja_fecha IS NULL;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'El requerimiento fue modificado por otro proceso.';
+    END IF;
+END;
+$func$
+LANGUAGE plpgsql;
+
 CREATE FUNCTION compras.anular_requerimiento(
     p_id_requerimiento INTEGER,
     p_motivo_baja TEXT,
@@ -3732,6 +3897,201 @@ CREATE CONSTRAINT TRIGGER tr_compras_detalle_tipo_prestacion_nuevo
     DEFERRABLE INITIALLY DEFERRED
     FOR EACH ROW
     EXECUTE PROCEDURE compras.validar_tipo_prestacion_detalle_nuevo();
+
+CREATE FUNCTION compras.corregir_item_requerimiento(
+    p_id_requerimiento INTEGER,
+    p_id_detalle INTEGER,
+    p_id_prestacion INTEGER,
+    p_id_tipo_nomenclador INTEGER,
+    p_codigo_nomenclador VARCHAR,
+    p_descripcion_nomenclador VARCHAR,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_estado INTEGER;
+    v_id_sector INTEGER;
+    v_detalle compras.requerimiento_detalle%ROWTYPE;
+    v_nomenclador autorizaciones.nomenclador%ROWTYPE;
+    v_usuario VARCHAR(100);
+BEGIN
+    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0
+       OR p_id_detalle IS NULL OR p_id_detalle <= 0 THEN
+        RAISE EXCEPTION 'Debe informar el requerimiento y el item a corregir.';
+    END IF;
+
+    PERFORM compras.bloquear_requerimiento_reclamo_prestacional(p_id_requerimiento);
+    SELECT r.estado, r.id_sector INTO v_estado, v_id_sector
+      FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento AND r.baja_fecha IS NULL
+     FOR UPDATE;
+    IF NOT FOUND OR v_estado NOT IN (1, 2, 3) THEN
+        RAISE EXCEPTION 'El item no puede corregirse en el estado actual. Actualice la pantalla.';
+    END IF;
+    IF EXISTS (
+        SELECT 1 FROM compras.requerimiento_reclamo_prestacional rr
+        WHERE rr.id_requerimiento = p_id_requerimiento
+    ) THEN
+        RAISE EXCEPTION 'El requerimiento ya tiene una creacion de RP iniciada. Actualice la pantalla.';
+    END IF;
+
+    SELECT d.* INTO v_detalle FROM compras.requerimiento_detalle d
+     WHERE d.id_detalle = p_id_detalle
+       AND d.id_requerimiento = p_id_requerimiento AND d.baja_fecha IS NULL
+     FOR UPDATE;
+    IF NOT FOUND OR v_detalle.tipo_item NOT IN ('NOMENCLADOR', 'MEDICAMENTO') THEN
+        RAISE EXCEPTION 'No se encontro un item activo de medicamento o prestacion para corregir.';
+    END IF;
+
+    PERFORM compras.validar_nomenclador_configurado(
+        v_id_sector, v_detalle.id_tipo_prestacion,
+        p_id_prestacion, p_id_tipo_nomenclador);
+    SELECT n.* INTO v_nomenclador FROM autorizaciones.nomenclador n
+     WHERE n.id_prestacion = p_id_prestacion AND n.baja_fecha IS NULL;
+    IF NOT FOUND
+       OR v_nomenclador.id_tipo_nomenclador IS DISTINCT FROM p_id_tipo_nomenclador
+       OR btrim(v_nomenclador.codigo) IS DISTINCT FROM btrim(p_codigo_nomenclador)
+       OR btrim(v_nomenclador.descripcion) IS DISTINCT FROM btrim(p_descripcion_nomenclador) THEN
+        RAISE EXCEPTION 'La seleccion no coincide con el nomenclador vigente. Actualice la pantalla.';
+    END IF;
+    IF EXISTS (
+        SELECT 1 FROM compras.requerimiento_detalle d
+        WHERE d.id_requerimiento = p_id_requerimiento AND d.baja_fecha IS NULL
+          AND d.id_detalle <> p_id_detalle AND d.id_prestacion = p_id_prestacion
+    ) THEN
+        RAISE EXCEPTION 'El requerimiento ya contiene la prestacion seleccionada.';
+    END IF;
+
+    IF v_detalle.tipo_item = 'NOMENCLADOR'
+       AND v_detalle.id_prestacion = p_id_prestacion
+       AND v_detalle.id_tipo_nomenclador = p_id_tipo_nomenclador
+       AND btrim(v_detalle.codigo_nomenclador) = btrim(v_nomenclador.codigo)
+       AND btrim(v_detalle.descripcion_nomenclador) = btrim(v_nomenclador.descripcion) THEN
+        RETURN p_id_detalle;
+    END IF;
+
+    PERFORM 1 FROM compras.requerimiento_comparativa c
+     WHERE c.id_requerimiento = p_id_requerimiento
+     ORDER BY c.id_comparativa FOR UPDATE;
+    PERFORM 1 FROM compras.requerimiento_comparativa_detalle cd
+      JOIN compras.requerimiento_comparativa c ON c.id_comparativa = cd.id_comparativa
+     WHERE c.id_requerimiento = p_id_requerimiento
+     ORDER BY cd.id_detalle FOR UPDATE OF cd;
+
+    IF v_detalle.id_prestacion IS DISTINCT FROM p_id_prestacion THEN
+        IF EXISTS (
+            SELECT 1 FROM compras.requerimiento_comparativa_detalle cd
+            JOIN compras.requerimiento_comparativa c ON c.id_comparativa = cd.id_comparativa
+            WHERE c.id_requerimiento = p_id_requerimiento
+              AND cd.id_prestacion = p_id_prestacion
+        ) THEN
+            RAISE EXCEPTION 'La comparativa ya contiene la prestacion de destino. No se modificaron importes.';
+        END IF;
+        IF EXISTS (
+            SELECT 1 FROM compras.requerimiento_detalle d
+            WHERE d.id_requerimiento = p_id_requerimiento AND d.baja_fecha IS NULL
+              AND d.id_detalle <> p_id_detalle AND d.id_prestacion = v_detalle.id_prestacion
+        ) AND EXISTS (
+            SELECT 1 FROM compras.requerimiento_comparativa_detalle cd
+            JOIN compras.requerimiento_comparativa c ON c.id_comparativa = cd.id_comparativa
+            WHERE c.id_requerimiento = p_id_requerimiento
+              AND cd.id_prestacion = v_detalle.id_prestacion
+        ) THEN
+            RAISE EXCEPTION 'La prestacion anterior esta compartida. No se pueden reasignar sus importes.';
+        END IF;
+    END IF;
+
+    v_usuario := compras.normalizar_usuario(p_usuario);
+    UPDATE compras.requerimiento_comparativa_detalle cd
+       SET id_prestacion = p_id_prestacion, modi_fecha = now(), modi_usr = v_usuario
+      FROM compras.requerimiento_comparativa c
+     WHERE c.id_comparativa = cd.id_comparativa
+       AND c.id_requerimiento = p_id_requerimiento
+       AND cd.id_prestacion = v_detalle.id_prestacion
+       AND cd.id_prestacion IS DISTINCT FROM p_id_prestacion;
+
+    UPDATE compras.requerimiento_detalle
+       SET tipo_item = 'NOMENCLADOR', id_prestacion = p_id_prestacion,
+           id_tipo_nomenclador = v_nomenclador.id_tipo_nomenclador,
+           codigo_nomenclador = btrim(v_nomenclador.codigo),
+           descripcion_nomenclador = btrim(v_nomenclador.descripcion),
+           id_medicamento = NULL, troquel = NULL, nombre_medicamento = NULL,
+           modi_fecha = now(), modi_usr = v_usuario
+     WHERE id_detalle = p_id_detalle AND id_requerimiento = p_id_requerimiento
+       AND baja_fecha IS NULL;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'El item ya no esta disponible. Actualice la pantalla.';
+    END IF;
+    IF v_detalle.id_prestador IS NOT NULL
+       AND NOT compras.es_prestador_compatible_cotizacion(
+           p_id_requerimiento, v_detalle.id_prestador) THEN
+        RAISE EXCEPTION 'El prestador adjudicado no es compatible con la nueva prestacion. No se modificaron importes.';
+    END IF;
+    RETURN p_id_detalle;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE FUNCTION compras.bloquear_guardado_comparativa(
+    p_id_requerimiento INTEGER,
+    p_prestaciones_esperadas VARCHAR
+)
+RETURNS VOID
+AS $func$
+DECLARE
+    v_estado INTEGER;
+    v_prestaciones INTEGER[];
+BEGIN
+    IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
+        RAISE EXCEPTION 'Debe informar el requerimiento de la comparativa.';
+    END IF;
+    IF p_prestaciones_esperadas IS NULL
+       OR p_prestaciones_esperadas !~ '^[1-9][0-9]*(,[1-9][0-9]*)*$' THEN
+        RAISE EXCEPTION 'No se pudo validar la lista de prestaciones. Actualice la pantalla.';
+    END IF;
+    v_prestaciones := string_to_array(p_prestaciones_esperadas, ',')::INTEGER[];
+    IF array_length(v_prestaciones, 1) <> (
+           SELECT count(DISTINCT id) FROM unnest(v_prestaciones) id
+       ) THEN
+        RAISE EXCEPTION 'La lista de prestaciones no es valida. Actualice la pantalla.';
+    END IF;
+
+    PERFORM compras.bloquear_requerimiento_reclamo_prestacional(p_id_requerimiento);
+    SELECT r.estado INTO v_estado FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento AND r.baja_fecha IS NULL
+     FOR UPDATE;
+    IF NOT FOUND OR v_estado <> 2 THEN
+        RAISE EXCEPTION 'La comparativa ya no puede modificarse en el estado actual. Actualice la pantalla.';
+    END IF;
+    IF EXISTS (
+        SELECT 1 FROM compras.requerimiento_reclamo_prestacional rr
+        WHERE rr.id_requerimiento = p_id_requerimiento
+    ) THEN
+        RAISE EXCEPTION 'El requerimiento ya tiene una creacion de RP iniciada. Actualice la pantalla.';
+    END IF;
+    PERFORM 1 FROM compras.requerimiento_detalle d
+     WHERE d.id_requerimiento = p_id_requerimiento AND d.baja_fecha IS NULL
+     ORDER BY d.id_detalle FOR UPDATE;
+    IF EXISTS (
+        SELECT id FROM unnest(v_prestaciones) id
+        EXCEPT
+        SELECT d.id_prestacion FROM compras.requerimiento_detalle d
+        WHERE d.id_requerimiento = p_id_requerimiento AND d.baja_fecha IS NULL
+    ) OR EXISTS (
+        SELECT d.id_prestacion FROM compras.requerimiento_detalle d
+        WHERE d.id_requerimiento = p_id_requerimiento AND d.baja_fecha IS NULL
+        EXCEPT
+        SELECT id FROM unnest(v_prestaciones) id
+    ) OR array_length(v_prestaciones, 1) <> (
+        SELECT count(*) FROM compras.requerimiento_detalle d
+        WHERE d.id_requerimiento = p_id_requerimiento AND d.baja_fecha IS NULL
+    ) THEN
+        RAISE EXCEPTION 'Las prestaciones cambiaron durante la carga. Actualice la pantalla.';
+    END IF;
+END;
+$func$
+LANGUAGE plpgsql;
 
 CREATE FUNCTION compras.guardar_requerimiento_detalle_clasificado(
     p_id INTEGER,

@@ -1453,10 +1453,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (requerimiento != null
                 && requerimiento.getIdRequerimientoCompra() > 0
                 && (
-                WebKeysCompras.esCotizado(
-                        requerimiento.getEstado()
-                )
-                        || WebKeysCompras.esReclamoRP(
+                WebKeysCompras.puedeConsultarReclamoPrestacional(
                         requerimiento.getEstado()
                 )
         )) {

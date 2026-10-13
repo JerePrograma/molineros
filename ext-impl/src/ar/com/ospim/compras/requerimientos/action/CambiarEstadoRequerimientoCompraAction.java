@@ -204,6 +204,42 @@ public class CambiarEstadoRequerimientoCompraAction
                 }
 
             } else if (estadoNuevo
+                    == WebKeysCompras.ESTADO_PARA_AUTORIZAR) {
+
+                validarRolCotizar(
+                        user
+                );
+
+                requerimientoHelper.cambiarEstado(
+                        idRequerimientoCompra,
+                        WebKeysCompras.ESTADO_PARA_AUTORIZAR,
+                        usuario
+                );
+
+                SessionMessages.add(
+                        actionRequest,
+                        "estado-requerimiento-compra-actualizado"
+                );
+
+            } else if (estadoNuevo
+                    == WebKeysCompras.ESTADO_AUTORIZADO) {
+
+                validarRolAutorizar(
+                        user
+                );
+
+                requerimientoHelper.cambiarEstado(
+                        idRequerimientoCompra,
+                        WebKeysCompras.ESTADO_AUTORIZADO,
+                        usuario
+                );
+
+                SessionMessages.add(
+                        actionRequest,
+                        "estado-requerimiento-compra-actualizado"
+                );
+
+            } else if (estadoNuevo
                     == WebKeysCompras.ESTADO_ORDEN_COMPRA) {
 
                 validarRolCotizar(
@@ -527,6 +563,22 @@ public class CambiarEstadoRequerimientoCompraAction
         )) {
             throw new Exception(
                     "No posee permisos para cotizar "
+                            + "requerimientos de compras."
+            );
+        }
+    }
+
+    private void validarRolAutorizar(
+            User user)
+            throws Exception {
+
+        if (user == null
+                || !PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+        )) {
+            throw new Exception(
+                    "No posee permisos para autorizar "
                             + "requerimientos de compras."
             );
         }

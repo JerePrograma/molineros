@@ -179,10 +179,7 @@ boolean botoneraPuedeCrearReclamoPrestacional =
 boolean botoneraPuedeVerReclamoPrestacional =
         botoneraRequerimientoPersistido
         && (
-                WebKeysCompras.esCotizado(
-                        botoneraEstadoActual
-                )
-                || WebKeysCompras.esReclamoRP(
+                WebKeysCompras.puedeConsultarReclamoPrestacional(
                         botoneraEstadoActual
                 )
         )
@@ -437,7 +434,7 @@ String botoneraReclamoPrestacionalFormId =
     
         var id = jQuery('#<portlet:namespace />requerimiento_id_visual').val();
         window.location.href =
-            "/pdfservlet/?accion=<%= botoneraHayPresupuestoPrestador ? "comparativaCompra" : "requerimientoCompra" %>&id_requerimiento="+ id;
+            "/pdfservlet/?accion=requerimientoCompra&id_requerimiento="+ id;
         
         return false;
     }

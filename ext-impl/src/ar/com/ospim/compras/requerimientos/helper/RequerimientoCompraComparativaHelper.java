@@ -167,7 +167,12 @@ public class RequerimientoCompraComparativaHelper {
         }
         List<RequerimientoCompraComparativaDetalle> detalles =
                 new ArrayList<RequerimientoCompraComparativaDetalle>();
+        StringBuilder prestacionesEsperadas = new StringBuilder();
         for (RequerimientoCompraDetalle item : r.getDetalles()) {
+            if (prestacionesEsperadas.length() > 0) {
+                prestacionesEsperadas.append(',');
+            }
+            prestacionesEsperadas.append(item.getIdPrestacionInt());
             RequerimientoCompraComparativaDetalle d = guardados.remove(item.getIdPrestacion());
             if (d == null) {
                 d = new RequerimientoCompraComparativaDetalle();
@@ -182,6 +187,7 @@ public class RequerimientoCompraComparativaHelper {
                     "Hay prestaciones guardadas que ya no pertenecen al requerimiento.");
         }
         c.setDetalles(detalles);
+        c.setPrestacionesEsperadas(prestacionesEsperadas.toString());
         calcular(c);
     }
 

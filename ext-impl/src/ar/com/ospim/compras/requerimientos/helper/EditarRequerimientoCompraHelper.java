@@ -10,6 +10,7 @@ import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.beans.SectorNomencladorCompra;
 import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
@@ -897,6 +898,62 @@ public class EditarRequerimientoCompraHelper {
         return completa;
     }
 
+    public int corregirItem(
+            RequerimientoCompraDetalle detalle,
+            String usuario) throws Exception {
+        Integer idRequerimiento = null;
+        try {
+            if (detalle == null || detalle.getIdInt() <= 0) {
+                throw errorUsuario("Debe seleccionar un detalle existente del requerimiento.");
+            }
+            idRequerimiento = getIdRequerimientoDetalle(detalle);
+            RequerimientoCompra requerimiento = obtenerRequerimientoDetalle(
+                    idRequerimiento != null ? idRequerimiento.intValue() : 0);
+            if (requerimiento == null || !requerimiento.isActivo()
+                    || !WebKeysCompras.puedeCorregirItem(requerimiento.getEstado())) {
+                throw errorUsuario("El medicamento o prestación solo puede corregirse antes de generar el RP.");
+            }
+            if (new RequerimientoCompraReclamoPrestacionalHelper()
+                    .obtenerPorRequerimiento(requerimiento.getIdRequerimientoCompra()) != null) {
+                throw errorUsuario("El requerimiento ya tiene un RP o una creación de RP en curso.");
+            }
+            RequerimientoCompraDetalle persistido = obtenerDetallePersistido(
+                    requerimiento, detalle.getIdInt());
+            if ((!persistido.esNomenclador() && !persistido.esMedicamento())
+                    || !RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(
+                            detalle.getTipoItemNormalizado())) {
+                throw errorUsuario("Seleccione el medicamento o prestación desde el nomenclador.");
+            }
+            detalle.setIdTipoPrestacion(persistido.getIdTipoPrestacion());
+            detalle.setCantidad(persistido.getCantidad());
+            detalle.setObservaciones(persistido.getObservaciones());
+            detalle.setPrecioUnitarioEstimado(persistido.getPrecioUnitarioEstimado());
+            detalle.setPrecioTotalEstimado(persistido.getPrecioTotalEstimadoInformado());
+            detalle.setIdPrestador(persistido.getIdPrestador());
+            detalle.setTipoItem(RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR);
+            detalle.setIdMedicamento(null);
+            detalle.setTroquel(null);
+            detalle.setNombreMedicamento(null);
+            validarDetalleNomencladorParaGuardar(requerimiento, persistido, detalle);
+            for (RequerimientoCompraDetalle otro : requerimiento.getDetalles()) {
+                if (otro != null && otro.getIdInt() != persistido.getIdInt()
+                        && mismoInteger(otro.getIdPrestacion(), detalle.getIdPrestacion())) {
+                    throw errorUsuario("La prestación seleccionada ya está incluida en el requerimiento.");
+                }
+            }
+            int idGuardado = EditarRequerimientoCompraServiceUtil.corregirItem(
+                    detalle, normalizarUsuario(usuario));
+            if (idGuardado != persistido.getIdInt()) {
+                throw new IllegalStateException("La corrección no devolvió el mismo detalle del requerimiento.");
+            }
+            return idGuardado;
+        } catch (Exception e) {
+            throw manejarErrorOperacion("corregir el medicamento o prestación",
+                    "No se pudo corregir el medicamento o prestación. Actualice la pantalla e intente nuevamente.",
+                    e, construirContextoDetalle(detalle, idRequerimiento, usuario));
+        }
+    }
+
     public int guardarDetalle(
             RequerimientoCompraDetalle detalle,
             String usuario) throws Exception {
@@ -1212,6 +1269,23 @@ public class EditarRequerimientoCompraHelper {
                         "El requerimiento no puede pasar al estado seleccionado "
                                 + "desde su estado actual."
                 );
+            }
+
+            if (WebKeysCompras.esParaAutorizar(idEstadoNuevo)
+                    || WebKeysCompras.esAutorizado(idEstadoNuevo)) {
+                if (!requerimientoActual.isActivo()) {
+                    throw errorUsuario(
+                            "El requerimiento ya no está disponible."
+                    );
+                }
+                RequerimientoCompraReclamoPrestacional relacion =
+                        new RequerimientoCompraReclamoPrestacionalHelper()
+                                .obtenerPorRequerimiento(idRequerimientoCompra);
+                if (relacion == null || !relacion.isVinculado()) {
+                    throw errorUsuario(
+                            "El requerimiento debe tener un Reclamo Prestacional vinculado."
+                    );
+                }
             }
 
             EditarRequerimientoCompraServiceUtil.cambiarEstado(

@@ -87,6 +87,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String ROL_ABM_COMPRAS = "ABM_Compras";
     public static final String ROL_ANULAR_COMPRAS = "ANULAR_Compras";
     public static final String ROL_COTIZAR_COMPRAS = "COTIZAR_Compras";
+    public static final String ROL_AUTORIZAR_COMPRAS = "AUTORIZAR_Compras";
 
     public static final String BUSQUEDA_REQUERIMIENTOS_COMPRA =
             "BUSQUEDA_REQUERIMIENTOS_COMPRA";
@@ -220,13 +221,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final int ESTADO_COTIZADO = 3;
     public static final int ESTADO_RECLAMO_RP = 4;
     public static final int ESTADO_ORDEN_COMPRA = 5;
+    public static final int ESTADO_PARA_AUTORIZAR = 6;
+    public static final int ESTADO_AUTORIZADO = 7;
     public static final int ESTADO_ANULADO = 99;
-
-    /**
-     * @deprecated Alias exclusivo para compatibilidad con código legacy.
-     */
-    @Deprecated
-    public static final int ESTADO_AUTORIZADO = ESTADO_RECLAMO_RP;
 
     public static final String ENVIO_PENDIENTE = "PENDIENTE";
     public static final String ENVIO_PROCESANDO = "PROCESANDO";
@@ -335,6 +332,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 return "RECLAMO (RP)";
             case ESTADO_ORDEN_COMPRA:
                 return "ORDEN DE COMPRA";
+            case ESTADO_PARA_AUTORIZAR:
+                return "PARA AUTORIZAR";
+            case ESTADO_AUTORIZADO:
+                return "AUTORIZADO";
             case ESTADO_ANULADO:
                 return "ANULADO";
             default:
@@ -350,6 +351,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         agregarEstado(estados, ESTADO_A_COTIZAR);
         agregarEstado(estados, ESTADO_COTIZADO);
         agregarEstado(estados, ESTADO_RECLAMO_RP);
+        agregarEstado(estados, ESTADO_PARA_AUTORIZAR);
+        agregarEstado(estados, ESTADO_AUTORIZADO);
         agregarEstado(estados, ESTADO_ORDEN_COMPRA);
         agregarEstado(estados, ESTADO_ANULADO);
 
@@ -362,6 +365,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
                 || estado == ESTADO_COTIZADO
                 || estado == ESTADO_RECLAMO_RP
                 || estado == ESTADO_ORDEN_COMPRA
+                || estado == ESTADO_PARA_AUTORIZAR
+                || estado == ESTADO_AUTORIZADO
                 || estado == ESTADO_ANULADO;
     }
 
@@ -381,12 +386,35 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return estado == ESTADO_RECLAMO_RP;
     }
 
+    public static boolean esParaAutorizar(int estado) {
+        return estado == ESTADO_PARA_AUTORIZAR;
+    }
+
+    public static boolean esAutorizado(int estado) {
+        return estado == ESTADO_AUTORIZADO;
+    }
+
+    public static boolean puedeEnviarAAutorizar(int estado) {
+        return esReclamoRP(estado);
+    }
+
+    public static boolean puedeConsultarReclamoPrestacional(int estado) {
+        return esCotizado(estado)
+                || esReclamoRP(estado)
+                || esParaAutorizar(estado)
+                || esAutorizado(estado);
+    }
+
     public static boolean esOrdenCompra(int estado) {
         return estado == ESTADO_ORDEN_COMPRA;
     }
 
     public static boolean esAnulado(int estado) {
         return estado == ESTADO_ANULADO;
+    }
+
+    public static boolean puedeCorregirItem(int estado) {
+        return esPendiente(estado) || esACotizar(estado) || esCotizado(estado);
     }
 
     public static boolean puedeEditarEstructura(int estado) {
@@ -418,6 +446,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return esACotizar(estado)
                 || esCotizado(estado)
                 || esReclamoRP(estado)
+                || esParaAutorizar(estado)
+                || esAutorizado(estado)
                 || esOrdenCompra(estado)
                 || esAnulado(estado);
     }
@@ -459,6 +489,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static boolean esSoloLectura(int estado) {
         return esCotizado(estado)
                 || esReclamoRP(estado)
+                || esParaAutorizar(estado)
+                || esAutorizado(estado)
                 || esOrdenCompra(estado)
                 || esAnulado(estado);
     }
@@ -489,6 +521,14 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             return esReclamoRP(
                     estadoNuevo
             );
+        }
+
+        if (esReclamoRP(estadoActual)) {
+            return esParaAutorizar(estadoNuevo);
+        }
+
+        if (esParaAutorizar(estadoActual)) {
+            return esAutorizado(estadoNuevo);
         }
 
         if (esAnulado(estadoNuevo)) {

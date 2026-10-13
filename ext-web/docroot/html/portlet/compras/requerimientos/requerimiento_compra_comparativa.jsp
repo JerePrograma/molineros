@@ -17,6 +17,10 @@ Map<String, String> comparativaEntrada =
         (Map<String, String>) renderRequest.getAttribute("comparativaEntrada");
 boolean comparativaEditable = Boolean.TRUE.equals(renderRequest.getAttribute("comparativaEditable"));
 boolean comparativaExiste = Boolean.TRUE.equals(renderRequest.getAttribute("comparativaExiste"));
+boolean comparativaPuedeEnviarAAutorizar = Boolean.TRUE.equals(
+        renderRequest.getAttribute("comparativaPuedeEnviarAAutorizar"));
+boolean comparativaPuedeAutorizar = Boolean.TRUE.equals(
+        renderRequest.getAttribute("comparativaPuedeAutorizar"));
 String comparativaError = (String) renderRequest.getAttribute("comparativaError");
 String comparativaArchivoActual = (String) renderRequest.getAttribute("comparativaArchivoActual");
 %>
@@ -229,6 +233,49 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
             <input type="button" value="Imprimir PDF"
                    onclick="window.open('/pdfservlet/?accion=comparativaCompra&amp;id_requerimiento=<%= comparativaReq.getIdRequerimientoCompra() %>');" />
         <% } %>
+        <% if (!comparativaEditable && (comparativaPuedeEnviarAAutorizar || comparativaPuedeAutorizar)) {
+            PortletURL comparativaCambiarEstadoURL = renderResponse.createActionURL();
+            comparativaCambiarEstadoURL.setWindowState(WindowState.MAXIMIZED);
+            comparativaCambiarEstadoURL.setParameter("struts_action", "/compras/cambiar_estado_requerimiento");
+        %>
+            <form action="<%= comparativaCambiarEstadoURL.toString() %>"
+                  method="post"
+                  id="<portlet:namespace />comparativaAutorizacionForm"
+                  style="display:none;">
+                <input type="hidden" name="<portlet:namespace />id_requerimiento_compra"
+                       value="<%= comparativaReq.getIdRequerimientoCompra() %>" />
+                <input type="hidden" name="<portlet:namespace />estado_nuevo"
+                       value="<%= comparativaPuedeAutorizar ? WebKeysCompras.ESTADO_AUTORIZADO : WebKeysCompras.ESTADO_PARA_AUTORIZAR %>" />
+            </form>
+            <input type="button" id="<portlet:namespace />comparativaAutorizacionBoton"
+                   value="<%= comparativaPuedeAutorizar ? "Autorizar" : "Enviar a Autorizar" %>"
+                   onclick="return <portlet:namespace />cambiarEstadoAutorizacionComparativaCompra();" />
+        <% } %>
+<% } %>
+<% if (!comparativaEditable && (comparativaPuedeEnviarAAutorizar || comparativaPuedeAutorizar)) { %>
+<script type="text/javascript">
+function <portlet:namespace />cambiarEstadoAutorizacionComparativaCompra() {
+    var form = document.getElementById('<portlet:namespace />comparativaAutorizacionForm');
+    var boton = document.getElementById('<portlet:namespace />comparativaAutorizacionBoton');
+    if (boton && boton.disabled) {
+        return false;
+    }
+    if (!form) {
+        alert('No se pudo preparar el cambio de estado del requerimiento.');
+        return false;
+    }
+    var mensaje = '<%= comparativaPuedeAutorizar ? "Confirma autorizar el requerimiento?" : "Confirma enviar el requerimiento a autorizar?" %>';
+    if (!confirm('\u00bf' + mensaje)) {
+        return false;
+    }
+    if (boton) {
+        boton.disabled = true;
+        boton.value = '<%= comparativaPuedeAutorizar ? "Autorizando..." : "Enviando..." %>';
+    }
+    submitForm(form);
+    return false;
+}
+</script>
 <% } %>
 <% if (comparativaEditable) { %>
 <script type="text/javascript">

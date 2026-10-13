@@ -16,8 +16,10 @@ IDs o funciones JavaScript expuestos:
 Efectos secundarios:
     Sólo renderiza o incluye presentación; no ejecuta persistencia.
 --%>
-<fieldset class="block-labels compras-detalle-editor">
-    <legend>Agregar / editar detalle</legend>
+<fieldset id="<portlet:namespace />detalle_editor_contenedor"
+          class="block-labels compras-detalle-editor"
+          <%= !puedeABMDetalle ? "style=\"display:none;\"" : "" %>>
+    <legend><%= puedeABMDetalle ? "Agregar / editar detalle" : "Corregir medicamento / prestación" %></legend>
 
     <input type="hidden"
            id="<portlet:namespace />detalle_edit_index"

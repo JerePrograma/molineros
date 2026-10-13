@@ -38,6 +38,12 @@ public class EditarRequerimientoCompraServiceUtil {
         );
     }
 
+    public static int corregirItem(
+            RequerimientoCompraDetalle detalle,
+            String usuario) throws Exception {
+        return getInstance().corregirItem(detalle, usuario);
+    }
+
     public static int guardarDetalle(
             RequerimientoCompraDetalle detalle,
             String usuario) throws Exception {
