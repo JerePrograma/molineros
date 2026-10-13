@@ -683,15 +683,21 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                 <% if (puedeCorregirItemDetalle) { %>
                     if ((detalle.tipoItem == 'NOMENCLADOR' || detalle.tipoItem == 'MEDICAMENTO')
                             && /^[0-9]+$/.test(String(detalle.id))
-                            && parseInt(detalle.id, 10) > 0) {
+                            && parseInt(detalle.id, 10) > 0
+                            && (<%= !puedeABMDetalle ? "true" : "false" %>
+                                    || detalle.tipoItem == 'MEDICAMENTO')) {
                         <% if (puedeABMDetalle) { %>
                             html += '&nbsp;';
                         <% } %>
-                        html += '<a href="#" title="Editar" '
+                        html += '<a href="#" title="<%= puedeABMDetalle ? "Corregir" : "Editar" %>" '
                                 + 'onclick="<portlet:namespace />corregirDetalleEnPantalla('
                                 + i + '); return false;">';
-                        html += '<img alt="Editar" '
-                                + 'src="<%= themeDisplay.getPathThemeImages() %>/common/edit.png" />';
+                        <% if (puedeABMDetalle) { %>
+                            html += 'Corregir';
+                        <% } else { %>
+                            html += '<img alt="Editar" '
+                                    + 'src="<%= themeDisplay.getPathThemeImages() %>/common/edit.png" />';
+                        <% } %>
                         html += '</a>';
                     }
                 <% } %>
