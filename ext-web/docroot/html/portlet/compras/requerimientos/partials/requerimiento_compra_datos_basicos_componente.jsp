@@ -691,7 +691,12 @@ int idRpCabecera =
                 <% } %>
             </td>
 
-            <td colspan="6"></td>
+            <td colspan="6">
+                <% if (req.isAnulado()
+                        && !WebKeysCompras.isEmpty(req.getMotivoBaja())) { %>
+                    <span style="color: red; font-size: 16px;">Anulado: <%= HtmlUtil.escape(req.getMotivoBajaVisible()) %></span>
+                <% } %>
+            </td>
         </tr>
 
     </table>

@@ -12,11 +12,14 @@ import ar.com.ospim.servlets.PdfServlet;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -124,6 +127,16 @@ public class NotificarCotizacionPrestadorHelper {
                         idRequerimientoCompra
                 );
 
+        byte[] pedidoPresupuestoFarmaciaPdf = pedidoPresupuestoPdf;
+        for (int i = 0; i < candidatos.size(); i++) {
+            if (esFarmaciaDestinataria(candidatos.get(i))) {
+                pedidoPresupuestoFarmaciaPdf =
+                        generarPedidoPresupuestoFarmaciaPdf(
+                                requerimiento, pedidoPresupuestoPdf);
+                break;
+            }
+        }
+
         String nombrePedidoPresupuestoPdf =
                 "PedidoPresupuesto_"
                         + idRequerimientoCompra
@@ -150,7 +163,9 @@ public class NotificarCotizacionPrestadorHelper {
                             companyId,
                             serviceContext,
                             resultado,
-                            pedidoPresupuestoPdf,
+                            esFarmaciaDestinataria(candidatos.get(i))
+                                    ? pedidoPresupuestoFarmaciaPdf
+                                    : pedidoPresupuestoPdf,
                             nombrePedidoPresupuestoPdf,
                             ordenesMedicasAdjuntas,
                             copiaCotizacionEnviada
@@ -1203,6 +1218,121 @@ public class NotificarCotizacionPrestadorHelper {
 
             throw errorRegistro;
         }
+    }
+
+    private boolean esFarmaciaDestinataria(PrestadorCotizacion prestador) {
+        String tipo = WebKeysCompras.normalizarClaveTexto(
+                prestador != null ? prestador.getTipoPrestadorVisible() : "");
+        return "FARMACIA".equals(tipo) || "FARMACIAS".equals(tipo);
+    }
+
+    protected byte[] generarPedidoPresupuestoFarmaciaPdf(
+            RequerimientoCompra requerimiento,
+            byte[] pdfNormal) throws Exception {
+
+        if (requerimiento == null || !"FARMACIA".equals(
+                WebKeysCompras.normalizarSectorCompra(
+                        requerimiento.getSectorDescripcion()))) {
+            return pdfNormal;
+        }
+
+        Set<Integer> idsMedicamentos = new HashSet<Integer>();
+        List<RequerimientoCompraDetalle> detalles = requerimiento.getDetalles();
+        for (int i = 0; detalles != null && i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+            if (detalle != null && detalle.getIdInt() > 0
+                    && "MEDICAMENTOS".equals(WebKeysCompras.normalizarClaveTexto(
+                            detalle.getTipoPrestacionDescripcion()))) {
+                idsMedicamentos.add(detalle.getId());
+            }
+        }
+        if (idsMedicamentos.isEmpty()) {
+            return pdfNormal;
+        }
+
+        List<Map<String, Object>> filas = getFilasPedidoPresupuestoPdf(
+                requerimiento.getIdRequerimientoCompra());
+        if (filas == null || filas.isEmpty()) {
+            throw new Exception("No se pudieron cargar los datos del pedido de presupuesto.");
+        }
+
+        // Consultar la droga del medicamento que efectivamente aparece en el PDF.
+        List<RequerimientoCompraDetalle> medicamentosReporte =
+                new ArrayList<RequerimientoCompraDetalle>();
+        Map<Integer, Integer> troquelPorDetalle = new HashMap<Integer, Integer>();
+        for (int i = 0; i < filas.size(); i++) {
+            Map<String, Object> fila = filas.get(i);
+            Integer idDetalle = (Integer) fila.get("detalle_id");
+            if (!idsMedicamentos.contains(idDetalle)) {
+                continue;
+            }
+            RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
+            detalle.setId(idDetalle);
+            detalle.setTipoItem((String) fila.get("tipo_item"));
+            detalle.setTroquel((Integer) fila.get("troquel"));
+            detalle.setIdTipoNomenclador((Integer) fila.get("id_tipo_nomenclador"));
+            detalle.setCodigoNomenclador((String) fila.get("codigo_nomenclador"));
+
+            int troquel = 0;
+            if (detalle.esMedicamento()) {
+                troquel = detalle.getTroquelInt();
+            } else if (detalle.esNomenclador()
+                    && detalle.getIdTipoNomencladorInt()
+                    == WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA) {
+                String codigo = detalle.getCodigoNomencladorVisible().trim();
+                if (codigo.matches("^[0-9]+$")) {
+                    troquel = GetterUtil.getInteger(codigo, 0);
+                }
+            }
+            if (troquel > 0) {
+                medicamentosReporte.add(detalle);
+                troquelPorDetalle.put(idDetalle, Integer.valueOf(troquel));
+            }
+        }
+        if (medicamentosReporte.isEmpty()) {
+            return pdfNormal;
+        }
+
+        Map<Integer, String> drogas = obtenerDrogasDetalleFarmacia(medicamentosReporte);
+        if (drogas == null) {
+            throw new Exception("No se pudo consultar la droga de los medicamentos.");
+        }
+        List<Map<String, Object>> filasFarmacia =
+                new ArrayList<Map<String, Object>>();
+        boolean hayReemplazo = false;
+        for (int i = 0; i < filas.size(); i++) {
+            Map<String, Object> fila = new HashMap<String, Object>(filas.get(i));
+            Integer troquel = troquelPorDetalle.get(fila.get("detalle_id"));
+            String droga = troquel != null ? drogas.get(troquel) : null;
+            if (!WebKeysCompras.isEmpty(droga)) {
+                fila.put("descripcion_item", droga.trim());
+                hayReemplazo = true;
+            }
+            filasFarmacia.add(fila);
+        }
+        return hayReemplazo
+                ? generarPedidoPresupuestoPdf(
+                        requerimiento.getIdRequerimientoCompra(), filasFarmacia)
+                : pdfNormal;
+    }
+
+    protected List<Map<String, Object>> getFilasPedidoPresupuestoPdf(
+            int idRequerimientoCompra) throws Exception {
+        return BusquedaRequerimientoCompraServiceUtil
+                .getFilasPedidoPresupuestoPdf(idRequerimientoCompra);
+    }
+
+    protected Map<Integer, String> obtenerDrogasDetalleFarmacia(
+            List<RequerimientoCompraDetalle> detalles) throws Exception {
+        return BusquedaRequerimientoCompraServiceUtil
+                .obtenerDrogasDetalleFarmacia(detalles);
+    }
+
+    protected byte[] generarPedidoPresupuestoPdf(
+            int idRequerimientoCompra,
+            List<Map<String, Object>> filas) throws Exception {
+        return new PdfServlet().crearRequerimientoCompraComoAdjunto(
+                idRequerimientoCompra, filas);
     }
 
     protected byte[] generarPedidoPresupuestoPdf(

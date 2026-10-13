@@ -107,6 +107,13 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return getInstance().getRequerimientoCompra(idRequerimientoCompra);
     }
 
+    public static List<Map<String, Object>> getFilasPedidoPresupuestoPdf(
+            int idRequerimientoCompra) throws Exception {
+
+        validarIdRequerimiento(idRequerimientoCompra);
+        return getInstance().getFilasPedidoPresupuestoPdf(idRequerimientoCompra);
+    }
+
     public static List<RequerimientoCompraDetalle> getDetalles(
             int idRequerimientoCompra) throws Exception {
 

@@ -12,6 +12,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Types;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?,?)}";
 
     private static final String SQL_GET_REQUERIMIENTO =
-            "SELECT rb.*, r.observacion_interna "
+            "SELECT rb.*, r.observacion_interna, r.motivo_baja "
                     + "FROM compras.get_requerimiento(?) rb "
                     + "JOIN compras.requerimiento r ON r.id_requerimiento = rb.id";
 
@@ -174,7 +175,40 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
             RequerimientoCompra requerimiento = mapRequerimiento(rs);
             requerimiento.setObservacionInterna(rs.getString("observacion_interna"));
+            requerimiento.setMotivoBaja(rs.getString("motivo_baja"));
             return requerimiento;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<Map<String, Object>> getFilasPedidoPresupuestoPdf(
+            int idRequerimientoCompra) throws Exception {
+
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        List<Map<String, Object>> filas =
+                new ArrayList<Map<String, Object>>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(
+                    "{call compras.get_requerimiento_compra_pdf(?)}"
+            );
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+            ResultSetMetaData columnas = rs.getMetaData();
+
+            while (rs.next()) {
+                Map<String, Object> fila = new HashMap<String, Object>();
+                for (int i = 1; i <= columnas.getColumnCount(); i++) {
+                    fila.put(columnas.getColumnLabel(i), rs.getObject(i));
+                }
+                filas.add(fila);
+            }
+            return filas;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);

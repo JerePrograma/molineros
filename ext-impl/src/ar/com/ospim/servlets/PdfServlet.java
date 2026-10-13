@@ -1257,6 +1257,83 @@ public class PdfServlet extends HttpServlet {
 		}
 	}
 	
+	public byte[] crearRequerimientoCompraComoAdjunto(
+			int idRequerimiento,
+			List<Map<String, Object>> filas) throws Exception {
+
+		if (idRequerimiento <= 0) {
+			throw new Exception(
+					"Debe informar el requerimiento de compra."
+			);
+		}
+
+		if (filas == null || filas.isEmpty()) {
+			throw new Exception(
+					"El pedido de presupuesto no contiene datos."
+			);
+		}
+
+		InputStream in = null;
+
+		try {
+			in =
+					getClass()
+							.getClassLoader()
+							.getResourceAsStream(
+									"jasper/compras/requerimiento_compra.jasper"
+							);
+
+			if (in == null) {
+				throw new Exception(
+						"No se encontró el Jasper de requerimiento: "
+								+ "jasper/compras/requerimiento_compra.jasper"
+				);
+			}
+
+			HashMap<String, String> parametros =
+					new HashMap<String, String>();
+
+			parametros.put(
+					"ID_REQUERIMIENTO",
+					String.valueOf(idRequerimiento)
+			);
+
+			JasperPrint print =
+					JasperFillManager.fillReport(
+							in,
+							parametros,
+							new JRMapCollectionDataSource(filas)
+					);
+
+			byte[] pdf =
+					JasperExportManager
+							.exportReportToPdf(
+									print
+							);
+
+			if (pdf == null || pdf.length == 0) {
+				throw new Exception(
+						"El pedido de presupuesto PDF quedó vacío."
+				);
+			}
+
+			return pdf;
+
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					_log.warn(
+							"No se pudo cerrar el Jasper "
+									+ "del requerimiento.",
+							e
+					);
+				}
+			}
+		}
+	}
+
 	private void generaRequerimientoCompra(HttpServletRequest req,
 	                                       HttpServletResponse res) throws IOException {
 

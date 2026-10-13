@@ -18,6 +18,7 @@ public class RequerimientoCompra {
     private String modiUsr;
     private Date bajaFecha;
     private String bajaUsr;
+    private String motivoBaja;
 
     private String afiliadoCuilTitular;
     private Integer afiliadoInt;
@@ -173,6 +174,18 @@ public class RequerimientoCompra {
 
     public void setBajaUsr(String bajaUsr) {
         this.bajaUsr = WebKeysCompras.trimToNull(bajaUsr);
+    }
+
+    public String getMotivoBaja() {
+        return motivoBaja;
+    }
+
+    public String getMotivoBajaVisible() {
+        return motivoBaja != null ? motivoBaja : "";
+    }
+
+    public void setMotivoBaja(String motivoBaja) {
+        this.motivoBaja = WebKeysCompras.trimToNull(motivoBaja);
     }
 
     public String getAfiliadoCuilTitular() {
