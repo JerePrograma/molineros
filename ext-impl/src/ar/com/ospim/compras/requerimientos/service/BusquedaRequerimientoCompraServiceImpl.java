@@ -1398,10 +1398,24 @@ public class BusquedaRequerimientoCompraServiceImpl {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         List<Nomenclador> resultado = new ArrayList<Nomenclador>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM compras.buscar_nomencladores(?,?,?,?,"
+        );
+        if (troqueles == null) {
+            sql.append("NULL::INTEGER[])");
+        } else {
+            sql.append("ARRAY[");
+            for (int i = 0; i < troqueles.size(); i++) {
+                if (i > 0) {
+                    sql.append(',');
+                }
+                sql.append('?');
+            }
+            sql.append("]::INTEGER[])");
+        }
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareStatement(
-                    "SELECT * FROM compras.buscar_nomencladores(?,?,?,?,?)");
+            stmt = con.prepareStatement(sql.toString());
             stmt.setInt(1, idSector);
             if (idTipoPrestacion == null) {
                 stmt.setNull(2, Types.INTEGER);
@@ -1410,11 +1424,15 @@ public class BusquedaRequerimientoCompraServiceImpl {
             }
             stmt.setString(3, WebKeysCompras.trimToNull(descripcion));
             stmt.setString(4, WebKeysCompras.trimToNull(codigo));
-            if (troqueles == null) {
-                stmt.setNull(5, Types.ARRAY);
-            } else {
-                stmt.setArray(5, con.createArrayOf("integer",
-                        troqueles.toArray(new Integer[troqueles.size()])));
+            if (troqueles != null) {
+                for (int i = 0; i < troqueles.size(); i++) {
+                    Integer troquel = troqueles.get(i);
+                    if (troquel == null) {
+                        stmt.setNull(5 + i, Types.INTEGER);
+                    } else {
+                        stmt.setInt(5 + i, troquel.intValue());
+                    }
+                }
             }
             rs = stmt.executeQuery();
             while (rs.next()) {
