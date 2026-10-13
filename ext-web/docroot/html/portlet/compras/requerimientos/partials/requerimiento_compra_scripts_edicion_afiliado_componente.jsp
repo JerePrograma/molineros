@@ -423,21 +423,17 @@ String afiliadoInicialAntecedentesFlag =
                         )
                         : '';
 
-        if (id == '9') {
-            return 'MEDICAMENTOS';
-        }
-
-        if (typeof <portlet:namespace />tiposNomencladorPrestacionesMedicas
+        if (typeof <portlet:namespace />tiposNomencladorCompra
                 != 'undefined'
-                && <portlet:namespace />tiposNomencladorPrestacionesMedicas) {
+                && <portlet:namespace />tiposNomencladorCompra) {
 
             for (var i = 0;
-                    i < <portlet:namespace />tiposNomencladorPrestacionesMedicas
+                    i < <portlet:namespace />tiposNomencladorCompra
                             .length;
                     i++) {
 
                 var tipo =
-                        <portlet:namespace />tiposNomencladorPrestacionesMedicas[i];
+                        <portlet:namespace />tiposNomencladorCompra[i];
 
                 if (tipo
                         && String(tipo.id) == id) {
@@ -1010,6 +1006,7 @@ String afiliadoInicialAntecedentesFlag =
          * Validar todo el lote antes de modificar la pantalla
          * o enviarlo al servidor.
          */
+        var configuracionesNomencladorLote = {};
         for (var j = 0; j < detalles.length; j++) {
             var detalle = detalles[j];
 
@@ -1034,7 +1031,9 @@ String afiliadoInicialAntecedentesFlag =
 
             if (!<portlet:namespace />validarTipoNomencladorResultadoDetalle(
                     detalle.idTipoNomenclador,
-                    detalle.idTipoPrestacion
+                    detalle.idTipoPrestacion,
+                    detalle.codigoNomenclador,
+                    configuracionesNomencladorLote
             )) {
                 return false;
             }

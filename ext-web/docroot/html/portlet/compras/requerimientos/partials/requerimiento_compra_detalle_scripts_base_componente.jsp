@@ -38,6 +38,12 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
         <% }
         }
     } %>
+    var <portlet:namespace />sectoresNomencladorCompra = {};
+    <% for (int i = 0; i < sectoresNomencladorDetalle.size(); i++) { %>
+        <portlet:namespace />sectoresNomencladorCompra['<%= sectoresNomencladorDetalle.get(i) %>'] = true;
+    <% } %>
+    var <portlet:namespace />configuracionNomencladorDetalle = null;
+    var <portlet:namespace />contextoConfiguracionNomencladorDetalle = '';
     var <portlet:namespace />detallesCompra = [];
     var <portlet:namespace />detalleDeletedIds = [];
     var <portlet:namespace />prestadoresEnviadosDetalleCache = [];
@@ -492,21 +498,31 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
     }
 
     function <portlet:namespace />esSectorNomencladorCompra() {
-        var descripcion =
-                <portlet:namespace />normalizarSectorCompra(
-                        <portlet:namespace />getSectorDescripcionSeleccionadoCompra()
-                );
-
-        return descripcion == 'PRESTACIONES MEDICAS'
-                || descripcion == 'DISCAPACIDAD'
-                || descripcion == 'ODONTOLOGIA';
+        var idSector = <portlet:namespace />getSectorSeleccionadoCompra();
+        var idTipo = jQuery.trim(
+                jQuery('#<portlet:namespace />detalle_id_tipo_prestacion').val() || ''
+        );
+        var contexto = idSector + ':' + idTipo;
+        if (<portlet:namespace />contextoConfiguracionNomencladorDetalle == contexto
+                && <portlet:namespace />configuracionNomencladorDetalle) {
+            return <portlet:namespace />configuracionNomencladorDetalle.habilitado === true;
+        }
+        return <portlet:namespace />sectoresNomencladorCompra[idSector] === true;
     }
 
     function <portlet:namespace />esSectorDetalleConCodigoCompra() {
-        return <portlet:namespace />esSectorFarmaciaCompra()
-                || <portlet:namespace />esSectorNomencladorCompra();
+        if (<portlet:namespace />esSectorNomencladorCompra()) {
+            return true;
+        }
+        for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+            var detalle = <portlet:namespace />detallesCompra[i];
+            if (detalle && (detalle.tipoItem == 'NOMENCLADOR'
+                    || detalle.tipoItem == 'MEDICAMENTO')) {
+                return true;
+            }
+        }
+        return false;
     }
-
     function <portlet:namespace />esSectorSinCotizacionPrestadorCompra() {
         var sector = jQuery('#<portlet:namespace />sector_id');
 

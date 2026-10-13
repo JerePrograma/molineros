@@ -17,8 +17,27 @@ Efectos secundarios:
     Sólo renderiza o incluye presentación; no ejecuta persistencia.
 --%>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 
 <%
+List<Integer> sectoresNomencladorCabecera =
+        (List<Integer>) request.getAttribute(
+                "compras.requerimiento.sectoresNomenclador"
+        );
+if (sectoresNomencladorCabecera == null) {
+    try {
+        sectoresNomencladorCabecera =
+                BusquedaRequerimientoCompraServiceUtil.listarSectoresNomenclador();
+    } catch (Exception e) {
+        throw new javax.servlet.ServletException(
+                "No se pudo consultar la configuracion de nomencladores de Compras.", e
+        );
+    }
+    request.setAttribute(
+            "compras.requerimiento.sectoresNomenclador",
+            sectoresNomencladorCabecera
+    );
+}
 Object soloLecturaCargosAttr =
         renderRequest.getAttribute(
                 WebKeysCompras.SOLO_LECTURA_ATTR
@@ -396,10 +415,11 @@ int idRpCabecera =
                                             : "false";
 
                             boolean usaCodigoPrestacion =
-                                    WebKeysCompras
-                                            .getFiltroTipoNomencladorCompras(
-                                                    sector.getDescripcion()
-                                            ) != null;
+                                    !WebKeysCompras.esSectorDetalleObservacionCompras(
+                                            sector.getDescripcion()
+                                    ) && sectoresNomencladorCabecera.contains(
+                                            Integer.valueOf(sector.getIdSector())
+                                    );
 
                             String usaCodigoPrestacionAttr =
                                     usaCodigoPrestacion

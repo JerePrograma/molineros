@@ -22,6 +22,7 @@ Efectos secundarios:
 <%@ page import="java.util.Map" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 
 <%!
 private String jsDetalleCompra(String value) {
@@ -299,6 +300,24 @@ if (restaurarCotizacion) {
     }
 }
 
+List<Integer> sectoresNomencladorDetalle =
+        (List<Integer>) request.getAttribute(
+                "compras.requerimiento.sectoresNomenclador"
+        );
+if (sectoresNomencladorDetalle == null) {
+    try {
+        sectoresNomencladorDetalle =
+                BusquedaRequerimientoCompraServiceUtil.listarSectoresNomenclador();
+    } catch (Exception e) {
+        throw new javax.servlet.ServletException(
+                "No se pudo consultar la configuracion de nomencladores de Compras.", e
+        );
+    }
+    request.setAttribute(
+            "compras.requerimiento.sectoresNomenclador",
+            sectoresNomencladorDetalle
+    );
+}
 Integer idSectorActual =
         reqDetalle.getSectorId();
 

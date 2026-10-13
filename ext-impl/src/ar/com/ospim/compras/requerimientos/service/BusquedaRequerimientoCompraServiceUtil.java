@@ -619,6 +619,60 @@ public class BusquedaRequerimientoCompraServiceUtil {
                 .intValue();
     }
 
+    /** La precedencia y la validación del contexto se resuelven una vez en SQL. */
+    public static List<SectorNomencladorCompra> getConfiguracionNomenclador(
+            int idSector, Integer idTipoPrestacion) throws Exception {
+        return getInstance().getConfiguracionNomenclador(idSector, idTipoPrestacion);
+    }
+
+    public static List<Integer> listarSectoresNomenclador() throws Exception {
+        return getInstance().listarSectoresNomenclador();
+    }
+
+    public static List<Nomenclador> buscarNomencladores(
+            int idSector, Integer idTipoPrestacion,
+            String descripcion, String codigo,
+            List<Integer> troqueles) throws Exception {
+        return getInstance().buscarNomencladores(
+                idSector, idTipoPrestacion, descripcion, codigo, troqueles);
+    }
+
+    /** AND dentro de una asociación; OR entre las asociaciones efectivas. */
+    public static boolean esNomencladorConfigurado(
+            List<SectorNomencladorCompra> asociaciones,
+            Nomenclador nomenclador) throws Exception {
+        if (asociaciones == null) {
+            throw new Exception("No se pudo resolver la configuración de nomencladores.");
+        }
+        if (nomenclador == null || nomenclador.getId_prestacion() <= 0
+                || nomenclador.getId_tipo_nomenclador() <= 0
+                || nomenclador.getBaja_fecha() != null) {
+            return false;
+        }
+        boolean permitido = false;
+        for (int i = 0; i < asociaciones.size(); i++) {
+            SectorNomencladorCompra asociacion = asociaciones.get(i);
+            if (asociacion == null || (asociacion.getIdTipoNomenclador() == null
+                    && asociacion.getMarcaReinLiq() == null
+                    && asociacion.getCodigoNomenclador() == null)) {
+                throw new Exception("Hay una asociación sin criterios de nomenclador.");
+            }
+            if ((asociacion.getIdTipoNomenclador() == null
+                    || asociacion.getIdTipoNomenclador().intValue()
+                            == nomenclador.getId_tipo_nomenclador())
+                    && (asociacion.getMarcaReinLiq() == null
+                    || asociacion.getMarcaReinLiq().intValue()
+                            == nomenclador.getMarcaReintegroLiquidacion())
+                    && (asociacion.getCodigoNomenclador() == null
+                    || asociacion.getCodigoNomenclador().equals(
+                            nomenclador.getCodigo() != null
+                                    ? nomenclador.getCodigo().trim() : ""))) {
+                permitido = true;
+            }
+        }
+        return permitido;
+    }
+
     private BusquedaRequerimientoCompraServiceUtil() {
     }
 }

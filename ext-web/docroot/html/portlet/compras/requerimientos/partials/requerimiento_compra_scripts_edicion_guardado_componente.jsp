@@ -609,6 +609,15 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         <portlet:namespace />sincronizarFormularioCompra();
 
         if (typeof window[
+                '<portlet:namespace />actualizarTiposPrestacionDetalle'
+        ] == 'function') {
+
+            window[
+                    '<portlet:namespace />actualizarTiposPrestacionDetalle'
+            ]('', false);
+        }
+
+        if (typeof window[
                 '<portlet:namespace />actualizarTipoNomencladorDetallePorSector'
         ] == 'function') {
 
@@ -620,21 +629,12 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
         }
 
         if (typeof window[
-                '<portlet:namespace />actualizarTiposPrestacionDetalle'
-        ] == 'function') {
-
-            window[
-                    '<portlet:namespace />actualizarTiposPrestacionDetalle'
-            ]('', false);
-        }
-
-        if (typeof window[
                 '<portlet:namespace />filtrarArticulosPorSector'
         ] == 'function') {
 
             window[
                     '<portlet:namespace />filtrarArticulosPorSector'
-            ]();
+            ](true);
         }
 
         <portlet:namespace />consultarItemsHistoricosAfiliado(

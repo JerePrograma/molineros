@@ -4,11 +4,13 @@ import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
-import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
+import ar.com.ospim.compras.requerimientos.beans.SectorNomencladorCompra;
 import ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portal.struts.PortletAction;
@@ -18,6 +20,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,9 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 public class BuscarItemTecnicoComprasAction extends PortletAction {
+
+    private static final Log _log = LogFactoryUtil.getLog(
+            BuscarItemTecnicoComprasAction.class);
 
     private final RequerimientoCompraDetalleHelper detalleHelper =
             new RequerimientoCompraDetalleHelper();
@@ -50,6 +56,12 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 user
         );
 
+        if ("CONSULTAR_CONFIGURACION".equals(
+                ParamUtil.getString(request, "cmd", ""))) {
+            publicarConfiguracion(request, response);
+            return new ActionForward(ActionConstants.COMMON_NULL);
+        }
+
         if ("CONSULTAR_DROGA".equals(
                 ParamUtil.getString(
                         request,
@@ -58,9 +70,8 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 )
         )) {
             String sector =
-                    resolverSector(
-                            request
-                    );
+                    WebKeysCompras.normalizarSectorCompra(
+                            resolverSector(request).getDescripcion());
 
             String droga =
                     nomencladorHelper.obtenerDrogaMedicamento(
@@ -98,221 +109,115 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
         );
     }
 
+    private void publicarConfiguracion(
+            RenderRequest request, RenderResponse response) throws Exception {
+        JSONObject resultado = new JSONObject();
+        JSONArray asociaciones = new JSONArray();
+        try {
+            RequerimientoCompraSector sector = resolverSector(request, false);
+            Integer idTipoPrestacion = resolverTipoPrestacion(request);
+            List<SectorNomencladorCompra> configuracion =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getConfiguracionNomenclador(
+                                    sector.getIdSector(), idTipoPrestacion);
+            for (int i = 0; i < configuracion.size(); i++) {
+                SectorNomencladorCompra asociacion = configuracion.get(i);
+                JSONObject fila = new JSONObject();
+                fila.put("idTipoNomenclador", asociacion.getIdTipoNomenclador()
+                        != null ? asociacion.getIdTipoNomenclador() : JSONObject.NULL);
+                fila.put("marcaReinLiq", asociacion.getMarcaReinLiq()
+                        != null ? asociacion.getMarcaReinLiq() : JSONObject.NULL);
+                fila.put("codigoNomenclador", asociacion.getCodigoNomenclador()
+                        != null ? asociacion.getCodigoNomenclador() : JSONObject.NULL);
+                asociaciones.put(fila);
+            }
+            resultado.put("habilitado", !configuracion.isEmpty());
+            if (configuracion.isEmpty()) {
+                resultado.put("error", "El contexto no tiene nomencladores configurados.");
+            }
+        } catch (Exception e) {
+            _log.error("No se pudo resolver el contexto de nomencladores de Compras.", e);
+            resultado.put("habilitado", false);
+            resultado.put("error", "No se pudo resolver la configuración de nomencladores. "
+                    + "Revise el sector y el tipo de cotización.");
+        }
+        resultado.put("asociaciones", asociaciones);
+        response.setContentType("application/json");
+        response.getWriter().write(resultado.toString());
+    }
+
     private void buscarNomenclador(
             RenderRequest request) throws Exception {
-
-        String codigo =
-                ParamUtil.getString(
-                        request,
-                        "codigo",
-                        ""
-                ).trim();
-
-        String descripcion =
-                ParamUtil.getString(
-                        request,
-                        "descripcion",
-                        ""
-                ).trim();
-
-        String droga =
-                ParamUtil.getString(
-                        request,
-                        "droga",
-                        ""
-                ).trim();
-
-        String sector =
-                resolverSector(
-                        request
-                );
-
-        if (!"FARMACIA".equals(sector)) {
-            droga = "";
-        }
-
-        if (codigo.length() == 0
-                && descripcion.length() == 0
-                && droga.length() == 0) {
-
-            publicarError(
-                    request,
-                    "FARMACIA".equals(sector)
-                            ? "Ingrese código, descripción o droga."
-                            : "Ingrese código o descripción."
-            );
-
-            return;
-        }
-
-        int idTipoPrestacion =
-                resolverTipoPrestacion(
-                        request,
-                        sector
-                );
-
-        Integer filtroTipoNomenclador =
-                WebKeysCompras
-                        .getFiltroTipoNomencladorCompras(
-                                sector
-                        );
-
-        if (filtroTipoNomenclador == null) {
-            publicarError(
-                    request,
-                    "El sector seleccionado no tiene configurado "
-                            + "un nomenclador para Compras."
-            );
-
-            return;
-        }
-
-        if ("PRESTACIONES MEDICAS".equals(
-                sector
-        )) {
-            /*
-             * El tipo de prestacion fue validado contra el catalogo del
-             * sector. INSUMOS consulta exclusivamente el tipo 10; los
-             * demas tipos medicos consultan la clasificacion general,
-             * cuya busqueda excluye el tipo 10.
-             */
-            filtroTipoNomenclador =
-                    WebKeysCompras.esTipoPrestacionInsumos(
-                            idTipoPrestacion
-                    )
-                            ? Integer.valueOf(
-                                    WebKeysCompras
-                                            .TIPO_NOMENCLADOR_PROTESIS_INSUMOS
-                            )
-                            : Integer.valueOf(0);
-        }
-
-        int marcaReinLiq =
-                "DISCAPACIDAD".equals(sector)
-                        ? WebKeysCompras
-                        .MARCA_REIN_LIQ_DISCAPACIDAD
-                        : 0;
-
-        request.setAttribute(
-                "COMPRAS_SECTOR_NOMENCLADOR",
-                sector
-        );
-
-        request.setAttribute(
-                "COMPRAS_MARCA_REIN_LIQ",
-                String.valueOf(
-                        marcaReinLiq
-                )
-        );
-
-        request.setAttribute(
-                "COMPRAS_ES_PREST_MED",
-                "PRESTACIONES MEDICAS".equals(sector)
-                        ? "1"
-                        : "0"
-        );
-
-        request.setAttribute(
-                "COMPRAS_CODIGO_NOMENCLADOR",
-                codigo
-        );
-
-        request.setAttribute(
-                "COMPRAS_DESCRIPCION_NOMENCLADOR",
-                descripcion
-        );
-
-        request.setAttribute(
-                "COMPRAS_ID_TIPO_NOMENCLADOR",
-                String.valueOf(
-                        filtroTipoNomenclador.intValue()
-                )
-        );
-
+        String codigo = ParamUtil.getString(request, "codigo", "").trim();
+        String descripcion = ParamUtil.getString(request, "descripcion", "").trim();
+        String droga = ParamUtil.getString(request, "droga", "").trim();
         try {
-            List<Nomenclador> resultados =
-                    nomencladorHelper.buscar(
-                            sector,
-                            idTipoPrestacion,
-                            filtroTipoNomenclador.intValue(),
-                            marcaReinLiq,
-                            codigo,
-                            descripcion,
-                            droga
-                    );
-
-            if ("FARMACIA".equals(sector)) {
-                request.setAttribute(
-                        "COMPRAS_DROGAS_NOMENCLADOR",
+            RequerimientoCompraSector sector = resolverSector(request);
+            String descripcionSector = WebKeysCompras.normalizarSectorCompra(
+                    sector.getDescripcion());
+            Integer idTipoPrestacion = resolverTipoPrestacion(request);
+            if (!"FARMACIA".equals(descripcionSector)) {
+                droga = "";
+            }
+            if (codigo.length() == 0 && descripcion.length() == 0
+                    && droga.length() == 0) {
+                publicarError(request, "FARMACIA".equals(descripcionSector)
+                        ? "Ingrese código, descripción o droga."
+                        : "Ingrese código o descripción.");
+                return;
+            }
+            request.setAttribute("COMPRAS_SECTOR_NOMENCLADOR", descripcionSector);
+            request.setAttribute("COMPRAS_MARCA_REIN_LIQ", "0");
+            request.setAttribute("COMPRAS_ES_PREST_MED",
+                    "PRESTACIONES MEDICAS".equals(descripcionSector) ? "1" : "0");
+            request.setAttribute("COMPRAS_CODIGO_NOMENCLADOR", codigo);
+            request.setAttribute("COMPRAS_DESCRIPCION_NOMENCLADOR", descripcion);
+            // 0 es contexto de búsqueda múltiple; nunca se persiste como tipo real.
+            request.setAttribute("COMPRAS_ID_TIPO_NOMENCLADOR", "0");
+            List<Nomenclador> resultados = nomencladorHelper.buscar(
+                    sector.getIdSector(), descripcionSector, idTipoPrestacion,
+                    codigo, descripcion, droga);
+            if ("FARMACIA".equals(descripcionSector)) {
+                request.setAttribute("COMPRAS_DROGAS_NOMENCLADOR",
                         BusquedaRequerimientoCompraServiceUtil
-                                .obtenerDrogasNomencladorFarmacia(resultados)
-                );
+                                .obtenerDrogasNomencladorFarmacia(resultados));
             }
-
-            request.setAttribute(
-                    "COMPRAS_RESULTADOS_NOMENCLADOR",
-                    resultados != null
-                            ? resultados
-                            : new ArrayList<Nomenclador>()
-            );
-
+            request.setAttribute("COMPRAS_RESULTADOS_NOMENCLADOR", resultados);
         } catch (Exception e) {
-            publicarError(
-                    request,
-                    e.getMessage() != null
-                            ? e.getMessage()
-                            : "No se pudieron buscar nomencladores."
-            );
+            _log.error("No se pudo buscar el nomenclador configurado de Compras.", e);
+            publicarError(request,
+                    "El contexto no tiene nomencladores configurados o no pudo "
+                            + "resolverse su configuración. Revise el sector y el tipo de cotización.");
         }
     }
 
-    private int resolverTipoPrestacion(
-            RenderRequest request,
-            String sector) throws Exception {
-
-        int idTipoPrestacion =
-                ParamUtil.getInteger(
-                        request,
-                        "id_tipo_prestacion",
-                        0
-                );
-
-        if (!"PRESTACIONES MEDICAS".equals(sector)) {
-            return idTipoPrestacion;
-        }
-
-        if (idTipoPrestacion <= 0) {
-            throw new Exception(
-                    "Debe seleccionar el tipo de prestación."
-            );
-        }
-
-        List<TipoPrestacionCompra> tipos =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarTiposPrestacion();
-
-        for (int i = 0; tipos != null && i < tipos.size(); i++) {
-            TipoPrestacionCompra tipo = tipos.get(i);
-
-            if (tipo != null
-                    && tipo.getIdInt() == idTipoPrestacion
-                    && sector.equals(
-                            WebKeysCompras.normalizarSectorCompra(
-                                    tipo.getSectorDescripcion()
-                            )
-                    )) {
-                return idTipoPrestacion;
-            }
-        }
-
-        throw new Exception(
-                "El tipo de prestación no corresponde al sector "
-                        + "del requerimiento."
-        );
-    }
-
-    private String resolverSector(
+    private Integer resolverTipoPrestacion(
             RenderRequest request) throws Exception {
+        String valor = ParamUtil.getString(request, "id_tipo_prestacion", "").trim();
+        if (valor.length() == 0 || "0".equals(valor)) {
+            return null;
+        }
+        if (!valor.matches("^[0-9]+$")) {
+            throw new Exception("El tipo de cotización informado no es válido.");
+        }
+        try {
+            int id = Integer.parseInt(valor);
+            if (id <= 0) {
+                throw new Exception("El tipo de cotización informado no es válido.");
+            }
+            return Integer.valueOf(id);
+        } catch (NumberFormatException e) {
+            throw new Exception("El tipo de cotización informado no es válido.");
+        }
+    }
+
+    private RequerimientoCompraSector resolverSector(
+            RenderRequest request) throws Exception {
+        return resolverSector(request, true);
+    }
+
+    private RequerimientoCompraSector resolverSector(
+            RenderRequest request, boolean requiereEdicion) throws Exception {
 
         int idRequerimiento =
                 ParamUtil.getInteger(
@@ -334,18 +239,20 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 );
             }
 
-            if (!requerimiento.puedeEditarEstructura()) {
+            if (requiereEdicion && !requerimiento.puedeEditarEstructura()) {
                 throw new Exception(
                         "Sólo se pueden buscar prestaciones para "
                                 + "requerimientos PENDIENTES."
                 );
             }
 
-            return WebKeysCompras
-                    .normalizarSectorCompra(
-                            requerimiento
-                                    .getSectorDescripcion()
-                    );
+            RequerimientoCompraSector sectorReal =
+                    BusquedaRequerimientoCompraServiceUtil.getSector(
+                            requerimiento.getIdSector());
+            if (sectorReal == null) {
+                throw new Exception("El sector del requerimiento no está disponible.");
+            }
+            return sectorReal;
         }
 
         int idSector =
@@ -368,10 +275,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             );
         }
 
-        return WebKeysCompras
-                .normalizarSectorCompra(
-                        sector.getDescripcion()
-                );
+        return sector;
     }
 
     private void publicarError(

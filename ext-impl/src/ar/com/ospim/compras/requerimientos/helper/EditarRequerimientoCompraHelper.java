@@ -11,6 +11,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
+import ar.com.ospim.compras.requerimientos.beans.SectorNomencladorCompra;
 import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
 import ar.com.ospim.compras.requerimientos.helper.PresupuestoCompraHelper.PresupuestoEntrada;
 import ar.com.ospim.compras.requerimientos.helper.PresupuestoCompraHelper.DocumentoPresupuestoCreado;
@@ -580,7 +581,7 @@ public class EditarRequerimientoCompraHelper {
             prepararDetalleParaGuardar(requerimiento, null, detalle);
             validarTipoPrestacionParaGuardar(requerimiento, null, detalle);
             normalizarDetalleNuevo(detalle);
-            validarDetalleParaGuardar(requerimiento, detalle, false);
+            validarDetalleParaGuardar(requerimiento, null, detalle, false);
         }
         PresupuestoCompraHelper presupuestoHelper = new PresupuestoCompraHelper();
         presupuestoHelper.validarCotizacionesEmpresaAlta(cotizaciones);
@@ -943,7 +944,9 @@ public class EditarRequerimientoCompraHelper {
 
             validarDetalleParaGuardar(
                     requerimiento,
-                    detalle
+                    detallePersistido,
+                    detalle,
+                    true
             );
 
             /*
@@ -2071,12 +2074,7 @@ private boolean mismoInteger(Integer a, Integer b) {
 
 private void validarDetalleParaGuardar(
         RequerimientoCompra requerimiento,
-        RequerimientoCompraDetalle detalle) throws Exception {
-    validarDetalleParaGuardar(requerimiento, detalle, true);
-}
-
-private void validarDetalleParaGuardar(
-        RequerimientoCompra requerimiento,
+        RequerimientoCompraDetalle detallePersistido,
         RequerimientoCompraDetalle detalle,
         boolean requiereIdPersistido) throws Exception {
 
@@ -2120,6 +2118,7 @@ private void validarDetalleParaGuardar(
     if (RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(tipoItem)) {
         validarDetalleNomencladorParaGuardar(
                 requerimiento,
+                detallePersistido,
                 detalle
         );
     } else if (RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)) {
@@ -2220,6 +2219,7 @@ private void validarTipoPrestacionParaGuardar(
 
 private void validarDetalleNomencladorParaGuardar(
         RequerimientoCompra requerimiento,
+        RequerimientoCompraDetalle detallePersistido,
         RequerimientoCompraDetalle detalle) throws Exception {
 
     if (detalle.getIdPrestacion() == null
@@ -2279,55 +2279,44 @@ private void validarDetalleNomencladorParaGuardar(
         );
     }
 
-    String sector =
-            WebKeysCompras.normalizarSectorCompra(
-                    requerimiento != null
-                            ? requerimiento.getSectorDescripcion()
-                            : null
-            );
+    boolean nuevaSeleccion = detallePersistido == null
+            || !detallePersistido.esNomenclador()
+            || !mismoInteger(
+                    detallePersistido.getIdPrestacion(),
+                    detalle.getIdPrestacion())
+            || !mismoInteger(
+                    detallePersistido.getIdTipoPrestacion(),
+                    detalle.getIdTipoPrestacion());
 
-    if (WebKeysCompras.isEmpty(sector)) {
-        throw errorUsuario(
-                "No se pudo determinar el sector del requerimiento."
-        );
+    /*
+     * La configuracion vigente valida selecciones nuevas y cambios de rubro.
+     * Retirar una asociacion no invalida la misma seleccion ya persistida.
+     */
+    if (nuevaSeleccion) {
+        List<SectorNomencladorCompra> configuracion =
+                BusquedaRequerimientoCompraServiceUtil
+                        .getConfiguracionNomenclador(
+                                requerimiento.getIdSector().intValue(),
+                                detalle.getIdTipoPrestacion());
+
+        if (configuracion == null || configuracion.isEmpty()) {
+            throw errorUsuario(
+                    "El sector y tipo de cotización no tienen "
+                            + "nomencladores configurados para Compras.");
+        }
+
+        if (!BusquedaRequerimientoCompraServiceUtil
+                .esNomencladorConfigurado(configuracion, nomenclador)) {
+            throw errorUsuario(
+                    "La prestación seleccionada no pertenece a los "
+                            + "nomencladores configurados para el sector "
+                            + "y tipo de cotización.");
+        }
     }
 
-    boolean nomencladorValido;
-
-    if (detalle.getIdTipoPrestacionInt() > 0) {
-        nomencladorValido =
-                WebKeysCompras
-                        .esNomencladorValidoParaTipoPrestacionCompras(
-                                sector,
-                                detalle.getIdTipoPrestacionInt(),
-                                idTipoNomencladorCanonico,
-                                nomenclador.getMarcaReintegroLiquidacion(),
-                                nomenclador.getCodigo()
-                        );
-    } else {
-        /*
-         * Compatibilidad exclusiva con detalles historicos que fueron
-         * persistidos antes de incorporar el tipo de prestacion.
-         */
-        nomencladorValido =
-                detalle.getIdInt() > 0
-                        && WebKeysCompras
-                                .esNomencladorValidoParaSectorCompras(
-                                        sector,
-                                        idTipoNomencladorCanonico,
-                                        nomenclador.getMarcaReintegroLiquidacion(),
-                                        nomenclador.getCodigo()
-                                );
-    }
-
-    if (!nomencladorValido) {
-        throw errorUsuario(
-                mensajeNomencladorInvalido(
-                        sector,
-                        detalle.getIdTipoPrestacionInt()
-                )
-        );
-    }
+    detalle.setIdTipoNomenclador(
+            Integer.valueOf(idTipoNomencladorCanonico)
+    );
 
     validarTextoTecnico(
             "código de nomenclador",
@@ -2353,53 +2342,6 @@ private void validarDetalleNomencladorParaGuardar(
     detalle.setDescripcionItem(
             detalle.getDescripcionNomenclador()
     );
-}
-
-private String mensajeNomencladorInvalido(
-        String sector,
-        int idTipoPrestacion) {
-    if ("FARMACIA".equals(sector)) {
-        return "Para Farmacia debe seleccionar una prestación "
-                + "del nomenclador tipo 9.";
-    }
-
-    if ("DISCAPACIDAD".equals(sector)) {
-        return "Para Discapacidad debe seleccionar una prestación "
-                + "con marca ReinLiq 6 o el código 431003.";
-    }
-
-    if ("ODONTOLOGIA".equals(sector)) {
-        return "Para Odontologia debe seleccionar una prestación "
-                + "del nomenclador tipo 1.";
-    }
-
-    if ("PRESTACIONES MEDICAS".equals(sector)) {
-        if (idTipoPrestacion <= 0) {
-            return "Para PRESTACIONES MÉDICAS debe seleccionar una "
-                    + "prestación de nomenclador tipo 2, 3, 4, 6 o 10.";
-        }
-
-        if (WebKeysCompras.esTipoPrestacionInsumos(
-                idTipoPrestacion
-        )) {
-            return "Para Insumos debe seleccionar una prestación "
-                    + "del nomenclador tipo 10.";
-        }
-
-        if (WebKeysCompras.esTipoPrestacionProtesis(
-                idTipoPrestacion
-        )) {
-            return "Para Prótesis debe seleccionar una prestación "
-                    + "de nomenclador tipo 2, 3, 4, 6 o 14.";
-        }
-
-        return "Para el tipo de PRESTACIONES MÉDICAS seleccionado "
-                + "debe elegir un nomenclador tipo 2, 3, 4 o 6; "
-                + "el tipo 10 corresponde exclusivamente a Insumos.";
-    }
-
-    return "La prestación seleccionada no corresponde "
-            + "al sector del requerimiento.";
 }
 
 private void validarDetalleMedicamentoParaGuardar(
@@ -2574,21 +2516,6 @@ private void prepararDetalleParaGuardar(
         detalle.setDescripcionItem(null);
         return;
     }
-
-    Integer filtroTipoNomenclador =
-            WebKeysCompras.getFiltroTipoNomencladorCompras(
-                    requerimiento != null
-                            ? requerimiento.getSectorDescripcion()
-                            : null
-            );
-
-    if (filtroTipoNomenclador == null) {
-        throw errorUsuario(
-                "El sector seleccionado no tiene configurado "
-                        + "un nomenclador para Compras."
-        );
-
-        }
 
         if (detallePersistido != null
                 && detallePersistido.esObservacion()) {

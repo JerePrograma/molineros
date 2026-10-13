@@ -1,6 +1,8 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.*;
+import ar.com.ospim.autorizaciones.beans.Nomenclador;
+import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.global.beans.Empresa;
 import ar.com.ospim.util.ConnectionHelper;
 
@@ -1336,4 +1338,93 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
         return documento;
     }
+    public List<SectorNomencladorCompra> getConfiguracionNomenclador(
+            int idSector, Integer idTipoPrestacion) throws Exception {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<SectorNomencladorCompra> resultado =
+                new ArrayList<SectorNomencladorCompra>();
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(
+                    "SELECT * FROM compras.resolver_sector_nomenclador(?,?)");
+            stmt.setInt(1, idSector);
+            if (idTipoPrestacion == null) {
+                stmt.setNull(2, Types.INTEGER);
+            } else {
+                stmt.setInt(2, idTipoPrestacion.intValue());
+            }
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                resultado.add(SectorNomencladorCompra.getMapping(rs));
+            }
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<Integer> listarSectoresNomenclador() throws Exception {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<Integer> resultado = new ArrayList<Integer>();
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(
+                    "SELECT DISTINCT sn.id_sector FROM compras.sector_nomenclador sn "
+                            + "JOIN compras.sector_requerimiento s "
+                            + "ON s.id_sector = sn.id_sector "
+                            + "WHERE s.activo = TRUE AND s.baja_fecha IS NULL "
+                            + "ORDER BY sn.id_sector");
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                resultado.add(Integer.valueOf(rs.getInt("id_sector")));
+            }
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<Nomenclador> buscarNomencladores(
+            int idSector, Integer idTipoPrestacion,
+            String descripcion, String codigo,
+            List<Integer> troqueles) throws Exception {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<Nomenclador> resultado = new ArrayList<Nomenclador>();
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(
+                    "SELECT * FROM compras.buscar_nomencladores(?,?,?,?,?)");
+            stmt.setInt(1, idSector);
+            if (idTipoPrestacion == null) {
+                stmt.setNull(2, Types.INTEGER);
+            } else {
+                stmt.setInt(2, idTipoPrestacion.intValue());
+            }
+            stmt.setString(3, WebKeysCompras.trimToNull(descripcion));
+            stmt.setString(4, WebKeysCompras.trimToNull(codigo));
+            if (troqueles == null) {
+                stmt.setNull(5, Types.ARRAY);
+            } else {
+                stmt.setArray(5, con.createArrayOf("integer",
+                        troqueles.toArray(new Integer[troqueles.size()])));
+            }
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                resultado.add(Nomenclador.getMapping(rs));
+            }
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
 }
