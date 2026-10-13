@@ -39,8 +39,15 @@ private String comprasNomencladorJs(String value) {
 private String comprasNomencladorInvocacion(
         String callback,
         Nomenclador nomenclador) {
+    return comprasNomencladorInvocacion(callback, nomenclador, null);
+}
 
-    return callback
+private String comprasNomencladorInvocacion(
+        String callback,
+        Nomenclador nomenclador,
+        Map<Integer, String> drogasNomenclador) {
+
+    String invocacion = callback
             + "(" + nomenclador.getId_prestacion()
             + "," + nomenclador.getId_tipo_nomenclador()
             + ",'" + comprasNomencladorJs(
@@ -52,8 +59,17 @@ private String comprasNomencladorInvocacion(
                     nomenclador.getDescripcion() != null
                             ? nomenclador.getDescripcion().trim()
                             : ""
-            )
-            + "')";
+            );
+
+    if (drogasNomenclador != null) {
+        invocacion += "','" + comprasNomencladorJs(
+                drogasNomenclador.get(
+                        Integer.valueOf(nomenclador.getId_prestacion())
+                )
+        );
+    }
+
+    return invocacion + "')";
 }
 %>
 
@@ -229,7 +245,8 @@ if (errorBusqueda == null
             String invocacion =
                     comprasNomencladorInvocacion(
                             callbackBusqueda,
-                            nomenclador
+                            nomenclador,
+                            mostrarDrogas ? drogasNomenclador : null
                     );
 %>
             <script type="text/javascript">
@@ -250,7 +267,8 @@ if (errorBusqueda == null
                 String invocacion =
                         comprasNomencladorInvocacion(
                                 callbackBusqueda,
-                                nomenclador
+                                nomenclador,
+                                mostrarDrogas ? drogasNomenclador : null
                         );
 
                 String inicioEnlace =

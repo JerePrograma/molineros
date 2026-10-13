@@ -35,6 +35,8 @@ Efectos secundarios:
             Descripción
         </th>
 
+        <th class="compras-detalle-columna-droga" style="display: none;">Droga</th>
+
         <th>Cantidad</th>
 
         <th class="compras-detalle-columna-observacion">
@@ -53,7 +55,7 @@ Efectos secundarios:
 
     <tbody id="<portlet:namespace />detalle_body">
         <tr class="portlet-section-body results-row">
-            <td colspan="<%= detalleColspan %>">
+            <td class="compras-detalle-fila-vacia" colspan="<%= detalleColspan %>">
                 Cargando detalles...
             </td>
         </tr>

@@ -3,6 +3,8 @@ package ar.com.ospim.compras.requerimientos.action;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans
         .RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.beans
+        .RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.service
         .BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.util.PermissionUtil;
@@ -14,7 +16,9 @@ import com.liferay.portal.struts.ActionConstants;
 import com.liferay.portal.struts.JSONAction;
 import com.liferay.portal.util.PortalUtil;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -170,9 +174,22 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
                                     idRequerimientoExcluir
                             );
 
-            return construirRespuesta(
-                    items
-            );
+            Map<Integer, String> drogas = Collections.emptyMap();
+            if (items != null && !items.isEmpty()) {
+                RequerimientoCompraSector sector =
+                        BusquedaRequerimientoCompraServiceUtil.getSector(
+                                idSector.intValue()
+                        );
+                if (sector != null && "FARMACIA".equals(
+                        WebKeysCompras.normalizarSectorCompra(
+                                sector.getDescripcion()
+                        ))) {
+                    drogas = BusquedaRequerimientoCompraServiceUtil
+                            .obtenerDrogasDetalleFarmacia(items);
+                }
+            }
+
+            return construirRespuesta(items, drogas);
 
         } catch (Exception e) {
             /*
@@ -195,6 +212,12 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
 
     private String construirRespuesta(
             List<RequerimientoCompraDetalle> items) {
+        return construirRespuesta(items, Collections.<Integer, String>emptyMap());
+    }
+
+    private String construirRespuesta(
+            List<RequerimientoCompraDetalle> items,
+            Map<Integer, String> drogas) {
 
         StringBuilder json =
                 new StringBuilder();
@@ -294,6 +317,15 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
                                 detalle.getIdTipoPrestacionString()
                         )
                 );
+
+                Integer troquel = idTipoNomenclador
+                        == WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA
+                                ? parseEntero(codigo)
+                                : null;
+                json.append(",\"droga\":");
+                json.append(jsonString(
+                        troquel != null ? drogas.get(troquel) : ""
+                ));
 
                 json.append(
                         '}'

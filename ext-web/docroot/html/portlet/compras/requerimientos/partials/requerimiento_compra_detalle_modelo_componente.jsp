@@ -20,6 +20,7 @@ Efectos secundarios:
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="com.liferay.portal.kernel.util.GetterUtil" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
@@ -342,6 +343,18 @@ String idSectorActualString =
 
 String sectorDescripcionActualString =
         reqDetalle.getSectorDescripcionVisible();
+
+Map<Integer, String> drogasDetalleFarmacia = new HashMap<Integer, String>();
+if ("FARMACIA".equals(WebKeysCompras.normalizarSectorCompra(
+        sectorDescripcionActualString))) {
+    try {
+        drogasDetalleFarmacia = BusquedaRequerimientoCompraServiceUtil
+                .obtenerDrogasDetalleFarmacia(detalles);
+    } catch (Exception e) {
+        throw new javax.servlet.ServletException(
+                "No se pudieron consultar las drogas de los medicamentos.", e);
+    }
+}
 
 PortletURL detalleActionURL =
         renderResponse.createActionURL();

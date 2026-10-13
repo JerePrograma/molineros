@@ -624,6 +624,7 @@ String afiliadoInicialAntecedentesFlag =
             idMedicamento: '',
             troquel: '',
             nombreMedicamento: '',
+            droga: item.droga == null ? '' : String(item.droga),
 
             cantidad: '1',
 

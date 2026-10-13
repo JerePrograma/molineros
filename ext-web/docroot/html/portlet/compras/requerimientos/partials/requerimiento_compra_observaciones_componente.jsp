@@ -17,7 +17,16 @@ Efectos secundarios:
     Sólo renderiza o incluye presentación; no ejecuta persistencia.
 --%>
 <fieldset class="block-labels compras-observaciones">
-    <legend>Observación</legend>
+    <legend>
+        Observación
+        <a href="javascript:void(0)"
+           onclick="return comprasHelp(event, '<portlet:namespace />helpObservaciones');">
+            <img style="height: 25px; width: 25px; vertical-align: middle;"
+                 src="/html/images/help.png"
+                 title="Ayuda para observaciones"
+                 alt="Ayuda" />
+        </a>
+    </legend>
 
     <% if (puedeEditarEstructuraPantalla) { %>
         <table class="lfr-table">
@@ -40,9 +49,24 @@ Efectos secundarios:
     <% } %>
 </fieldset>
 
+<div id="<portlet:namespace />helpObservaciones"
+     class="containerPlus draggable compras-container-ayuda {buttons:'c', skin:'default', width:'700',title:'Ayuda - Observación',closed:'true'}"
+     style="top: 500px; left: 200px">
+    Son observaciones que se envian por correo al prestador junto al pedido de cotización.
+</div>
+
 <% if (puedeEditarEstructuraPantalla) { %>
     <fieldset class="block-labels compras-observaciones">
-        <legend>Observación interna</legend>
+        <legend>
+            Observación interna
+            <a href="javascript:void(0)"
+               onclick="return comprasHelp(event, '<portlet:namespace />helpObservacionInterna');">
+                <img style="height: 25px; width: 25px; vertical-align: middle;"
+                     src="/html/images/help.png"
+                     title="Ayuda para observaciones internas"
+                     alt="Ayuda" />
+            </a>
+        </legend>
         <table class="lfr-table">
             <tr>
                 <td>
@@ -55,4 +79,10 @@ Efectos secundarios:
             </tr>
         </table>
     </fieldset>
+
+    <div id="<portlet:namespace />helpObservacionInterna"
+         class="containerPlus draggable compras-container-ayuda {buttons:'c', skin:'default', width:'700',title:'Ayuda - Observación interna',closed:'true'}"
+         style="top: 500px; left: 200px">
+        Son observaciones para uso interno y no se comparten con personal externo.
+    </div>
 <% } %>

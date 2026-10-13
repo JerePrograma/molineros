@@ -234,6 +234,38 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return drogasPorPrestacion;
     }
 
+    public static Map<Integer, String> obtenerDrogasDetalleFarmacia(
+            List<RequerimientoCompraDetalle> detalles) throws Exception {
+
+        List<Integer> troqueles = new ArrayList<Integer>();
+
+        for (int i = 0; detalles != null && i < detalles.size(); i++) {
+            RequerimientoCompraDetalle detalle = detalles.get(i);
+            if (detalle == null) {
+                continue;
+            }
+
+            int troquel = 0;
+            if (detalle.esMedicamento()) {
+                troquel = detalle.getTroquelInt();
+            } else if (detalle.esNomenclador()
+                    && detalle.getIdTipoNomencladorInt()
+                    == WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA) {
+                String codigo = detalle.getCodigoNomencladorVisible().trim();
+                if (codigo.matches("^[0-9]+$")) {
+                    troquel = GetterUtil.getInteger(codigo, 0);
+                }
+            }
+
+            Integer claveTroquel = Integer.valueOf(troquel);
+            if (troquel > 0 && !troqueles.contains(claveTroquel)) {
+                troqueles.add(claveTroquel);
+            }
+        }
+
+        return getInstance().listarDrogasMedicamentosBatch(troqueles);
+    }
+
     public static List<RequerimientoCompraEstado> listarEstados()
             throws Exception {
         return WebKeysCompras.listarEstados();

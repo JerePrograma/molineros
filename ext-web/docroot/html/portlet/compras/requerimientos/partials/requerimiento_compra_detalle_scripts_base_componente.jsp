@@ -162,6 +162,14 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                                 idDetalleCotizacion
                         )
                         : detalle.getPrestadorSeleccionadoVisible();
+        int troquelDrogaDetalle = detalle.esMedicamento()
+                ? detalle.getTroquelInt()
+                : (detalle.esNomenclador()
+                        && detalle.getIdTipoNomencladorInt()
+                                == WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA
+                        ? GetterUtil.getInteger(detalle.getCodigoNomencladorVisible(), 0)
+                        : 0);
+        String drogaDetalle = drogasDetalleFarmacia.get(Integer.valueOf(troquelDrogaDetalle));
     %>
         <portlet:namespace />detallesCompra.push({
             id: '<%= jsDetalleCompra(detalle.getIdString()) %>',
@@ -177,6 +185,7 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
             idMedicamento: '<%= jsDetalleCompra(detalle.getIdMedicamentoString()) %>',
             troquel: '<%= jsDetalleCompra(detalle.getTroquelString()) %>',
             nombreMedicamento: '<%= jsDetalleCompra(detalle.getNombreMedicamentoVisible()) %>',
+            droga: '<%= jsDetalleCompra(drogaDetalle) %>',
             cantidad: '<%= jsDetalleCompra(detalle.getCantidadString()) %>',
             precioUnitario: '<%= jsDetalleCompra(precioUnitarioDetalle) %>',
             precioTotal: '<%= cotizacionRestaurada
@@ -550,6 +559,33 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                 || descripcion == 'OTROS';
     }
 
+    function <portlet:namespace />esDetalleMedicamentosFarmaciaCompra(detalle) {
+        if (!detalle || !<portlet:namespace />esSectorFarmaciaCompra()) {
+            return false;
+        }
+        var tipo = <portlet:namespace />normalizarSectorCompra(detalle.tipoPrestacion);
+        if (tipo == 'MEDICAMENTOS') {
+            return true;
+        }
+        return detalle.tipoItem == 'MEDICAMENTO'
+                && <portlet:namespace />detalleValue(detalle.idTipoPrestacion) == '';
+    }
+
+    function <portlet:namespace />mostrarColumnaDrogaDetalleCompra() {
+        if (!<portlet:namespace />esSectorFarmaciaCompra()) {
+            return false;
+        }
+        for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+            if (<portlet:namespace />esDetalleMedicamentosFarmaciaCompra(
+                    <portlet:namespace />detallesCompra[i])) {
+                return true;
+            }
+        }
+        return <portlet:namespace />normalizarSectorCompra(
+                jQuery('#<portlet:namespace />detalle_id_tipo_prestacion option:selected').text()
+        ) == 'MEDICAMENTOS';
+    }
+
     function <portlet:namespace />actualizarVisibilidadColumnasDetalleCompra() {
         var mostrarTipoCotizacion =
                 !<portlet:namespace />esSectorSinCotizacionPrestadorCompra();
@@ -570,6 +606,14 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                 'display',
                 mostrarObservacion ? '' : 'none'
         );
+        var mostrarDroga = <portlet:namespace />mostrarColumnaDrogaDetalleCompra();
+        var tabla = jQuery('#<portlet:namespace />detalle_body').parent();
+        tabla.find('.compras-detalle-columna-droga').css(
+                'display', mostrarDroga ? '' : 'none'
+        );
+        tabla.find('.compras-detalle-fila-vacia').attr(
+                'colspan', <%= detalleColspan %> + (mostrarDroga ? 1 : 0)
+        );
     }
 
     function <portlet:namespace />renderDetallesCompra() {
@@ -580,7 +624,7 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
         if (<portlet:namespace />detallesCompra.length == 0) {
             tbody.append(
                 '<tr class="portlet-section-body results-row">' +
-                    '<td colspan="<%= detalleColspan %>">No hay detalles cargados.</td>' +
+                    '<td class="compras-detalle-fila-vacia" colspan="<%= detalleColspan %>">No hay detalles cargados.</td>' +
                 '</tr>'
             );
 
@@ -605,6 +649,10 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
             <% } %>
             html += '<td class="compras-detalle-columna-codigo">' + <portlet:namespace />detalleEscapeHtml(detalle.codigoItem) + '</td>';
             html += '<td class="compras-detalle-columna-codigo">' + <portlet:namespace />detalleEscapeHtml(detalle.descripcionItem) + '</td>';
+            html += '<td class="compras-detalle-columna-droga" style="display: none;">' +
+                    <portlet:namespace />detalleEscapeHtml(
+                            <portlet:namespace />esDetalleMedicamentosFarmaciaCompra(detalle)
+                                    ? detalle.droga : '') + '</td>';
             html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';
             html += '<td class="compras-detalle-columna-observacion">' + <portlet:namespace />detalleEscapeHtml(detalle.observaciones) + '</td>';
 

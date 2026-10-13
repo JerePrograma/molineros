@@ -641,7 +641,8 @@ Efectos secundarios:
             idPrestacion,
             idTipoNomenclador,
             codigo,
-            descripcion) {
+            descripcion,
+            droga) {
 
         if (jQuery(
                 '#<portlet:namespace />detalle_codigo_nomenclador'
@@ -710,6 +711,12 @@ Efectos secundarios:
                     '#<portlet:namespace />detalle_droga_nomenclador'
             ).val('');
 
+            if (typeof droga != 'undefined') {
+                <portlet:namespace />consultaDrogaSecuencia++;
+                jQuery('#<portlet:namespace />detalle_droga_nomenclador').val(
+                        droga == null ? '' : String(droga)
+                );
+            } else {
             var secuenciaActual =
                     ++<portlet:namespace />consultaDrogaSecuencia;
 
@@ -773,6 +780,7 @@ Efectos secundarios:
                     }
                 }
             });
+            }
         }
 
         if (<portlet:namespace />popupNomencladorDetalle) {
@@ -1039,6 +1047,9 @@ Efectos secundarios:
         );
 
         <portlet:namespace />actualizarTipoItemEditor(true);
+        jQuery('#<portlet:namespace />detalle_droga_nomenclador').val(
+                <portlet:namespace />detalleValue(detalle.droga)
+        );
 
         jQuery('#<portlet:namespace />detalle_submit').val('Guardar detalle');
         jQuery('#<portlet:namespace />detalle_cancelar').show();
@@ -1219,6 +1230,9 @@ Efectos secundarios:
                             )
                             : '',
 
+            droga: esHistorico
+                    ? <portlet:namespace />detalleValue(detalleExistente.droga) : '',
+
             cantidad: cantidad,
 
             precioUnitario:
@@ -1297,6 +1311,10 @@ Efectos secundarios:
                                 '#<portlet:namespace />detalle_descripcion_nomenclador'
                         ).val()
                 );
+
+        detalle.droga = <portlet:namespace />esSectorFarmaciaCompra()
+                ? jQuery.trim(jQuery('#<portlet:namespace />detalle_droga_nomenclador').val() || '')
+                : '';
 
         detalle.codigoItem =
                 detalle.codigoNomenclador;
