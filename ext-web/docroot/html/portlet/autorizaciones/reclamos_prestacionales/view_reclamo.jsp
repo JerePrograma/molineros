@@ -601,7 +601,9 @@ span-fixed-size {
 		<table >
 			<%-- Observacion como Fieldset--%>
 			<%
-			if (reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null && reclamoprestacional.getEstadoObservacion().length() >0 ) {
+			// La referencia de Compras se conserva en el historico, fuera de la cabecera.
+			if (reclamoprestacional != null && reclamoprestacional.getEstadoObservacion() != null && reclamoprestacional.getEstadoObservacion().length() >0
+			        && !reclamoprestacional.getEstadoObservacion().trim().matches("Requerimiento ID #[1-9][0-9]*")) {
 			%>																	
 			<tr>
 				<td colspan="12">
