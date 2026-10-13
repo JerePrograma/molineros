@@ -968,7 +968,7 @@ Efectos secundarios:
             jQuery(
                     '#<portlet:namespace />detalle_submit'
             ).val(
-                    'Agregar detalle'
+                    'Agregar'
             );
 
             jQuery(
@@ -1083,7 +1083,7 @@ Efectos secundarios:
         );
 
         jQuery('#<portlet:namespace />detalle_submit').val(
-                <portlet:namespace />detalleModoCorreccion ? 'Guardar corrección' : 'Guardar detalle');
+                'Guardar');
         jQuery('#<portlet:namespace />detalle_cancelar').show();
         if (<portlet:namespace />detalleModoCorreccion) {
             jQuery('#<portlet:namespace />detalle_cantidad, #<portlet:namespace />detalle_observaciones')

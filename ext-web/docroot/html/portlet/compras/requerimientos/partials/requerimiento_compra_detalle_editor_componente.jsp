@@ -19,7 +19,6 @@ Efectos secundarios:
 <fieldset id="<portlet:namespace />detalle_editor_contenedor"
           class="block-labels compras-detalle-editor"
           <%= !puedeABMDetalle ? "style=\"display:none;\"" : "" %>>
-    <legend><%= puedeABMDetalle ? "Agregar / editar detalle" : "Corregir medicamento / prestación" %></legend>
 
     <input type="hidden"
            id="<portlet:namespace />detalle_edit_index"
@@ -295,11 +294,11 @@ Efectos secundarios:
                 class="compras-detalle-acciones">
                 <input type="button"
                        id="<portlet:namespace />detalle_submit"
-                       value="Agregar detalle"
+                       value="Agregar"
                        onclick="return <portlet:namespace />agregarOActualizarDetalle();" />
                 <input type="button"
                        id="<portlet:namespace />detalle_cancelar"
-                       value="Cancelar edición"
+                       value="Cancelar"
                        style="display:none;"
                        onclick="return <portlet:namespace />cancelarEdicionDetalle();" />
             </td>

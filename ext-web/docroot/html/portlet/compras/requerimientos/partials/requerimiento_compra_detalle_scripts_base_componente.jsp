@@ -687,9 +687,12 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                         <% if (puedeABMDetalle) { %>
                             html += '&nbsp;';
                         <% } %>
-                        html += '<a href="#" title="Corregir medicamento / prestación" '
+                        html += '<a href="#" title="Editar" '
                                 + 'onclick="<portlet:namespace />corregirDetalleEnPantalla('
-                                + i + '); return false;">Corregir medicamento / prestación</a>';
+                                + i + '); return false;">';
+                        html += '<img alt="Editar" '
+                                + 'src="<%= themeDisplay.getPathThemeImages() %>/common/edit.png" />';
+                        html += '</a>';
                     }
                 <% } %>
 
