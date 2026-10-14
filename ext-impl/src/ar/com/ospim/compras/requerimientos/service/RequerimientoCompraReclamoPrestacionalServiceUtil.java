@@ -57,6 +57,15 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
         );
     }
 
+    public static Map<Integer, RequerimientoCompraReclamoPrestacional>
+    obtenerRelacionesPorRequerimientos(
+            List<Integer> idsRequerimientos) throws Exception {
+
+        return helper.obtenerRelacionesPorRequerimientos(
+                idsRequerimientos
+        );
+    }
+
     public static void reservarCreacion(
             int idRequerimientoCompra,
             String tokenReserva,

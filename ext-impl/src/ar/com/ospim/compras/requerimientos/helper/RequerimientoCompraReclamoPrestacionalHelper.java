@@ -104,6 +104,39 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         return resultado;
     }
 
+    public Map<Integer, RequerimientoCompraReclamoPrestacional>
+    obtenerRelacionesPorRequerimientos(
+            List<Integer> idsRequerimientos) throws Exception {
+
+        Map<Integer, RequerimientoCompraReclamoPrestacional> resultado =
+                new HashMap<Integer, RequerimientoCompraReclamoPrestacional>();
+
+        List<Integer> idsValidos =
+                normalizarIdsRequerimientos(idsRequerimientos);
+
+        if (idsValidos.isEmpty()) {
+            return resultado;
+        }
+
+        List<RequerimientoCompraReclamoPrestacional> relaciones =
+                RequerimientoCompraReclamoPrestacionalServiceUtil
+                        .listarVinculadasPorRequerimientos(null, idsValidos);
+
+        for (int i = 0; i < relaciones.size(); i++) {
+            RequerimientoCompraReclamoPrestacional relacion = relaciones.get(i);
+
+            if (relacion != null
+                    && (relacion.isVinculado() || relacion.isBaja())) {
+                resultado.put(
+                        Integer.valueOf(relacion.getIdRequerimientoCompra()),
+                        relacion
+                );
+            }
+        }
+
+        return resultado;
+    }
+
     public boolean liberarReserva(
             int idRequerimientoCompra,
             String tokenReserva,

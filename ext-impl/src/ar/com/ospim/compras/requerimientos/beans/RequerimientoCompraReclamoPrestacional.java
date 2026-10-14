@@ -16,6 +16,8 @@ public class RequerimientoCompraReclamoPrestacional {
     private String altaUsr;
     private Date modiFecha;
     private String modiUsr;
+    private Date bajaFecha;
+    private String bajaUsr;
 
     public int getIdRequerimientoCompra() {
         return idRequerimientoCompra;
@@ -101,6 +103,27 @@ public class RequerimientoCompraReclamoPrestacional {
 
     public void setModiUsr(String modiUsr) {
         this.modiUsr = modiUsr;
+    }
+
+    public Date getBajaFecha() {
+        return bajaFecha;
+    }
+
+    public void setBajaFecha(Date bajaFecha) {
+        this.bajaFecha = bajaFecha;
+    }
+
+    public String getBajaUsr() {
+        return bajaUsr;
+    }
+
+    public void setBajaUsr(String bajaUsr) {
+        this.bajaUsr = bajaUsr;
+    }
+
+    public boolean isBaja() {
+        return WebKeysCompras.VINCULO_RECLAMO_BAJA.equals(estado)
+                && bajaFecha != null && getIdReclamoPrestacionalInt() > 0;
     }
 
     public boolean isReservado() {

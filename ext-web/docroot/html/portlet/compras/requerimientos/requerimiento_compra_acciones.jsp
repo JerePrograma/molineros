@@ -17,6 +17,8 @@ Efectos secundarios:
     Sólo renderiza presentación; las operaciones se delegan al Action.
 --%>
 <%@ include file="/html/portlet/compras/init.jsp" %> 
+<%@ page import="java.util.Map" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
  
 <% 
 ResultRow row = 
@@ -26,6 +28,19 @@ ResultRow row =
  
 RequerimientoCompra req = 
         (RequerimientoCompra) row.getObject(); 
+
+Map<Integer, RequerimientoCompraReclamoPrestacional> relacionesRp =
+        (Map<Integer, RequerimientoCompraReclamoPrestacional>)
+                renderRequest.getAttribute(
+                        WebKeysCompras.RELACIONES_RECLAMO_PRESTACIONAL_COMPRA
+                );
+
+RequerimientoCompraReclamoPrestacional relacionRp =
+        relacionesRp != null
+                ? relacionesRp.get(Integer.valueOf(req.getIdRequerimientoCompra()))
+                : null;
+
+boolean puedeAnularRequerimiento = req.puedeAnular(relacionRp);
  
 boolean showABMButtons = 
         user != null 
@@ -106,7 +121,7 @@ String anularURL =
             value="/compras/cambiar_estado_requerimiento" /> 
 </portlet:actionURL> 
  
-<c:if test="<%= showAnularButtons && req.puedeAnular() %>"> 
+<c:if test="<%= showAnularButtons && puedeAnularRequerimiento %>">
     <form action="<%= cambiarEstadoURL %>" 
           method="post" 
           id="<%= anularFormId %>" 
@@ -136,7 +151,7 @@ String anularURL =
                 url="<%= editarURL %>" /> 
     </c:if> 
  
-    <c:if test="<%= showAnularButtons && req.puedeAnular() %>"> 
+    <c:if test="<%= showAnularButtons && puedeAnularRequerimiento %>">
         <liferay-ui:icon 
                 image="delete" 
                 message="Eliminar" 

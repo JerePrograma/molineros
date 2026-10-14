@@ -416,6 +416,8 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
         relacion.setAltaUsr(rs.getString("alta_usr"));
         relacion.setModiFecha(rs.getTimestamp("modi_fecha"));
         relacion.setModiUsr(rs.getString("modi_usr"));
+        relacion.setBajaFecha(rs.getTimestamp("baja_fecha"));
+        relacion.setBajaUsr(rs.getString("baja_usr"));
 
         return relacion;
     }

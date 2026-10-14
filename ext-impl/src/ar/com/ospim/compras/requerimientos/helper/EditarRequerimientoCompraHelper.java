@@ -1236,6 +1236,11 @@ public class EditarRequerimientoCompraHelper {
             int idEstadoNuevo,
             String usuario) throws Exception {
 
+        if (WebKeysCompras.esAnulado(idEstadoNuevo)) {
+            anularRequerimiento(idRequerimientoCompra, "", usuario);
+            return;
+        }
+
         try {
             if (idRequerimientoCompra <= 0) {
                 throw errorUsuario(
@@ -1331,10 +1336,13 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            if (!WebKeysCompras.validarTransicionEstado(
-                    requerimientoActual.getEstado(),
-                    WebKeysCompras.ESTADO_ANULADO
-            )) {
+            RequerimientoCompraReclamoPrestacional relacion = null;
+            if (requerimientoActual.isReclamoRP()) {
+                relacion = new RequerimientoCompraReclamoPrestacionalHelper()
+                        .obtenerPorRequerimiento(idRequerimientoCompra);
+            }
+
+            if (!requerimientoActual.puedeAnular(relacion)) {
                 throw errorUsuario(
                         "El requerimiento no puede anularse "
                                 + "desde su estado actual."

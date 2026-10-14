@@ -216,7 +216,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             }
         }
 
-        return reclamoHelper.obtenerVinculadasPorRequerimientos(ids);
+        return reclamoHelper.obtenerRelacionesPorRequerimientos(ids);
     }
 
     private void validarPermisoView(User user) throws Exception {

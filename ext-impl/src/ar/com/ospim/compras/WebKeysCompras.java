@@ -211,6 +211,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String VINCULO_RECLAMO_ERROR =
             "ERROR";
 
+    public static final String VINCULO_RECLAMO_BAJA =
+            "BAJA";
+
     /*
      * Parámetro único del prestador adjudicado para todo el requerimiento.
      * Se mantiene el parseo de los parámetros legacy por detalle durante la
@@ -486,7 +489,16 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     }
 
     public static boolean puedeAnular(int estado) {
-        return esPendiente(estado) || esACotizar(estado);
+        return esPendiente(estado) || esACotizar(estado)
+                || esCotizado(estado);
+    }
+
+    public static boolean puedeAnular(
+            int estado,
+            boolean reclamoPrestacionalDeBaja) {
+
+        return puedeAnular(estado)
+                || (esReclamoRP(estado) && reclamoPrestacionalDeBaja);
     }
 
     public static boolean esSoloLectura(int estado) {
@@ -520,6 +532,12 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             return false;
         }
 
+        if (esAnulado(estadoNuevo)) {
+            return puedeAnular(
+                    estadoActual
+            );
+        }
+
         if (esCotizado(estadoActual)) {
             return esReclamoRP(
                     estadoNuevo
@@ -532,12 +550,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
         if (esParaAutorizar(estadoActual)) {
             return esAutorizado(estadoNuevo);
-        }
-
-        if (esAnulado(estadoNuevo)) {
-            return puedeAnular(
-                    estadoActual
-            );
         }
 
         if (esPendiente(estadoActual)

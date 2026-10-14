@@ -725,6 +725,18 @@ public class RequerimientoCompra {
         return WebKeysCompras.puedeAnular(getEstado()) && bajaFecha == null;
     }
 
+    public boolean puedeAnular(
+            RequerimientoCompraReclamoPrestacional relacion) {
+
+        boolean reclamoPrestacionalDeBaja = relacion != null
+                && relacion.getIdRequerimientoCompra()
+                        == getIdRequerimientoCompra()
+                && relacion.isBaja();
+
+        return WebKeysCompras.puedeAnular(
+                getEstado(), reclamoPrestacionalDeBaja) && isActivo();
+    }
+
     public boolean puedeEliminarDetalle() {
         return WebKeysCompras.puedeEliminarDetalle(
                 getEstado()
