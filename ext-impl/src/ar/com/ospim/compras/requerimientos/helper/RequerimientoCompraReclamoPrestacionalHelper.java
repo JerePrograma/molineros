@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
+import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
@@ -13,6 +14,7 @@ import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPre
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -322,11 +324,37 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                         "No se pudo identificar al usuario del adjunto de la comparativa.");
             }
 
-            int idReclamo =
-                    transaccion.insertarReclamoPrestacional(
-                            reclamo,
-                            user
-                    );
+            List<RevisionesReclamo> revisionesOriginales =
+                    reclamo.getRevisiones();
+            ReclamoPrestacional.ESTADOSEVALUACIONRECLAMO evaluacionOriginal =
+                    reclamo.getEstadoResolucionAutorizada();
+            List<RevisionesReclamo> revisionesParaGuardar =
+                    new ArrayList<RevisionesReclamo>();
+            if (revisionesOriginales != null) {
+                revisionesParaGuardar.addAll(revisionesOriginales);
+            }
+
+            RevisionesReclamo revisionCompra = new RevisionesReclamo();
+            revisionCompra.setEstado(RevisionesReclamo.ESTADOS.NUEVO);
+            revisionCompra.setFecha_revision(new Date());
+            revisionCompra.setUsr_responsable_resolucion(
+                    "AUDITORIA ADMINISTRATIVA");
+            revisionCompra.setUsr_presente("AUDITORIA MEDICA");
+            revisionCompra.setUsr_resolucion("AUTORIZADO");
+            revisionesParaGuardar.add(revisionCompra);
+
+            int idReclamo;
+            try {
+                reclamo.setRevisiones(revisionesParaGuardar);
+                idReclamo = transaccion.insertarReclamoPrestacional(
+                        reclamo,
+                        user
+                );
+            } finally {
+                // Preservar el borrador para los reintentos del alta.
+                reclamo.setRevisiones(revisionesOriginales);
+                reclamo.setEstadoResolucionAutorizada(evaluacionOriginal);
+            }
 
             if (idReclamo <= 0) {
                 throw new Exception(
