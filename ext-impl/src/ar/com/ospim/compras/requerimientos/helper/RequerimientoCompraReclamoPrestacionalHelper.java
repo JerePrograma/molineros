@@ -2,11 +2,16 @@ package ar.com.ospim.compras.requerimientos.helper;
 
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
+import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraComparativaServiceUtil;
+import ar.com.ospim.servlets.PdfServlet;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalTransaccion;
 
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.ServiceContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -202,19 +207,36 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             ReclamoPrestacional reclamo,
             User user) throws Exception {
 
+        ServiceContext serviceContext = new ServiceContext();
+        if (user != null) {
+            serviceContext.setUserId(user.getUserId());
+            serviceContext.setCompanyId(user.getCompanyId());
+        }
+        serviceContext.setScopeGroupId(
+                WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS);
+        return crearYVincular(
+                idRequerimientoCompra, tokenReserva, reclamo, user,
+                serviceContext);
+    }
+
+    public int crearYVincular(
+            int idRequerimientoCompra,
+            String tokenReserva,
+            ReclamoPrestacional reclamo,
+            User user,
+            ServiceContext serviceContext) throws Exception {
+
         return crearYVincularInterno(
-                idRequerimientoCompra,
-                tokenReserva,
-                reclamo,
-                user
-        );
+                idRequerimientoCompra, tokenReserva, reclamo, user,
+                serviceContext);
     }
 
     private int crearYVincularInterno(
             int idRequerimientoCompra,
             String tokenReserva,
             ReclamoPrestacional reclamo,
-            User user) throws Exception {
+            User user,
+            ServiceContext serviceContext) throws Exception {
 
         validarIdRequerimiento(idRequerimientoCompra);
         validarToken(tokenReserva);
@@ -232,6 +254,8 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         RequerimientoCompraReclamoPrestacionalTransaccion
                 transaccion = null;
+        DocumentoComprasCreado comparativaCreada = null;
+        boolean commitInvocado = false;
 
         try {
             transaccion =
@@ -288,6 +312,16 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                     usuario
             );
 
+            boolean tieneComparativa =
+                    !RequerimientoCompraComparativaServiceUtil
+                            .listar(idRequerimientoCompra).isEmpty();
+            if (tieneComparativa
+                    && (user == null || serviceContext == null
+                        || serviceContext.getUserId() != user.getUserId())) {
+                throw new Exception(
+                        "No se pudo identificar al usuario del adjunto de la comparativa.");
+            }
+
             int idReclamo =
                     transaccion.insertarReclamoPrestacional(
                             reclamo,
@@ -299,6 +333,15 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                         "La inserción no devolvió un identificador válido "
                                 + "de Reclamo Prestacional."
                 );
+            }
+
+            if (tieneComparativa) {
+                byte[] contenido = new PdfServlet()
+                        .crearComparativaCompraComoAdjunto(idRequerimientoCompra);
+                comparativaCreada = DocumentoLibraryComprasHelper
+                        .crearComparativaReclamoPrestacional(
+                                idRequerimientoCompra, idReclamo, contenido,
+                                serviceContext);
             }
 
             transaccion.guardarObservacionEstadoReclamo(
@@ -337,15 +380,36 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                     usuario
             );
 
+            commitInvocado = true;
             transaccion.commit();
             return idReclamo;
 
         } catch (Exception e) {
+            boolean rollbackConfirmado = transaccion == null;
             if (transaccion != null) {
                 try {
                     transaccion.rollback();
+                    rollbackConfirmado = !commitInvocado;
                 } catch (Exception rollbackError) {
                     e.addSuppressed(rollbackError);
+                }
+            }
+
+            if (comparativaCreada != null) {
+                if (!rollbackConfirmado) {
+                    throw new Exception(
+                            "No se pudo confirmar el guardado del RP. "
+                                    + "Consulte el requerimiento antes de reintentar; "
+                                    + "la comparativa se conservó.", e);
+                }
+                try {
+                    DocumentoLibraryComprasHelper
+                            .eliminarDocumentoCreado(comparativaCreada);
+                } catch (Exception cleanupError) {
+                    e.addSuppressed(cleanupError);
+                    throw new Exception(
+                            "El alta del RP fue revertida, pero no se pudo retirar "
+                                    + "la comparativa. Informe a Sistemas antes de reintentar.", e);
                 }
             }
 

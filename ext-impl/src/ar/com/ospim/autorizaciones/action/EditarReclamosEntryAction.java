@@ -35,6 +35,8 @@ import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.ServiceContextFactory;
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
 import com.liferay.portal.util.PortalUtil;
 
 import ar.com.ospim.afiliados.beans.AfiCuentasBancarias;
@@ -915,7 +917,10 @@ import com.liferay.portlet.PortletURLFactoryUtil;
                                                             .getIdRequerimientoCompra(),
                                                     contextoCompra.getNonce(),
                                                     reclamoPrestacional,
-                                                    user
+                                                    user,
+                                                    ServiceContextFactory.getInstance(
+                                                            DLFileEntry.class.getName(),
+                                                            renderRequest)
                                             );
 
                             reclamoPrestacional =

@@ -1727,6 +1727,171 @@ public class DocumentoLibraryComprasHelper
         }
     }
 
+    public static DocumentoComprasCreado crearComparativaReclamoPrestacional(
+            int idRequerimientoCompra,
+            int idReclamoPrestacional,
+            byte[] contenido,
+            ServiceContext serviceContext)
+            throws Exception {
+
+        if (idRequerimientoCompra <= 0 || idReclamoPrestacional <= 0) {
+            throw new Exception(
+                    "El requerimiento y el Reclamo Prestacional "
+                            + "de la comparativa no son válidos."
+            );
+        }
+
+        validarContextoDocumentLibrary(serviceContext);
+
+        if (contenido == null
+                || contenido.length < 5
+                || contenido[0] != '%'
+                || contenido[1] != 'P'
+                || contenido[2] != 'D'
+                || contenido[3] != 'F'
+                || contenido[4] != '-') {
+
+            throw new Exception(
+                    "La comparativa generada no contiene un PDF válido."
+            );
+        }
+
+        if (contenido.length > obtenerMaximoTamanoDocumento()) {
+            throw new Exception(
+                    "La comparativa supera el tamaño permitido."
+            );
+        }
+
+        DLFolder folder = DLFolderLocalServiceUtil.getFolder(
+                WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS,
+                WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
+                "ReclamosPrestacionales"
+        );
+
+        if (folder.getGroupId() != serviceContext.getScopeGroupId()) {
+            throw new Exception(
+                    "La carpeta de adjuntos del Reclamo Prestacional "
+                            + "no corresponde al sitio actual."
+            );
+        }
+
+        String titulo = idReclamoPrestacional
+                + "-ComparativaCompra_" + idRequerimientoCompra;
+        String nombrePersistido = titulo + ".pdf";
+        String descripcion =
+                "Comparativa del requerimiento #" + idRequerimientoCompra;
+
+        File archivoTemporal = null;
+        FileOutputStream output = null;
+        DLFileEntry entry = null;
+        DocumentoComprasCreado documento = null;
+        Exception errorOperacion = null;
+
+        try {
+            archivoTemporal = File.createTempFile("comparativa-rp-", ".pdf");
+            output = new FileOutputStream(archivoTemporal);
+            output.write(contenido);
+            output.flush();
+            output.close();
+            output = null;
+
+            entry = DLFileEntryLocalServiceUtil.addFileEntry(
+                    serviceContext.getUserId(),
+                    folder.getFolderId(),
+                    nombrePersistido,
+                    titulo,
+                    descripcion,
+                    "",
+                    archivoTemporal,
+                    serviceContext
+            );
+
+            if (entry == null || entry.getFileEntryId() <= 0L) {
+                throw new Exception(
+                        "Document Library no devolvió una comparativa válida."
+                );
+            }
+
+            documento = new DocumentoComprasCreado(
+                    entry.getGroupId(),
+                    entry.getFolderId(),
+                    entry.getFileEntryId(),
+                    entry.getUuid(),
+                    entry.getName(),
+                    entry.getTitle()
+            );
+
+            if (documento.getGroupId() != folder.getGroupId()
+                    || documento.getFolderId() != folder.getFolderId()
+                    || WebKeysCompras.isEmpty(documento.getUuid())
+                    || WebKeysCompras.isEmpty(documento.getNombrePersistido())
+                    || !titulo.equals(documento.getTitulo())) {
+
+                throw new Exception(
+                        "La comparativa creada no conserva "
+                                + "una identidad válida en Document Library."
+                );
+            }
+
+            return documento;
+
+        } catch (Exception error) {
+            errorOperacion = error;
+
+            if (entry != null && entry.getFileEntryId() > 0L) {
+                try {
+                    if (documento != null) {
+                        eliminarDocumentoCreado(documento);
+                    } else {
+                        DLFileEntryLocalServiceUtil.deleteFileEntry(entry);
+                    }
+
+                } catch (Exception cleanupError) {
+                    error.addSuppressed(cleanupError);
+                    _log.error(
+                            "No se pudo compensar la comparativa del RP. "
+                                    + "fileEntryId=" + entry.getFileEntryId(),
+                            cleanupError
+                    );
+                    throw new Exception(
+                            "No se pudo guardar la comparativa del RP "
+                                    + "ni retirar el documento creado. "
+                                    + "Informe a Sistemas antes de reintentar.",
+                            error
+                    );
+                }
+            }
+
+            throw error;
+
+        } finally {
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (Exception closeError) {
+                    if (errorOperacion != null) {
+                        errorOperacion.addSuppressed(closeError);
+                    }
+                    _log.error(
+                            "No se pudo cerrar el archivo temporal "
+                                    + "de la comparativa del RP.",
+                            closeError
+                    );
+                }
+            }
+
+            if (archivoTemporal != null
+                    && archivoTemporal.exists()
+                    && !archivoTemporal.delete()) {
+
+                _log.error(
+                        "No se pudo eliminar el archivo temporal "
+                                + "de la comparativa del RP."
+                );
+            }
+        }
+    }
+
     private static void validarContenidoPdfPedidoCotizacion(
             byte[] contenido)
             throws Exception {

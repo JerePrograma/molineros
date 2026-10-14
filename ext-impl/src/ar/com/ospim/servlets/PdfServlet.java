@@ -1419,34 +1419,10 @@ public class PdfServlet extends HttpServlet {
         }
 
         try {
-            RequerimientoCompraComparativaHelper helper =
-                    new RequerimientoCompraComparativaHelper();
-
-            ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra r =
-                    helper.obtenerRequerimiento(id);
-
-            LinkedHashMap<String, Map<String, ?>> proveedores =
-                    new LinkedHashMap<String, Map<String, ?>>();
-
-            List<Map<String, ?>> filas =
-                    helper.filasReportePdf(
-                            r,
-                            helper.cargar(r),
-                            proveedores);
-
-            HashMap<String, Object> parametros =
-                    new HashMap<String, Object>();
-
-            parametros.put("REQUERIMIENTO", String.valueOf(id));
-            parametros.put("PROVEEDORES", proveedores);
-
             crearPdfFromByteArray(
                     req,
                     res,
-                    crearPdfComparativaCompra(
-                            filas,
-                            proveedores,
-                            parametros),
+                    crearComparativaCompraComoAdjunto(id),
                     "ComparativaCompra_" + id + ".pdf");
 
         } catch (IllegalArgumentException e) {
@@ -1465,6 +1441,32 @@ public class PdfServlet extends HttpServlet {
                         "No se pudo generar el PDF de la comparativa.");
             }
         }
+    }
+
+    public byte[] crearComparativaCompraComoAdjunto(int id) throws Exception {
+
+        RequerimientoCompraComparativaHelper helper =
+                new RequerimientoCompraComparativaHelper();
+
+        ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra r =
+                helper.obtenerRequerimiento(id);
+
+        LinkedHashMap<String, Map<String, ?>> proveedores =
+                new LinkedHashMap<String, Map<String, ?>>();
+
+        List<Map<String, ?>> filas =
+                helper.filasReportePdf(
+                        r,
+                        helper.cargar(r),
+                        proveedores);
+
+        HashMap<String, Object> parametros =
+                new HashMap<String, Object>();
+
+        parametros.put("REQUERIMIENTO", String.valueOf(id));
+        parametros.put("PROVEEDORES", proveedores);
+
+        return crearPdfComparativaCompra(filas, proveedores, parametros);
     }
 
     private byte[] crearPdfComparativaCompra(
