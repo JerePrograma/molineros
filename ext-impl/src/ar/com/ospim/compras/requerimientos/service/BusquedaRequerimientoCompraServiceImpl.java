@@ -32,7 +32,11 @@ import java.util.HashMap;
 public class BusquedaRequerimientoCompraServiceImpl {
 
     private static final String SQL_BUSCAR_REQUERIMIENTOS =
-            "{call compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?,?)}";
+            "SELECT rb.*, afi.id_seccional AS afiliado_id_seccional "
+                    + "FROM compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?,?) rb "
+                    + "LEFT JOIN public.afiliado afi "
+                    + "ON afi.cuil_titular = rb.afiliado_cuil_titular "
+                    + "AND afi.inte = rb.afiliado_int ORDER BY rb.id DESC";
 
     private static final String SQL_GET_REQUERIMIENTO =
             "SELECT rb.*, r.observacion_interna, r.motivo_baja "
@@ -106,7 +110,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             RequerimientoCompraFiltro filtro) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         List<RequerimientoCompra> resultado =
@@ -114,14 +118,16 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_BUSCAR_REQUERIMIENTOS);
+            stmt = con.prepareStatement(SQL_BUSCAR_REQUERIMIENTOS);
 
             setParametrosBusqueda(stmt, filtro, filtro.getIdEstado(), 0);
 
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                resultado.add(mapRequerimiento(rs));
+                RequerimientoCompra requerimiento = mapRequerimiento(rs);
+                requerimiento.setAfiliadoIdSeccional(getInteger(rs, "afiliado_id_seccional"));
+                resultado.add(requerimiento);
             }
 
             return resultado;
