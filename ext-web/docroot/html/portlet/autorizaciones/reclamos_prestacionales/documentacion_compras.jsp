@@ -2,6 +2,8 @@
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper" %>
+<%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntry" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil" %>
 <%@ page import="java.text.SimpleDateFormat" %>
@@ -23,6 +25,9 @@ RequerimientoCompraPedidoCotizacion
 
 RequerimientoCompraPresupuesto
         presupuestoDocumentacionCompras =
+        null;
+
+DLFileEntry comparativaDocumentacionCompras =
         null;
 
 boolean mostrarDocumentacionCompras =
@@ -83,6 +88,15 @@ if (reclamoprestacional != null
                     BusquedaRequerimientoCompraServiceUtil
                             .getPresupuestoAdjudicado(
                                     idRequerimientoDocumentacionCompras
+                            );
+
+            comparativaDocumentacionCompras =
+                    DocumentoLibraryComprasHelper
+                            .obtenerComparativaReclamoPrestacional(
+                                    idRequerimientoDocumentacionCompras,
+                                    relacionDocumentacionCompras
+                                            .getIdReclamoPrestacionalInt(),
+                                    themeDisplay.getScopeGroupId()
                             );
         }
 
@@ -146,6 +160,46 @@ boolean presupuestoDocumentacionComprasValido =
                 .intValue() > 0
                 && presupuestoDocumentacionCompras
                 .getIdRequerimientoPresupuesto() != null;
+
+boolean comparativaDocumentacionComprasValida =
+        mostrarDocumentacionCompras
+                && comparativaDocumentacionCompras != null;
+
+String urlComparativaDocumentacionCompras =
+        "";
+
+String fechaComparativaDocumentacionCompras =
+        "-";
+
+if (comparativaDocumentacionComprasValida) {
+    PortletURL urlComparativaCompras =
+            renderResponse.createActionURL();
+
+    urlComparativaCompras.setParameter(
+            "struts_action",
+            "/autorizaciones/descargar_documento_compra_reclamo"
+    );
+    urlComparativaCompras.setParameter(
+            "id_reclamo_prestacional",
+            String.valueOf(
+                    relacionDocumentacionCompras
+                            .getIdReclamoPrestacionalInt()
+            )
+    );
+    urlComparativaCompras.setParameter(
+            WebKeysCompras.PARAM_TIPO_DOCUMENTO_COMPRA_RECLAMO,
+            WebKeysCompras.DOCUMENTO_COMPRA_RECLAMO_COMPARATIVA
+    );
+    urlComparativaDocumentacionCompras =
+            urlComparativaCompras.toString();
+
+    if (comparativaDocumentacionCompras.getCreateDate() != null) {
+        fechaComparativaDocumentacionCompras =
+                new SimpleDateFormat("dd/MM/yyyy").format(
+                        comparativaDocumentacionCompras.getCreateDate()
+                );
+    }
+}
 
 String urlPedidoCotizacionDocumentacionCompras =
         "";
@@ -458,6 +512,50 @@ if (presupuestoDocumentacionComprasValido) {
                                 <img
                                     src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
                                     alt="Ver / descargar cotización adjudicada"
+                                    style="border:0;" />
+
+                            </a>
+                        </td>
+
+                    <% } else { %>
+
+                        <td colspan="2">No disponible</td>
+
+                    <% } %>
+                </tr>
+
+                <tr class="<%=
+                        filaDocumentacionCompras++ % 2 == 0
+                                ? "results-row"
+                                : "results-row alt"
+                %>">
+                    <td>Comparativa del requerimiento</td>
+                    <td>
+                        <%= HtmlUtil.escape(
+                                fechaComparativaDocumentacionCompras
+                        ) %>
+                    </td>
+
+                    <% if (comparativaDocumentacionComprasValida) { %>
+
+                        <td>
+                            <%= HtmlUtil.escape(
+                                    comparativaDocumentacionCompras
+                                            .getTitle() + ".pdf"
+                            ) %>
+                        </td>
+                        <td>
+                            <a
+                                href="<%= HtmlUtil.escape(
+                                        urlComparativaDocumentacionCompras
+                                ) %>"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Ver / descargar comparativa del requerimiento">
+
+                                <img
+                                    src="<%= themeDisplay.getPathThemeImages() %>/common/view.png"
+                                    alt="Ver / descargar comparativa del requerimiento"
                                     style="border:0;" />
 
                             </a>

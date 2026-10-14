@@ -3,6 +3,10 @@
 <%@page import="com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil"%>
 <%@ page import="ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones" %>
 <%@ page import="ar.com.ospim.autorizaciones.beans.ReclamoPrestacional" %>
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil" %>
 <%@ page import="ar.com.ospim.util.PermissionUtil" %>
 <%@ include file="/html/portlet/document_library/init.jsp" %>
 
@@ -57,6 +61,32 @@ headerNames.add("");
 SearchContainer searchContainer = new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_DELTA, portletURL, headerNames, LanguageUtil.format(pageContext, "no-documents-were-found-that-matched-the-keywords-x", "<b>" + HtmlUtil.escape(keywords) + "</b>"));
 
 try {
+    DLFileEntry comparativaDocumentacionCompras = null;
+    if (Boolean.TRUE.equals(request.getAttribute(
+            WebKeysCompras.ATTR_COMPARATIVA_DOCUMENTACION_COMPRAS))) {
+        try {
+            RequerimientoCompraReclamoPrestacional relacionDocumentacionCompras =
+                    RequerimientoCompraReclamoPrestacionalServiceUtil
+                            .getRelacionPorReclamoPrestacional(
+                                    reclamoprestacional.getId_reclamo());
+            if (relacionDocumentacionCompras != null
+                    && relacionDocumentacionCompras.isVinculado()
+                    && relacionDocumentacionCompras.getIdReclamoPrestacionalInt()
+                        == reclamoprestacional.getId_reclamo()
+                    && relacionDocumentacionCompras.getIdRequerimientoCompra() > 0) {
+                comparativaDocumentacionCompras = DocumentoLibraryComprasHelper
+                        .obtenerComparativaReclamoPrestacional(
+                                relacionDocumentacionCompras.getIdRequerimientoCompra(),
+                                relacionDocumentacionCompras.getIdReclamoPrestacionalInt(),
+                                themeDisplay.getScopeGroupId());
+            }
+        } catch (Exception errorClasificacionComparativa) {
+            comparativaDocumentacionCompras = null;
+            _log.error(
+                    "No se pudo clasificar la comparativa en Documentacion de Compras.",
+                    errorClasificacionComparativa);
+        }
+    }
     
 	
 	DynamicQuery dlf =DynamicQueryFactoryUtil.forClass(
@@ -101,6 +131,17 @@ try {
 
 	
 	List<Object> results=DLFolderLocalServiceUtil.dynamicQuery(dlf);
+    if (comparativaDocumentacionCompras != null) {
+        for (int indiceDocumento = results.size() - 1;
+             indiceDocumento >= 0; indiceDocumento--) {
+            DLFileEntry documentoListado =
+                    (DLFileEntry) results.get(indiceDocumento);
+            if (documentoListado.getFileEntryId()
+                    == comparativaDocumentacionCompras.getFileEntryId()) {
+                results.remove(indiceDocumento);
+            }
+        }
+    }
 	
 	int total = results.size();
 	

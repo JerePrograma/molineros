@@ -314,6 +314,14 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             DOCUMENTO_COMPRA_RECLAMO_PEDIDO_COTIZACION =
             "PEDIDO_COTIZACION";
 
+    public static final String
+            DOCUMENTO_COMPRA_RECLAMO_COMPARATIVA =
+            "COMPARATIVA";
+
+    public static final String
+            ATTR_COMPARATIVA_DOCUMENTACION_COMPRAS =
+            "compras.comparativaDocumentacion";
+
     public static String getPrefijoDocumentoRequerimientoCompra(
             int idRequerimientoCompra) {
 

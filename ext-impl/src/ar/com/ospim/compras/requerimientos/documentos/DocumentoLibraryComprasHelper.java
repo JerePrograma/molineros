@@ -5,6 +5,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotiza
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 
 import com.liferay.documentlibrary.service.DLLocalServiceUtil;
+import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -1724,6 +1725,64 @@ public class DocumentoLibraryComprasHelper
                                 + "del pedido de cotización."
                 );
             }
+        }
+    }
+
+    public static DLFileEntry obtenerComparativaReclamoPrestacional(
+            int idRequerimientoCompra,
+            int idReclamoPrestacional,
+            long groupId)
+            throws Exception {
+
+        if (idRequerimientoCompra <= 0
+                || idReclamoPrestacional <= 0
+                || groupId <= 0L) {
+
+            throw new Exception(
+                    "No se pudo identificar la comparativa "
+                            + "del Reclamo Prestacional."
+            );
+        }
+
+        String titulo = idReclamoPrestacional
+                + "-ComparativaCompra_" + idRequerimientoCompra;
+
+        try {
+            DLFolder folder = DLFolderLocalServiceUtil.getFolder(
+                    groupId,
+                    WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
+                    "ReclamosPrestacionales"
+            );
+
+            DLFileEntry entry = DLFileEntryLocalServiceUtil.getFileEntryByTitle(
+                    folder.getFolderId(),
+                    titulo + ".pdf"
+            );
+
+            if (entry == null
+                    || entry.getFileEntryId() <= 0L
+                    || entry.getGroupId() != groupId
+                    || entry.getFolderId() != folder.getFolderId()
+                    || !titulo.equals(entry.getTitle())
+                    || WebKeysCompras.isEmpty(entry.getName())
+                    || !".pdf".equals(
+                            obtenerExtensionSeguraDocumento(entry.getName()))
+                    || WebKeysCompras.isEmpty(entry.getUuid())) {
+
+                throw new Exception(
+                        "La comparativa del Reclamo Prestacional "
+                                + "no conserva una identidad válida "
+                                + "en Document Library."
+                );
+            }
+
+            return entry;
+
+        } catch (NoSuchFolderException e) {
+            return null;
+
+        } catch (NoSuchFileEntryException e) {
+            return null;
         }
     }
 

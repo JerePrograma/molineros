@@ -101,10 +101,14 @@ public class DescargarDocumentoCompraReclamoAction
                                     tipoDocumentoCompra
                             );
 
+            boolean esComparativa =
+                    WebKeysCompras.DOCUMENTO_COMPRA_RECLAMO_COMPARATIVA
+                            .equals(tipoDocumentoCompra);
+
             if (!WebKeysCompras.isEmpty(
                     tipoDocumentoCompra
             )
-                    && !esPedidoCotizacion) {
+                    && !esPedidoCotizacion && !esComparativa) {
 
                 throw new Exception(
                         "El tipo de documento de Compras "
@@ -114,7 +118,7 @@ public class DescargarDocumentoCompraReclamoAction
 
             if (idReclamoPrestacional <= 0
                     || (
-                    !esPedidoCotizacion
+                    !esPedidoCotizacion && !esComparativa
                             && idRequerimientoPresupuesto <= 0
             )) {
 
@@ -141,6 +145,13 @@ public class DescargarDocumentoCompraReclamoAction
 
             int idRequerimientoCompra =
                     relacion.getIdRequerimientoCompra();
+
+            if (esComparativa) {
+                descargarComparativa(
+                        actionRequest, actionResponse,
+                        idRequerimientoCompra, idReclamoPrestacional);
+                return;
+            }
 
             if (esPedidoCotizacion) {
                 descargarPedidoCotizacion(
@@ -600,6 +611,59 @@ public class DescargarDocumentoCompraReclamoAction
 
     protected boolean isCheckMethodOnProcessAction() {
         return false;
+    }
+
+    private void descargarComparativa(
+            ActionRequest actionRequest,
+            ActionResponse actionResponse,
+            int idRequerimientoCompra,
+            int idReclamoPrestacional) throws Exception {
+
+        InputStream input = null;
+        try {
+            ThemeDisplay themeDisplay = (ThemeDisplay)
+                    actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
+            if (themeDisplay == null) {
+                throw new Exception(
+                        "No se pudo determinar el contexto del portal.");
+            }
+
+            DLFileEntry entry = DocumentoLibraryComprasHelper
+                    .obtenerComparativaReclamoPrestacional(
+                            idRequerimientoCompra, idReclamoPrestacional,
+                            themeDisplay.getScopeGroupId());
+            if (entry == null
+                    || entry.getCompanyId() != themeDisplay.getCompanyId()) {
+                throw new Exception(
+                        "La comparativa de Compras no está disponible "
+                                + "en el sitio actual.");
+            }
+
+            DLFileEntryPermission.check(
+                    themeDisplay.getPermissionChecker(),
+                    entry.getFolderId(), entry.getName(), ActionKeys.VIEW);
+
+            String nombreDescarga = validarNombreDescarga(
+                    entry.getTitle() + ".pdf");
+            byte[] contenido = DocumentoLibraryComprasHelper
+                    .leerContenidoDocumentLibrary(entry);
+            validarContenidoPdf(contenido, nombreDescarga);
+            input = new ByteArrayInputStream(contenido);
+
+            HttpServletResponse response =
+                    PortalUtil.getHttpServletResponse(actionResponse);
+            if (response == null) {
+                throw new Exception(
+                        "No se pudo preparar la respuesta de descarga.");
+            }
+
+            ServletResponseUtil.sendFile(
+                    response, nombreDescarga, input, contenido.length,
+                    "application/pdf");
+            setForward(actionRequest, ActionConstants.COMMON_NULL);
+        } finally {
+            ServletResponseUtil.cleanUp(input);
+        }
     }
 
     private void descargarPedidoCotizacion(

@@ -87,6 +87,12 @@ boolean showReadOnlyReclamPrestac=PermissionUtil.userContainsRole(user,WebKeysAu
 
 </fieldset>
    
+<%
+request.setAttribute(
+        WebKeysCompras.ATTR_COMPARATIVA_DOCUMENTACION_COMPRAS,
+        Boolean.TRUE
+);
+%>
 <div id="<portlet:namespace />listado_imagenes_afiliado">
 				<jsp:include page='/html/portlet/autorizaciones/reclamos_prestacionales/reclamo_prestacional_imagenes_search_documentos.jsp' />  
 </div>
