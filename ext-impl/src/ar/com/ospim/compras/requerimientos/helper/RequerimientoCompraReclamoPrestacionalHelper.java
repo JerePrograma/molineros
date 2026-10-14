@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Orquestación y reglas del vinculo Compras / Reclamo Prestacional.
@@ -203,6 +204,19 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         return true;
     }
 
+    public static RevisionesReclamo crearRevisionInicialCompra() {
+        RevisionesReclamo revisionCompra = new RevisionesReclamo();
+        revisionCompra.setId(-1 - new Random().nextInt(Integer.MAX_VALUE));
+        revisionCompra.setEstado(RevisionesReclamo.ESTADOS.NUEVO);
+        revisionCompra.setRevisionInicialCompra(true);
+        revisionCompra.setFecha_revision(new Date());
+        revisionCompra.setUsr_responsable_resolucion(
+                "AUDITORIA ADMINISTRATIVA");
+        revisionCompra.setUsr_presente("AUDITORIA MEDICA");
+        revisionCompra.setUsr_resolucion("AUTORIZADO");
+        return revisionCompra;
+    }
+
     public int crearYVincular(
             int idRequerimientoCompra,
             String tokenReserva,
@@ -334,13 +348,14 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                 revisionesParaGuardar.addAll(revisionesOriginales);
             }
 
-            RevisionesReclamo revisionCompra = new RevisionesReclamo();
-            revisionCompra.setEstado(RevisionesReclamo.ESTADOS.NUEVO);
-            revisionCompra.setFecha_revision(new Date());
-            revisionCompra.setUsr_responsable_resolucion(
-                    "AUDITORIA ADMINISTRATIVA");
-            revisionCompra.setUsr_presente("AUDITORIA MEDICA");
-            revisionCompra.setUsr_resolucion("AUTORIZADO");
+            RevisionesReclamo revisionCompra = crearRevisionInicialCompra();
+            for (int i = revisionesParaGuardar.size() - 1; i >= 0; i--) {
+                RevisionesReclamo revision = revisionesParaGuardar.get(i);
+                if (revision != null && revision.isRevisionInicialCompra()) {
+                    revisionCompra.setId(revision.getId());
+                    revisionesParaGuardar.remove(i);
+                }
+            }
             revisionesParaGuardar.add(revisionCompra);
 
             int idReclamo;

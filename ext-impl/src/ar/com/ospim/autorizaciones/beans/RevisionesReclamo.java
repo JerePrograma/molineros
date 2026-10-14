@@ -36,6 +36,7 @@ public class RevisionesReclamo implements Serializable {
 	
 
 private ESTADOS estado;
+    private boolean revisionInicialCompra;
 	
 	public enum ESTADOS {
 		NUEVO, MODIF, BAJA
@@ -210,6 +211,14 @@ private ESTADOS estado;
 		SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
 		return fechaRevision != null ? sdf.format(fechaRevision): "";
 	}
+
+    public boolean isRevisionInicialCompra() {
+        return revisionInicialCompra;
+    }
+
+    public void setRevisionInicialCompra(boolean revisionInicialCompra) {
+        this.revisionInicialCompra = revisionInicialCompra;
+    }
 
 	public ESTADOS getEstado() {
 		return estado;

@@ -204,6 +204,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
         List<RevisionesReclamo> revisiones =
                 new ArrayList<RevisionesReclamo>();
+        revisiones.add(RequerimientoCompraReclamoPrestacionalHelper
+                .crearRevisionInicialCompra());
 
         List<ContactoCRM> contactos =
                 new ArrayList<ContactoCRM>();
