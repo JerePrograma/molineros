@@ -19,6 +19,8 @@ import java.util.Map;
  */
 public class BusquedaRequerimientoCompraServiceUtil {
 
+    public static final int REQUERIMIENTOS_POR_PAGINA = 50;
+
     private static final int MAX_ITEMS_HISTORICOS_AFILIADO = 20;
 
     private static BusquedaRequerimientoCompraServiceImpl instance = null;
@@ -98,6 +100,19 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
 
         return requerimientos;
+    }
+
+    public static List<RequerimientoCompra> buscarRequerimientosListado(
+            RequerimientoCompraFiltro filtro,
+            boolean incluirReclamoRp,
+            int pagina) throws Exception {
+
+        RequerimientoCompraFiltro filtroEfectivo = filtro != null
+                ? filtro : new RequerimientoCompraFiltro();
+        validarFiltroBusqueda(filtroEfectivo);
+
+        return getInstance().buscarRequerimientosPaginados(
+                filtroEfectivo, incluirReclamoRp, Math.max(1, pagina));
     }
 
     public static RequerimientoCompra getRequerimientoCompra(

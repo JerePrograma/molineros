@@ -35,6 +35,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
             new RequerimientoCompraReclamoPrestacionalHelper();
 
     private static final String[] SEARCH_PARAMS = new String[] {
+            "pagina",
             "id_requerimiento_compra",
             "id_estado",
             "estado",
@@ -105,12 +106,23 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                             && filtro.getIdEstado().intValue()
                             == WebKeysCompras.ESTADO_COTIZADO;
 
+            int pagina = Math.max(1, ParamUtil.getInteger(renderRequest, "pagina", 1));
+
             List<RequerimientoCompra> requerimientos =
                     BusquedaRequerimientoCompraServiceUtil
                             .buscarRequerimientosListado(
                                     filtro,
-                                    incluirReclamoRpEnCotizados
+                                    incluirReclamoRpEnCotizados,
+                                    pagina
                             );
+
+            if (pagina > 1 && requerimientos.isEmpty()) {
+                pagina = 1;
+                requerimientos = BusquedaRequerimientoCompraServiceUtil
+                        .buscarRequerimientosListado(filtro, incluirReclamoRpEnCotizados, pagina);
+            }
+            renderRequest.setAttribute(WebKeysCompras.PAGINA_REQUERIMIENTOS_COMPRA,
+                    Integer.valueOf(pagina));
 
             /*
              * Id RP debe estar disponible tanto en la solapa general

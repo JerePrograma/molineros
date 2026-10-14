@@ -19,6 +19,7 @@ Efectos secundarios:
 <%@ include file="/html/portlet/compras/init.jsp" %>
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.helper.ExportarRequerimientosCompraHelper" %>
@@ -67,7 +68,7 @@ SearchContainer searchContainer = new SearchContainer(
         null,
         null,
         SearchContainer.DEFAULT_CUR_PARAM,
-        Integer.MAX_VALUE,
+        BusquedaRequerimientoCompraServiceUtil.REQUERIMIENTOS_POR_PAGINA,
         portletURL,
         headerNames,
         "No se encontraron requerimientos de compras."
@@ -99,7 +100,32 @@ for (int i = 0; i < requerimientos.size(); i++) {
 }
 %>
 
-<liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />
+<liferay-ui:search-iterator paginate="false" searchContainer="<%= searchContainer %>" />
+
+<%
+int totalRegistros = requerimientos.isEmpty() ? 0 : requerimientos.get(0).getTotalRegistros();
+int totalPaginas = totalRegistros == 0 ? 0 : 1 + (totalRegistros - 1)
+        / BusquedaRequerimientoCompraServiceUtil.REQUERIMIENTOS_POR_PAGINA;
+Integer paginaListado = (Integer) renderRequest.getAttribute(
+        WebKeysCompras.PAGINA_REQUERIMIENTOS_COMPRA);
+int paginaActual = paginaListado != null ? paginaListado.intValue() : 1;
+if (totalPaginas > 0) {
+%>
+<table class="lfr-table">
+    <tr>
+        <td>Total filas encontradas: <%= totalRegistros %></td>
+        <td><%= paginaActual %>/<%= totalPaginas %> páginas&nbsp;</td>
+        <td>
+            <select name="<portlet:namespace />pagina_sel" id="<portlet:namespace />pagina_sel"
+                    onchange="<portlet:namespace />buscarRequerimientos(this.value);">
+                <% for (int pagina = 1; pagina <= totalPaginas; pagina++) { %>
+                <option value="<%= pagina %>" <% if (pagina == paginaActual) { %>selected="selected"<% } %>><%= pagina %></option>
+                <% } %>
+            </select>
+        </td>
+    </tr>
+</table>
+<% } %>
 
 <%
 String exportacionToken = (String) renderRequest.getAttribute(

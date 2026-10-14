@@ -116,17 +116,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareCall(SQL_BUSCAR_REQUERIMIENTOS);
 
-            setNullableInteger(stmt, 1, filtro.getIdEstado());
-            setNullableInteger(stmt, 2, filtro.getIdSector());
-            stmt.setString(3, filtro.getAfiliadoCuilTitular());
-            setNullableInteger(stmt, 4, filtro.getAfiliadoInt());
-            stmt.setString(5, filtro.getIdTercerizadora());
-            setNullableBoolean(stmt, 6, filtro.getRecupero());
-            setNullableBoolean(stmt, 7, filtro.getSurge());
-            stmt.setString(8, filtro.getTexto());
-            setNullableDate(stmt, 9, filtro.getFechaAltaDesde());
-            setNullableDate(stmt, 10, filtro.getFechaAltaHasta());
-            setNullableInteger(stmt, 11, filtro.getIdRequerimientoCompra());
+            setParametrosBusqueda(stmt, filtro, filtro.getIdEstado(), 0);
 
             rs = stmt.executeQuery();
 
@@ -139,6 +129,67 @@ public class BusquedaRequerimientoCompraServiceImpl {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt, con);
         }
+    }
+
+    public List<RequerimientoCompra> buscarRequerimientosPaginados(
+            RequerimientoCompraFiltro filtro,
+            boolean incluirReclamoRp,
+            int pagina) throws Exception {
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<RequerimientoCompra> resultado = new ArrayList<RequerimientoCompra>();
+        String consulta = "SELECT * FROM compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?,?)";
+        StringBuilder sql = new StringBuilder("WITH requerimientos AS (");
+        sql.append(consulta);
+        if (incluirReclamoRp) {
+            sql.append(" UNION ALL ").append(consulta);
+        }
+        sql.append(") SELECT rb.*, tot.total_registros FROM requerimientos rb ")
+                .append("CROSS JOIN (SELECT count(*) AS total_registros FROM requerimientos) tot ")
+                .append("ORDER BY rb.id DESC LIMIT ? OFFSET ?");
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(sql.toString());
+            setParametrosBusqueda(stmt, filtro, filtro.getIdEstado(), 0);
+            int parametros = 11;
+            if (incluirReclamoRp) {
+                setParametrosBusqueda(stmt, filtro,
+                        Integer.valueOf(WebKeysCompras.ESTADO_RECLAMO_RP), parametros);
+                parametros += 11;
+            }
+            stmt.setInt(parametros + 1,
+                    BusquedaRequerimientoCompraServiceUtil.REQUERIMIENTOS_POR_PAGINA);
+            stmt.setLong(parametros + 2, ((long) pagina - 1L)
+                    * BusquedaRequerimientoCompraServiceUtil.REQUERIMIENTOS_POR_PAGINA);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                RequerimientoCompra requerimiento = mapRequerimiento(rs);
+                requerimiento.setTotalRegistros(rs.getInt("total_registros"));
+                resultado.add(requerimiento);
+            }
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    private void setParametrosBusqueda(PreparedStatement stmt,
+            RequerimientoCompraFiltro filtro, Integer estado, int inicio) throws Exception {
+        setNullableInteger(stmt, inicio + 1, estado);
+        setNullableInteger(stmt, inicio + 2, filtro.getIdSector());
+        stmt.setString(inicio + 3, filtro.getAfiliadoCuilTitular());
+        setNullableInteger(stmt, inicio + 4, filtro.getAfiliadoInt());
+        stmt.setString(inicio + 5, filtro.getIdTercerizadora());
+        setNullableBoolean(stmt, inicio + 6, filtro.getRecupero());
+        setNullableBoolean(stmt, inicio + 7, filtro.getSurge());
+        stmt.setString(inicio + 8, filtro.getTexto());
+        setNullableDate(stmt, inicio + 9, filtro.getFechaAltaDesde());
+        setNullableDate(stmt, inicio + 10, filtro.getFechaAltaHasta());
+        setNullableInteger(stmt, inicio + 11, filtro.getIdRequerimientoCompra());
     }
 
     public RequerimientoCompra getRequerimientoCompra(
@@ -1128,7 +1179,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
     }
 
     private void setNullableInteger(
-            CallableStatement stmt,
+            PreparedStatement stmt,
             int index,
             Integer value) throws Exception {
 
@@ -1140,7 +1191,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
     }
 
     private void setNullableDate(
-            CallableStatement stmt,
+            PreparedStatement stmt,
             int index,
             java.util.Date value) throws Exception {
 
@@ -1155,7 +1206,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
     }
 
     private void setNullableBoolean(
-            CallableStatement stmt,
+            PreparedStatement stmt,
             int index,
             Boolean value) throws Exception {
 

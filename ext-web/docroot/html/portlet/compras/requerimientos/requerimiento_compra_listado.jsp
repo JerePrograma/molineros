@@ -1385,9 +1385,14 @@ if (tercerizadoras == null) {
         }
     }
 
-    function <portlet:namespace />buscarRequerimientos() {
+    function <portlet:namespace />buscarRequerimientos(pagina) {
         if (!<portlet:namespace />validarFiltroBusqueda()) {
             return false;
+        }
+
+        pagina = parseInt(pagina, 10);
+        if (isNaN(pagina) || pagina < 1) {
+            pagina = 1;
         }
 
         var estado =
@@ -1482,6 +1487,8 @@ if (tercerizadoras == null) {
         var url =
                 '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>" />'
                 + '&struts_action=/compras/buscar_requerimientos'
+                + '&pagina=' + encodeURIComponent(pagina)
+                + '&<portlet:namespace />pagina=' + encodeURIComponent(pagina)
                 + '&estado=' + encodeURIComponent(estado)
                 + '&sector_id=' + encodeURIComponent(sector_id)
                 + '&fechaAltaDesdeDia='

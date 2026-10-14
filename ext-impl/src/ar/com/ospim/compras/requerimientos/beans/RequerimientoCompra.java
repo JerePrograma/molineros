@@ -11,6 +11,7 @@ import java.util.List;
 public class RequerimientoCompra {
 
     private Integer id;
+    private int totalRegistros;
 
     private Date altaFecha;
     private String altaUsr;
@@ -70,6 +71,14 @@ public class RequerimientoCompra {
     public RequerimientoCompra(Integer id) {
         this();
         this.id = id;
+    }
+
+    public int getTotalRegistros() {
+        return totalRegistros;
+    }
+
+    public void setTotalRegistros(int totalRegistros) {
+        this.totalRegistros = totalRegistros;
     }
 
     public Integer getId() {
