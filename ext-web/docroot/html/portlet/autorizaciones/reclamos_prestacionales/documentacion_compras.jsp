@@ -1,10 +1,13 @@
 <%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper" %>
 <%@ page import="com.liferay.portlet.documentlibrary.model.DLFileEntry" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.service.RequerimientoCompraComparativaServiceUtil" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.ArrayList" %>
@@ -13,6 +16,12 @@
 
 <%
 RequerimientoCompraReclamoPrestacional relacionDocumentacionCompras =
+        null;
+
+RequerimientoCompra requerimientoDocumentacionCompras =
+        null;
+
+RequerimientoCompraComparativa cotizacionDocumentacionCompras =
         null;
 
 List<RequerimientoCompraPresupuesto>
@@ -64,6 +73,12 @@ if (reclamoprestacional != null
                     relacionDocumentacionCompras
                             .getIdRequerimientoCompra();
 
+            requerimientoDocumentacionCompras =
+                    BusquedaRequerimientoCompraServiceUtil
+                            .getRequerimientoCompra(
+                                    idRequerimientoDocumentacionCompras
+                            );
+
             List<RequerimientoCompraPresupuesto>
                     ordenesRecuperadas =
                     BusquedaRequerimientoCompraServiceUtil
@@ -89,6 +104,21 @@ if (reclamoprestacional != null
                             .getPresupuestoAdjudicado(
                                     idRequerimientoDocumentacionCompras
                             );
+
+            if (presupuestoDocumentacionCompras != null
+                    && presupuestoDocumentacionCompras.getIdPrestador() != null
+                    && presupuestoDocumentacionCompras.getIdPrestador().intValue() > 0) {
+
+                List<RequerimientoCompraComparativa> cotizaciones =
+                        RequerimientoCompraComparativaServiceUtil.listar(
+                                idRequerimientoDocumentacionCompras,
+                                presupuestoDocumentacionCompras.getIdPrestador().intValue()
+                        );
+
+                if (!cotizaciones.isEmpty()) {
+                    cotizacionDocumentacionCompras = cotizaciones.get(0);
+                }
+            }
 
             comparativaDocumentacionCompras =
                     DocumentoLibraryComprasHelper
@@ -164,6 +194,32 @@ boolean presupuestoDocumentacionComprasValido =
 boolean comparativaDocumentacionComprasValida =
         mostrarDocumentacionCompras
                 && comparativaDocumentacionCompras != null;
+
+String fechaPedidoCotizacionDocumentacionCompras =
+        "-";
+
+if (pedidoCotizacionDocumentacionComprasValido
+        && requerimientoDocumentacionCompras != null
+        && requerimientoDocumentacionCompras.getAltaFecha() != null) {
+
+    fechaPedidoCotizacionDocumentacionCompras =
+            new SimpleDateFormat("dd/MM/yyyy").format(
+                    requerimientoDocumentacionCompras.getAltaFecha()
+            );
+}
+
+String fechaPresupuestoDocumentacionCompras =
+        "-";
+
+if (presupuestoDocumentacionComprasValido
+        && cotizacionDocumentacionCompras != null
+        && cotizacionDocumentacionCompras.getFechaPresupuesto() != null) {
+
+    fechaPresupuestoDocumentacionCompras =
+            new SimpleDateFormat("dd/MM/yyyy").format(
+                    cotizacionDocumentacionCompras.getFechaPresupuesto()
+            );
+}
 
 String urlComparativaDocumentacionCompras =
         "";
@@ -445,7 +501,11 @@ if (presupuestoDocumentacionComprasValido) {
                                 : "results-row alt"
                 %>">
                     <td>Pedido de cotizaci&oacute;n</td>
-                    <td>-</td>
+                    <td>
+                        <%= HtmlUtil.escape(
+                                fechaPedidoCotizacionDocumentacionCompras
+                        ) %>
+                    </td>
 
                     <% if (pedidoCotizacionDocumentacionComprasValido) { %>
 
@@ -489,7 +549,11 @@ if (presupuestoDocumentacionComprasValido) {
                         Cotizaci&oacute;n del prestador adjudicado
                     </td>
 
-                    <td>-</td>
+                    <td>
+                        <%= HtmlUtil.escape(
+                                fechaPresupuestoDocumentacionCompras
+                        ) %>
+                    </td>
 
                     <% if (presupuestoDocumentacionComprasValido) { %>
 
