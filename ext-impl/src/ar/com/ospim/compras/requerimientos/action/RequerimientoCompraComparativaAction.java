@@ -40,7 +40,8 @@ public class RequerimientoCompraComparativaAction extends PortletAction {
 
     public static void validarPermiso(User user, boolean editar) throws Exception {
         if (!puedeEditar(user) && (editar || user == null
-                || !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS))) {
+                || (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
+                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)))) {
             throw new IllegalArgumentException("No posee permisos para la comparativa de Compras.");
         }
     }

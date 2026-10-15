@@ -6,9 +6,10 @@ Los nuevos estados son `6 = PARA AUTORIZAR` y `7 = AUTORIZADO`.
 La migracion es `20261013_autorizacion_requerimiento.sql`. Debe instalarse antes
 de publicar el Java/JSP que usa el nuevo flujo. Crear y asignar en el portal el
 rol `AUTORIZAR_Compras` para las personas que pueden confirmar la autorizacion.
-El autorizador debe conservar el permiso de consulta existente, por ejemplo
-"VIEW_Compras", ademas de "AUTORIZAR_Compras". El permiso nuevo solo habilita
-la operacion de aprobar; no concede acceso a edicion o cotizacion.
+Con el Java de la entrega 20261015, AUTORIZAR_Compras tambien permite consultar
+la pantalla y los documentos necesarios para aprobar. No habilita edicion,
+cotizacion ni creacion de Orden de Compra. Ver la guia
+20261015_autorizacion_orden_compra_empresas.md para el circuito corporativo.
 Los permisos se controlan en el servidor; la funcion SQL no recibe roles.
 
 ## Persistencia

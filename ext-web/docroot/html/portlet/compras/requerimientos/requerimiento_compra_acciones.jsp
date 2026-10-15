@@ -2,7 +2,7 @@
 Responsabilidad:
     Renderiza las acciones de fila del listado sin la acción Ver redundante.
 Incluido desde:
-    Sin caller JSP activo; entry point de compatibilidad conservado por su ruta legacy.
+    requerimiento_compra_busqueda_resultado.jsp mediante row.addJSP.
 Pantallas o estados de uso:
     Búsqueda, selección o popup según el forward indicado.
 Entradas requeridas:
@@ -56,6 +56,15 @@ boolean showCotizarButtons =
                 WebKeysCompras.ROL_COTIZAR_COMPRAS 
         ); 
  
+boolean showAutorizarButton =
+        req.isActivo()
+        && WebKeysCompras.esParaAutorizar(req.getEstado())
+        && user != null
+        && PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+        );
+
 boolean showAnularButtons = 
         user != null 
         && PermissionUtil.userContainsRole( 
@@ -112,6 +121,13 @@ String anularURL =
             value="<%= idRequerimiento %>" /> 
 </portlet:renderURL> 
  
+<portlet:renderURL
+        windowState="<%= WindowState.MAXIMIZED.toString() %>"
+        var="autorizarURL">
+    <portlet:param name="struts_action" value="/compras/ver_requerimiento" />
+    <portlet:param name="id_requerimiento_compra" value="<%= idRequerimiento %>" />
+</portlet:renderURL>
+
 <portlet:actionURL 
         windowState="<%= WindowState.MAXIMIZED.toString() %>" 
         var="cambiarEstadoURL"> 
@@ -143,6 +159,13 @@ String anularURL =
 </c:if> 
  
 <liferay-ui:icon-menu>
+
+    <c:if test="<%= showAutorizarButton %>">
+        <liferay-ui:icon
+                image="submit"
+                message="Revisar para autorizar"
+                url="<%= autorizarURL %>" />
+    </c:if>
 
 <c:if test="<%= showEditarButton %>"> 
         <liferay-ui:icon 

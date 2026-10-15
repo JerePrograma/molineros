@@ -332,6 +332,10 @@ public class DescargarOrdenMedicaCompraAction
                         || PermissionUtil.userContainsRole(
                         user,
                         WebKeysCompras.ROL_ANULAR_COMPRAS
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_AUTORIZAR_COMPRAS
                 );
 
         if (!permitido) {

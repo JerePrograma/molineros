@@ -30,7 +30,8 @@ public final class ExportarRequerimientosCompraHelper {
         return user != null
                 && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
                 || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS));
+                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
+                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS));
     }
 
     public static void validarPermiso(User user) throws Exception {

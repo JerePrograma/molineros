@@ -487,6 +487,7 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                    empresa_cuit VARCHAR(11),
                                                    empresa_sucursal VARCHAR(6),
                                                    descripcion_empresa VARCHAR(200),
+                                                   empresa_adjudicada BOOLEAN NOT NULL DEFAULT FALSE,
 
     /*
      * Identidad exacta del documento en Liferay Document Library.
@@ -636,6 +637,11 @@ CREATE UNIQUE INDEX ux_compras_presupuesto_requerimiento_empresa_activa
     )
     WHERE baja_fecha IS NULL
       AND tipo_documento = 3;
+
+-- Contrato de adjudicacion corporativa vigente desde el 25/09/2026.
+CREATE UNIQUE INDEX ux_compras_empresa_adjudicada_activa
+    ON compras.requerimiento_presupuesto (id_requerimiento)
+    WHERE tipo_documento = 3 AND baja_fecha IS NULL AND empresa_adjudicada;
 
 CREATE INDEX ix_compras_orden_medica_receta_fecha_activa
     ON compras.requerimiento_presupuesto (
@@ -1227,17 +1233,18 @@ END IF;
 ELSE
 
         /*
-         * ORDEN_COMPRA, AUTORIZADO y ANULADO son completamente
+         * ORDEN_COMPRA y ANULADO son completamente
          * inmutables una vez alcanzados.
          */
-        IF OLD.estado IN (5, 7, 99)
+        IF OLD.estado IN (5, 99)
            AND NEW IS DISTINCT FROM OLD THEN
 
             RAISE EXCEPTION
                 'El requerimiento no puede modificarse en el estado actual.';
 END IF;
 
-        IF OLD.estado IN (4, 6)
+        -- Autorizacion previa a la OC: conservar toda la fila salvo estado y auditoria.
+        IF OLD.estado IN (4, 6, 7)
            AND NEW IS DISTINCT FROM OLD THEN
 
             v_fila_transicion := NEW;
@@ -1246,8 +1253,11 @@ END IF;
             v_fila_transicion.modi_usr := OLD.modi_usr;
 
             IF NOT (
-                    (OLD.estado = 4 AND NEW.estado = 6)
+                    (OLD.estado = 4 AND NEW.estado = 6
+                     AND compras.normalizar_sector(v_sector_descripcion) NOT IN ('RRHH', 'SISTEMAS'))
                  OR (OLD.estado = 6 AND NEW.estado = 7)
+                 OR (OLD.estado = 7 AND NEW.estado = 5
+                     AND compras.normalizar_sector(v_sector_descripcion) IN ('RRHH', 'SISTEMAS'))
                )
                OR v_fila_transicion IS DISTINCT FROM OLD THEN
 
@@ -1349,20 +1359,26 @@ END IF;
              * Transiciones funcionales actualmente soportadas:
              *
              * 1 PENDIENTE -> 2 A_COTIZAR
-             * 1 PENDIENTE -> 5 ORDEN_COMPRA para RRHH/SISTEMAS
+             * 1 PENDIENTE -> 6 PARA_AUTORIZAR para RRHH/SISTEMAS
              * 1 PENDIENTE -> 99 ANULADO
              * 2 A_COTIZAR -> 3 COTIZADO
              * 2 A_COTIZAR -> 99 ANULADO
              * 3 COTIZADO -> 4 RECLAMO_RP
              * 4 RECLAMO_RP -> 6 PARA_AUTORIZAR
              * 6 PARA_AUTORIZAR -> 7 AUTORIZADO
+             * 7 AUTORIZADO -> 5 ORDEN_COMPRA para RRHH/SISTEMAS
              */
             IF NOT (
-                    (OLD.estado = 1 AND NEW.estado IN (2, 5, 99))
+                    (OLD.estado = 1 AND NEW.estado IN (2, 99))
+                 OR (OLD.estado = 1 AND NEW.estado = 6
+                     AND compras.normalizar_sector(v_sector_descripcion) IN ('RRHH', 'SISTEMAS'))
                  OR (OLD.estado = 2 AND NEW.estado IN (3, 99))
                  OR (OLD.estado = 3 AND NEW.estado = 4)
-                 OR (OLD.estado = 4 AND NEW.estado = 6)
+                 OR (OLD.estado = 4 AND NEW.estado = 6
+                     AND compras.normalizar_sector(v_sector_descripcion) NOT IN ('RRHH', 'SISTEMAS'))
                  OR (OLD.estado = 6 AND NEW.estado = 7)
+                 OR (OLD.estado = 7 AND NEW.estado = 5
+                     AND compras.normalizar_sector(v_sector_descripcion) IN ('RRHH', 'SISTEMAS'))
             ) THEN
 
                 RAISE EXCEPTION
@@ -1414,22 +1430,19 @@ END IF;
 
 END IF;
 
-            IF OLD.estado = 1
-               AND NEW.estado = 5 THEN
+            IF ((OLD.estado = 1 AND NEW.estado = 6)
+                OR (OLD.estado = 6 AND NEW.estado = 7))
+               AND compras.normalizar_sector(v_sector_descripcion) IN ('RRHH', 'SISTEMAS')
+               OR (OLD.estado = 7 AND NEW.estado = 5) THEN
 
-                IF compras.normalizar_sector(
-                        v_sector_descripcion
-                   ) NOT IN ('RRHH', 'SISTEMAS') THEN
-
-                    RAISE EXCEPTION
-                        'Solo los requerimientos de RRHH o SISTEMAS pueden pasar directamente a ORDEN_COMPRA.';
+                IF compras.normalizar_sector(v_sector_descripcion) NOT IN ('RRHH', 'SISTEMAS') THEN
+                    RAISE EXCEPTION 'Solo RRHH o SISTEMAS pueden crear una ORDEN_COMPRA.';
                 END IF;
 
                 IF NOT EXISTS (
                     SELECT 1
                       FROM compras.requerimiento_detalle d
-                     WHERE d.id_requerimiento =
-                           NEW.id_requerimiento
+                     WHERE d.id_requerimiento = NEW.id_requerimiento
                        AND d.baja_fecha IS NULL
                 ) THEN
 
@@ -1440,8 +1453,7 @@ END IF;
                 IF NOT EXISTS (
                     SELECT 1
                       FROM compras.requerimiento_presupuesto rp
-                     WHERE rp.id_requerimiento =
-                           NEW.id_requerimiento
+                     WHERE rp.id_requerimiento = NEW.id_requerimiento
                        AND rp.tipo_documento = 3
                        AND rp.baja_fecha IS NULL
                 ) THEN
@@ -1450,6 +1462,40 @@ END IF;
                         'Debe existir al menos una cotizacion de Empresa activa antes de pasar a ORDEN_COMPRA.';
                 END IF;
 
+                IF (SELECT count(*)
+                      FROM compras.requerimiento_presupuesto rp
+                     WHERE rp.id_requerimiento = NEW.id_requerimiento
+                       AND rp.tipo_documento = 3
+                       AND rp.baja_fecha IS NULL
+                       AND rp.empresa_adjudicada) <> 1 THEN
+
+                    RAISE EXCEPTION
+                        'Debe seleccionar exactamente una Empresa adjudicada con cotizacion activa.';
+                END IF;
+
+                IF EXISTS (
+                    SELECT 1
+                      FROM compras.requerimiento_presupuesto rp
+                     WHERE rp.id_requerimiento = NEW.id_requerimiento
+                       AND rp.tipo_documento = 3
+                       AND rp.baja_fecha IS NULL
+                       AND rp.empresa_adjudicada
+                       AND (
+                           NULLIF(btrim(rp.descripcion_empresa), '') IS NULL
+                           OR (rp.empresa_cuit IS NOT NULL
+                               AND (NULLIF(btrim(rp.empresa_cuit), '') IS NULL
+                                    OR length(rp.empresa_cuit) > 11
+                                    OR rp.empresa_cuit <> btrim(rp.empresa_cuit)))
+                           OR (rp.empresa_sucursal IS NOT NULL
+                               AND (rp.empresa_cuit IS NULL OR NOT EXISTS (
+                                   SELECT 1 FROM compras.buscar_empresas_cotizacion(
+                                       rp.empresa_cuit, NULL, rp.empresa_sucursal, 1)
+                               )))
+                       )
+                ) THEN
+                    RAISE EXCEPTION
+                        'La Empresa adjudicada debe tener nombre y una identidad fiscal valida cuando este informada.';
+                END IF;
             END IF;
 
             IF OLD.estado = 2
@@ -2880,6 +2926,24 @@ END IF;
             'La transicion al mismo estado no es válida.';
 END IF;
 
+    -- Autorizacion previa a la OC: tampoco puede omitirse por la ruta generica.
+    IF p_estado_nuevo IN (6, 7) THEN
+        PERFORM compras.cambiar_estado_autorizacion_requerimiento(
+                p_id_requerimiento, p_estado_nuevo, p_usuario);
+        RETURN;
+    END IF;
+
+    IF p_estado_nuevo = 5 THEN
+        PERFORM compras.confirmar_orden_compra_requerimiento(
+                p_id_requerimiento, p_usuario);
+        RETURN;
+    END IF;
+
+    IF v_estado_actual IN (6, 7) THEN
+        RAISE EXCEPTION
+            'El requerimiento no puede modificarse en el estado actual.';
+    END IF;
+
 UPDATE compras.requerimiento
 SET estado = p_estado_nuevo,
     modi_fecha = now(),
@@ -2913,6 +2977,8 @@ AS $func$
 DECLARE
     v_estado_actual INTEGER;
     v_id_reclamo INTEGER;
+    v_sector_descripcion VARCHAR(120);
+    v_es_empresa BOOLEAN;
     v_usuario VARCHAR(100);
 BEGIN
     IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
@@ -2925,46 +2991,119 @@ BEGIN
 
     v_usuario := compras.normalizar_usuario(p_usuario);
 
-    SELECT r.estado
-      INTO v_estado_actual
+    SELECT r.estado, sr.descripcion
+      INTO v_estado_actual, v_sector_descripcion
       FROM compras.requerimiento r
+      JOIN compras.sector_requerimiento sr ON sr.id_sector = r.id_sector
+       AND sr.activo = TRUE AND sr.baja_fecha IS NULL
      WHERE r.id_requerimiento = p_id_requerimiento
        AND r.baja_fecha IS NULL
-     FOR UPDATE;
+     FOR UPDATE OF r;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'No se encontro el requerimiento activo.';
     END IF;
 
-    IF NOT (
-            (v_estado_actual = 4 AND p_estado_nuevo = 6)
-         OR (v_estado_actual = 6 AND p_estado_nuevo = 7)
-    ) THEN
-        RAISE EXCEPTION
-            'El requerimiento no puede pasar al estado seleccionado desde su estado actual.';
-    END IF;
+    v_es_empresa := compras.normalizar_sector(v_sector_descripcion)
+        IN ('RRHH', 'SISTEMAS');
 
-    -- Orden compartido con la baja RP: primero RP, luego vinculo.
-    PERFORM rp.id FROM autorizaciones.reclamos_prestacionales rp
-    JOIN compras.requerimiento_reclamo_prestacional rr
-      ON rr.id_reclamo_prestacional = rp.id
-    WHERE rr.id_requerimiento = p_id_requerimiento
-    FOR UPDATE OF rp;
+    IF v_es_empresa THEN
+        IF NOT (
+                (v_estado_actual = 1 AND p_estado_nuevo = 6)
+             OR (v_estado_actual = 6 AND p_estado_nuevo = 7)
+        ) THEN
+            RAISE EXCEPTION
+                'RRHH o SISTEMAS deben pasar de PENDIENTE a PARA AUTORIZAR y luego a AUTORIZADO.';
+        END IF;
 
-    SELECT rr.id_reclamo_prestacional
-      INTO v_id_reclamo
-      FROM compras.requerimiento_reclamo_prestacional rr
-      JOIN autorizaciones.reclamos_prestacionales rp
-        ON rp.id = rr.id_reclamo_prestacional
-       AND rp.baja_fecha IS NULL
-     WHERE rr.id_requerimiento = p_id_requerimiento
-       AND rr.estado = 'VINCULADO'
-       AND rr.id_reclamo_prestacional > 0
-     FOR UPDATE OF rr, rp;
+        IF NOT EXISTS (
+            SELECT 1
+              FROM compras.requerimiento_detalle d
+             WHERE d.id_requerimiento = p_id_requerimiento
+               AND d.baja_fecha IS NULL
+        ) THEN
 
-    IF NOT FOUND THEN
-        RAISE EXCEPTION
-            'El requerimiento debe tener un Reclamo Prestacional activo y vinculado.';
+            RAISE EXCEPTION
+                'Debe existir al menos un detalle antes de enviar o autorizar el requerimiento.';
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1
+              FROM compras.requerimiento_presupuesto rp
+             WHERE rp.id_requerimiento = p_id_requerimiento
+               AND rp.tipo_documento = 3
+               AND rp.baja_fecha IS NULL
+        ) THEN
+
+            RAISE EXCEPTION
+                'Debe existir al menos una cotizacion de Empresa activa antes de enviar o autorizar el requerimiento.';
+        END IF;
+
+        IF (SELECT count(*)
+              FROM compras.requerimiento_presupuesto rp
+             WHERE rp.id_requerimiento = p_id_requerimiento
+               AND rp.tipo_documento = 3
+               AND rp.baja_fecha IS NULL
+               AND rp.empresa_adjudicada) <> 1 THEN
+
+            RAISE EXCEPTION
+                'Debe seleccionar exactamente una Empresa adjudicada con cotizacion activa.';
+        END IF;
+
+        IF EXISTS (
+            SELECT 1
+              FROM compras.requerimiento_presupuesto rp
+             WHERE rp.id_requerimiento = p_id_requerimiento
+               AND rp.tipo_documento = 3
+               AND rp.baja_fecha IS NULL
+               AND rp.empresa_adjudicada
+               AND (
+                   NULLIF(btrim(rp.descripcion_empresa), '') IS NULL
+                   OR (rp.empresa_cuit IS NOT NULL
+                       AND (NULLIF(btrim(rp.empresa_cuit), '') IS NULL
+                            OR length(rp.empresa_cuit) > 11
+                            OR rp.empresa_cuit <> btrim(rp.empresa_cuit)))
+                   OR (rp.empresa_sucursal IS NOT NULL
+                       AND (rp.empresa_cuit IS NULL OR NOT EXISTS (
+                           SELECT 1 FROM compras.buscar_empresas_cotizacion(
+                               rp.empresa_cuit, NULL, rp.empresa_sucursal, 1)
+                       )))
+               )
+        ) THEN
+            RAISE EXCEPTION
+                'La Empresa adjudicada debe tener nombre y una identidad fiscal valida cuando este informada.';
+        END IF;
+    ELSE
+        IF NOT (
+                (v_estado_actual = 4 AND p_estado_nuevo = 6)
+             OR (v_estado_actual = 6 AND p_estado_nuevo = 7)
+        ) THEN
+            RAISE EXCEPTION
+                'El requerimiento no puede pasar al estado seleccionado desde su estado actual.';
+        END IF;
+
+        -- Orden compartido con la baja RP: primero RP, luego vinculo.
+        PERFORM rp.id FROM autorizaciones.reclamos_prestacionales rp
+        JOIN compras.requerimiento_reclamo_prestacional rr
+          ON rr.id_reclamo_prestacional = rp.id
+        WHERE rr.id_requerimiento = p_id_requerimiento
+        FOR UPDATE OF rp;
+
+        SELECT rr.id_reclamo_prestacional
+          INTO v_id_reclamo
+          FROM compras.requerimiento_reclamo_prestacional rr
+          JOIN autorizaciones.reclamos_prestacionales rp
+            ON rp.id = rr.id_reclamo_prestacional
+           AND rp.baja_fecha IS NULL
+         WHERE rr.id_requerimiento = p_id_requerimiento
+           AND rr.estado = 'VINCULADO'
+           AND rr.id_reclamo_prestacional > 0
+         FOR UPDATE OF rr, rp;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION
+                'El requerimiento debe tener un Reclamo Prestacional activo y vinculado.';
+        END IF;
     END IF;
 
     UPDATE compras.requerimiento
@@ -3059,9 +3198,9 @@ BEGIN
         RETURN 5;
     END IF;
 
-    IF v_estado <> 1 THEN
+    IF v_estado <> 7 THEN
         RAISE EXCEPTION
-            'El requerimiento solo puede pasar a ORDEN_COMPRA desde PENDIENTE.';
+            'El requerimiento solo puede pasar a ORDEN_COMPRA desde AUTORIZADO.';
     END IF;
 
     IF compras.normalizar_sector(
@@ -3069,7 +3208,7 @@ BEGIN
        ) NOT IN ('RRHH', 'SISTEMAS') THEN
 
         RAISE EXCEPTION
-            'Solo los requerimientos de RRHH o SISTEMAS pueden pasar directamente a ORDEN_COMPRA.';
+            'Solo los requerimientos de RRHH o SISTEMAS pueden crear una ORDEN_COMPRA.';
     END IF;
 
     IF NOT EXISTS (
@@ -3095,11 +3234,53 @@ BEGIN
             'Debe existir al menos una cotizacion de Empresa activa antes de pasar a ORDEN_COMPRA.';
     END IF;
 
-    PERFORM compras.cambiar_estado_requerimiento(
-        p_id_requerimiento,
-        5,
-        p_usuario
-    );
+    IF (SELECT count(*)
+          FROM compras.requerimiento_presupuesto rp
+         WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 3
+           AND rp.baja_fecha IS NULL
+           AND rp.empresa_adjudicada) <> 1 THEN
+
+        RAISE EXCEPTION
+            'Debe seleccionar exactamente una Empresa adjudicada con cotizacion activa.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+          FROM compras.requerimiento_presupuesto rp
+         WHERE rp.id_requerimiento = p_id_requerimiento
+           AND rp.tipo_documento = 3
+           AND rp.baja_fecha IS NULL
+           AND rp.empresa_adjudicada
+           AND (
+               NULLIF(btrim(rp.descripcion_empresa), '') IS NULL
+               OR (rp.empresa_cuit IS NOT NULL
+                   AND (NULLIF(btrim(rp.empresa_cuit), '') IS NULL
+                        OR length(rp.empresa_cuit) > 11
+                        OR rp.empresa_cuit <> btrim(rp.empresa_cuit)))
+               OR (rp.empresa_sucursal IS NOT NULL
+                   AND (rp.empresa_cuit IS NULL OR NOT EXISTS (
+                       SELECT 1 FROM compras.buscar_empresas_cotizacion(
+                           rp.empresa_cuit, NULL, rp.empresa_sucursal, 1)
+                   )))
+           )
+    ) THEN
+        RAISE EXCEPTION
+            'La Empresa adjudicada debe tener nombre y una identidad fiscal valida cuando este informada.';
+    END IF;
+
+    UPDATE compras.requerimiento
+       SET estado = 5,
+           modi_fecha = now(),
+           modi_usr = compras.normalizar_usuario(p_usuario)
+     WHERE id_requerimiento = p_id_requerimiento
+       AND estado = 7
+       AND baja_fecha IS NULL;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION
+            'El requerimiento fue modificado por otro proceso.';
+    END IF;
 
     RETURN 5;
 END;

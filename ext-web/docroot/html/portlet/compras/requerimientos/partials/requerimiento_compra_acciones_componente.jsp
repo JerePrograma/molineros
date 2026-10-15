@@ -48,6 +48,10 @@ boolean botoneraTieneRolCotizar =
         user != null
         && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
 
+boolean botoneraTieneRolAutorizar =
+        user != null
+        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
+
 boolean botoneraTieneRolCrearReclamo =
         user != null
         && PermissionUtil.userContainsRole(
@@ -139,6 +143,39 @@ boolean botoneraPuedePasarAOrdenCompra =
                 botoneraHayCotizacionesEmpresa
         );
 
+boolean botoneraHayDetalles =
+        botoneraRequerimientoPersistido
+        && req.getDetalles() != null
+        && !req.getDetalles().isEmpty();
+
+boolean botoneraPuedeEnviarAAutorizar =
+        botoneraRequerimientoPersistido
+        && req.isActivo()
+        && req.esSectorSinCotizacionPrestador()
+        && botoneraTieneRolCotizar
+        && botoneraEmpresasAdjudicadas == 1
+        && WebKeysCompras.puedeEnviarAAutorizar(
+                botoneraEstadoActual,
+                botoneraSectorDescripcionActual,
+                botoneraHayDetalles,
+                botoneraHayCotizacionesEmpresa
+        );
+
+boolean botoneraContextoAutorizacionValido =
+        botoneraRequerimientoPersistido
+        && (req.esSectorSinCotizacionPrestador()
+                ? botoneraHayDetalles && botoneraEmpresasAdjudicadas == 1
+                : botoneraConsultaRelacionReclamoOk
+                        && botoneraRelacionReclamo != null
+                        && botoneraRelacionReclamo.isVinculado());
+
+boolean botoneraPuedeAutorizar =
+        botoneraRequerimientoPersistido
+        && req.isActivo()
+        && WebKeysCompras.esParaAutorizar(botoneraEstadoActual)
+        && botoneraTieneRolAutorizar
+        && botoneraContextoAutorizacionValido;
+
 boolean botoneraPuedeReintentarCotizacion =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
@@ -148,7 +185,8 @@ boolean botoneraPuedeReintentarCotizacion =
 
 boolean botoneraPuedeImprimir =
         botoneraRequerimientoPersistido
-        && (botoneraTieneRolView || puedeABM || botoneraTieneRolCotizar);
+        && (botoneraTieneRolView || puedeABM || botoneraTieneRolCotizar
+                || botoneraTieneRolAutorizar);
 
 boolean botoneraHayPresupuestoPrestador = false;
 if (botoneraCotizacionesEmpresaAttr instanceof java.util.List) {
@@ -188,6 +226,7 @@ boolean botoneraPuedeVerReclamoPrestacional =
                 || puedeABM
                 || botoneraTieneRolCotizar
                 || botoneraTieneRolAnular
+                || botoneraTieneRolAutorizar
         )
         && botoneraTieneRolVerReclamo
         && botoneraConsultaRelacionReclamoOk
@@ -219,6 +258,8 @@ String botoneraEnviarCotizarFormId =
         namespaceCompra + "enviarCotizarRequerimientoCompraForm";
 String botoneraOrdenCompraFormId =
         namespaceCompra + "ordenCompraRequerimientoCompraForm";
+String botoneraAutorizacionFormId =
+        namespaceCompra + "autorizacionRequerimientoCompraForm";
 String botoneraReintentarCotizacionFormId =
         namespaceCompra + "reintentarCotizacionRequerimientoCompraForm";
 String botoneraReclamoPrestacionalFormId =
@@ -253,6 +294,22 @@ String botoneraReclamoPrestacionalFormId =
     </form>
 <% } %>
 
+<% if (botoneraPuedeEnviarAAutorizar || botoneraPuedeAutorizar) { %>
+    <form action="<%= botoneraCambiarEstadoURL.toString() %>"
+          method="post"
+          id="<%= botoneraAutorizacionFormId %>"
+          style="display:none;">
+        <input type="hidden"
+               name="<portlet:namespace />id_requerimiento_compra"
+               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
+        <input type="hidden"
+               name="<portlet:namespace />estado_nuevo"
+               value="<%= botoneraPuedeAutorizar
+                       ? WebKeysCompras.ESTADO_AUTORIZADO
+                       : WebKeysCompras.ESTADO_PARA_AUTORIZAR %>" />
+    </form>
+<% } %>
+
 <% if (botoneraPuedeReintentarCotizacion) { %>
     <form action="<%= botoneraCambiarEstadoURL.toString() %>"
           method="post"
@@ -277,6 +334,12 @@ String botoneraReclamoPrestacionalFormId =
                name="<portlet:namespace />id_requerimiento_compra"
                value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
     </form>
+<% } %>
+
+<% if (botoneraPuedeAutorizar) { %>
+<div class="portlet-msg-info">
+    Revise el detalle y las cotizaciones del requerimiento antes de autorizar.
+</div>
 <% } %>
 
 <div class="compras-seccion compras-seccion-botonera">
@@ -312,6 +375,20 @@ String botoneraReclamoPrestacionalFormId =
                                '<portlet:namespace />btnEnviarCotizarRequerimientoCompra',
                                '\u00bfConfirma enviar a Cotizar a los prestadores habilitados?',
                                'Notificando...'
+                       );" />
+            <% } %>
+
+            <% if (botoneraPuedeEnviarAAutorizar || botoneraPuedeAutorizar) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnAutorizacionRequerimientoCompra"
+                       value="<%= botoneraPuedeAutorizar ? "Autorizar" : "Enviar a Autorizar" %>"
+                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
+                               '<%= botoneraAutorizacionFormId %>',
+                               '<portlet:namespace />btnAutorizacionRequerimientoCompra',
+                               '<%= botoneraPuedeAutorizar
+                                       ? "Confirma autorizar el requerimiento?"
+                                       : "Confirma enviar el requerimiento a autorizar?" %>',
+                               '<%= botoneraPuedeAutorizar ? "Autorizando..." : "Enviando..." %>'
                        );" />
             <% } %>
 
@@ -411,6 +488,10 @@ String botoneraReclamoPrestacionalFormId =
     function <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(formId, botonId, mensajeConfirmacion, textoProcesando) {
         var form = document.getElementById(formId);
         var btn = document.getElementById(botonId);
+
+        if (btn && btn.disabled) {
+            return false;
+        }
 
         if (!form) {
             alert('No se pudo preparar el cambio de estado del requerimiento.');

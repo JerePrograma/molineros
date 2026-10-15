@@ -1343,7 +1343,8 @@ public class PdfServlet extends HttpServlet {
 			if (user == null
 					|| (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
 					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS))) {
+					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
+					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS))) {
 
 				res.sendError(
 						HttpServletResponse.SC_FORBIDDEN,

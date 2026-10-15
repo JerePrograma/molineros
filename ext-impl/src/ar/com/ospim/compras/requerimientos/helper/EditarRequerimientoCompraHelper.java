@@ -1268,7 +1268,8 @@ public class EditarRequerimientoCompraHelper {
 
             if (!WebKeysCompras.validarTransicionEstado(
                     requerimientoActual.getEstado(),
-                    idEstadoNuevo
+                    idEstadoNuevo,
+                    requerimientoActual.getSectorDescripcion()
             )) {
                 throw errorUsuario(
                         "El requerimiento no puede pasar al estado seleccionado "
@@ -1283,13 +1284,17 @@ public class EditarRequerimientoCompraHelper {
                             "El requerimiento ya no está disponible."
                     );
                 }
-                RequerimientoCompraReclamoPrestacional relacion =
-                        new RequerimientoCompraReclamoPrestacionalHelper()
-                                .obtenerPorRequerimiento(idRequerimientoCompra);
-                if (relacion == null || !relacion.isVinculado()) {
-                    throw errorUsuario(
-                            "El requerimiento debe tener un Reclamo Prestacional vinculado."
-                    );
+                if (requerimientoActual.esSectorSinCotizacionPrestador()) {
+                    validarEmpresaAdjudicadaParaConfirmacion(requerimientoActual);
+                } else {
+                    RequerimientoCompraReclamoPrestacional relacion =
+                            new RequerimientoCompraReclamoPrestacionalHelper()
+                                    .obtenerPorRequerimiento(idRequerimientoCompra);
+                    if (relacion == null || !relacion.isVinculado()) {
+                        throw errorUsuario(
+                                "El requerimiento debe tener un Reclamo Prestacional vinculado."
+                        );
+                    }
                 }
             }
 
@@ -1401,62 +1406,18 @@ public class EditarRequerimientoCompraHelper {
 
                 throw errorUsuario(
                         "Sólo los requerimientos de RRHH o Sistemas "
-                                + "pueden pasar directamente a Orden de Compra."
+                                + "pueden pasar a Orden de Compra."
                 );
             }
 
-            if (!requerimientoActual.isPendiente()) {
+            if (!WebKeysCompras.esAutorizado(requerimientoActual.getEstado())) {
                 throw errorUsuario(
-                        "El requerimiento sólo puede pasar a Orden de Compra "
-                                + "mientras está PENDIENTE."
+                        "El requerimiento debe estar AUTORIZADO "
+                                + "antes de Crear Orden de Compra."
                 );
             }
 
-            if (!requerimientoActual.tieneDetalles()) {
-                throw errorUsuario(
-                        "Debe agregar al menos un detalle antes de pasar "
-                                + "el requerimiento a Orden de Compra."
-                );
-            }
-
-            List<RequerimientoCompraPresupuesto> cotizacionesEmpresa =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .listarCotizacionesEmpresa(
-                                    idRequerimientoCompra
-                            );
-
-            boolean hayCotizacionesEmpresa =
-                    cotizacionesEmpresa != null
-                            && !cotizacionesEmpresa.isEmpty();
-
-            if (!requerimientoActual.puedePasarAOrdenCompra(
-                    hayCotizacionesEmpresa
-            )) {
-
-                throw errorUsuario(
-                        "Debe cargar al menos una cotización de Empresa "
-                                + "antes de pasar el requerimiento "
-                                + "a Orden de Compra."
-                );
-            }
-
-            RequerimientoCompraPresupuesto adjudicada = null;
-            for (int i = 0; cotizacionesEmpresa != null && i < cotizacionesEmpresa.size(); i++) {
-                RequerimientoCompraPresupuesto cotizacion = cotizacionesEmpresa.get(i);
-                if (cotizacion != null && cotizacion.isActivo()
-                        && cotizacion.isCotizacionEmpresa() && cotizacion.isEmpresaAdjudicada()) {
-                    if (adjudicada != null) {
-                        throw errorUsuario("Debe existir exactamente una Empresa adjudicada.");
-                    }
-                    adjudicada = cotizacion;
-                }
-            }
-            if (adjudicada == null) {
-                throw errorUsuario("Debe seleccionar una Empresa adjudicada con cotizacion activa "
-                        + "antes de Crear Orden de Compra.");
-            }
-            validarEmpresaAdjudicada(idRequerimientoCompra,
-                    adjudicada.getIdRequerimientoPresupuesto());
+            validarEmpresaAdjudicadaParaConfirmacion(requerimientoActual);
 
             int estadoFinal =
                     EditarRequerimientoCompraServiceUtil.confirmarOrdenCompra(
@@ -1485,6 +1446,41 @@ public class EditarRequerimientoCompraHelper {
                             + ", usuario=" + usuario
             );
         }
+    }
+
+    private void validarEmpresaAdjudicadaParaConfirmacion(
+            RequerimientoCompra requerimiento) throws Exception {
+
+        if (!requerimiento.tieneDetalles()) {
+            throw errorUsuario("Debe agregar al menos un detalle antes de enviar "
+                    + "a autorizar o Crear Orden de Compra.");
+        }
+        List<RequerimientoCompraPresupuesto> cotizaciones =
+                BusquedaRequerimientoCompraServiceUtil.listarCotizacionesEmpresa(
+                        requerimiento.getIdRequerimientoCompra());
+        RequerimientoCompraPresupuesto adjudicada = null;
+        for (int i = 0; cotizaciones != null && i < cotizaciones.size(); i++) {
+            RequerimientoCompraPresupuesto cotizacion = cotizaciones.get(i);
+            if (cotizacion != null && cotizacion.isActivo()
+                    && cotizacion.isCotizacionEmpresa() && cotizacion.isEmpresaAdjudicada()) {
+                if (adjudicada != null) {
+                    throw errorUsuario("Debe existir exactamente una Empresa adjudicada.");
+                }
+                adjudicada = cotizacion;
+            }
+        }
+        if (adjudicada == null) {
+            throw errorUsuario("Debe seleccionar una Empresa adjudicada con cotizacion activa "
+                    + "antes de enviar a autorizar o Crear Orden de Compra.");
+        }
+        if (adjudicada.getIdRequerimiento() == null
+                || adjudicada.getIdRequerimiento().intValue()
+                != requerimiento.getIdRequerimientoCompra()) {
+            throw errorUsuario("La cotizacion adjudicada no pertenece al requerimiento.");
+        }
+        new PresupuestoCompraHelper().validarDatosEmpresaCotizacion(
+                adjudicada.getEmpresaCuit(), adjudicada.getEmpresaSucursal(),
+                adjudicada.getDescripcionEmpresa(), 1);
     }
 
     public NotificacionCotizacionResultado enviarACotizar(

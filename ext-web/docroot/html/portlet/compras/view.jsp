@@ -7,6 +7,13 @@ response.setDateHeader("Expires", 0);
 
 String tabs1 = ParamUtil.getString(request, "tabs1", null);
 
+boolean mostrarParaAutorizar =
+        user != null
+        && PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+        );
+
 boolean mostrarConfiguracionCorreos =
         user != null
         && PermissionUtil.userContainsRole(
@@ -28,6 +35,11 @@ String tabs1Values =
 String tabs1Names =
         "Requerimientos,Cotizados";
 
+if (mostrarParaAutorizar) {
+    tabs1Values += ",para-autorizar";
+    tabs1Names += ",Para Autorizar";
+}
+
 if (mostrarConfiguracionCorreos) {
     tabs1Values += ",configuracion-de-correos";
     tabs1Names += ",Configuraci\u00f3n de Correos";
@@ -36,6 +48,7 @@ if (mostrarConfiguracionCorreos) {
 boolean tabValida =
         "requerimientos".equals(tabs1)
         || "cotizados".equals(tabs1)
+        || (mostrarParaAutorizar && "para-autorizar".equals(tabs1))
         || (
                 mostrarConfiguracionCorreos
                 && "configuracion-de-correos".equals(tabs1)
@@ -78,6 +91,11 @@ currentURL = PortalUtil.getCurrentURL(request);
     <c:when test='<%= "cotizados".equals(tabs1) %>'>
         <liferay-util:include
                 page="/html/portlet/compras/requerimientos/requerimiento_compra_cotizados.jsp" />
+    </c:when>
+
+    <c:when test='<%= mostrarParaAutorizar && "para-autorizar".equals(tabs1) %>'>
+        <liferay-util:include
+                page="/html/portlet/compras/requerimientos/requerimiento_compra_para_autorizar.jsp" />
     </c:when>
 
     <c:when test='<%= "configuracion-de-correos".equals(tabs1) %>'>

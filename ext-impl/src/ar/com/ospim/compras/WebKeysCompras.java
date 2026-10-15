@@ -412,6 +412,18 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return esReclamoRP(estado);
     }
 
+    public static boolean puedeEnviarAAutorizar(
+            int estado,
+            String sectorDescripcion,
+            boolean hayDetalles,
+            boolean hayCotizacionesEmpresa) {
+
+        if (esSectorSinCotizacionPrestador(sectorDescripcion)) {
+            return esPendiente(estado) && hayDetalles && hayCotizacionesEmpresa;
+        }
+        return puedeEnviarAAutorizar(estado);
+    }
+
     public static boolean puedeConsultarReclamoPrestacional(int estado) {
         return esCotizado(estado)
                 || esReclamoRP(estado)
@@ -488,7 +500,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             boolean hayDetalles,
             boolean hayCotizacionesEmpresa) {
 
-        return esPendiente(estado)
+        return esAutorizado(estado)
                 && esSectorSinCotizacionPrestador(
                         sectorDescripcion
                 )
@@ -568,6 +580,18 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
         return esACotizar(estadoActual)
                 && esCotizado(estadoNuevo);
+    }
+
+    public static boolean validarTransicionEstado(
+            int estadoActual,
+            int estadoNuevo,
+            String sectorDescripcion) {
+
+        if (esParaAutorizar(estadoNuevo)) {
+            return puedeEnviarAAutorizar(
+                    estadoActual, sectorDescripcion, true, true);
+        }
+        return validarTransicionEstado(estadoActual, estadoNuevo);
     }
 
     public static boolean puedeCambiarEstado(
