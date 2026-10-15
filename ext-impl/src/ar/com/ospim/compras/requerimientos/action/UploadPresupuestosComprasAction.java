@@ -196,7 +196,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                                 uploadReq.getFile("presupuesto_0"),
                                 uploadReq.getFileName("presupuesto_0"), idPrestador),
                         entrada, serviceContext, usuario);
-                actionResponse.setRenderParameter("prestador_comparativa", String.valueOf(idPrestador));
+                actionResponse.setRenderParameter("prestador_comparativa", "");
                 actionResponse.setRenderParameter("presupuestos_guardados", "1");
                 actionResponse.setRenderParameter("compras_operacion", OPERACION_PRESUPUESTO_AGREGAR);
                 SessionMessages.add(actionRequest, "requerimiento-compra-presupuesto-guardado");
