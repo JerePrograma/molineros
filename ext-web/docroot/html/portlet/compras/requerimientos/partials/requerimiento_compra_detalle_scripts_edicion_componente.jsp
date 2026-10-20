@@ -2272,7 +2272,9 @@ Efectos secundarios:
         jQuery(
                 '#<portlet:namespace />detalle_id_tipo_prestacion'
         ).change(function() {
-            <portlet:namespace />actualizarTipoNomencladorDetallePorSector(true);
+            <portlet:namespace />actualizarTipoNomencladorDetallePorSector(
+                    !<portlet:namespace />esSectorFarmaciaTipoNomenclador()
+            );
             <portlet:namespace />actualizarTipoItemEditor(true);
             <portlet:namespace />actualizarVisibilidadColumnasDetalleCompra();
         });
