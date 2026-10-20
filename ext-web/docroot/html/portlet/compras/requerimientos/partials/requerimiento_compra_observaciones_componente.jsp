@@ -55,7 +55,6 @@ Efectos secundarios:
     Son observaciones que se envian por correo al prestador junto al pedido de cotización.
 </div>
 
-<% if (puedeEditarEstructuraPantalla) { %>
     <fieldset class="block-labels compras-observaciones">
         <legend>
             Observación interna
@@ -67,6 +66,7 @@ Efectos secundarios:
                      alt="Ayuda" />
             </a>
         </legend>
+        <% if (puedeEditarEstructuraPantalla) { %>
         <table class="lfr-table">
             <tr>
                 <td>
@@ -78,6 +78,13 @@ Efectos secundarios:
                 </td>
             </tr>
         </table>
+        <% } else { %>
+            <div class="compras-observaciones-vista">
+                <%= HtmlUtil.escape(
+                        req.getObservacionInternaVisible()
+                ) %>
+            </div>
+        <% } %>
     </fieldset>
 
     <div id="<portlet:namespace />helpObservacionInterna"
@@ -85,4 +92,3 @@ Efectos secundarios:
          style="top: 500px; left: 200px">
         Son observaciones para uso interno y no se comparten con personal externo.
     </div>
-<% } %>
