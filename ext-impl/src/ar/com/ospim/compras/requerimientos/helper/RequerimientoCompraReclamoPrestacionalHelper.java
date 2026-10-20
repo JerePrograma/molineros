@@ -211,7 +211,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         revisionCompra.setRevisionInicialCompra(true);
         revisionCompra.setFecha_revision(new Date());
         revisionCompra.setUsr_responsable_resolucion(
-                "AUDITORIA ADMINISTRATIVA");
+                "AUDITORIA DE PRESTACIONES MEDICAS");
         revisionCompra.setUsr_presente("AUDITORIA MEDICA");
         revisionCompra.setUsr_resolucion("AUTORIZADO");
         return revisionCompra;

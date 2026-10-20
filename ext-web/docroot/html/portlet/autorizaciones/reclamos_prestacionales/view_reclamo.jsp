@@ -2188,6 +2188,7 @@ manejarTipoSector();
     
     jQuery("#<portlet:namespace />botonrevision").hide();
     jQuery("#<portlet:namespace />buttonaddprestacion").hide();    
+    jQuery("#<portlet:namespace/>mensajerevisionefectuada").hide();
     
     //document.getElementById("<portlet:namespace />buscadorcie10buscador").disabled = "disabled";
        
