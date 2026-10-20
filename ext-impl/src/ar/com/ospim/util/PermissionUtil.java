@@ -1,6 +1,7 @@
 package ar.com.ospim.util;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
@@ -20,15 +21,23 @@ import com.liferay.portal.model.User;
 public class PermissionUtil {
 	
 	public static boolean userContainsRole(User user,String role) {
-		if(null!=user){
-			List<Role> roles=user.getRoles();
-			for (Role rol : roles){
-				if (rol.getName().equals(role)){
+		if (user == null || role == null || role.length() == 0) {
+			return false;
+		}
+		List<Role> roles = user.getRoles();
+		if (roles == null) {
+			return false;
+		}
+		String nombreRol = role.toUpperCase(Locale.ENGLISH);
+		for (Role rol : roles) {
+			if (rol != null) {
+				String nombre = rol.getName();
+				if (nombre != null
+						&& nombreRol.equals(nombre.toUpperCase(Locale.ENGLISH))) {
 					return true;
 				}
 			}
 		}
 		return false;
-				
 	}
 }

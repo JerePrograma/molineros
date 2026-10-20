@@ -83,11 +83,11 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String
             CODIGO_ESPECIAL_DISCAPACIDAD = "431003";
 
-    public static final String ROL_VIEW_COMPRAS = "VIEW_Compras";
-    public static final String ROL_ABM_COMPRAS = "ABM_Compras";
-    public static final String ROL_ANULAR_COMPRAS = "ANULAR_Compras";
-    public static final String ROL_COTIZAR_COMPRAS = "COTIZAR_Compras";
-    public static final String ROL_AUTORIZAR_COMPRAS = "AUTORIZAR_Compras";
+    public static final String ROL_VIEW_COMPRAS = "VIEW_COMPRAS";
+    public static final String ROL_ABM_COMPRAS = "ABM_COMPRAS";
+    public static final String ROL_ANULAR_COMPRAS = "ANULAR_COMPRAS";
+    public static final String ROL_COTIZAR_COMPRAS = "COTIZAR_COMPRAS";
+    public static final String ROL_AUTORIZAR_COMPRAS = "AUTORIZAR_COMPRAS";
 
     public static final String BUSQUEDA_REQUERIMIENTOS_COMPRA =
             "BUSQUEDA_REQUERIMIENTOS_COMPRA";

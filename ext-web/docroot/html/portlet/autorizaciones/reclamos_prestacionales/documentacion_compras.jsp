@@ -230,6 +230,7 @@ String fechaComparativaDocumentacionCompras =
 if (comparativaDocumentacionComprasValida) {
     PortletURL urlComparativaCompras =
             renderResponse.createActionURL();
+    urlComparativaCompras.setWindowState(LiferayWindowState.EXCLUSIVE);
 
     urlComparativaCompras.setParameter(
             "struts_action",
@@ -267,6 +268,7 @@ if (pedidoCotizacionDocumentacionComprasValido) {
 
     PortletURL urlPedidoCotizacionCompras =
             renderResponse.createActionURL();
+    urlPedidoCotizacionCompras.setWindowState(LiferayWindowState.EXCLUSIVE);
 
     urlPedidoCotizacionCompras.setParameter(
             "struts_action",
@@ -297,6 +299,7 @@ if (presupuestoDocumentacionComprasValido) {
 
     PortletURL urlPresupuestoCompras =
             renderResponse.createActionURL();
+    urlPresupuestoCompras.setWindowState(LiferayWindowState.EXCLUSIVE);
 
     urlPresupuestoCompras.setParameter(
             "struts_action",
@@ -417,6 +420,7 @@ if (presupuestoDocumentacionComprasValido) {
                     PortletURL urlOrden =
                             renderResponse
                                     .createActionURL();
+                    urlOrden.setWindowState(LiferayWindowState.EXCLUSIVE);
 
                     urlOrden.setParameter(
                             "struts_action",

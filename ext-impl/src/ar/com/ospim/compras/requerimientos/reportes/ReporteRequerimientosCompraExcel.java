@@ -31,7 +31,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 /** Descarga POI siguiendo XLSServlet y los reportes de Liquidaciones. */
 public final class ReporteRequerimientosCompraExcel {
 
-    private static final int COLUMNA_ID_SECCIONAL = 6;
+    private static final int COLUMNA_SECCIONAL = 6;
 
     private static final Log LOG = LogFactoryUtil.getLog(ReporteRequerimientosCompraExcel.class);
 
@@ -99,10 +99,10 @@ public final class ReporteRequerimientosCompraExcel {
             String[] titulos = ExportarRequerimientosCompraHelper.titulosListado(mostrarRp);
             Row cabecera = hoja.createRow(0);
             for (int c = 0; c <= titulos.length + 1; c++) {
-                String titulo = c == COLUMNA_ID_SECCIONAL ? "ID_SECCIONAL"
+                String titulo = c == COLUMNA_SECCIONAL ? "Seccional"
                         : c == titulos.length + 1 ? "Prestador adjudicado"
                         : LanguageUtil.get(locale,
-                                titulos[c < COLUMNA_ID_SECCIONAL ? c : c - 1]);
+                                titulos[c < COLUMNA_SECCIONAL ? c : c - 1]);
                 texto(cabecera.createCell(c), titulo);
                 cabecera.getCell(c).setCellStyle(encabezado);
                 hoja.setColumnWidth(c, (c == 3 || c == titulos.length + 1 ? 42 : 20) * 256);
@@ -115,12 +115,11 @@ public final class ReporteRequerimientosCompraExcel {
                         req, relaciones.get(id), mostrarRp);
                 Row fila = hoja.createRow(i + 1);
                 for (int c = 0; c < valores.length; c++) {
-                    texto(fila.createCell(c < COLUMNA_ID_SECCIONAL ? c : c + 1),
+                    texto(fila.createCell(c < COLUMNA_SECCIONAL ? c : c + 1),
                             valores[c]);
                 }
-                texto(fila.createCell(COLUMNA_ID_SECCIONAL),
-                        req.getAfiliadoIdSeccional() != null
-                                ? String.valueOf(req.getAfiliadoIdSeccional()) : "");
+                texto(fila.createCell(COLUMNA_SECCIONAL),
+                        req.getAfiliadoSeccionalDescripcion());
                 texto(fila.createCell(valores.length + 1),
                         ExportarRequerimientosCompraHelper.obtenerPrestador(prestadores.get(id)));
             }

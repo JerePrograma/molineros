@@ -32,11 +32,14 @@ import java.util.HashMap;
 public class BusquedaRequerimientoCompraServiceImpl {
 
     private static final String SQL_BUSCAR_REQUERIMIENTOS =
-            "SELECT rb.*, afi.id_seccional AS afiliado_id_seccional "
+            "SELECT rb.*, afi.id_seccional AS afiliado_id_seccional, "
+                    + "sec.descripcion AS afiliado_seccional_descripcion "
                     + "FROM compras.buscar_requerimientos(?,?,?,?,?,?,?,?,?,?,?) rb "
                     + "LEFT JOIN public.afiliado afi "
                     + "ON afi.cuil_titular = rb.afiliado_cuil_titular "
-                    + "AND afi.inte = rb.afiliado_int ORDER BY rb.id DESC";
+                    + "AND afi.inte = rb.afiliado_int "
+                    + "LEFT JOIN public.seccional sec ON sec.id_seccional = afi.id_seccional "
+                    + "ORDER BY rb.id DESC";
 
     private static final String SQL_GET_REQUERIMIENTO =
             "SELECT rb.*, r.observacion_interna, r.motivo_baja "
@@ -127,6 +130,8 @@ public class BusquedaRequerimientoCompraServiceImpl {
             while (rs.next()) {
                 RequerimientoCompra requerimiento = mapRequerimiento(rs);
                 requerimiento.setAfiliadoIdSeccional(getInteger(rs, "afiliado_id_seccional"));
+                requerimiento.setAfiliadoSeccionalDescripcion(
+                        rs.getString("afiliado_seccional_descripcion"));
                 resultado.add(requerimiento);
             }
 

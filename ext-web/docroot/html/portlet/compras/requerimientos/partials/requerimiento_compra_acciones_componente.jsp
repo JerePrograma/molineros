@@ -151,15 +151,18 @@ boolean botoneraHayDetalles =
 boolean botoneraPuedeEnviarAAutorizar =
         botoneraRequerimientoPersistido
         && req.isActivo()
-        && req.esSectorSinCotizacionPrestador()
         && botoneraTieneRolCotizar
-        && botoneraEmpresasAdjudicadas == 1
         && WebKeysCompras.puedeEnviarAAutorizar(
                 botoneraEstadoActual,
                 botoneraSectorDescripcionActual,
                 botoneraHayDetalles,
                 botoneraHayCotizacionesEmpresa
-        );
+        )
+        && (req.esSectorSinCotizacionPrestador()
+                ? botoneraEmpresasAdjudicadas == 1
+                : botoneraConsultaRelacionReclamoOk
+                        && botoneraRelacionReclamo != null
+                        && botoneraRelacionReclamo.isVinculado());
 
 boolean botoneraContextoAutorizacionValido =
         botoneraRequerimientoPersistido
@@ -346,6 +349,20 @@ String botoneraReclamoPrestacionalFormId =
 <table class="lfr-table">
     <tr>
         <td class="compras-botonera-acciones">
+            <% if (botoneraPuedeEnviarAAutorizar || botoneraPuedeAutorizar) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnAutorizacionRequerimientoCompra"
+                       value="<%= botoneraPuedeAutorizar ? "Autorizar" : "Enviar a Autorizar" %>"
+                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
+                               '<%= botoneraAutorizacionFormId %>',
+                               '<portlet:namespace />btnAutorizacionRequerimientoCompra',
+                               '<%= botoneraPuedeAutorizar
+                                       ? "Confirma autorizar el requerimiento?"
+                                       : "Confirma enviar el requerimiento a autorizar?" %>',
+                               '<%= botoneraPuedeAutorizar ? "Autorizando..." : "Enviando..." %>'
+                       );" />
+            <% } %>
+
             <% if (modoEditable && puedeEditarEstructuraPantalla) { %>
                 <input type="button"
                        id="<portlet:namespace />btnGuardarCompras"
@@ -375,20 +392,6 @@ String botoneraReclamoPrestacionalFormId =
                                '<portlet:namespace />btnEnviarCotizarRequerimientoCompra',
                                '\u00bfConfirma enviar a Cotizar a los prestadores habilitados?',
                                'Notificando...'
-                       );" />
-            <% } %>
-
-            <% if (botoneraPuedeEnviarAAutorizar || botoneraPuedeAutorizar) { %>
-                <input type="button"
-                       id="<portlet:namespace />btnAutorizacionRequerimientoCompra"
-                       value="<%= botoneraPuedeAutorizar ? "Autorizar" : "Enviar a Autorizar" %>"
-                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
-                               '<%= botoneraAutorizacionFormId %>',
-                               '<portlet:namespace />btnAutorizacionRequerimientoCompra',
-                               '<%= botoneraPuedeAutorizar
-                                       ? "Confirma autorizar el requerimiento?"
-                                       : "Confirma enviar el requerimiento a autorizar?" %>',
-                               '<%= botoneraPuedeAutorizar ? "Autorizando..." : "Enviando..." %>'
                        );" />
             <% } %>
 

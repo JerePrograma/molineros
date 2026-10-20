@@ -25,6 +25,7 @@ public class RequerimientoCompra {
     private Integer afiliadoInt;
     private Integer afiliadoIdOspim;
     private Integer afiliadoIdSeccional;
+    private String afiliadoSeccionalDescripcion;
 
     private Integer idSector;
     private String sectorDescripcion;
@@ -248,6 +249,14 @@ public class RequerimientoCompra {
 
     public void setAfiliadoIdSeccional(Integer afiliadoIdSeccional) {
         this.afiliadoIdSeccional = afiliadoIdSeccional;
+    }
+
+    public String getAfiliadoSeccionalDescripcion() {
+        return afiliadoSeccionalDescripcion;
+    }
+
+    public void setAfiliadoSeccionalDescripcion(String afiliadoSeccionalDescripcion) {
+        this.afiliadoSeccionalDescripcion = afiliadoSeccionalDescripcion;
     }
 
     public boolean tieneAfiliadoInformado() {
