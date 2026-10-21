@@ -124,6 +124,7 @@ if (totalPaginas > 0) {
             </select>
         </td>
         <td>
+            <div class="taglib-page-iterator">
             <div class="search-pages">
                 <div class="page-links">
                     <c:choose>
@@ -159,6 +160,7 @@ if (totalPaginas > 0) {
                         </c:otherwise>
                     </c:choose>
                 </div>
+            </div>
             </div>
         </td>
     </tr>

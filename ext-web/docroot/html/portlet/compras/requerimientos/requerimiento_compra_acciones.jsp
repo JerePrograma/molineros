@@ -16,7 +16,14 @@ IDs o funciones JavaScript expuestos:
 Efectos secundarios:
     Sólo renderiza presentación; las operaciones se delegan al Action.
 --%>
-<%@ include file="/html/portlet/compras/init.jsp" %> 
+<%@ page pageEncoding="ISO-8859-1" %>
+<%@ include file="/html/portlet/init.jsp" %>
+<%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
+<%@ page import="ar.com.ospim.compras.WebKeysCompras" %>
+<%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra" %>
+<%@ page import="ar.com.ospim.util.PermissionUtil" %>
+<%@ page import="com.liferay.portal.kernel.dao.search.ResultRow" %>
+<%@ page import="javax.portlet.WindowState" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional" %>
  
