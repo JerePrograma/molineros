@@ -337,6 +337,8 @@ Efectos secundarios:
         } else {
             var url = <portlet:namespace />buscarItemTecnicoURL
                     + '&<portlet:namespace />cmd=CONSULTAR_CONFIGURACION'
+                    + '&<portlet:namespace />modo_correccion='
+                    + (<portlet:namespace />detalleModoCorreccion ? 'true' : 'false')
                     + '&<portlet:namespace />id_requerimiento_compra='
                     + encodeURIComponent(<portlet:namespace />idRequerimientoCompraDetalle)
                     + '&<portlet:namespace />sector_id=' + encodeURIComponent(idSector)
@@ -594,6 +596,8 @@ Efectos secundarios:
 
         var url =
                 <portlet:namespace />buscarItemTecnicoURL
+                + '&<portlet:namespace />modo_correccion='
+                + (<portlet:namespace />detalleModoCorreccion ? 'true' : 'false')
                 + '&<portlet:namespace />id_requerimiento_compra='
                 + encodeURIComponent(
                         <portlet:namespace />idRequerimientoCompraDetalle
@@ -731,6 +735,8 @@ Efectos secundarios:
             var url =
                     <portlet:namespace />buscarItemTecnicoURL
                     + '&<portlet:namespace />cmd=CONSULTAR_DROGA'
+                    + '&<portlet:namespace />modo_correccion='
+                    + (<portlet:namespace />detalleModoCorreccion ? 'true' : 'false')
                     + '&<portlet:namespace />id_requerimiento_compra='
                     + encodeURIComponent(
                             <portlet:namespace />idRequerimientoCompraDetalle

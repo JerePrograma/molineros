@@ -52,9 +52,12 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                         request
                 );
 
-        detalleHelper.validarPermisoABM(
-                user
-        );
+        if (ParamUtil.getBoolean(request, "modo_correccion", false)
+                && ParamUtil.getInteger(request, "id_requerimiento_compra", 0) > 0) {
+            detalleHelper.validarPermisoCorregirItem(user);
+        } else {
+            detalleHelper.validarPermisoABM(user);
+        }
 
         if ("CONSULTAR_CONFIGURACION".equals(
                 ParamUtil.getString(request, "cmd", ""))) {
@@ -239,10 +242,15 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
                 );
             }
 
-            if (requiereEdicion && !requerimiento.puedeEditarEstructura()) {
+            boolean puedeBuscar = requerimiento.puedeEditarEstructura();
+            if (ParamUtil.getBoolean(request, "modo_correccion", false)) {
+                puedeBuscar = requerimiento.isActivo()
+                        && WebKeysCompras.puedeCorregirItem(requerimiento.getEstado());
+            }
+            if (requiereEdicion && !puedeBuscar) {
                 throw new Exception(
-                        "Sólo se pueden buscar prestaciones para "
-                                + "requerimientos PENDIENTES."
+                        "El estado actual del requerimiento no permite "
+                                + "buscar prestaciones para su modificación."
                 );
             }
 
