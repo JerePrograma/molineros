@@ -6,6 +6,8 @@
 -- la fecha de incorporacion manual, NO un envio SMTP. intentos queda en cero.
 -- Ejecutar este archivo completo en la base de uso y recargar el requerimiento.
 -- Es independiente de los instaladores generales de Compras.
+-- Ante un error, ejecutar ROLLBACK antes de consultar o reintentar.
+-- El control inicial solo diagnostica el destino; no crea tablas faltantes.
 
 BEGIN;
 
@@ -19,7 +21,31 @@ DECLARE
     v_cuerpo TEXT;
     v_definicion TEXT;
     v_actualizada TEXT;
+    v_faltantes TEXT;
 BEGIN
+    -- Referencia: preflight del megascript de Compras del 21/10/2026.
+    SELECT string_agg(objeto, ', ' ORDER BY objeto) INTO v_faltantes
+    FROM (VALUES
+        ('compras.requerimiento',
+            to_regclass('compras.requerimiento') IS NOT NULL),
+        ('compras.requerimiento_cotizacion_prestador',
+            to_regclass('compras.requerimiento_cotizacion_prestador') IS NOT NULL),
+        ('public.prestador',
+            to_regclass('public.prestador') IS NOT NULL),
+        ('compras.es_prestador_compatible_cotizacion(integer,integer)',
+            to_regprocedure('compras.es_prestador_compatible_cotizacion(integer,integer)') IS NOT NULL),
+        ('compras.listar_prestadores_enviados(integer,integer)',
+            to_regprocedure('compras.listar_prestadores_enviados(integer,integer)') IS NOT NULL)
+    ) AS necesarios(objeto, existe)
+    WHERE NOT existe;
+
+    IF v_faltantes IS NOT NULL THEN
+        RAISE EXCEPTION 'Destino incompatible para la incorporacion manual. Base seleccionada: %.',
+            current_database()
+            USING DETAIL = 'Objetos faltantes: ' || v_faltantes,
+                  HINT = 'Confirmar en pgAdmin la misma base y servidor que usa Molineros. No crear tablas ni instalar el schema completo para resolver este error.';
+    END IF;
+
     -- Mismo orden de bloqueo que la reserva de notificaciones.
     SELECT r.estado INTO v_estado
     FROM compras.requerimiento r
