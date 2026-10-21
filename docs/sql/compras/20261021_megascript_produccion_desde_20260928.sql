@@ -9,10 +9,11 @@
 -- Ensayo: sobre una COPIA, sustituir solamente el ultimo COMMIT por ROLLBACK.
 -- No es instalador desde cero ni actualizador universal de revisiones posteriores.
 -- El 25/09 se incluye porque se incorporo a Git el 30/09 (0d91cc9c).
--- No se incluyen SQL de consulta, el ejemplo opcional INSUMOS DIABETES,
--- ni el esquema completo. Los prerrequisitos anteriores al corte deben existir.
+-- INSUMOS DIABETES solo nomenclador 10: confirmado por el usuario el 21/10/2026.
+-- Se excluyen consultas y esquema completo; los prerrequisitos previos deben existir.
 -- Efectos de datos heredados: carga inicial sector_nomenclador (13/10) y
 -- conciliacion de relaciones VINCULADO/ERROR de RP ya dados de baja (14/10).
+-- El bloque 14 reemplaza solo las asociaciones especificas de INSUMOS DIABETES.
 -- No invoca notificaciones ni envios de correo.
 
 BEGIN;
@@ -79,7 +80,7 @@ $preflight_megascript$;
 SELECT current_database() AS base_objetivo, current_user AS usuario_ejecutor,
        version() AS version_postgresql, now() AS inicio_transaccion;
 
--- ===== BLOQUE 01/13: docs/sql/compras/20260925_cotizaciones_empresas_alta_adjudicacion.sql =====
+-- ===== BLOQUE 01/14: docs/sql/compras/20260925_cotizaciones_empresas_alta_adjudicacion.sql =====
 -- SHA256 original (bytes): 8e2a233f65a4cf29cdd3e05b92dc92a1c699543edeaef4805782be6b44b1b522
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -595,7 +596,7 @@ END;
 $func$
 LANGUAGE plpgsql;
 
--- ===== BLOQUE 02/13: docs/sql/20260930_buscar_medicamentos_droga_compras.sql =====
+-- ===== BLOQUE 02/14: docs/sql/20260930_buscar_medicamentos_droga_compras.sql =====
 -- SHA256 original (bytes): 9fe11339879a73a8fd35c1e5cf396ff8e86c4eec19fa9388f96a3d49299d2359
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -641,7 +642,7 @@ LANGUAGE plpgsql VOLATILE
 COST 100
 ROWS 1000;
 
--- ===== BLOQUE 03/13: docs/sql/compras/20261006_cotizaciones_identificacion_fiscal_diferida.sql =====
+-- ===== BLOQUE 03/14: docs/sql/compras/20261006_cotizaciones_identificacion_fiscal_diferida.sql =====
 -- SHA256 original (bytes): 8f463fa7ad7bad05bd4edc4dedf6b00e499eb4332719121ea6599a18ab0e7133
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -1187,7 +1188,7 @@ END;
 $func$
 LANGUAGE plpgsql;
 
--- ===== BLOQUE 04/13: docs/sql/compras/20261007_edicion_empresa_cotizacion.sql =====
+-- ===== BLOQUE 04/14: docs/sql/compras/20261007_edicion_empresa_cotizacion.sql =====
 -- SHA256 original (bytes): 543a3471a5666f08a3cf34789dbf14d0e5d7d88f5d53fbcc24d3abf593b8f653
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -1347,7 +1348,7 @@ END;
 $func$
 LANGUAGE plpgsql;
 
--- ===== BLOQUE 05/13: docs/sql/20261008_observacion_interna_requerimiento_compras.sql =====
+-- ===== BLOQUE 05/14: docs/sql/20261008_observacion_interna_requerimiento_compras.sql =====
 -- SHA256 original (bytes): 9acd0a0f2987059940355f8ff94be9d5b44caef7f8356ce82a818d56eb9cc5d2
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -1427,7 +1428,7 @@ END;
 $func$
 LANGUAGE plpgsql;
 
--- ===== BLOQUE 06/13: docs/sql/compras/20261013_sector_nomenclador.sql =====
+-- ===== BLOQUE 06/14: docs/sql/compras/20261013_sector_nomenclador.sql =====
 -- SHA256 original (bytes): 6c96ea89a27b6eeee6889640ee584dc56d9eb1a3dfe4230438f1a45267274c21
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -2437,7 +2438,7 @@ BEGIN
 END;
 $function$;
 
--- ===== BLOQUE 07/13: docs/sql/compras/20261013_corregir_item_antes_rp.sql =====
+-- ===== BLOQUE 07/14: docs/sql/compras/20261013_corregir_item_antes_rp.sql =====
 -- SHA256 original (bytes): 675ea6ab119d5fbe7253057e4cbd9eaa2db0c2e0324ad0b5194319bd6ca7da7b
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -2753,7 +2754,7 @@ BEGIN$nuevo$;
 END;
 $adaptar_detalle$;
 
--- ===== BLOQUE 08/13: docs/sql/compras/20261013_autorizacion_requerimiento.sql =====
+-- ===== BLOQUE 08/14: docs/sql/compras/20261013_autorizacion_requerimiento.sql =====
 -- SHA256 original (bytes): 037afb77bcc64cbe89bb11eecf37bd09c300b57736ea774ed03cdbd151c05417
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -3023,7 +3024,7 @@ END IF;
 END;
 $adaptar_trigger$;
 
--- ===== BLOQUE 09/13: docs/sql/compras/20261014_baja_vinculo_reclamo_prestacional.sql =====
+-- ===== BLOQUE 09/14: docs/sql/compras/20261014_baja_vinculo_reclamo_prestacional.sql =====
 -- SHA256 original (bytes): 837a4029b8e6ba0f05fc48a6bb839b5512bb3848a25ecdf96b588123f445f899
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -3312,7 +3313,7 @@ BEGIN
 END;
 $reconciliar$;
 
--- ===== BLOQUE 10/13: docs/sql/compras/20261015_autorizacion_orden_compra_empresas.sql =====
+-- ===== BLOQUE 10/14: docs/sql/compras/20261015_autorizacion_orden_compra_empresas.sql =====
 -- SHA256 original (bytes): d4bb68e9d8d205c41af24296f65a6901827eb748fc96cc8cb98463df823257e1
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -3899,7 +3900,7 @@ END IF;
 END;
 $adaptar_validacion$;
 
--- ===== BLOQUE 11/13: docs/sql/20261020_normalizar_drogas_compras.sql =====
+-- ===== BLOQUE 11/14: docs/sql/20261020_normalizar_drogas_compras.sql =====
 -- SHA256 original (bytes): 1beab9206638a5429b7fb64b8d0d6d57d35aaa88792b74f5e2a8130f80c09ebd
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -3946,7 +3947,7 @@ LANGUAGE plpgsql VOLATILE
 COST 100
 ROWS 1000;
 
--- ===== BLOQUE 12/13: docs/sql/compras/20261020_prestadores_visibles_autorizacion.sql =====
+-- ===== BLOQUE 12/14: docs/sql/compras/20261020_prestadores_visibles_autorizacion.sql =====
 -- SHA256 original (bytes): 6ef3136166caae03b34f216c83c37d1f211fb1e678ea0f3ad1571b453e9eed0c
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -4005,7 +4006,7 @@ BEGIN
 END;
 $prestadores_visibles$;
 
--- ===== BLOQUE 13/13: docs/sql/compras/20261021_observacion_interna_autorizador.sql =====
+-- ===== BLOQUE 13/14: docs/sql/compras/20261021_observacion_interna_autorizador.sql =====
 -- SHA256 original (bytes): dd5ab0e32b95fb67651ca04b460de72e477d30ff17fb166f66f57aacdbcda82d
 -- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
 
@@ -4049,6 +4050,85 @@ END;
 $func$
 LANGUAGE plpgsql;
 
+-- ===== BLOQUE 14/14: docs/sql/compras/20261013_insumos_diabetes_nomenclador.sql =====
+-- SHA256 original (bytes): 54ac776a1a7caf24d11c130aa152e84300dabb21295301db788d53f27ed4a61b
+-- Regla funcional confirmada por el usuario el 21/10/2026: incluir DIABETES solo 10.
+-- El encabezado historico del ejemplo se conserva como parte de la fuente original.
+-- Solo se retiraron BEGIN/COMMIT exteriores; cuerpo funcional conservado.
+
+-- EJEMPLO OPERATIVO SEPARADO, NO EJECUTADO POR CODEX.
+-- PostgreSQL 9.6. ISO-8859-1 sin BOM.
+-- SOLO ejecutar despues de confirmar funcionalmente que INSUMOS DIABETES
+-- debe buscar y guardar exclusivamente el nomenclador 10. Su nombre no
+-- implica esa regla. Este cambio NO forma parte de la migracion compatible.
+-- No modifica compras.tipo_prestacion ni public.prestador_rubro.
+-- El ID se resuelve de nuevo; NO supone que sea 6 ni el 8 observado el 13/10.
+
+-- 1. Resolver el ID real y verificar el sector antes de configurar.
+SELECT t.id_tipo_prestacion, t.descripcion, t.id_sector,
+       s.descripcion AS sector, s.activo, s.baja_fecha,
+       CASE WHEN EXISTS (
+           SELECT 1 FROM compras.sector_nomenclador c
+           WHERE c.id_sector = t.id_sector
+             AND c.id_tipo_prestacion = t.id_tipo_prestacion
+       ) THEN 'ESPECIFICA'
+         WHEN EXISTS (
+           SELECT 1 FROM compras.sector_nomenclador c
+           WHERE c.id_sector = t.id_sector AND c.id_tipo_prestacion IS NULL
+       ) THEN 'GENERAL HEREDADA' ELSE 'SIN CONFIGURACION' END AS origen
+FROM compras.tipo_prestacion t
+JOIN compras.sector_requerimiento s ON s.id_sector = t.id_sector
+WHERE compras.normalizar_sector(t.descripcion) = 'INSUMOS DIABETES';
+
+-- 2. Cambio de negocio explicito: reemplazar SU conjunto especifico por 10.
+DO $configurar_diabetes$
+DECLARE
+    v_rubro SMALLINT;
+    v_sector INTEGER;
+    v_cantidad INTEGER;
+BEGIN
+    SELECT count(*), min(t.id_tipo_prestacion), min(t.id_sector)
+    INTO v_cantidad, v_rubro, v_sector
+    FROM compras.tipo_prestacion t
+    JOIN compras.sector_requerimiento s ON s.id_sector = t.id_sector
+    WHERE compras.normalizar_sector(t.descripcion) = 'INSUMOS DIABETES'
+      AND compras.normalizar_sector(s.descripcion) = 'PRESTACIONES MEDICAS'
+      AND s.activo = TRUE AND s.baja_fecha IS NULL;
+    IF v_cantidad <> 1 THEN
+        RAISE EXCEPTION 'Se requiere un unico rubro INSUMOS DIABETES perteneciente al sector activo PRESTACIONES MEDICAS; encontrados: %.', v_cantidad;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.tipo_nomenclador WHERE id_tipo_nomenclador = 10) THEN
+        RAISE EXCEPTION 'No existe el tipo real de nomenclador 10 en el catalogo.';
+    END IF;
+    -- Elimina solo asociaciones propias de ESTE rubro. No modifica la
+    -- configuracion general, otros rubros ni prestaciones historicas.
+    DELETE FROM compras.sector_nomenclador
+    WHERE id_sector = v_sector AND id_tipo_prestacion = v_rubro;
+    INSERT INTO compras.sector_nomenclador
+        (id_sector, id_tipo_prestacion, id_tipo_nomenclador)
+    VALUES (v_sector, v_rubro, 10);
+    IF (SELECT count(*) FROM compras.resolver_sector_nomenclador(v_sector, v_rubro)) <> 1 THEN
+        RAISE EXCEPTION 'No quedo una unica asociacion efectiva para INSUMOS DIABETES.';
+    END IF;
+END;
+$configurar_diabetes$;
+
+-- 3. Confirmar el conjunto efectivo: solo 10, sin sumar el general.
+SELECT t.id_tipo_prestacion, t.descripcion, s.id_sector,
+       s.descripcion AS sector, 'ESPECIFICA'::VARCHAR AS origen,
+       c.id_tipo_nomenclador, tn.descripcion AS nomenclador,
+       c.marca_rein_liq, c.codigo_nomenclador
+FROM compras.tipo_prestacion t
+JOIN compras.sector_requerimiento s ON s.id_sector = t.id_sector
+CROSS JOIN LATERAL compras.resolver_sector_nomenclador(s.id_sector, t.id_tipo_prestacion) c
+LEFT JOIN public.tipo_nomenclador tn ON tn.id_tipo_nomenclador = c.id_tipo_nomenclador
+WHERE compras.normalizar_sector(t.descripcion) = 'INSUMOS DIABETES'
+  AND compras.normalizar_sector(s.descripcion) = 'PRESTACIONES MEDICAS'
+  AND s.activo = TRUE AND s.baja_fecha IS NULL;
+
+-- Quitar la ultima asociacion especifica volveria a heredar las generales
+-- del sector, si existen. No equivale a bloquear totalmente este rubro.
+
 -- ===== VALIDACION FINAL: dentro de la misma transaccion =====
 -- Cada funcion creada explicitamente debe conservar el cuerpo de su ultima
 -- fuente. Las adaptaciones dinamicas se verifican por sus marcadores finales.
@@ -4056,6 +4136,8 @@ DO $validacion_final_megascript$
 DECLARE
     v_faltantes TEXT;
     v_def TEXT;
+    v_cantidad_diabetes INTEGER;
+    v_tipo_diabetes INTEGER;
 BEGIN
     SELECT string_agg(esperado.firma, E'\n' ORDER BY esperado.firma)
       INTO v_faltantes
@@ -4161,6 +4243,17 @@ BEGIN
         IF position('v_fila_correccion compras.requerimiento_detalle%ROWTYPE;' IN v_def) = 0 THEN
             RAISE EXCEPTION 'No se completo la adaptacion conocida del validador de detalle.';
         END IF;
+    END IF;
+    SELECT count(*), min(c.id_tipo_nomenclador)
+      INTO v_cantidad_diabetes, v_tipo_diabetes
+      FROM compras.tipo_prestacion t
+      JOIN compras.sector_requerimiento s ON s.id_sector = t.id_sector
+      CROSS JOIN LATERAL compras.resolver_sector_nomenclador(s.id_sector, t.id_tipo_prestacion) c
+     WHERE compras.normalizar_sector(t.descripcion) = 'INSUMOS DIABETES'
+       AND compras.normalizar_sector(s.descripcion) = 'PRESTACIONES MEDICAS'
+       AND s.activo = TRUE AND s.baja_fecha IS NULL;
+    IF v_cantidad_diabetes <> 1 OR v_tipo_diabetes IS DISTINCT FROM 10 THEN
+        RAISE EXCEPTION 'INSUMOS DIABETES debe resolver exclusivamente el nomenclador 10.';
     END IF;
     RAISE NOTICE 'Controles SQL finales aprobados en %. Falta confirmar la transaccion.', current_database();
 END;

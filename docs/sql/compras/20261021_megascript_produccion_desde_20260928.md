@@ -13,11 +13,14 @@ La seleccion usa la incorporacion/modificacion en Git, no solamente la fecha
 del nombre: `20260925_cotizaciones_empresas_alta_adjudicacion.sql` entro el
 30/09/2026 en `0d91cc9c` y por eso SI esta incluido.
 
-Son **13 migraciones incrementales**. Los cuerpos funcionales y los controles
+Son **14 bloques incrementales**. La regla de INSUMOS DIABETES solo con
+nomenclador 10 fue confirmada por el usuario el 21/10/2026 e incorporada como
+bloque 14 en la revision posterior al commit `1d2d3298`.
+Los cuerpos funcionales y los controles
 originales provienen exclusivamente de `docs/sql`; no se importo codigo de
 `compras_schema.sql`, snapshots, conexiones de QA ni otras carpetas al entregable.
 Los originales no se modificaron. Se normalizaron los finales de linea a LF,
-se quitaron sus 13 pares exteriores BEGIN/COMMIT y se agregaron el encabezado,
+se quitaron sus 14 pares exteriores BEGIN/COMMIT y se agregaron el encabezado,
 la transaccion unica, el preflight y la validacion final. Los LF tambien
 conservan los fragmentos comparados por las adaptaciones dinamicas originales.
 
@@ -55,19 +58,20 @@ originales de cada archivo, antes de normalizar los finales de linea.
 
 | Bloque | Fuente | Lineas | Efecto |
 |---|---|---|---|
-| 01 | `compras/20260925_cotizaciones_empresas_alta_adjudicacion.sql` | 86-597 | Alta de cotizaciones de Empresas y adjudicacion; contrato incorporado a Git el 30/09. |
-| 02 | `20260930_buscar_medicamentos_droga_compras.sql` | 602-643 | Busqueda de medicamentos por droga; su cuerpo final se vuelve a instalar en el bloque 11. |
-| 03 | `compras/20261006_cotizaciones_identificacion_fiscal_diferida.sql` | 648-1189 | Identificacion fiscal diferida y reconstruccion del indice fiscal de Empresas. |
-| 04 | `compras/20261007_edicion_empresa_cotizacion.sql` | 1194-1349 | Edicion de Empresa sobre la misma cotizacion, conservando documento y adjudicacion. |
-| 05 | `20261008_observacion_interna_requerimiento_compras.sql` | 1354-1429 | Columna observacion_interna y sobrecarga de guardar_requerimiento de 24 argumentos. |
-| 06 | `compras/20261013_sector_nomenclador.sql` | 1434-2439 | Configuracion de nomencladores por sector/rubro y funciones de busqueda/guardado. |
-| 07 | `compras/20261013_corregir_item_antes_rp.sql` | 2444-2755 | Correccion del mismo item antes del RP y bloqueo de comparativas obsoletas. |
-| 08 | `compras/20261013_autorizacion_requerimiento.sql` | 2760-3025 | Estados 6/7, descripciones, listado y adaptacion conocida de validaciones. |
-| 09 | `compras/20261014_baja_vinculo_reclamo_prestacional.sql` | 3030-3314 | Baja logica de vinculo RP, trigger, anulacion y conciliacion de bajas anteriores. |
-| 10 | `compras/20261015_autorizacion_orden_compra_empresas.sql` | 3319-3901 | Autorizacion corporativa 1 -> 6 -> 7 -> 5 y proteccion de la ruta generica. |
-| 11 | `20261020_normalizar_drogas_compras.sql` | 3906-3948 | Busqueda por droga con normalizacion de tildes; version final del bloque 02. |
-| 12 | `compras/20261020_prestadores_visibles_autorizacion.sql` | 3953-4007 | Prestadores notificados visibles tambien en estados 6/7. |
-| 13 | `compras/20261021_observacion_interna_autorizador.sql` | 4012-4051 | Guardado exclusivo de observacion interna en requerimientos activos 1 a 7. |
+| 01 | `compras/20260925_cotizaciones_empresas_alta_adjudicacion.sql` | 87-598 | Alta de cotizaciones de Empresas y adjudicacion; contrato incorporado a Git el 30/09. |
+| 02 | `20260930_buscar_medicamentos_droga_compras.sql` | 603-644 | Busqueda de medicamentos por droga; su cuerpo final se vuelve a instalar en el bloque 11. |
+| 03 | `compras/20261006_cotizaciones_identificacion_fiscal_diferida.sql` | 649-1190 | Identificacion fiscal diferida y reconstruccion del indice fiscal de Empresas. |
+| 04 | `compras/20261007_edicion_empresa_cotizacion.sql` | 1195-1350 | Edicion de Empresa sobre la misma cotizacion, conservando documento y adjudicacion. |
+| 05 | `20261008_observacion_interna_requerimiento_compras.sql` | 1355-1430 | Columna observacion_interna y sobrecarga de guardar_requerimiento de 24 argumentos. |
+| 06 | `compras/20261013_sector_nomenclador.sql` | 1435-2440 | Configuracion de nomencladores por sector/rubro y funciones de busqueda/guardado. |
+| 07 | `compras/20261013_corregir_item_antes_rp.sql` | 2445-2756 | Correccion del mismo item antes del RP y bloqueo de comparativas obsoletas. |
+| 08 | `compras/20261013_autorizacion_requerimiento.sql` | 2761-3026 | Estados 6/7, descripciones, listado y adaptacion conocida de validaciones. |
+| 09 | `compras/20261014_baja_vinculo_reclamo_prestacional.sql` | 3031-3315 | Baja logica de vinculo RP, trigger, anulacion y conciliacion de bajas anteriores. |
+| 10 | `compras/20261015_autorizacion_orden_compra_empresas.sql` | 3320-3902 | Autorizacion corporativa 1 -> 6 -> 7 -> 5 y proteccion de la ruta generica. |
+| 11 | `20261020_normalizar_drogas_compras.sql` | 3907-3949 | Busqueda por droga con normalizacion de tildes; version final del bloque 02. |
+| 12 | `compras/20261020_prestadores_visibles_autorizacion.sql` | 3954-4008 | Prestadores notificados visibles tambien en estados 6/7. |
+| 13 | `compras/20261021_observacion_interna_autorizador.sql` | 4013-4052 | Guardado exclusivo de observacion interna en requerimientos activos 1 a 7. |
+| 14 | `compras/20261013_insumos_diabetes_nomenclador.sql` | 4059-4131 | Regla confirmada por el usuario: INSUMOS DIABETES exclusivamente con nomenclador 10. |
 
 ### SHA-256 de los originales
 
@@ -84,23 +88,32 @@ originales de cada archivo, antes de normalizar los finales de linea.
 - **11** `1beab9206638a5429b7fb64b8d0d6d57d35aaa88792b74f5e2a8130f80c09ebd`
 - **12** `6ef3136166caae03b34f216c83c37d1f211fb1e678ea0f3ad1571b453e9eed0c`
 - **13** `dd5ab0e32b95fb67651ca04b460de72e477d30ff17fb166f66f57aacdbcda82d`
+- **14** `54ac776a1a7caf24d11c130aa152e84300dabb21295301db788d53f27ed4a61b`
 
-SHA-256 del megascript final: `8323e317461c321194cb42f70864810b24f0779d64d258142eb795a4d607c221`.
+SHA-256 del megascript final: `d3d6cb1e77951a139dcd8db7d1f765d8ac7e4aa765cbf77ba7951fc7b0a9aad5`.
 
 ## Exclusiones explicitas
 
-El inventario Git desde el corte contiene 15 archivos SQL agregados o modificados:
-los 13 incluidos y estos dos casos separados:
+El inventario Git del periodo hasta el HEAD fuente contiene 15 archivos SQL
+agregados o modificados: 14 incluidos y una exclusion:
 
-1. `20261013_sector_nomenclador_consultas.sql`: consultas operativas, con su
-   propia transaccion READ ONLY/ROLLBACK. No es una migracion y no debe incrustarse
-   en una transaccion de instalacion. Puede usarse despues como consulta.
-2. `20261013_insumos_diabetes_nomenclador.sql`: su encabezado dice
-   "SOLO ejecutar despues de confirmar funcionalmente que INSUMOS DIABETES
-   debe buscar y guardar exclusivamente el nomenclador 10" y que "Este cambio
-   NO forma parte de la migracion compatible". Se conserva como ejemplo separado;
-   el consolidado mantiene la herencia general de DIABETES prevista en la
-   migracion de nomencladores. No se infiere una regla nueva de su nombre.
+`20261013_sector_nomenclador_consultas.sql`: consultas operativas, con su propia
+transaccion READ ONLY/ROLLBACK. No es una migracion y no debe incrustarse en una
+transaccion de instalacion. Puede usarse despues como consulta.
+
+### Inclusion confirmada de INSUMOS DIABETES
+
+El usuario confirmo expresamente **"Incluir INSUMOS DIABETES exclusivamente
+con nomenclador 10"**. Esa confirmacion satisface la condicion funcional
+indicada por `20261013_insumos_diabetes_nomenclador.sql`. Su encabezado historico
+se conserva intacto y el encabezado del bloque 14 aclara su inclusion autorizada.
+
+El bloque resuelve el ID real del rubro en el sector activo PRESTACIONES MEDICAS;
+no supone que su ID sea 8. Reemplaza solo las asociaciones propias de ese rubro
+por una unica asociacion al tipo 10. Su conjunto efectivo deja de sumar la
+configuracion general del sector. No modifica otros rubros, sus maestros ni
+prestaciones historicas. Si falta un rubro unico o el nomenclador 10, aborta
+toda la transaccion. La validacion final comprueba nuevamente el conjunto solo 10.
 
 Los Markdown explicativos se usaron para el alcance y las advertencias, no como
 SQL ejecutable. Los incrementales anteriores al corte y el relevamiento del 22/09
@@ -119,6 +132,10 @@ No es una migracion que solo defina funciones:
 - El bloque 09 concilia relaciones VINCULADO/ERROR cuyo RP ya tiene `baja_fecha`:
   las marca BAJA, conserva ambos IDs y registra la auditoria del RP. No cambia
   el estado del requerimiento. Ademas instala el trigger para futuras bajas.
+- El bloque 14 reemplaza las asociaciones especificas de INSUMOS DIABETES por
+  nomenclador 10. Si el rubro heredaba las generales despues del bloque 06,
+  pasa a utilizar exclusivamente esta configuracion propia. Si ya tenia
+  asociaciones propias, se reemplazan solo las suyas.
 
 El documento de autorizacion corporativa advierte que la migracion del 14/10
 no es un prerequisito automatico de la del 15/10. Aqui se incluye por su propio
@@ -137,7 +154,8 @@ ORDER BY rr.id_requerimiento, rr.id_reclamo_prestacional;
 ```
 
 El script no invoca notificaciones, reservas de envio ni correos. No modifica
-maestros de Empresas o Prestadores ni aplica el ejemplo opcional de DIABETES.
+maestros de Empresas o Prestadores. La configuracion de DIABETES integra la
+misma transaccion del resto de la entrega.
 
 ## Ejecucion controlada
 
@@ -215,7 +233,7 @@ columnas, indices, trigger de baja RP y conciliacion antes de confirmar.
 
 - **36 comprobaciones funcionales**, repetidas tambien en otra base con el
   CHECK de estados conocido y validador anterior sin la adaptacion del 14/10.
-  Cubren nomencladores y herencia de DIABETES, conciliacion, estados,
+  Cubren nomencladores y DIABETES exclusivamente con 10, conciliacion, estados,
   adjudicacion, envio/aprobacion, proteccion de la ruta generica, rechazo de
   OC anticipada y doble envio, OC idempotente, observacion interna, prestadores
   en 6/7, trigger de baja RP, anulacion, correccion de item y busqueda por droga.
@@ -227,14 +245,20 @@ columnas, indices, trigger de baja RP y conciliacion antes de confirmar.
   trigger de asociaciones activo fuera del contrato verificado y reejecucion
   sobre autorizacion corporativa instalada. En cada caso, dump identico antes
   y despues; el trigger ajeno permanece activo.
-- Cobertura exhaustiva del inventario Git: 13 migraciones incluidas y dos
-  exclusiones explicitas; huellas de todos los originales conservadas.
+- Pruebas especificas de DIABETES: busqueda y validacion limitada a 10,
+  ID real del rubro distinto de 8, reemplazo de asociaciones previas, conservacion
+  de otros rubros y rechazo/rollback si el rubro no existe o esta duplicado.
+- Cobertura exhaustiva del inventario Git hasta el HEAD fuente: 14 bloques
+  incluidos y una exclusion explicita; huellas de todos los originales conservadas.
 - ISO-8859-1 sin BOM, sin mojibake y revision de espacios/diff de los archivos.
 
-Evidencia local: `.codex/artifacts/megascript-produccion-20261021/`, con
+Evidencia inicial: `.codex/artifacts/megascript-produccion-20261021/`, con
 `instalacion.log`, `funcional.log`, `ensayo-rollback.log`, `error-tardio.log`,
 `instalacion-cabecera-previa-check.log`, `funcional-cabecera-previa-check.log`,
 `resultados.json`, `resultados-ampliados.json` y `manifest.json`.
+La nueva ejecucion completa que incluye DIABETES y sus pruebas especificas
+esta en `diabetes-confirmado/` dentro de esa carpeta; se revalidaron instalacion,
+matriz funcional, variantes de catalogo y rollback del archivo actualizado.
 Los rechazos de las pruebas negativas son resultados esperados, no instalaciones
 fallidas sobre ambientes reales. Los primeros ajustes del generador/fixture se
 resolvieron antes de ejecutar estas verificaciones finales.
