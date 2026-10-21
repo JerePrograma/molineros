@@ -168,6 +168,27 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     ? user.getScreenName()
                     : "sistema";
 
+            if ("saveObservacionInterna".equals(cmd)) {
+                validarPermisoObservacionInterna(user);
+                consumirTokenGuardadoCompra(actionRequest);
+                contextoGuardado.tokenConsumido = true;
+                String observacionInterna =
+                        getParametroRaw(actionRequest, "observacion_interna", null);
+                if (observacionInterna == null) {
+                    errorCampo("observacion_interna", "Debe informar la observación interna, aunque esté vacía.");
+                }
+                contextoGuardado.persistenciaInvocada = true;
+                requerimientoHelper.guardarObservacionInterna(
+                        idRequerimientoCompra, observacionInterna, usuario);
+                actionResponse.setRenderParameter("compras_guardado", "true");
+                actionResponse.setRenderParameter("compras_operacion", cmd);
+                setIdRequerimientoEnRequest(actionRequest, actionResponse, idRequerimientoCompra);
+                actionResponse.setRenderParameter("struts_action", "/compras/ver_requerimiento");
+                SessionMessages.add(actionRequest, "requerimiento-compra-guardado");
+                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
+                return;
+            }
+
             if ("saveEmpresaAdjudicada".equals(cmd)) {
                 validarPermisoCotizar(user);
                 consumirTokenGuardadoCompra(actionRequest);
@@ -494,7 +515,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 );
             }
 
-            if (altaOriginal && idRequerimientoCompra <= 0) {
+            if ("saveObservacionInterna".equals(cmd)) {
+                actionResponse.setRenderParameter("struts_action", "/compras/ver_requerimiento");
+                actionResponse.setRenderParameter("observacion_interna",
+                        getParametroRaw(actionRequest, "observacion_interna", ""));
+                setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
+            } else if (altaOriginal && idRequerimientoCompra <= 0) {
                 copiarParametrosOrdenesMedicas(
                         actionRequest,
                         actionResponse
@@ -1355,7 +1381,10 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     requerimiento.getDetalles()
             );
 
-            if (!soloLectura) {
+            if (!soloLectura
+                    || (requerimiento.puedeEditarObservacionInterna()
+                        && user != null
+                        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS))) {
                 generarTokenGuardadoCompra(renderRequest);
             }
         } catch (Exception e) {
@@ -1676,6 +1705,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     "permisos",
                     "No posee permisos para administrar requerimientos de compras."
             );
+        }
+    }
+
+    private void validarPermisoObservacionInterna(User user) throws Exception {
+        if (user == null) {
+            errorCampo("usuario", "No se pudo determinar el usuario actual.");
+        }
+        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)) {
+            errorCampo("permisos", "No posee permisos para editar la observación interna.");
         }
     }
 

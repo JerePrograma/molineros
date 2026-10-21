@@ -632,6 +632,12 @@ public class RequerimientoCompra {
         return WebKeysCompras.puedeEditarEstructura(getEstado()) && bajaFecha == null;
     }
 
+    public boolean puedeEditarObservacionInterna() {
+        return getIdRequerimientoCompra() > 0 && isActivo()
+                && WebKeysCompras.esEstadoValido(getEstado())
+                && !WebKeysCompras.esAnulado(getEstado());
+    }
+
     public boolean puedeEditarSurge() {
         return WebKeysCompras.puedeEditarSurge(getEstado()) && bajaFecha == null;
     }

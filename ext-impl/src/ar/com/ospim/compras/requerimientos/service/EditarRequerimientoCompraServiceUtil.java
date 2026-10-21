@@ -38,6 +38,14 @@ public class EditarRequerimientoCompraServiceUtil {
         );
     }
 
+    public static int guardarObservacionInterna(
+            int idRequerimientoCompra,
+            String observacionInterna,
+            String usuario) throws Exception {
+        return getInstance().guardarObservacionInterna(
+                idRequerimientoCompra, observacionInterna, usuario);
+    }
+
     public static int corregirItem(
             RequerimientoCompraDetalle detalle,
             String usuario) throws Exception {

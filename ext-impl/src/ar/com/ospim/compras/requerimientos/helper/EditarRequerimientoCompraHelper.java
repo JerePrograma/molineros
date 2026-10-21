@@ -83,6 +83,34 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
+    public int guardarObservacionInterna(
+            int idRequerimientoCompra,
+            String observacionInterna,
+            String usuario) throws Exception {
+        try {
+            if (idRequerimientoCompra <= 0) {
+                throw errorUsuario("Debe informar el requerimiento de compra que desea editar.");
+            }
+            RequerimientoCompra actual = BusquedaRequerimientoCompraServiceUtil
+                    .getRequerimientoCompra(idRequerimientoCompra);
+            if (actual == null || !actual.puedeEditarObservacionInterna()) {
+                throw errorUsuario("La observación interna no puede modificarse en el estado actual. "
+                        + "Actualice la pantalla.");
+            }
+            int idGuardado = EditarRequerimientoCompraServiceUtil.guardarObservacionInterna(
+                    idRequerimientoCompra, WebKeysCompras.trimToNull(observacionInterna),
+                    normalizarUsuario(usuario));
+            if (idGuardado != idRequerimientoCompra) {
+                throw new IllegalStateException("El guardado no devolvió el mismo requerimiento.");
+            }
+            return idGuardado;
+        } catch (Exception e) {
+            throw manejarErrorOperacion("guardar la observación interna",
+                    "No se pudo guardar la observación interna. Actualice la pantalla e intente nuevamente.",
+                    e, "idRequerimiento=" + idRequerimientoCompra + ", usuario=" + usuario);
+        }
+    }
+
     public int guardarRequerimientoCompra(
             RequerimientoCompra requerimiento,
             String usuario) throws Exception {

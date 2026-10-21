@@ -166,6 +166,11 @@ public class VerRequerimientoCompraAction extends PortletAction {
                 );
             }
 
+            if (requerimiento.puedeEditarObservacionInterna()
+                    && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)) {
+                RequerimientoCompraGuardadoToken.publicar(renderRequest);
+            }
+
             cargarCatalogos(
                     renderRequest
             );

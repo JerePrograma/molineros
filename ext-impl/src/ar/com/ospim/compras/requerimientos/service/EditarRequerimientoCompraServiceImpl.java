@@ -29,6 +29,9 @@ public class EditarRequerimientoCompraServiceImpl {
     private static final String SQL_GUARDAR_REQUERIMIENTO_DETALLE =
             "{call compras.guardar_requerimiento_detalle_clasificado(?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 
+    private static final String SQL_GUARDAR_OBSERVACION_INTERNA =
+            "{call compras.guardar_observacion_interna_requerimiento(?,?,?)}";
+
     private static final String SQL_CORREGIR_ITEM =
             "{call compras.corregir_item_requerimiento(?,?,?,?,?,?,?)}";
 
@@ -196,6 +199,27 @@ public class EditarRequerimientoCompraServiceImpl {
             return stmt.getInt(1);
         } finally {
             ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    public int guardarObservacionInterna(
+            int idRequerimientoCompra,
+            String observacionInterna,
+            String usuario) throws Exception {
+        Connection con = null;
+        CallableStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareCall(SQL_GUARDAR_OBSERVACION_INTERNA);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setString(2, observacionInterna);
+            stmt.setString(3, usuario);
+            rs = stmt.executeQuery();
+            return rs.next() ? rs.getInt(1) : 0;
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt, con);
         }
     }
 

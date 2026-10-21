@@ -55,6 +55,13 @@ Efectos secundarios:
     Son observaciones que se envian por correo al prestador junto al pedido de cotización.
 </div>
 
+    <%
+    boolean observacionInternaGuardadoIndependiente =
+            !puedeEditarEstructuraPantalla
+            && req.puedeEditarObservacionInterna()
+            && user != null
+            && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
+    %>
     <fieldset class="block-labels compras-observaciones">
         <legend>
             Observación interna
@@ -66,7 +73,46 @@ Efectos secundarios:
                      alt="Ayuda" />
             </a>
         </legend>
-        <% if (puedeEditarEstructuraPantalla) { %>
+        <% if (observacionInternaGuardadoIndependiente) {
+            PortletURL observacionInternaURL = renderResponse.createActionURL();
+            observacionInternaURL.setWindowState(WindowState.MAXIMIZED);
+            observacionInternaURL.setParameter("struts_action", "/compras/editar_requerimiento");
+            String observacionInternaValor = req.getObservacionInternaVisible();
+            if (ParamUtil.getBoolean(renderRequest, "compras_error", false)
+                    && "saveObservacionInterna".equals(
+                            ParamUtil.getString(renderRequest, "compras_operacion", ""))) {
+                observacionInternaValor = ParamUtil.getString(renderRequest, "observacion_interna", "");
+            }
+        %>
+        <form action="<%= observacionInternaURL.toString() %>"
+              method="post"
+              id="<portlet:namespace />observacionInternaForm"
+              onsubmit="this.elements['<portlet:namespace />btnGuardarObservacionInterna'].disabled = true;">
+            <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>"
+                   value="saveObservacionInterna" />
+            <input type="hidden" name="<portlet:namespace />id_requerimiento_compra"
+                   value="<%= req.getIdRequerimientoCompra() %>" />
+            <input type="hidden" name="<portlet:namespace />compras_save_token"
+                   value="<%= HtmlUtil.escape((String) renderRequest.getAttribute("COMPRAS_SAVE_TOKEN")) %>" />
+            <table class="lfr-table">
+                <tr>
+                    <td>
+                        <textarea id="<portlet:namespace />observacion_interna"
+                                  name="<portlet:namespace />observacion_interna"
+                                  cols="100" rows="4"><%= HtmlUtil.escape(observacionInternaValor) %></textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="submit"
+                               id="<portlet:namespace />btnGuardarObservacionInterna"
+                               name="<portlet:namespace />btnGuardarObservacionInterna"
+                               value="Guardar observación interna" />
+                    </td>
+                </tr>
+            </table>
+        </form>
+        <% } else if (puedeEditarEstructuraPantalla) { %>
         <table class="lfr-table">
             <tr>
                 <td>
