@@ -177,7 +177,7 @@ public class RequerimientoCompraDetalle {
     public String getTipoPrestacionDescripcionVisible() {
         return tipoPrestacionDescripcion != null
                 ? tipoPrestacionDescripcion
-                : "Sin clasificar (histórico)";
+                : "";
     }
 
     public void setTipoPrestacionDescripcion(

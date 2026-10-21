@@ -851,7 +851,7 @@ Efectos secundarios:
             opcionInicial.attr('value', '');
             opcionInicial.text(
                     permitirSinClasificar
-                            ? 'Sin clasificar (histórico)'
+                            ? ''
                             : 'Seleccione...'
             );
             select.append(opcionInicial);
