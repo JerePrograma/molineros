@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="requerimiento_comparativa" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
-    <style name="Celda" isDefault="true" mode="Opaque" forecolor="#000000" backcolor="#FFFFFF" fontName="Arial" fontSize="9">
+    <style name="Celda" isDefault="true" mode="Opaque" forecolor="#000000" backcolor="#FFFFFF" fontName="SansSerif" fontSize="9">
         <box padding="4"><pen lineWidth="0.5" lineColor="#000000"/></box>
     </style>
     <style name="CeldaProveedor" style="Celda">
