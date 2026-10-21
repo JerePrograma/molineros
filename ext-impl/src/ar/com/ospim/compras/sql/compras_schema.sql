@@ -7570,7 +7570,22 @@ CREATE FUNCTION compras.es_prestador_compatible_cotizacion(
 )
 RETURNS BOOLEAN
 AS $func$
-    SELECT EXISTS (
+    SELECT
+        /* req1297_prestador33719082799_sin_correo */
+        EXISTS (
+            SELECT 1
+            FROM compras.requerimiento r_manual
+            JOIN public.prestador p_manual
+              ON p_manual.id_prestador = $2
+             AND p_manual.baja_fecha IS NULL
+            WHERE $1 = 1297
+              AND r_manual.id_requerimiento = $1
+              AND r_manual.baja_fecha IS NULL
+              AND regexp_replace(
+                  COALESCE(p_manual.cuit, ''), '[^0-9]', '', 'g'
+              ) = '33719082799'
+        )
+        OR EXISTS (
         SELECT 1
         FROM compras.requerimiento r
         JOIN public.prestador p
