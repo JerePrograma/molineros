@@ -16,6 +16,8 @@ del nombre: `20260925_cotizaciones_empresas_alta_adjudicacion.sql` entro el
 Son **14 bloques incrementales**. La regla de INSUMOS DIABETES solo con
 nomenclador 10 fue confirmada por el usuario el 21/10/2026 e incorporada como
 bloque 14 en la revision posterior al commit `1d2d3298`.
+Se integra ademas el **prerrequisito 00 de comparativas del 23/09**, faltante
+en el catalogo informado por el usuario despues del commit `15c15161`.
 Los cuerpos funcionales y los controles
 originales provienen exclusivamente de `docs/sql`; no se importo codigo de
 `compras_schema.sql`, snapshots, conexiones de QA ni otras carpetas al entregable.
@@ -25,8 +27,9 @@ la transaccion unica, el preflight y la validacion final. Los LF tambien
 conservan los fragmentos comparados por las adaptaciones dinamicas originales.
 
 **Este trabajo no ejecuto el megascript ni ninguna migracion sobre la base
-del portal, QA o produccion.** Solo se usaron bases sinteticas de un cluster
-temporal propio, escuchando en `127.0.0.1:54396`.
+del portal, QA o produccion.** Solo se usaron bases sinteticas de clusters
+temporales propios, escuchando en `127.0.0.1:54396` (9.6.24) y
+`127.0.0.1:54395` (9.6.5).
 
 ## Contrato de destino
 
@@ -34,8 +37,12 @@ temporal propio, escuchando en `127.0.0.1:54396`.
   documentado el 22/09. La ejecucion en otra version/codificacion se rechaza.
 - Base existente con las tablas y funciones anteriores al corte. No es una
   instalacion desde cero ni una actualizacion universal de cualquier revision.
-- Deben existir las dos tablas de comparativas del 23/09. El script de creacion
-  del 23/09 y su duplicado sin extension son anteriores al corte y no se reejecutan.
+- El prerrequisito 00 incorpora las dos tablas de comparativas del 23/09 cuando
+  AMBAS faltan. Usa una sola vez el DDL canonico del archivo `.sql` y comprueba
+  las claves padre de requerimiento, prestador y nomenclador.
+- Si ambas tablas de comparativas existen, conserva sus datos/secuencias y
+  valida columnas, tipos, nulabilidad, PK, UNIQUE, FK y defaults. Si existe
+  solamente una o su contrato es distinto, aborta sin borrarla ni reemplazarla.
 - Los contratos originales comprueban firmas, cuerpos conocidos de funciones,
   nomencladores, rubros, sectores, columnas, indices y restricciones instaladas.
   No se quitaron ni relajaron esos controles para hacer pasar el consolidado.
@@ -58,23 +65,25 @@ originales de cada archivo, antes de normalizar los finales de linea.
 
 | Bloque | Fuente | Lineas | Efecto |
 |---|---|---|---|
-| 01 | `compras/20260925_cotizaciones_empresas_alta_adjudicacion.sql` | 87-598 | Alta de cotizaciones de Empresas y adjudicacion; contrato incorporado a Git el 30/09. |
-| 02 | `20260930_buscar_medicamentos_droga_compras.sql` | 603-644 | Busqueda de medicamentos por droga; su cuerpo final se vuelve a instalar en el bloque 11. |
-| 03 | `compras/20261006_cotizaciones_identificacion_fiscal_diferida.sql` | 649-1190 | Identificacion fiscal diferida y reconstruccion del indice fiscal de Empresas. |
-| 04 | `compras/20261007_edicion_empresa_cotizacion.sql` | 1195-1350 | Edicion de Empresa sobre la misma cotizacion, conservando documento y adjudicacion. |
-| 05 | `20261008_observacion_interna_requerimiento_compras.sql` | 1355-1430 | Columna observacion_interna y sobrecarga de guardar_requerimiento de 24 argumentos. |
-| 06 | `compras/20261013_sector_nomenclador.sql` | 1435-2440 | Configuracion de nomencladores por sector/rubro y funciones de busqueda/guardado. |
-| 07 | `compras/20261013_corregir_item_antes_rp.sql` | 2445-2756 | Correccion del mismo item antes del RP y bloqueo de comparativas obsoletas. |
-| 08 | `compras/20261013_autorizacion_requerimiento.sql` | 2761-3026 | Estados 6/7, descripciones, listado y adaptacion conocida de validaciones. |
-| 09 | `compras/20261014_baja_vinculo_reclamo_prestacional.sql` | 3031-3315 | Baja logica de vinculo RP, trigger, anulacion y conciliacion de bajas anteriores. |
-| 10 | `compras/20261015_autorizacion_orden_compra_empresas.sql` | 3320-3902 | Autorizacion corporativa 1 -> 6 -> 7 -> 5 y proteccion de la ruta generica. |
-| 11 | `20261020_normalizar_drogas_compras.sql` | 3907-3949 | Busqueda por droga con normalizacion de tildes; version final del bloque 02. |
-| 12 | `compras/20261020_prestadores_visibles_autorizacion.sql` | 3954-4008 | Prestadores notificados visibles tambien en estados 6/7. |
-| 13 | `compras/20261021_observacion_interna_autorizador.sql` | 4013-4052 | Guardado exclusivo de observacion interna en requerimientos activos 1 a 7. |
-| 14 | `compras/20261013_insumos_diabetes_nomenclador.sql` | 4059-4131 | Regla confirmada por el usuario: INSUMOS DIABETES exclusivamente con nomenclador 10. |
+| 00 | `compras/20260923_requerimiento_comparativa.sql` | Antes del bloque 01 | Dependencia anterior al corte: crear ambas comparativas solo si faltan; conservar y validar si existen. |
+| 01 | `compras/20260925_cotizaciones_empresas_alta_adjudicacion.sql` | 275-786 | Alta de cotizaciones de Empresas y adjudicacion; contrato incorporado a Git el 30/09. |
+| 02 | `20260930_buscar_medicamentos_droga_compras.sql` | 791-832 | Busqueda de medicamentos por droga; su cuerpo final se vuelve a instalar en el bloque 11. |
+| 03 | `compras/20261006_cotizaciones_identificacion_fiscal_diferida.sql` | 837-1378 | Identificacion fiscal diferida y reconstruccion del indice fiscal de Empresas. |
+| 04 | `compras/20261007_edicion_empresa_cotizacion.sql` | 1383-1538 | Edicion de Empresa sobre la misma cotizacion, conservando documento y adjudicacion. |
+| 05 | `20261008_observacion_interna_requerimiento_compras.sql` | 1543-1618 | Columna observacion_interna y sobrecarga de guardar_requerimiento de 24 argumentos. |
+| 06 | `compras/20261013_sector_nomenclador.sql` | 1623-2628 | Configuracion de nomencladores por sector/rubro y funciones de busqueda/guardado. |
+| 07 | `compras/20261013_corregir_item_antes_rp.sql` | 2633-2944 | Correccion del mismo item antes del RP y bloqueo de comparativas obsoletas. |
+| 08 | `compras/20261013_autorizacion_requerimiento.sql` | 2949-3214 | Estados 6/7, descripciones, listado y adaptacion conocida de validaciones. |
+| 09 | `compras/20261014_baja_vinculo_reclamo_prestacional.sql` | 3219-3503 | Baja logica de vinculo RP, trigger, anulacion y conciliacion de bajas anteriores. |
+| 10 | `compras/20261015_autorizacion_orden_compra_empresas.sql` | 3508-4090 | Autorizacion corporativa 1 -> 6 -> 7 -> 5 y proteccion de la ruta generica. |
+| 11 | `20261020_normalizar_drogas_compras.sql` | 4095-4137 | Busqueda por droga con normalizacion de tildes; version final del bloque 02. |
+| 12 | `compras/20261020_prestadores_visibles_autorizacion.sql` | 4142-4196 | Prestadores notificados visibles tambien en estados 6/7. |
+| 13 | `compras/20261021_observacion_interna_autorizador.sql` | 4201-4240 | Guardado exclusivo de observacion interna en requerimientos activos 1 a 7. |
+| 14 | `compras/20261013_insumos_diabetes_nomenclador.sql` | 4247-4319 | Regla confirmada por el usuario: INSUMOS DIABETES exclusivamente con nomenclador 10. |
 
 ### SHA-256 de los originales
 
+- **00** `c2155fe158a3d1aa346703a3a8c01dde792197744d2a4350af62921a02acec2b`
 - **01** `8e2a233f65a4cf29cdd3e05b92dc92a1c699543edeaef4805782be6b44b1b522`
 - **02** `9fe11339879a73a8fd35c1e5cf396ff8e86c4eec19fa9388f96a3d49299d2359`
 - **03** `8f463fa7ad7bad05bd4edc4dedf6b00e499eb4332719121ea6599a18ab0e7133`
@@ -90,7 +99,7 @@ originales de cada archivo, antes de normalizar los finales de linea.
 - **13** `dd5ab0e32b95fb67651ca04b460de72e477d30ff17fb166f66f57aacdbcda82d`
 - **14** `54ac776a1a7caf24d11c130aa152e84300dabb21295301db788d53f27ed4a61b`
 
-SHA-256 del megascript final: `d3d6cb1e77951a139dcd8db7d1f765d8ac7e4aa765cbf77ba7951fc7b0a9aad5`.
+SHA-256 del megascript final: `e90886fc863c52f6230cb2e5321efc4f0a93027287ea6452c79e6e6b4bf6a8a6`.
 
 ## Exclusiones explicitas
 
@@ -116,8 +125,10 @@ prestaciones historicas. Si falta un rubro unico o el nomenclador 10, aborta
 toda la transaccion. La validacion final comprueba nuevamente el conjunto solo 10.
 
 Los Markdown explicativos se usaron para el alcance y las advertencias, no como
-SQL ejecutable. Los incrementales anteriores al corte y el relevamiento del 22/09
-no se reinstalan. No se importan reparaciones manuales de datos de otras carpetas
+SQL ejecutable. La unica dependencia anterior al corte incorporada es el DDL
+de comparativas del 23/09; los otros incrementales previos y el relevamiento
+del 22/09 no se reinstalan. El duplicado sin extension del SQL23 no se ejecuta.
+No se importan reparaciones manuales de datos de otras carpetas
 o conversaciones. Los cambios de Java/JSP, reportes, documentos y permisos del
 portal no se despliegan por ejecutar SQL.
 
@@ -125,6 +136,8 @@ portal no se despliegan por ejecutar SQL.
 
 No es una migracion que solo defina funciones:
 
+- El prerrequisito 00 crea dos tablas vacias y sus secuencias/PK/UNIQUE/FK
+  solamente si ambas faltan. No carga datos ni modifica las tablas padre.
 - El bloque 06 crea `compras.sector_nomenclador` y carga la configuracion inicial
   solo si no existe. Si existe con el contrato reconocido, conserva la
   configuracion y no restaura asociaciones que se hayan quitado. La carga
@@ -202,6 +215,32 @@ if ($LASTEXITCODE -ne 0) { throw 'Migracion fallida: revisar el primer ERROR del
 El consolidado tiene una unica transaccion y un bloqueo asesor por base para
 evitar dos ejecuciones simultaneas del mismo archivo. Si falla cualquier bloque
 o control final, no puede confirmarse una instalacion parcial de los anteriores.
+Eso incluye las tablas y secuencias creadas por el prerrequisito 00: un error
+posterior tambien revierte esa creacion. No aplicar SQL23 por separado como
+atajo para quitar el error del preflight.
+
+### Diagnostico que motivo incorporar el prerrequisito 00
+
+El usuario aporto una lectura de `devmolineros`, PostgreSQL 9.6.5, UTF8:
+5 cuerpos finales coincidentes, 8 diferentes y 13 funciones ausentes. Tambien
+faltaban ambas comparativas, la tabla de configuracion, las cuatro columnas
+nuevas, el trigger y dos indices de la entrega. Ese estado no corresponde
+a la instalacion completa del consolidado. No es una diferencia de formato.
+
+La version inicial exigia las comparativas ya instaladas y, en ese estado,
+su preflight se detenia antes del bloque 01. No se puede reconstruir que
+seleccion/archivo se ejecuto originalmente solo desde el mensaje generico de
+exito del cliente. El diagnostico actual no demuestra que se haya confirmado
+la transaccion completa ni que las cinco coincidencias provengan de esa ejecucion.
+
+Se identificaron los ocho hashes diferentes como versiones anteriores conocidas:
+anulacion (18/09), baja de cotizacion y registro de presupuesto (27/08),
+confirmacion de OC (01/09), cambio de autorizacion (13/10), ambos guardados de
+detalle y listado batch de relaciones RP anteriores a sus respectivas revisiones.
+En particular, `74ed87bb5dd09b0f1dac72b9683bc159` y
+`f2eca47dd6573aae231c0a061634e143` son los contratos de detalle expresamente
+admitidos por el SQL de nomencladores. Se conservan todos los controles;
+no se fuerza la instalacion sobre cuerpos desconocidos.
 
 ### Errores, reejecucion y reversa
 
@@ -221,8 +260,10 @@ o control final, no puede confirmarse una instalacion parcial de los anteriores.
 
 ## Validacion ejecutada el 21/10/2026
 
-**PostgreSQL 9.6.24 real**, temporal y aislado, base UTF8 y cliente LATIN1.
-Se uso el paquete binario Windows x64 de PostgreSQL distribuido por EDB,
+**PostgreSQL 9.6.24 y PostgreSQL 9.6.5 reales**, temporales y aislados, base UTF8
+y cliente LATIN1. La revision del prerrequisito se ejecuto tambien en 9.6.5,
+la misma version informada por el usuario. Se usaron paquetes binarios Windows
+x64 de PostgreSQL distribuidos por EDB,
 extraido solo en `.codex/artifacts/megascript-produccion-20261021/`.
 No se instalo un servicio ni se cambio la instalacion de PostgreSQL del equipo.
 
@@ -250,6 +291,15 @@ columnas, indices, trigger de baja RP y conciliacion antes de confirmar.
   de otros rubros y rechazo/rollback si el rubro no existe o esta duplicado.
 - Cobertura exhaustiva del inventario Git hasta el HEAD fuente: 14 bloques
   incluidos y una exclusion explicita; huellas de todos los originales conservadas.
+- Prerrequisito 00: instalacion completa con ambas comparativas ausentes,
+  conservacion de IDs e importes existentes, rollback hasta eliminar tambien
+  sus tablas/secuencias nuevas y rechazo no destructivo de instalacion parcial,
+  FK/defaults desconocidos, SERIAL sin default, UNIQUE y defaults adicionales.
+- Reproduccion sintetica en 9.6.5 de los 26 estados de funcion informados:
+  5 coincidentes, 8 cuerpos anteriores y 13 ausentes, sin ambas comparativas.
+  Desde ese punto, el archivo completo llego a COMMIT, el control de solo
+  lectura en una conexion nueva devolvio APROBADO y pasaron los 36 controles
+  funcionales. No se copiaron los datos de la base real.
 - ISO-8859-1 sin BOM, sin mojibake y revision de espacios/diff de los archivos.
 
 Evidencia inicial: `.codex/artifacts/megascript-produccion-20261021/`, con
@@ -259,6 +309,16 @@ Evidencia inicial: `.codex/artifacts/megascript-produccion-20261021/`, con
 La nueva ejecucion completa que incluye DIABETES y sus pruebas especificas
 esta en `diabetes-confirmado/` dentro de esa carpeta; se revalidaron instalacion,
 matriz funcional, variantes de catalogo y rollback del archivo actualizado.
+La revision que incorpora el prerrequisito 00 agrega evidencia en
+`prerrequisito-comparativas/` dentro de esa misma carpeta.
+La ejecucion equivalente en PostgreSQL 9.6.5 esta en
+`prerrequisito-comparativas-965/`; ambos conjuntos verifican las mismas ramas
+de creacion, preservacion y rechazo/rollback del nuevo prerrequisito.
+El ensayo desde los contratos informados se registra en esa ultima carpeta:
+`resultado-catalogo-informado.json`, `diagnostico-antes-informado.log`,
+`instalacion-desde-contratos-informados.log`,
+`verificacion-desde-contratos-informados.log` y
+`funcional-desde-contratos-informados.log`.
 Los rechazos de las pruebas negativas son resultados esperados, no instalaciones
 fallidas sobre ambientes reales. Los primeros ajustes del generador/fixture se
 resolvieron antes de ejecutar estas verificaciones finales.
@@ -266,10 +326,11 @@ resolvieron antes de ejecutar estas verificaciones finales.
 Las estructuras/datos de la prueba son sinteticos y las funciones previas usan
 capturas locales ya disponibles. Hay dobles limitados para el padron de Empresas,
 documentos, compatibilidad/emails de prestadores y tipos externos. Esos soportes
-no se incorporaron al megascript. La prueba acredita ejecucion SQL en 9.6.24;
+no se incorporaron al megascript. La prueba acredita ejecucion SQL en 9.6.24 y 9.6.5;
 no acredita el padron real, Document Library, SMTP, roles efectivos ni el portal.
-No se ejecuto exactamente el parche 9.6.5; se uso solamente sintaxis disponible
-en la rama 9.6 y se conservaron los cuerpos fuente previstos para esa rama.
+Se uso solamente sintaxis disponible en la rama 9.6 y se conservaron los cuerpos
+fuente previstos para esa rama. Los servidores temporales escucharon solamente
+en loopback; la prueba 9.6.5 uso el puerto 54395 y no la direccion real informada.
 
 No hubo build Java/JSP ni despliegue porque los unicos archivos de producto
 agregados son SQL y esta guia. La preparacion y el push de estos archivos no

@@ -10,7 +10,8 @@
 -- No es instalador desde cero ni actualizador universal de revisiones posteriores.
 -- El 25/09 se incluye porque se incorporo a Git el 30/09 (0d91cc9c).
 -- INSUMOS DIABETES solo nomenclador 10: confirmado por el usuario el 21/10/2026.
--- Se excluyen consultas y esquema completo; los prerrequisitos previos deben existir.
+-- Se integra como prerrequisito 00 el SQL de comparativas del 23/09 si falta.
+-- Se excluyen consultas y esquema completo; el resto del contrato previo debe existir.
 -- Efectos de datos heredados: carga inicial sector_nomenclador (13/10) y
 -- conciliacion de relaciones VINCULADO/ERROR de RP ya dados de baja (14/10).
 -- El bloque 14 reemplaza solo las asociaciones especificas de INSUMOS DIABETES.
@@ -43,8 +44,7 @@ BEGIN
         ('compras.requerimiento'), ('compras.requerimiento_detalle'),
         ('compras.requerimiento_presupuesto'), ('compras.requerimiento_cotizacion_prestador'),
         ('compras.requerimiento_reclamo_prestacional'), ('compras.sector_requerimiento'),
-        ('compras.tipo_prestacion'), ('compras.requerimiento_comparativa'),
-        ('compras.requerimiento_comparativa_detalle'), ('autorizaciones.reclamos_prestacionales'),
+        ('compras.tipo_prestacion'), ('public.prestador'), ('autorizaciones.reclamos_prestacionales'),
         ('autorizaciones.nomenclador'), ('public.tipo_nomenclador'), ('public.medicamentos')
     ) AS necesarios(objeto)
     WHERE to_regclass(objeto) IS NULL;
@@ -79,6 +79,194 @@ $preflight_megascript$;
 
 SELECT current_database() AS base_objetivo, current_user AS usuario_ejecutor,
        version() AS version_postgresql, now() AS inicio_transaccion;
+
+-- ===== PRERREQUISITO 00: docs/sql/compras/20260923_requerimiento_comparativa.sql =====
+-- SHA256 original (bytes): c2155fe158a3d1aa346703a3a8c01dde792197744d2a4350af62921a02acec2b
+-- Dependencia anterior al corte, faltante en el catalogo informado por el usuario.
+-- El duplicado sin extension tiene el mismo DDL; solo se incluye esta fuente.
+-- Crear ambas tablas vacias si faltan; conservar y validar si ya existen.
+DO $prerrequisito_comparativas$
+DECLARE
+    v_cabecera REGCLASS := to_regclass('compras.requerimiento_comparativa');
+    v_detalle REGCLASS := to_regclass('compras.requerimiento_comparativa_detalle');
+    v_faltantes TEXT;
+BEGIN
+    IF (v_cabecera IS NULL) <> (v_detalle IS NULL) THEN
+        RAISE EXCEPTION 'Comparativas parcialmente instaladas: existe solo una de las dos tablas.'
+            USING HINT = 'Relevar la tabla existente. No borrarla ni sobrescribirla para continuar.';
+    END IF;
+
+    SELECT string_agg(x.tabla || '.' || x.columna, E'\n' ORDER BY x.tabla)
+      INTO v_faltantes
+      FROM (VALUES ('compras.requerimiento','id_requerimiento'),
+                   ('public.prestador','id_prestador'),
+                   ('autorizaciones.nomenclador','id_prestacion')) x(tabla,columna)
+      LEFT JOIN pg_attribute a ON a.attrelid=to_regclass(x.tabla)
+           AND a.attname=x.columna AND NOT a.attisdropped
+     WHERE a.attname IS NULL OR NOT EXISTS (
+         SELECT 1 FROM pg_index i
+         WHERE i.indrelid=to_regclass(x.tabla)
+           AND i.indisunique AND i.indisvalid AND i.indisready AND i.indimmediate
+           AND i.indpred IS NULL AND i.indexprs IS NULL
+           AND i.indnatts=1 AND i.indkey[0]=a.attnum
+     );
+    IF v_faltantes IS NOT NULL THEN
+        RAISE EXCEPTION 'Faltan claves padre referenciables para las comparativas del 23/09.'
+            USING DETAIL=v_faltantes;
+    END IF;
+
+    IF v_cabecera IS NULL AND v_detalle IS NULL THEN
+-- INICIO DDL ORIGINAL 20260923 (sin modificaciones).
+-- Comparativa vigente por requerimiento y prestador.
+CREATE TABLE compras.requerimiento_comparativa (
+    id_comparativa SERIAL PRIMARY KEY,
+    id_requerimiento INTEGER NOT NULL REFERENCES compras.requerimiento (id_requerimiento),
+    id_prestador INTEGER NOT NULL REFERENCES public.prestador (id_prestador),
+    fecha_presupuesto DATE,
+    forma_pago INTEGER NOT NULL DEFAULT 30,
+    plazo_entrega VARCHAR(5),
+    validez_presupuesto INTEGER,
+    envio VARCHAR(20),
+    iva NUMERIC(18,2),
+    iibb NUMERIC(18,2),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL,
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    CONSTRAINT uq_compras_comparativa_prestador UNIQUE (id_requerimiento, id_prestador)
+);
+
+CREATE TABLE compras.requerimiento_comparativa_detalle (
+    id_detalle SERIAL PRIMARY KEY,
+    id_comparativa INTEGER NOT NULL REFERENCES compras.requerimiento_comparativa (id_comparativa),
+    id_prestacion INTEGER NOT NULL REFERENCES autorizaciones.nomenclador (id_prestacion),
+    cantidad INTEGER,
+    importe_unitario NUMERIC(18,2),
+    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    alta_usr VARCHAR(100) NOT NULL,
+    modi_fecha TIMESTAMP WITHOUT TIME ZONE,
+    modi_usr VARCHAR(100),
+    CONSTRAINT uq_compras_comparativa_prestacion UNIQUE (id_comparativa, id_prestacion)
+);
+
+-- FIN DDL ORIGINAL 20260923.
+        RAISE NOTICE 'Comparativas del 23/09 creadas vacias dentro de la transaccion de instalacion.';
+    ELSE
+        RAISE NOTICE 'Comparativas existentes: se conservan sus tablas, secuencias y datos.';
+    END IF;
+
+    -- Comprobar el contrato completo de columnas de la fuente, sin cambiarlo.
+    SELECT string_agg(x.tabla || '.' || x.columna, E'
+' ORDER BY x.tabla,x.columna)
+      INTO v_faltantes
+      FROM (VALUES
+        ('compras.requerimiento_comparativa','id_comparativa','integer',-1,TRUE),
+        ('compras.requerimiento_comparativa','id_requerimiento','integer',-1,TRUE),
+        ('compras.requerimiento_comparativa','id_prestador','integer',-1,TRUE),
+        ('compras.requerimiento_comparativa','fecha_presupuesto','date',-1,FALSE),
+        ('compras.requerimiento_comparativa','forma_pago','integer',-1,TRUE),
+        ('compras.requerimiento_comparativa','plazo_entrega','character varying',9,FALSE),
+        ('compras.requerimiento_comparativa','validez_presupuesto','integer',-1,FALSE),
+        ('compras.requerimiento_comparativa','envio','character varying',24,FALSE),
+        ('compras.requerimiento_comparativa','iva','numeric',1179654,FALSE),
+        ('compras.requerimiento_comparativa','iibb','numeric',1179654,FALSE),
+        ('compras.requerimiento_comparativa','alta_fecha','timestamp without time zone',-1,TRUE),
+        ('compras.requerimiento_comparativa','alta_usr','character varying',104,TRUE),
+        ('compras.requerimiento_comparativa','modi_fecha','timestamp without time zone',-1,FALSE),
+        ('compras.requerimiento_comparativa','modi_usr','character varying',104,FALSE),
+        ('compras.requerimiento_comparativa_detalle','id_detalle','integer',-1,TRUE),
+        ('compras.requerimiento_comparativa_detalle','id_comparativa','integer',-1,TRUE),
+        ('compras.requerimiento_comparativa_detalle','id_prestacion','integer',-1,TRUE),
+        ('compras.requerimiento_comparativa_detalle','cantidad','integer',-1,FALSE),
+        ('compras.requerimiento_comparativa_detalle','importe_unitario','numeric',1179654,FALSE),
+        ('compras.requerimiento_comparativa_detalle','alta_fecha','timestamp without time zone',-1,TRUE),
+        ('compras.requerimiento_comparativa_detalle','alta_usr','character varying',104,TRUE),
+        ('compras.requerimiento_comparativa_detalle','modi_fecha','timestamp without time zone',-1,FALSE),
+        ('compras.requerimiento_comparativa_detalle','modi_usr','character varying',104,FALSE)
+      ) x(tabla,columna,tipo,modificador,obligatorio)
+      LEFT JOIN pg_attribute a ON a.attrelid=to_regclass(x.tabla)
+           AND a.attname=x.columna AND NOT a.attisdropped
+     WHERE a.attname IS NULL OR a.atttypid<>to_regtype(x.tipo)
+        OR a.atttypmod<>x.modificador OR a.attnotnull<>x.obligatorio;
+    IF v_faltantes IS NOT NULL THEN
+        RAISE EXCEPTION 'Contrato de columnas de comparativas distinto del SQL 23/09.'
+            USING DETAIL=v_faltantes;
+    END IF;
+
+    IF (SELECT count(*) FROM pg_attribute
+        WHERE attrelid=to_regclass('compras.requerimiento_comparativa') AND attnum>0 AND NOT attisdropped)<>14
+       OR (SELECT count(*) FROM pg_attribute
+        WHERE attrelid=to_regclass('compras.requerimiento_comparativa_detalle') AND attnum>0 AND NOT attisdropped)<>9
+       OR EXISTS (SELECT 1 FROM pg_class
+          WHERE oid IN(to_regclass('compras.requerimiento_comparativa'),to_regclass('compras.requerimiento_comparativa_detalle'))
+            AND relkind<>'r')
+       OR pg_get_serial_sequence('compras.requerimiento_comparativa','id_comparativa') IS NULL
+       OR pg_get_serial_sequence('compras.requerimiento_comparativa_detalle','id_detalle') IS NULL THEN
+        RAISE EXCEPTION 'Estructura o secuencias de comparativas distintas del SQL 23/09.';
+    END IF;
+
+    -- PK/UNIQUE y FK con las mismas columnas, sin depender del nombre generado.
+    SELECT string_agg(x.tabla || '(' || x.columnas || ')', E'
+' ORDER BY x.tabla,x.columnas)
+      INTO v_faltantes
+      FROM (VALUES
+        ('compras.requerimiento_comparativa','p','id_comparativa',NULL::TEXT,NULL::TEXT),
+        ('compras.requerimiento_comparativa','u','id_requerimiento,id_prestador',NULL,NULL),
+        ('compras.requerimiento_comparativa','f','id_requerimiento','compras.requerimiento','id_requerimiento'),
+        ('compras.requerimiento_comparativa','f','id_prestador','public.prestador','id_prestador'),
+        ('compras.requerimiento_comparativa_detalle','p','id_detalle',NULL,NULL),
+        ('compras.requerimiento_comparativa_detalle','u','id_comparativa,id_prestacion',NULL,NULL),
+        ('compras.requerimiento_comparativa_detalle','f','id_comparativa','compras.requerimiento_comparativa','id_comparativa'),
+        ('compras.requerimiento_comparativa_detalle','f','id_prestacion','autorizaciones.nomenclador','id_prestacion')
+      ) x(tabla,tipo,columnas,padre,claves_padre)
+     WHERE NOT EXISTS (
+        SELECT 1 FROM pg_constraint c
+        WHERE c.conrelid=to_regclass(x.tabla) AND c.contype::TEXT=x.tipo
+          AND c.convalidated AND NOT c.condeferrable
+          AND c.conkey=(SELECT array_agg(a.attnum ORDER BY k.orden)
+              FROM unnest(string_to_array(x.columnas,',')) WITH ORDINALITY k(nombre,orden)
+              JOIN pg_attribute a ON a.attrelid=to_regclass(x.tabla) AND a.attname=k.nombre AND NOT a.attisdropped)
+          AND (x.padre IS NULL OR (
+              c.confrelid=to_regclass(x.padre)
+              AND c.confkey=(SELECT array_agg(a.attnum ORDER BY k.orden)
+                  FROM unnest(string_to_array(x.claves_padre,',')) WITH ORDINALITY k(nombre,orden)
+                  JOIN pg_attribute a ON a.attrelid=to_regclass(x.padre) AND a.attname=k.nombre AND NOT a.attisdropped)
+              AND c.confupdtype='a' AND c.confdeltype='a' AND c.confmatchtype='s'
+          ))
+     );
+    IF v_faltantes IS NOT NULL THEN
+        RAISE EXCEPTION 'Claves o relaciones de comparativas distintas del SQL 23/09.' USING DETAIL=v_faltantes;
+    END IF;
+
+    IF (SELECT count(*) FROM pg_constraint
+        WHERE conrelid IN(to_regclass('compras.requerimiento_comparativa'),to_regclass('compras.requerimiento_comparativa_detalle')))<>8 THEN
+        RAISE EXCEPTION 'Comparativas con restricciones adicionales al contrato 23/09. Relevar sin desactivarlas.';
+    END IF;
+
+    IF EXISTS(SELECT 1 FROM (VALUES
+            ('compras.requerimiento_comparativa','id_comparativa'),
+            ('compras.requerimiento_comparativa_detalle','id_detalle')) x(tabla,columna)
+        WHERE NOT EXISTS(SELECT 1 FROM pg_attrdef d JOIN pg_attribute a ON a.attrelid=d.adrelid AND a.attnum=d.adnum
+            WHERE d.adrelid=to_regclass(x.tabla) AND a.attname=x.columna
+              AND pg_get_expr(d.adbin,d.adrelid)=format('nextval(%L::regclass)',to_regclass(pg_get_serial_sequence(x.tabla,x.columna))::TEXT))) THEN
+        RAISE EXCEPTION 'Default SERIAL de comparativas distinto de su secuencia asociada. Relevar sin modificarlo.';
+    END IF;
+
+    IF NOT EXISTS(SELECT 1 FROM pg_attrdef d JOIN pg_attribute a ON a.attrelid=d.adrelid AND a.attnum=d.adnum
+        WHERE d.adrelid=to_regclass('compras.requerimiento_comparativa') AND a.attname='forma_pago'
+          AND regexp_replace(pg_get_expr(d.adbin,d.adrelid),'[[:space:]()]','','g')='30')
+       OR EXISTS(SELECT 1 FROM (VALUES ('compras.requerimiento_comparativa'),('compras.requerimiento_comparativa_detalle')) x(tabla)
+          WHERE NOT EXISTS(SELECT 1 FROM pg_attrdef d JOIN pg_attribute a ON a.attrelid=d.adrelid AND a.attnum=d.adnum
+              WHERE d.adrelid=to_regclass(x.tabla) AND a.attname='alta_fecha'
+                AND lower(regexp_replace(pg_get_expr(d.adbin,d.adrelid),'[[:space:]]','','g'))='now()')) THEN
+        RAISE EXCEPTION 'Valores por defecto de comparativas distintos del SQL 23/09.';
+    END IF;
+    IF (SELECT count(*) FROM pg_attrdef
+        WHERE adrelid IN(to_regclass('compras.requerimiento_comparativa'),to_regclass('compras.requerimiento_comparativa_detalle')))<>5 THEN
+        RAISE EXCEPTION 'Comparativas con valores por defecto adicionales al SQL 23/09.';
+    END IF;
+END;
+$prerrequisito_comparativas$;
 
 -- ===== BLOQUE 01/14: docs/sql/compras/20260925_cotizaciones_empresas_alta_adjudicacion.sql =====
 -- SHA256 original (bytes): 8e2a233f65a4cf29cdd3e05b92dc92a1c699543edeaef4805782be6b44b1b522
@@ -4189,7 +4377,9 @@ BEGIN
         WHERE attrelid = 'compras.requerimiento_reclamo_prestacional'::REGCLASS
           AND attname = 'baja_usr' AND atttypid = 'character varying'::REGTYPE
           AND atttypmod = 104 AND NOT attisdropped)
-       OR to_regclass('compras.sector_nomenclador') IS NULL THEN
+       OR to_regclass('compras.sector_nomenclador') IS NULL
+       OR to_regclass('compras.requerimiento_comparativa') IS NULL
+       OR to_regclass('compras.requerimiento_comparativa_detalle') IS NULL THEN
         RAISE EXCEPTION 'No se completo el contrato de columnas/tablas de la entrega.';
     END IF;
 
