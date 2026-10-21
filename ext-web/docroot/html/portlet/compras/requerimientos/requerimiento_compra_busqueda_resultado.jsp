@@ -123,6 +123,44 @@ if (totalPaginas > 0) {
                 <% } %>
             </select>
         </td>
+        <td>
+            <div class="search-pages">
+                <div class="page-links">
+                    <c:choose>
+                        <c:when test="<%= paginaActual > 1 %>">
+                            <a class="first" href="javascript:void(0)" onclick="return <portlet:namespace />buscarRequerimientos(1);"><liferay-ui:message key="first" /></a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="first"><liferay-ui:message key="first" /></span>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:choose>
+                        <c:when test="<%= paginaActual > 1 %>">
+                            <a class="previous" href="javascript:void(0)" onclick="return <portlet:namespace />buscarRequerimientos(<%= paginaActual - 1 %>);"><liferay-ui:message key="previous" /></a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="previous"><liferay-ui:message key="previous" /></span>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:choose>
+                        <c:when test="<%= paginaActual < totalPaginas %>">
+                            <a class="next" href="javascript:void(0)" onclick="return <portlet:namespace />buscarRequerimientos(<%= paginaActual + 1 %>);"><liferay-ui:message key="next" /></a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="next"><liferay-ui:message key="next" /></span>
+                        </c:otherwise>
+                    </c:choose>
+                    <c:choose>
+                        <c:when test="<%= paginaActual < totalPaginas %>">
+                            <a class="last" href="javascript:void(0)" onclick="return <portlet:namespace />buscarRequerimientos(<%= totalPaginas %>);"><liferay-ui:message key="last" /></a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="last"><liferay-ui:message key="last" /></span>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+        </td>
     </tr>
 </table>
 <% } %>
