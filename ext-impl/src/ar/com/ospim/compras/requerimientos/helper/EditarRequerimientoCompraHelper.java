@@ -965,12 +965,7 @@ public class EditarRequerimientoCompraHelper {
             detalle.setTroquel(null);
             detalle.setNombreMedicamento(null);
             validarDetalleNomencladorParaGuardar(requerimiento, persistido, detalle);
-            for (RequerimientoCompraDetalle otro : requerimiento.getDetalles()) {
-                if (otro != null && otro.getIdInt() != persistido.getIdInt()
-                        && mismoInteger(otro.getIdPrestacion(), detalle.getIdPrestacion())) {
-                    throw errorUsuario("La prestación seleccionada ya está incluida en el requerimiento.");
-                }
-            }
+            validarPrestacionNoRepetida(requerimiento, persistido, detalle);
             int idGuardado = EditarRequerimientoCompraServiceUtil.corregirItem(
                     detalle, normalizarUsuario(usuario));
             if (idGuardado != persistido.getIdInt()) {
@@ -1035,6 +1030,8 @@ public class EditarRequerimientoCompraHelper {
                     detalle,
                     true
             );
+
+            validarPrestacionNoRepetida(requerimiento, detallePersistido, detalle);
 
             /*
              * Un detalle NUEVO puede completar posteriormente
@@ -2162,6 +2159,28 @@ private void aplicarReglaSectorSinAfiliado(
             requerimiento.getCargoTercerizadora() != null
                     && requerimiento.getCargoTercerizadora().intValue() > 0
     );
+}
+
+private void validarPrestacionNoRepetida(
+        RequerimientoCompra requerimiento,
+        RequerimientoCompraDetalle persistido,
+        RequerimientoCompraDetalle detalle) throws Exception {
+
+    if (!detalle.esNomenclador() || requerimiento.getDetalles() == null) {
+        return;
+    }
+    String codigo = WebKeysCompras.trimToNull(detalle.getCodigoNomenclador());
+    for (RequerimientoCompraDetalle otro : requerimiento.getDetalles()) {
+        if (otro == null || (persistido != null
+                && otro.getIdInt() == persistido.getIdInt())) {
+            continue;
+        }
+        if ((detalle.getIdPrestacion() != null
+                && mismoInteger(otro.getIdPrestacion(), detalle.getIdPrestacion()))
+                || (codigo != null && mismoTexto(codigo, otro.getCodigoNomenclador()))) {
+            throw errorUsuario("El código de prestación ya está incluido en el requerimiento.");
+        }
+    }
 }
 
 private boolean mismoTexto(String a, String b) {

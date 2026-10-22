@@ -1485,6 +1485,25 @@ Efectos secundarios:
             return false;
         }
 
+        if (detalle.tipoItem == 'NOMENCLADOR') {
+            var editIndex = parseInt(
+                    jQuery('#<portlet:namespace />detalle_edit_index').val(), 10);
+            var codigo = jQuery.trim(detalle.codigoNomenclador).toUpperCase();
+            for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
+                var otro = <portlet:namespace />detallesCompra[i];
+                if (!otro || i == editIndex) {
+                    continue;
+                }
+                if ((<portlet:namespace />esEnteroPositivo(otro.idPrestacion)
+                        && parseInt(otro.idPrestacion, 10) == parseInt(detalle.idPrestacion, 10))
+                        || (codigo != '' && codigo == jQuery.trim(
+                                <portlet:namespace />detalleValue(otro.codigoNomenclador)).toUpperCase())) {
+                    alert('El código de prestación ya está incluido en el requerimiento.');
+                    return false;
+                }
+            }
+        }
+
         if (!<portlet:namespace />esEnteroPositivo(
                 detalle.cantidad
         )) {

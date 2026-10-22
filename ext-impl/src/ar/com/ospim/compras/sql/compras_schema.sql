@@ -4197,6 +4197,54 @@ CREATE TRIGGER tr_compras_detalle_tipo_prestacion
     FOR EACH ROW
     EXECUTE PROCEDURE compras.validar_tipo_prestacion_detalle_fila();
 
+CREATE OR REPLACE FUNCTION compras.validar_codigo_prestacion_detalle_fila()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $func$
+DECLARE
+    v_codigo TEXT;
+BEGIN
+    IF NEW.baja_fecha IS NOT NULL OR NEW.tipo_item <> 'NOMENCLADOR' THEN
+        RETURN NEW;
+    END IF;
+
+    -- El bloqueo de cabecera serializa altas y cambios del mismo requerimiento.
+    PERFORM 1 FROM compras.requerimiento r
+     WHERE r.id_requerimiento = NEW.id_requerimiento
+     FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'No existe el requerimiento del detalle.';
+    END IF;
+
+    SELECT NULLIF(upper(btrim(n.codigo)), '') INTO v_codigo
+      FROM autorizaciones.nomenclador n
+     WHERE n.id_prestacion = NEW.id_prestacion;
+    v_codigo := COALESCE(v_codigo, NULLIF(upper(btrim(NEW.codigo_nomenclador)), ''));
+
+    IF EXISTS (
+        SELECT 1 FROM compras.requerimiento_detalle d
+        LEFT JOIN autorizaciones.nomenclador n ON n.id_prestacion = d.id_prestacion
+        WHERE d.id_requerimiento = NEW.id_requerimiento AND d.baja_fecha IS NULL
+          AND d.id_detalle IS DISTINCT FROM NEW.id_detalle
+          AND (d.id_prestacion = NEW.id_prestacion
+               OR (v_codigo IS NOT NULL AND v_codigo = upper(btrim(
+                       COALESCE(NULLIF(btrim(n.codigo), ''), d.codigo_nomenclador)))))
+    ) THEN
+        RAISE EXCEPTION 'El código de prestación ya está incluido en el requerimiento.';
+    END IF;
+    RETURN NEW;
+END;
+$func$;
+
+CREATE TRIGGER tr_compras_detalle_codigo_prestacion
+    BEFORE INSERT OR UPDATE OF id_requerimiento, tipo_item, id_prestacion,
+        codigo_nomenclador, baja_fecha
+    ON compras.requerimiento_detalle
+    FOR EACH ROW
+    EXECUTE PROCEDURE compras.validar_codigo_prestacion_detalle_fila();
+
+REVOKE ALL ON FUNCTION compras.validar_codigo_prestacion_detalle_fila() FROM PUBLIC;
+
 CREATE FUNCTION compras.validar_tipo_prestacion_detalle_nuevo()
 RETURNS TRIGGER
 AS $func$
