@@ -33,7 +33,7 @@ public class EditarRequerimientoCompraServiceImpl {
             "{call compras.guardar_observacion_interna_requerimiento(?,?,?)}";
 
     private static final String SQL_CORREGIR_ITEM =
-            "{call compras.corregir_item_requerimiento(?,?,?,?,?,?,?)}";
+            "{call compras.corregir_item_requerimiento(?,?,?,?,?,?,?,?,?)}";
 
     private static final String SQL_BORRAR_REQUERIMIENTO_DETALLE =
             "{call compras.borrar_requerimiento_detalle(?,?)}";
@@ -239,6 +239,8 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setString(5, detalle.getCodigoNomenclador());
             stmt.setString(6, detalle.getDescripcionNomenclador());
             stmt.setString(7, usuario);
+            setNullableInteger(stmt, 8, detalle.getIdTipoPrestacion());
+            setNullableInteger(stmt, 9, detalle.getCantidad());
             rs = stmt.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
         } finally {

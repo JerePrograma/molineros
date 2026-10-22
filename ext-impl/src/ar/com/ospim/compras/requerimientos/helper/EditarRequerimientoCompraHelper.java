@@ -952,8 +952,10 @@ public class EditarRequerimientoCompraHelper {
                             detalle.getTipoItemNormalizado())) {
                 throw errorUsuario("Seleccione el medicamento o prestación desde el nomenclador.");
             }
-            detalle.setIdTipoPrestacion(persistido.getIdTipoPrestacion());
-            detalle.setCantidad(persistido.getCantidad());
+            validarTipoPrestacionParaGuardar(requerimiento, persistido, detalle);
+            if (detalle.getCantidad() == null || detalle.getCantidad().intValue() <= 0) {
+                throw errorUsuario("La cantidad debe ser mayor que cero.");
+            }
             detalle.setObservaciones(persistido.getObservaciones());
             detalle.setPrecioUnitarioEstimado(persistido.getPrecioUnitarioEstimado());
             detalle.setPrecioTotalEstimado(persistido.getPrecioTotalEstimadoInformado());

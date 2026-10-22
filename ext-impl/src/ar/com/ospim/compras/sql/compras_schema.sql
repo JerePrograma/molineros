@@ -1689,7 +1689,9 @@ END IF;
             OR NEW.id_prestacion IS DISTINCT FROM OLD.id_prestacion
             OR NEW.id_tipo_nomenclador IS DISTINCT FROM OLD.id_tipo_nomenclador
             OR NEW.codigo_nomenclador IS DISTINCT FROM OLD.codigo_nomenclador
-            OR NEW.descripcion_nomenclador IS DISTINCT FROM OLD.descripcion_nomenclador) THEN
+            OR NEW.descripcion_nomenclador IS DISTINCT FROM OLD.descripcion_nomenclador
+            OR NEW.id_tipo_prestacion IS DISTINCT FROM OLD.id_tipo_prestacion
+            OR NEW.cantidad IS DISTINCT FROM OLD.cantidad) THEN
 
         PERFORM compras.bloquear_requerimiento_reclamo_prestacional(NEW.id_requerimiento);
         SELECT r.estado, r.id_sector INTO v_estado, v_id_sector_correccion
@@ -1701,7 +1703,25 @@ END IF;
                       WHERE rr.id_requerimiento = NEW.id_requerimiento) THEN
             RAISE EXCEPTION 'El item no puede corregirse despues de iniciar el RP.';
         END IF;
+        IF NEW.cantidad IS NULL OR NEW.cantidad <= 0 THEN
+            RAISE EXCEPTION 'La cantidad debe ser mayor a cero.';
+        END IF;
+        IF OLD.id_tipo_prestacion IS NOT NULL AND NEW.id_tipo_prestacion IS NULL THEN
+            RAISE EXCEPTION 'El tipo de prestacion ya informado no puede quitarse.';
+        END IF;
+        IF NEW.id_tipo_prestacion IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM compras.tipo_prestacion t
+            WHERE t.id_tipo_prestacion = NEW.id_tipo_prestacion
+              AND t.id_sector = v_id_sector_correccion
+        ) THEN
+            RAISE EXCEPTION 'El tipo de prestacion no corresponde al sector del requerimiento.';
+        END IF;
+        NEW.precio_total_estimado := CASE WHEN NEW.precio_unitario_estimado IS NULL THEN NULL
+            ELSE round(NEW.cantidad * NEW.precio_unitario_estimado, 2) END;
         v_fila_correccion := NEW;
+        v_fila_correccion.id_tipo_prestacion := OLD.id_tipo_prestacion;
+        v_fila_correccion.cantidad := OLD.cantidad;
+        v_fila_correccion.precio_total_estimado := OLD.precio_total_estimado;
         v_fila_correccion.tipo_item := OLD.tipo_item;
         v_fila_correccion.id_prestacion := OLD.id_prestacion;
         v_fila_correccion.id_tipo_nomenclador := OLD.id_tipo_nomenclador;
@@ -1713,10 +1733,10 @@ END IF;
         v_fila_correccion.modi_fecha := OLD.modi_fecha;
         v_fila_correccion.modi_usr := OLD.modi_usr;
         IF v_fila_correccion IS DISTINCT FROM OLD THEN
-            RAISE EXCEPTION 'La correccion del item debe conservar cantidades, observaciones e importes.';
+            RAISE EXCEPTION 'La correccion del item debe conservar observaciones, precios unitarios y adjudicacion.';
         END IF;
         PERFORM compras.validar_nomenclador_configurado(
-            v_id_sector_correccion, OLD.id_tipo_prestacion,
+            v_id_sector_correccion, NEW.id_tipo_prestacion,
             NEW.id_prestacion, NEW.id_tipo_nomenclador);
         IF NEW.id_medicamento IS NOT NULL OR NEW.troquel IS NOT NULL
            OR NEW.nombre_medicamento IS NOT NULL OR NOT EXISTS (
@@ -4128,9 +4148,15 @@ BEGIN
        AND NEW.id_tipo_prestacion
             IS DISTINCT FROM OLD.id_tipo_prestacion THEN
 
-        IF v_estado <> 1 THEN
-            RAISE EXCEPTION
-                'El tipo de prestación solo puede modificarse en estado PENDIENTE.';
+        PERFORM compras.bloquear_requerimiento_reclamo_prestacional(NEW.id_requerimiento);
+        SELECT r.estado INTO v_estado FROM compras.requerimiento r
+         WHERE r.id_requerimiento = NEW.id_requerimiento AND r.baja_fecha IS NULL
+         FOR UPDATE;
+        IF NOT FOUND OR v_estado NOT IN (1, 2, 3) OR EXISTS (
+            SELECT 1 FROM compras.requerimiento_reclamo_prestacional rr
+            WHERE rr.id_requerimiento = NEW.id_requerimiento
+        ) THEN
+            RAISE EXCEPTION 'El tipo de prestacion solo puede modificarse antes de iniciar el RP.';
         END IF;
 
         IF OLD.id_tipo_prestacion IS NOT NULL
@@ -4240,7 +4266,9 @@ CREATE FUNCTION compras.corregir_item_requerimiento(
     p_id_tipo_nomenclador INTEGER,
     p_codigo_nomenclador VARCHAR,
     p_descripcion_nomenclador VARCHAR,
-    p_usuario VARCHAR
+    p_usuario VARCHAR,
+    p_id_tipo_prestacion INTEGER,
+    p_cantidad INTEGER
 )
 RETURNS INTEGER
 AS $func$
@@ -4279,8 +4307,21 @@ BEGIN
         RAISE EXCEPTION 'No se encontro un item activo de medicamento o prestacion para corregir.';
     END IF;
 
+    IF p_cantidad IS NULL OR p_cantidad <= 0 THEN
+        RAISE EXCEPTION 'La cantidad debe ser mayor a cero.';
+    END IF;
+    IF v_detalle.id_tipo_prestacion IS NOT NULL AND p_id_tipo_prestacion IS NULL THEN
+        RAISE EXCEPTION 'El tipo de prestacion ya informado no puede quitarse.';
+    END IF;
+    IF p_id_tipo_prestacion IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM compras.tipo_prestacion t
+        WHERE t.id_tipo_prestacion = p_id_tipo_prestacion AND t.id_sector = v_id_sector
+    ) THEN
+        RAISE EXCEPTION 'El tipo de prestacion no corresponde al sector del requerimiento.';
+    END IF;
+
     PERFORM compras.validar_nomenclador_configurado(
-        v_id_sector, v_detalle.id_tipo_prestacion,
+        v_id_sector, p_id_tipo_prestacion,
         p_id_prestacion, p_id_tipo_nomenclador);
     SELECT n.* INTO v_nomenclador FROM autorizaciones.nomenclador n
      WHERE n.id_prestacion = p_id_prestacion AND n.baja_fecha IS NULL;
@@ -4298,7 +4339,9 @@ BEGIN
         RAISE EXCEPTION 'El requerimiento ya contiene la prestacion seleccionada.';
     END IF;
 
-    IF v_detalle.tipo_item = 'NOMENCLADOR'
+    IF v_detalle.id_tipo_prestacion IS NOT DISTINCT FROM p_id_tipo_prestacion
+       AND v_detalle.cantidad = p_cantidad
+       AND v_detalle.tipo_item = 'NOMENCLADOR'
        AND v_detalle.id_prestacion = p_id_prestacion
        AND v_detalle.id_tipo_nomenclador = p_id_tipo_nomenclador
        AND btrim(v_detalle.codigo_nomenclador) = btrim(v_nomenclador.codigo)
@@ -4348,6 +4391,9 @@ BEGIN
 
     UPDATE compras.requerimiento_detalle
        SET tipo_item = 'NOMENCLADOR', id_prestacion = p_id_prestacion,
+           id_tipo_prestacion = p_id_tipo_prestacion, cantidad = p_cantidad,
+           precio_total_estimado = CASE WHEN precio_unitario_estimado IS NULL THEN NULL
+               ELSE round(p_cantidad * precio_unitario_estimado, 2) END,
            id_tipo_nomenclador = v_nomenclador.id_tipo_nomenclador,
            codigo_nomenclador = btrim(v_nomenclador.codigo),
            descripcion_nomenclador = btrim(v_nomenclador.descripcion),
@@ -4364,6 +4410,32 @@ BEGIN
         RAISE EXCEPTION 'El prestador adjudicado no es compatible con la nueva prestacion. No se modificaron importes.';
     END IF;
     RETURN p_id_detalle;
+END;
+$func$
+LANGUAGE plpgsql;
+
+CREATE FUNCTION compras.corregir_item_requerimiento(
+    p_id_requerimiento INTEGER, p_id_detalle INTEGER,
+    p_id_prestacion INTEGER, p_id_tipo_nomenclador INTEGER,
+    p_codigo_nomenclador VARCHAR, p_descripcion_nomenclador VARCHAR,
+    p_usuario VARCHAR
+)
+RETURNS INTEGER
+AS $func$
+DECLARE
+    v_tipo INTEGER;
+    v_cantidad INTEGER;
+BEGIN
+    PERFORM compras.bloquear_requerimiento_reclamo_prestacional(p_id_requerimiento);
+    PERFORM 1 FROM compras.requerimiento r
+     WHERE r.id_requerimiento = p_id_requerimiento FOR UPDATE;
+    SELECT d.id_tipo_prestacion, d.cantidad INTO v_tipo, v_cantidad
+      FROM compras.requerimiento_detalle d
+     WHERE d.id_detalle = p_id_detalle AND d.id_requerimiento = p_id_requerimiento
+       AND d.baja_fecha IS NULL FOR UPDATE;
+    RETURN compras.corregir_item_requerimiento(
+        p_id_requerimiento, p_id_detalle, p_id_prestacion, p_id_tipo_nomenclador,
+        p_codigo_nomenclador, p_descripcion_nomenclador, p_usuario, v_tipo, v_cantidad);
 END;
 $func$
 LANGUAGE plpgsql;

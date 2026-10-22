@@ -235,9 +235,6 @@ Efectos secundarios:
         <portlet:namespace />configurarEditorMedicamentoHistorico(
                 esHistorico
         );
-        if (<portlet:namespace />detalleModoCorreccion) {
-            selectTipoPrestacion.attr('disabled', 'disabled');
-        }
 
         var sectorEditor = <portlet:namespace />normalizarSectorCompra(
                 <portlet:namespace />getSectorDescripcionSeleccionadoCompra()
@@ -830,6 +827,10 @@ Efectos secundarios:
                 );
             }
 
+            if (!<portlet:namespace />esEnteroPositivo(idSector)) {
+                idSector = '<%= HtmlUtil.escape(idSectorActualString) %>';
+            }
+
             return idSector;
         }
 
@@ -1092,9 +1093,8 @@ Efectos secundarios:
                 'Guardar');
         jQuery('#<portlet:namespace />detalle_cancelar').show();
         if (<portlet:namespace />detalleModoCorreccion) {
-            jQuery('#<portlet:namespace />detalle_cantidad, #<portlet:namespace />detalle_observaciones')
+            jQuery('#<portlet:namespace />detalle_observaciones')
                     .attr('readonly', 'readonly');
-            jQuery('#<portlet:namespace />detalle_id_tipo_prestacion').attr('disabled', 'disabled');
         }
 
         if (detalle.tipoItem == 'MEDICAMENTO' && !<portlet:namespace />detalleModoCorreccion) {
@@ -1227,11 +1227,9 @@ Efectos secundarios:
                             : tipoEsperado,
 
             idTipoPrestacion:
-                    <portlet:namespace />detalleModoCorreccion && detalleExistente
-                            ? <portlet:namespace />detalleValue(detalleExistente.idTipoPrestacion)
-                            : jQuery.trim(
-                                    jQuery('#<portlet:namespace />detalle_id_tipo_prestacion').val() || ''
-                            ),
+                    jQuery.trim(
+                            jQuery('#<portlet:namespace />detalle_id_tipo_prestacion').val() || ''
+                    ),
 
             tipoPrestacion:
                     jQuery.trim(
@@ -1276,8 +1274,7 @@ Efectos secundarios:
             droga: esHistorico
                     ? <portlet:namespace />detalleValue(detalleExistente.droga) : '',
 
-            cantidad: <portlet:namespace />detalleModoCorreccion && detalleExistente
-                    ? <portlet:namespace />detalleValue(detalleExistente.cantidad) : cantidad,
+            cantidad: cantidad,
 
             precioUnitario:
                     detalleExistente
@@ -1537,9 +1534,7 @@ Efectos secundarios:
         addHidden('id_requerimiento_compra', idReq);
         addHidden('id_detalle', detalle.id);
         addHidden('tipo_item', detalle.tipoItem);
-        if (cmd != 'corregirItem') {
-            addHidden('id_tipo_prestacion', detalle.idTipoPrestacion);
-        }
+        addHidden('id_tipo_prestacion', detalle.idTipoPrestacion);
         addHidden('codigo_item', detalle.codigoItem);
         addHidden('descripcion_item', detalle.descripcionItem);
 
@@ -1548,8 +1543,8 @@ Efectos secundarios:
         addHidden('codigo_nomenclador', detalle.codigoNomenclador);
         addHidden('descripcion_nomenclador', detalle.descripcionNomenclador);
 
+        addHidden('cantidad', detalle.cantidad);
         if (cmd != 'corregirItem') {
-            addHidden('cantidad', detalle.cantidad);
             addHidden('observaciones_detalle', detalle.observaciones);
         }
 

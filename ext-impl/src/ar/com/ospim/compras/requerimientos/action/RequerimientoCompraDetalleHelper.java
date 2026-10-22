@@ -289,6 +289,8 @@ public class RequerimientoCompraDetalleHelper {
         detalle.setId(Integer.valueOf(getIdDetalleFromRequest(request)));
         detalle.setIdRequerimientoCompra(getIdRequerimientoCompraFromRequest(request));
         cargarDetalleTecnicoDesdeRequest(request, "", "Detalle", detalle);
+        detalle.setCantidad(parseCantidadDesdeRequest(
+                request, "cantidad", "Detalle - Cantidad"));
         requerimientoHelper.corregirItem(detalle, usuario);
     }
 
