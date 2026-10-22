@@ -693,7 +693,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 
 		var opcionTipo = tipoSelect.options[tipoSelect.selectedIndex];
 
-		var tipo = trim(opcionTipo.innerHTML);
+		var tipo = jQuery.trim(jQuery(opcionTipo).text());
 
 		var puedeCotizar = opcionTipo.getAttribute("data-puede-cotizar") == "true";
 
@@ -959,7 +959,7 @@ jQuery('#<portlet:namespace/>certificacionFechaVtoAnio').val('');
 	        });
 
 	    } else if (editable && !solicitarCotizacion) {
-	        rubrosCotizacon.each(function(){
+	    	rubrosCotizacion.each(function(){
 	            this.checked = false;
 	        });
 	    }
