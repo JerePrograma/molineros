@@ -820,7 +820,7 @@ Efectos secundarios:
                     )
             );
 
-            if (idSector == '') {
+            if (!<portlet:namespace />esEnteroPositivo(idSector)) {
                 idSector = jQuery.trim(
                         String(
                                 jQuery(
