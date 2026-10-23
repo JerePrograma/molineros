@@ -46,6 +46,9 @@ import net.sf.jasperreports.engine.export.JRPdfExporter;
 import net.sf.jasperreports.engine.util.JRLoader;
 import ar.com.ospim.autorizaciones.beans.SituacionMedica;
 import ar.com.ospim.autorizaciones.services.SituacionesMedicasServiceUtil;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraOrdenHelper;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraOrdenPdfHelper;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.util.ConnectionHelper;
@@ -183,6 +186,11 @@ public class PdfServlet extends HttpServlet {
 			throws ServletException, IOException {
 
 		String accion = ParamUtil.getString(req, "accion");
+
+        if ("ordenCompra".equals(accion)) {
+            generaOrdenCompra(req, res);
+            return;
+        }
 
 		if ("comparativaCompra".equals(accion)) {
             generaComparativaCompra(req, res);
@@ -1165,6 +1173,56 @@ public class PdfServlet extends HttpServlet {
 	}
 
 	
+    private void generaOrdenCompra(HttpServletRequest req,
+            HttpServletResponse res) throws IOException {
+        User user;
+        try {
+            user = PortalUtil.getUser(req);
+            if (user == null
+                    || (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
+                    && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
+                    && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
+                    && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS))) {
+                res.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+        } catch (Exception e) {
+            _log.error("No se pudo validar el permiso para imprimir la orden de compra.", e);
+            res.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        int idRequerimiento = ParamUtil.getInteger(req, "id_requerimiento", 0);
+        if (idRequerimiento <= 0) {
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "Debe informar el requerimiento de compra.");
+            return;
+        }
+        try {
+            RequerimientoCompraOrden orden = new RequerimientoCompraOrdenHelper()
+                    .preparar(idRequerimiento, user.getFullName());
+            if (orden == null || orden.getIdOrdenCompra() <= 0
+                    || orden.getRequerimiento() == null
+                    || !orden.getRequerimiento().isActivo()
+                    || !orden.getRequerimiento().isOrdenCompra()) {
+                res.sendError(HttpServletResponse.SC_NOT_FOUND,
+                        "No hay una orden de compra emitida para el requerimiento.");
+                return;
+            }
+            byte[] pdf = new RequerimientoCompraOrdenPdfHelper().generar(orden);
+            crearPdfFromByteArray(req, res, pdf,
+                    "OrdenCompra_" + orden.getIdOrdenCompra() + ".pdf");
+        } catch (IllegalArgumentException e) {
+            res.sendError(HttpServletResponse.SC_NOT_FOUND,
+                    "No hay una orden de compra emitida para el requerimiento.");
+        } catch (Exception e) {
+            _log.error("No se pudo imprimir la orden de compra. id=" + idRequerimiento, e);
+            if (!res.isCommitted()) {
+                res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "No se pudo generar el PDF de la orden de compra.");
+            }
+        }
+    }
+
 	public byte[] crearRequerimientoCompraComoAdjunto(
 			int idRequerimiento) throws Exception {
 

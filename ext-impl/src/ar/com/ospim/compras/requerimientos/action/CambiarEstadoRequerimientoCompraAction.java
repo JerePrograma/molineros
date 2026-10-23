@@ -258,15 +258,9 @@ public class CambiarEstadoRequerimientoCompraAction
                         user
                 );
 
-                requerimientoHelper
-                        .pasarAOrdenCompra(
-                                idRequerimientoCompra,
-                                usuario
-                        );
-
-                SessionMessages.add(
-                        actionRequest,
-                        "estado-requerimiento-compra-actualizado"
+                throw new IllegalArgumentException(
+                        "Complete el formulario Crear Orden de Compra "
+                                + "para guardar y emitir la orden."
                 );
 
             } else if (estadoNuevo

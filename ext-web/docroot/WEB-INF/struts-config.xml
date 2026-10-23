@@ -7169,6 +7169,11 @@
 					path="portlet.compras.result.search" />
 		</action>
 
+        <action path="/compras/orden_compra"
+                type="ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction">
+            <forward name="portlet.compras.orden_compra" path="portlet.compras.orden_compra" />
+        </action>
+
 		<action
 				path="/compras/imprimir_requerimiento"
 				type="ar.com.ospim.compras.requerimientos.action.ImprimirRequerimientoCompraAction">

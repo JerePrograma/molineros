@@ -137,11 +137,29 @@ boolean botoneraPuedeEnviarACotizar =
 
 boolean botoneraPuedePasarAOrdenCompra =
         botoneraRequerimientoPersistido
+        && req.isActivo()
         && botoneraTieneRolCotizar
-        && botoneraEmpresasAdjudicadas == 1
-        && req.puedePasarAOrdenCompra(
-                botoneraHayCotizacionesEmpresa
-        );
+        && WebKeysCompras.esAutorizado(botoneraEstadoActual)
+        && req.tieneDetalles()
+        && (req.esSectorSinCotizacionPrestador()
+                ? botoneraEmpresasAdjudicadas == 1
+                : botoneraConsultaRelacionReclamoOk
+                        && botoneraRelacionReclamo != null
+                        && botoneraRelacionReclamo.isVinculado()
+                        && req.tieneCotizacionCompletaConPrestadorUnico());
+
+boolean botoneraPuedeVerOrdenCompra =
+        botoneraRequerimientoPersistido && req.isActivo()
+        && req.isOrdenCompra()
+        && Boolean.TRUE.equals(renderRequest.getAttribute(
+                RequerimientoCompraRenderActionUtil.ATTR_ORDEN_COMPRA_EMITIDA))
+        && (botoneraTieneRolView || puedeABM || botoneraTieneRolCotizar
+                || botoneraTieneRolAutorizar);
+
+PortletURL botoneraOrdenCompraURL = renderResponse.createRenderURL();
+botoneraOrdenCompraURL.setWindowState(WindowState.MAXIMIZED);
+botoneraOrdenCompraURL.setParameter("struts_action", "/compras/orden_compra");
+botoneraOrdenCompraURL.setParameter("id_requerimiento_compra", String.valueOf(botoneraIdRequerimientoActual));
 
 boolean botoneraHayDetalles =
         botoneraRequerimientoPersistido
@@ -259,8 +277,6 @@ botoneraReclamoPrestacionalURL.setParameter(
 
 String botoneraEnviarCotizarFormId =
         namespaceCompra + "enviarCotizarRequerimientoCompraForm";
-String botoneraOrdenCompraFormId =
-        namespaceCompra + "ordenCompraRequerimientoCompraForm";
 String botoneraAutorizacionFormId =
         namespaceCompra + "autorizacionRequerimientoCompraForm";
 String botoneraReintentarCotizacionFormId =
@@ -280,20 +296,6 @@ String botoneraReclamoPrestacionalFormId =
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
                value="<%= String.valueOf(WebKeysCompras.ESTADO_A_COTIZAR) %>" />
-    </form>
-<% } %>
-
-<% if (botoneraPuedePasarAOrdenCompra) { %>
-    <form action="<%= botoneraCambiarEstadoURL.toString() %>"
-          method="post"
-          id="<%= botoneraOrdenCompraFormId %>"
-          style="display:none;">
-        <input type="hidden"
-               name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
-        <input type="hidden"
-               name="<portlet:namespace />estado_nuevo"
-               value="<%= String.valueOf(WebKeysCompras.ESTADO_ORDEN_COMPRA) %>" />
     </form>
 <% } %>
 
@@ -395,16 +397,11 @@ String botoneraReclamoPrestacionalFormId =
                        );" />
             <% } %>
 
-            <% if (botoneraPuedePasarAOrdenCompra) { %>
+            <% if (botoneraPuedePasarAOrdenCompra || botoneraPuedeVerOrdenCompra) { %>
                 <input type="button"
                        id="<portlet:namespace />btnOrdenCompraRequerimientoCompra"
-                       value="Crear Orden de Compra"
-                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
-                               '<%= botoneraOrdenCompraFormId %>',
-                               '<portlet:namespace />btnOrdenCompraRequerimientoCompra',
-                               '\u00bfConfirma pasar el requerimiento a Orden de Compra?',
-                               'Procesando...'
-                       );" />
+                       value="<%= botoneraPuedePasarAOrdenCompra ? "Crear Orden de Compra" : "Ver Orden de Compra" %>"
+                       onClick="window.location.href='<%= botoneraOrdenCompraURL.toString() %>';" />
             <% } %>
 
             <% if (botoneraPuedeReintentarCotizacion) { %>

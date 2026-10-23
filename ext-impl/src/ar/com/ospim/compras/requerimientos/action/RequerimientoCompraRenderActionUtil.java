@@ -11,6 +11,7 @@ import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.util.PortalUtil;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraOrdenServiceUtil;
 
 import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -30,6 +31,9 @@ import javax.portlet.RenderRequest;
 
 /** Publica el contexto de presentación requerido por los JSP de Compras. */
 public final class RequerimientoCompraRenderActionUtil {
+
+    public static final String ATTR_ORDEN_COMPRA_EMITIDA =
+            "compras.requerimiento.ordenCompraEmitida";
 
     public static final String ATTR_PUEDE_CORREGIR_ITEM =
             "compras.requerimiento.puedeCorregirItem";
@@ -74,6 +78,19 @@ public final class RequerimientoCompraRenderActionUtil {
         if (renderRequest == null) {
             return;
         }
+
+        boolean ordenCompraEmitida = false;
+        if (requerimiento != null && requerimiento.isActivo() && requerimiento.isOrdenCompra()) {
+            try {
+                ordenCompraEmitida = RequerimientoCompraOrdenServiceUtil.obtenerPorRequerimiento(
+                                requerimiento.getIdRequerimientoCompra()) != null;
+            } catch (Exception e) {
+                LogFactoryUtil.getLog(RequerimientoCompraRenderActionUtil.class).warn(
+                        "No se pudo consultar la Orden de Compra emitida. Requerimiento="
+                                + requerimiento.getIdRequerimientoCompra(), e);
+            }
+        }
+        renderRequest.setAttribute(ATTR_ORDEN_COMPRA_EMITIDA, Boolean.valueOf(ordenCompraEmitida));
 
         boolean puedeCorregirItem = false;
         if (requerimiento != null && requerimiento.getIdRequerimientoCompra() > 0

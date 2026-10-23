@@ -428,7 +428,8 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
         return esCotizado(estado)
                 || esReclamoRP(estado)
                 || esParaAutorizar(estado)
-                || esAutorizado(estado);
+                || esAutorizado(estado)
+                || esOrdenCompra(estado);
     }
 
     public static boolean esOrdenCompra(int estado) {
