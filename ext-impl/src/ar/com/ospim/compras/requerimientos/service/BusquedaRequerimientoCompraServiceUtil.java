@@ -111,6 +111,10 @@ public class BusquedaRequerimientoCompraServiceUtil {
                 ? filtro : new RequerimientoCompraFiltro();
         validarFiltroBusqueda(filtroEfectivo);
 
+        if (!incluirReclamoRp && !filtroEfectivo.tieneFiltros()) {
+            return getInstance().buscarRequerimientosInicialesPaginados(Math.max(1, pagina));
+        }
+
         return getInstance().buscarRequerimientosPaginados(
                 filtroEfectivo, incluirReclamoRp, Math.max(1, pagina));
     }

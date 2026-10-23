@@ -41,6 +41,30 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "LEFT JOIN public.seccional sec ON sec.id_seccional = afi.id_seccional "
                     + "ORDER BY rb.id DESC";
 
+    /* La entrada sin filtros pagina IDs antes de armar las cabeceras. */
+    private static final String SQL_BUSCAR_REQUERIMIENTOS_INICIALES =
+            "WITH candidatos AS ("
+                    + "SELECT r.id_requerimiento FROM compras.requerimiento r "
+                    + "JOIN compras.sector_requerimiento s ON s.id_sector = r.id_sector "
+                    + "WHERE r.baja_fecha IS NULL"
+                    + "), pagina AS ("
+                    + "SELECT id_requerimiento FROM candidatos "
+                    + "ORDER BY id_requerimiento DESC LIMIT ? OFFSET ?"
+                    + ") SELECT r.*, r.id_requerimiento AS id, r.estado AS id_estado, "
+                    + "s.descripcion AS sector_descripcion, s.requiere_afiliado, "
+                    + "NULLIF(concat_ws(', ', NULLIF(btrim(r.afiliado_apellido), ''), "
+                    + "NULLIF(btrim(r.afiliado_nombre), '')), '')::VARCHAR "
+                    + "AS afiliado_nombre_apellido, "
+                    + "NULLIF(concat_ws(' ', NULLIF(btrim(r.afiliado_documento_tipo), ''), "
+                    + "NULLIF(btrim(r.afiliado_documento_nro), '')), '')::VARCHAR "
+                    + "AS afiliado_documento, "
+                    + "compras.estado_requerimiento_descripcion(r.estado) AS estado_descripcion, "
+                    + "tot.total_registros FROM pagina p "
+                    + "JOIN compras.requerimiento r ON r.id_requerimiento = p.id_requerimiento "
+                    + "JOIN compras.sector_requerimiento s ON s.id_sector = r.id_sector "
+                    + "CROSS JOIN (SELECT count(*) AS total_registros FROM candidatos) tot "
+                    + "ORDER BY r.id_requerimiento DESC";
+
     private static final String SQL_GET_REQUERIMIENTO =
             "SELECT rb.*, r.observacion_interna, r.motivo_baja "
                     + "FROM compras.get_requerimiento(?) rb "
@@ -135,6 +159,34 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 resultado.add(requerimiento);
             }
 
+            return resultado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
+        }
+    }
+
+    public List<RequerimientoCompra> buscarRequerimientosInicialesPaginados(
+            int pagina) throws Exception {
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<RequerimientoCompra> resultado = new ArrayList<RequerimientoCompra>();
+
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(SQL_BUSCAR_REQUERIMIENTOS_INICIALES);
+            stmt.setInt(1,
+                    BusquedaRequerimientoCompraServiceUtil.REQUERIMIENTOS_POR_PAGINA);
+            stmt.setLong(2, ((long) pagina - 1L)
+                    * BusquedaRequerimientoCompraServiceUtil.REQUERIMIENTOS_POR_PAGINA);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                RequerimientoCompra requerimiento = mapRequerimiento(rs);
+                requerimiento.setTotalRegistros(rs.getInt("total_registros"));
+                resultado.add(requerimiento);
+            }
             return resultado;
         } finally {
             closeQuietly(rs);
