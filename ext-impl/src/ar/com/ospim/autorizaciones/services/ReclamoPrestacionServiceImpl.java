@@ -1232,7 +1232,7 @@ public class ReclamoPrestacionServiceImpl {
 							//stmt4.setBoolean(9, pres.isRecuperableSur()   );
 							stmt4.setDouble(10, pres.getCantidad()   );
 							
-							if(pres.getComprobanteNro()!=null) {
+							if(pres.getComprobanteTipo()!=null) {
 								   stmt4.setString(11,pres.getComprobanteTipo());
 							} else {
 									stmt4.setNull(11, Types.VARCHAR);

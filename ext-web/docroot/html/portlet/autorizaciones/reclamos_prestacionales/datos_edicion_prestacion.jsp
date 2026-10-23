@@ -37,6 +37,23 @@ if(prestacionEnEdicion != null  ){
 	 
 }
 
+boolean hayOtrasPrestacionesOTR = false;
+if (prestacionEnEdicion != null && tipoedicion == 0
+        && "OTR".equals(prestacionEnEdicion.getComprobanteTipo())
+        && !PrestacionesReclamo.ESTADOS.BAJA.equals(prestacionEnEdicion.getEstado())) {
+    List<PrestacionesReclamo> prestaciones = (List<PrestacionesReclamo>) request.getSession().getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);
+    if (prestaciones != null) {
+        for (PrestacionesReclamo otra : prestaciones) {
+            if (otra.getIdRegistro() != prestacionEnEdicion.getIdRegistro()
+                    && "OTR".equals(otra.getComprobanteTipo())
+                    && !PrestacionesReclamo.ESTADOS.BAJA.equals(otra.getEstado())) {
+                hayOtrasPrestacionesOTR = true;
+                break;
+            }
+        }
+    }
+}
+
 String   captionbotoncancelar="Cancelar Edicion de la Prestacion" ;
 String   captionlabelproceso="PRESTACION EN PROCESO DE EDICION";
 String   estiloLabel=""; 
@@ -419,6 +436,12 @@ jQuery("#<portlet:namespace />Autorizado").hide();
 
 filtrarLetraComprobanteEdicion();
 cambiorecuperableEdicion();
+
+function <portlet:namespace />confirmarComprobanteOTR() {
+    var cpbteTipo = jQuery('#<portlet:namespace />comprobante_tipo_edicion').val();
+    return <%=hayOtrasPrestacionesOTR%> && cpbteTipo != null && cpbteTipo != '' && cpbteTipo != 'OTR'
+        && confirm('¿Desea asignar el mismo Comprobante, Letra, Sucursal y Número al resto de las prestaciones con OTR de este reclamo?');
+}
 
 function calculatotalEdicion(){
 	importe=jQuery("#<portlet:namespace />importeEdicion").val();

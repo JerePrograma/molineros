@@ -171,6 +171,11 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 //		obtiene la instancia en memoria 
  	     presta= listaPrestacionesReclamo.get(pos);
 		 if  (GrabaEdicion) {    
+             boolean aplicarComprobanteOTR = ParamUtil.getBoolean(renderRequest, "aplicarComprobanteOTR")
+                     && estadoAprobaRechazado == 0
+                     && "OTR".equals(presta.getComprobanteTipo())
+                     && !PrestacionesReclamo.ESTADOS.BAJA.equals(presta.getEstado())
+                     && ("FCP".equals(cpteTipo) || "RCB".equals(cpteTipo) || "AUT".equals(cpteTipo));
 			 if (estadoAprobaRechazado >1 && observaciones!=""){ // observacion de rechazo o autorizacion
 				 presta.setObservacionesAutorizaRechaza(presta.getObservaciones() + " (OBSERVACION: "  +  observaciones + " )" ) ;
 				 presta.setObservaciones(presta.getObservaciones() + " (OBSERVACION: "  +  observaciones + " )" ) ;
@@ -215,6 +220,21 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 			    	presta.setCodigoPrestacion(codigoSeguimientoFiltroEdit);
 			    	presta.setDescripcion(descripcionSeguimientoFiltroEdit);	
 			    }
+
+                if (aplicarComprobanteOTR) {
+                    for (PrestacionesReclamo otra : listaPrestacionesReclamo) {
+                        if (otra != presta && "OTR".equals(otra.getComprobanteTipo())
+                                && !PrestacionesReclamo.ESTADOS.BAJA.equals(otra.getEstado())) {
+                            otra.setComprobanteTipo(presta.getComprobanteTipo());
+                            otra.setComprobanteLetra(presta.getComprobanteLetra());
+                            otra.setComprobanteSucursal(presta.getComprobanteSucursal());
+                            otra.setComprobanteNro(presta.getComprobanteNro());
+                            if (!PrestacionesReclamo.ESTADOS.NUEVO.equals(otra.getEstado())) {
+                                otra.setEstado(PrestacionesReclamo.ESTADOS.MODIF);
+                            }
+                        }
+                    }
+                }
 
 			    listaPrestacionesReclamo.remove(pos);
 			    session.removeAttribute(WebKeysAutorizaciones.PRESTACION_EN_PROCESO_DE_EDICION   );
