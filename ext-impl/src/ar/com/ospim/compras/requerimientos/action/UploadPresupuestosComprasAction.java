@@ -99,6 +99,9 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         ""
                 );
 
+        actionResponse.setRenderParameter("compras_guardado", "false");
+        actionResponse.setRenderParameter("compras_error", "false");
+
         try {
             User user =
                     PortalUtil.getUser(
@@ -279,8 +282,11 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                     idRequerimientoCompra,
                     modo
             );
+            actionResponse.setRenderParameter("compras_guardado", "true");
 
         } catch (Exception e) {
+            actionResponse.setRenderParameter("compras_guardado", "false");
+            actionResponse.setRenderParameter("compras_error", "true");
             _log.error(
                     "No se pudo procesar el presupuesto del requerimiento. "
                             + "idRequerimiento="

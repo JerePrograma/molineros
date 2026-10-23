@@ -339,6 +339,32 @@ if ("id_requerimiento_compra".equals(errorCampoCompra)) {
 }
 %>
 
+<%
+boolean errorRespuestaOperacionCompra = ParamUtil.getBoolean(renderRequest, "compras_error", false)
+        || !WebKeysCompras.isEmpty(errorParaAlert) || hayErrorOperacionCompra;
+PortletURL destinoRespuestaOperacionCompra =
+        renderResponse.createRenderURL();
+destinoRespuestaOperacionCompra.setWindowState(LiferayWindowState.MAXIMIZED);
+destinoRespuestaOperacionCompra.setParameter("struts_action",
+        ParamUtil.getString(renderRequest, "struts_action", "/compras/ver_requerimiento"));
+destinoRespuestaOperacionCompra.setParameter("id_requerimiento_compra", idRequerimientoMensaje);
+destinoRespuestaOperacionCompra.setParameter("compras_guardado", "true");
+destinoRespuestaOperacionCompra.setParameter("compras_operacion", comprasOperacion);
+destinoRespuestaOperacionCompra.setParameter("presupuestos_guardados",
+        ParamUtil.getString(renderRequest, "presupuestos_guardados", "0"));
+String urlRespuestaOperacionCompra = ParamUtil.getString(renderRequest, "compras_destino", "");
+if (WebKeysCompras.isEmpty(urlRespuestaOperacionCompra)) {
+    urlRespuestaOperacionCompra = destinoRespuestaOperacionCompra.toString();
+}
+%>
+<span id="<portlet:namespace />respuestaOperacionCompra" style="display:none;"
+      data-compras-id="<%= HtmlUtil.escape(idRequerimientoMensaje) %>"
+      data-compras-error="<%= errorRespuestaOperacionCompra %>"
+      data-compras-guardado="<%= ParamUtil.getBoolean(renderRequest, "compras_guardado", false) %>"
+      data-compras-reintento-seguro="<%= ParamUtil.getBoolean(renderRequest, "compras_reintento_seguro", false) %>"
+      data-compras-error-mensaje="<%= HtmlUtil.escape(errorParaAlert) %>"
+      data-compras-destino="<%= HtmlUtil.escape(urlRespuestaOperacionCompra) %>"></span>
+
 <style type="text/css">
     .compras-notificacion-resumen {
         margin-bottom: 12px;

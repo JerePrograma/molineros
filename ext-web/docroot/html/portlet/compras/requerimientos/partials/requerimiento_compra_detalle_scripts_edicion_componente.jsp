@@ -1569,9 +1569,16 @@ Efectos secundarios:
 
         document.body.appendChild(form);
 
-        form.submit();
-
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form, {
+            alError: function() {
+                <portlet:namespace />setDetalleAccionEnCurso(false);
+            },
+            alFinalizar: function() {
+                if (form.parentNode) {
+                    form.parentNode.removeChild(form);
+                }
+            }
+        });
     }
 
     function <portlet:namespace />agregarOActualizarDetalle() {

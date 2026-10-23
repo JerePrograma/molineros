@@ -115,6 +115,12 @@ public class IniciarReclamoPrestacionalCompraAction
         ReclamoPrestacionalCompraPrecargaHelper.Precarga
                 precargaHandoff = null;
 
+        if (ParamUtil.getBoolean(actionRequest, "compras_conservar_campos", false)) {
+            actionResponse.setRenderParameter("compras_guardado", "false");
+            actionResponse.setRenderParameter("compras_error", "false");
+            actionResponse.setRenderParameter("compras_destino", "");
+        }
+
         try {
             User user =
                     PortalUtil.getUser(
@@ -275,7 +281,10 @@ public class IniciarReclamoPrestacionalCompraAction
 
                 if (registroConsulta.isColision()) {
 
-                    actionResponse.sendRedirect(
+                    completarNavegacionReclamo(
+                            actionRequest,
+                            actionResponse,
+                            idRequerimientoCompra,
                             construirURLRecuperacionEdicion(
                                     httpRequest,
                                     destino,
@@ -317,7 +326,10 @@ public class IniciarReclamoPrestacionalCompraAction
                                 idReclamo
                         );
 
-                actionResponse.sendRedirect(
+                completarNavegacionReclamo(
+                        actionRequest,
+                        actionResponse,
+                        idRequerimientoCompra,
                         redirect
                 );
 
@@ -436,11 +448,16 @@ public class IniciarReclamoPrestacionalCompraAction
                                     usuario
                             );
 
-            actionResponse.sendRedirect(
+            completarNavegacionReclamo(
+                    actionRequest,
+                    actionResponse,
+                    idRequerimientoCompra,
                     redirect
             );
 
         } catch (Exception e) {
+            actionResponse.setRenderParameter("compras_guardado", "false");
+            actionResponse.setRenderParameter("compras_error", "true");
 
             /*
              * Sólo compensa el handoff NUEVO que esta petición alcanzó a
@@ -521,12 +538,36 @@ public class IniciarReclamoPrestacionalCompraAction
         );
     }
 
+    private void completarNavegacionReclamo(
+            ActionRequest actionRequest,
+            ActionResponse actionResponse,
+            int idRequerimientoCompra,
+            String destino) throws Exception {
+
+        if (!ParamUtil.getBoolean(actionRequest, "compras_conservar_campos", false)) {
+            actionResponse.sendRedirect(destino);
+            return;
+        }
+
+        actionResponse.setRenderParameter("compras_guardado", "true");
+        actionResponse.setRenderParameter("compras_error", "false");
+        actionResponse.setRenderParameter("compras_destino", destino);
+        actionResponse.setRenderParameter("struts_action", STRUTS_ACTION_VER_REQUERIMIENTO);
+        actionResponse.setRenderParameter(
+                WebKeysCompras.PARAM_ID_REQUERIMIENTO_COMPRA,
+                String.valueOf(idRequerimientoCompra)
+        );
+        setForward(actionRequest, WebKeysCompras.FORWARD_COMPRAS_VER_REQUERIMIENTO);
+    }
+
     private void informarConflictoFuncional(
             ActionRequest actionRequest,
             ActionResponse actionResponse,
             int idRequerimientoCompra,
             String mensaje) {
 
+        actionResponse.setRenderParameter("compras_guardado", "false");
+        actionResponse.setRenderParameter("compras_error", "true");
         SessionErrors.add(
                 actionRequest,
                 "reclamo-prestacional-compra-error"

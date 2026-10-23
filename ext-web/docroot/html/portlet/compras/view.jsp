@@ -108,3 +108,5 @@ currentURL = PortalUtil.getCurrentURL(request);
                 page="/html/portlet/compras/requerimientos/requerimiento_compra_listado.jsp" />
     </c:otherwise>
 </c:choose>
+
+<jsp:include page="/html/portlet/compras/requerimientos/partials/requerimiento_compra_scripts_envio_componente.jsp" />

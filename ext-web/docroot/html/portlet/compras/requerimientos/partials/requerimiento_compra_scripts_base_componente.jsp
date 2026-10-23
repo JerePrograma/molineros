@@ -65,6 +65,7 @@ Efectos secundarios:
             value="/compras/ver_situacion_medica_vigente" />
 
 </portlet:renderURL>
+<jsp:include page="/html/portlet/compras/requerimientos/partials/requerimiento_compra_scripts_envio_componente.jsp" />
 <script type="text/javascript">
     var <portlet:namespace />situacionMedicaSecuencia =
             0;

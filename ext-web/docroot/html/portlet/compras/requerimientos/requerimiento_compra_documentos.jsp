@@ -755,7 +755,7 @@ boolean msgPresupuestoBorrado =
                    onclick="return <portlet:namespace />agregarFilaPresupuesto();" />
             <div class="portlet-msg-info">
                 Las cotizaciones se guardan junto al requerimiento. Puede guardar sin adjudicar.
-                Si vuelve a cargar la pantalla despu&#233;s de un error, seleccione nuevamente los archivos.
+                Ante un error, los datos y los archivos seleccionados permanecen en pantalla.
             </div>
             <div id="<portlet:namespace />empresas_recuperadas" style="display:none;">
                 <% for (int filaEmpresa = 0; filaEmpresa < filasEmpresaRecuperadas; filaEmpresa++) { %>
@@ -941,9 +941,7 @@ boolean msgPresupuestoBorrado =
                 .attr('name', '<portlet:namespace />empresa_sucursal').val(sucursal).appendTo(form);
         jQuery('#<portlet:namespace />id_requerimiento_presupuesto').val(idPresupuesto);
         jQuery('#<portlet:namespace />presupuesto_accion').val('editarEmpresa');
-        boton.disabled = true;
-        form.submit();
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form, { boton: boton });
     }
 
     function <portlet:namespace />validarTamanoArchivoPresupuesto(archivo) {
@@ -1061,9 +1059,7 @@ boolean msgPresupuestoBorrado =
                 + '#<portlet:namespace />empresa_adjudicada_indice').each(function() {
             jQuery(this).clone().removeAttr('id').addClass('empresa-adjudicacion-envio').appendTo(form);
         });
-        boton.disabled = true;
-        form.submit();
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form, { boton: boton });
     }
 
     var <portlet:namespace />popupEmpresaCotizacion = null;
@@ -1468,7 +1464,6 @@ boolean msgPresupuestoBorrado =
         row.append(acciones);
         <% } else { %>
         prestador.change(function() {
-            archivo.val('');
             <portlet:namespace />cargarComparativaPrestador(prestador.val());
         });
         <% } %>
@@ -1660,12 +1655,10 @@ boolean msgPresupuestoBorrado =
         }
         var boton = seccion.find('#<portlet:namespace />guardarComparativaBoton');
         if (boton.attr('disabled')) { return false; }
-        boton.attr('disabled', 'disabled');
         accion.value = 'guardarComparativa';
         idPresupuesto.value = '';
         <portlet:namespace />reindexarFilasPresupuesto();
-        form.submit();
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form);
         <% } %>
 
         if (!<portlet:namespace />validarFilasPresupuesto(false)) {
@@ -1676,9 +1669,7 @@ boolean msgPresupuestoBorrado =
         idPresupuesto.value = '';
 
         <portlet:namespace />reindexarFilasPresupuesto();
-        form.submit();
-
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form);
     }
 
     function <portlet:namespace />deletePresupuestoRequerimientoCompra(
@@ -1729,30 +1720,40 @@ boolean msgPresupuestoBorrado =
 
         accion.value = '<%= Constants.DELETE %>';
         idPresupuesto.value = String(idNumerico);
-        form.submit();
-
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form);
     }
 
     <% if (!cotizacionEmpresaPresupuestos) { %>
     function <portlet:namespace />cargarComparativaPrestador(idPrestador) {
         var seccion = jQuery('#<portlet:namespace />comparativaPrestadorSeccion');
-        seccion.empty();
-        if (!idPrestador) { return; }
-        seccion.html('<div class="portlet-msg-info">Cargando presupuesto...</div>');
+        if (!idPrestador) {
+            jQuery('#<portlet:namespace />presupuesto_0').val('');
+            seccion.empty();
+            return;
+        }
+        var prestadorAnterior = seccion.find('input[name^="<portlet:namespace />prestador_"]').val();
+        function informarError(mensaje) {
+            if (jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val() == idPrestador) {
+                jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val(prestadorAnterior || '');
+                alert(mensaje || 'No se pudo cargar el presupuesto. La informacion cargada permanece en pantalla.');
+            }
+        }
         jQuery.ajax({
             url: '<%= comparativaPrestadorURL.toString() %>',
             data: { '<portlet:namespace />id_prestador': idPrestador },
             success: function(html) {
-                if (jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val() == idPrestador) {
-                    seccion.html(html);
+                if (jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val() != idPrestador) { return; }
+                var contenido = jQuery('<div></div>');
+                contenido.get(0).innerHTML = html;
+                if (contenido.find('.portlet-msg-error').length > 0
+                        || contenido.find('input[name="<portlet:namespace />prestador_' + idPrestador + '"]').val() != idPrestador) {
+                    informarError(jQuery.trim(contenido.find('.portlet-msg-error').eq(0).text()));
+                    return;
                 }
+                jQuery('#<portlet:namespace />presupuesto_0').val('');
+                seccion.html(html);
             },
-            error: function() {
-                if (jQuery('#<portlet:namespace />presupuesto_0_id_prestador').val() == idPrestador) {
-                    seccion.html('<div class="portlet-msg-error">No se pudo cargar el presupuesto.</div>');
-                }
-            }
+            error: function() { informarError(''); }
         });
     }
 

@@ -218,8 +218,6 @@ String anularURL =
         }
 
         motivoInput.value = motivo;
-        submitForm(form);
-
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form);
     }
 </script>

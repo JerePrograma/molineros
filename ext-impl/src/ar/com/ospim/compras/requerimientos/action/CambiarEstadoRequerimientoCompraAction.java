@@ -99,6 +99,10 @@ public class CambiarEstadoRequerimientoCompraAction
                 WebKeysCompras
                         .FORWARD_COMPRAS_VER_REQUERIMIENTO;
 
+        actionResponse.setRenderParameter("compras_guardado", "false");
+        actionResponse.setRenderParameter("compras_error", "false");
+        boolean operacionConfirmada = true;
+
         try {
             User user =
                     PortalUtil.getUser(
@@ -146,6 +150,10 @@ public class CambiarEstadoRequerimientoCompraAction
                         false,
                         estadoPersistido
                 );
+                operacionConfirmada = resultado != null
+                        && resultado.getErrores() == 0
+                        && resultado.getEmailsInvalidos() == 0
+                        && resultado.getPendientesSinClasificar() == 0;
 
                 if (estadoPersistido
                         == WebKeysCompras.ESTADO_A_COTIZAR) {
@@ -191,6 +199,10 @@ public class CambiarEstadoRequerimientoCompraAction
                         true,
                         estadoPersistido
                 );
+                operacionConfirmada = resultado != null
+                        && resultado.getErrores() == 0
+                        && resultado.getEmailsInvalidos() == 0
+                        && resultado.getPendientesSinClasificar() == 0;
 
                 if (estadoPersistido
                         == WebKeysCompras.ESTADO_A_COTIZAR) {
@@ -283,7 +295,14 @@ public class CambiarEstadoRequerimientoCompraAction
                 );
             }
 
+            actionResponse.setRenderParameter("compras_guardado",
+                    String.valueOf(operacionConfirmada));
+            actionResponse.setRenderParameter("compras_error",
+                    String.valueOf(!operacionConfirmada));
+
         } catch (Exception e) {
+            actionResponse.setRenderParameter("compras_guardado", "false");
+            actionResponse.setRenderParameter("compras_error", "true");
             _log.error(
                     "Error procesando estado del requerimiento "
                             + "de compra. id="

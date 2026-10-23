@@ -43,6 +43,9 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
         int idRequerimientoCompra =
                 0;
 
+        actionResponse.setRenderParameter("compras_guardado", "false");
+        actionResponse.setRenderParameter("compras_error", "false");
+
         try {
             idRequerimientoCompra =
                     detalleHelper.getIdRequerimientoCompraFromRequest(
@@ -72,6 +75,7 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
 
             if ("corregirItem".equals(cmd)) {
                 detalleHelper.corregirItemDesdeRequest(actionRequest, usuario);
+                actionResponse.setRenderParameter("compras_guardado", "true");
                 actionResponse.setRenderParameter("id_requerimiento_compra",
                         String.valueOf(idRequerimientoCompra));
                 actionResponse.setRenderParameter("struts_action", "/compras/ver_requerimiento");
@@ -88,6 +92,7 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                         actionResponse,
                         usuario
                 );
+                actionResponse.setRenderParameter("compras_guardado", "true");
 
             } else if (CMD_ADD_ITEMS.equals(cmd)) {
 
@@ -104,6 +109,7 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                 );
 
                 if (cantidadGuardada > 0) {
+                    actionResponse.setRenderParameter("compras_guardado", "true");
                     /*
                      * Se reutiliza el mensaje existente de detalle guardado
                      * para no ampliar el contrato de mensajes del módulo.
@@ -122,6 +128,7 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
                         usuario
                 );
 
+                actionResponse.setRenderParameter("compras_guardado", "true");
                 SessionMessages.add(
                         actionRequest,
                         "requerimiento-compra-item-borrado"
@@ -141,6 +148,7 @@ public class EditarRequerimientoCompraDetalleAction extends PortletAction {
             );
 
         } catch (Exception e) {
+            actionResponse.setRenderParameter("compras_guardado", "false");
 
             String mensaje =
                     e.getMessage();

@@ -87,7 +87,7 @@ Efectos secundarios:
         <form action="<%= observacionInternaURL.toString() %>"
               method="post"
               id="<portlet:namespace />observacionInternaForm"
-              onsubmit="this.elements['<portlet:namespace />btnGuardarObservacionInterna'].disabled = true;">
+              onsubmit="return <portlet:namespace />enviarOperacionCompra(this);">
             <input type="hidden" name="<portlet:namespace /><%= Constants.CMD %>"
                    value="saveObservacionInterna" />
             <input type="hidden" name="<portlet:namespace />id_requerimiento_compra"

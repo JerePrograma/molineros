@@ -280,6 +280,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                         "compras_operacion",
                         "saveCotizacion"
                 );
+                actionResponse.setRenderParameter("compras_guardado", "true");
 
                 return;
             }

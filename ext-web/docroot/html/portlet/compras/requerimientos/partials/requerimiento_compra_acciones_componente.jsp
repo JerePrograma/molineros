@@ -429,14 +429,14 @@ String botoneraReclamoPrestacionalFormId =
                 <input type="button"
                        id="<portlet:namespace />btnCrearReclamoPrestacional"
                        value="Crear Reclamo Prestacional"
-                       onClick="submitForm(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>')); return false;" />
+                       onClick="return <portlet:namespace />enviarOperacionCompra(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>'), {boton: this});" />
             <% } %>
 
             <% if (botoneraPuedeVerReclamoPrestacional) { %>
                 <input type="button"
                        id="<portlet:namespace />btnVerReclamoPrestacional"
                        value="Ver Reclamo Prestacional"
-                       onClick="submitForm(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>')); return false;" />
+                       onClick="return <portlet:namespace />enviarOperacionCompra(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>'), {boton: this});" />
             <% } %>
 
             <% if (botoneraReclamoEnProceso
@@ -505,13 +505,21 @@ String botoneraReclamoPrestacionalFormId =
             return false;
         }
 
+        var textoOriginal = btn ? btn.value : '';
+
         if (btn) {
             btn.disabled = true;
             btn.value = textoProcesando;
         }
 
-        submitForm(form);
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form, {
+            alError: function() {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.value = textoOriginal;
+                }
+            }
+        });
     }
 
     function <%= namespaceCompra %>imprimirRequerimientoCompra() {

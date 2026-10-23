@@ -1176,7 +1176,7 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
     }
 
     function <portlet:namespace />guardarCotizacion() {
-        if (<portlet:namespace />guardandoCompra) {
+        if (<portlet:namespace />guardandoCompra || <portlet:namespace />enviandoOperacionCompra || <portlet:namespace />operacionCompraIncierta) {
             return false;
         }
 
@@ -1223,13 +1223,16 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
             return <portlet:namespace />cancelarGuardadoCompra();
         }
 
-        submitForm(form);
-
-        return false;
+        return <portlet:namespace />enviarOperacionCompra(form, {
+            alError: function(reintentoSeguro) {
+                if (reintentoSeguro) { <portlet:namespace />cancelarGuardadoCompra(); }
+                else { <portlet:namespace />guardandoCompra = false; }
+            }
+        });
     }
 
     function <portlet:namespace />guardar() {
-        if (<portlet:namespace />guardandoCompra) {
+        if (<portlet:namespace />guardandoCompra || <portlet:namespace />enviandoOperacionCompra || <portlet:namespace />operacionCompraIncierta) {
             return false;
         }
 

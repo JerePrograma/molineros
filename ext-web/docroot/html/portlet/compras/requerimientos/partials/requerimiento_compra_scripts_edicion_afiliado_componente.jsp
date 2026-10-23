@@ -906,6 +906,8 @@ String afiliadoInicialAntecedentesFlag =
                         '#<portlet:namespace />items_historicos_afiliado_agregar'
                 );
 
+        var textoBotonAgregar = botonAgregar.val();
+
         botonAgregar
                 .attr(
                         'disabled',
@@ -928,7 +930,20 @@ String afiliadoInicialAntecedentesFlag =
                     form
             );
 
-            form.submit();
+            <portlet:namespace />enviarOperacionCompra(form, {
+                alError: function() {
+                    botonAgregar.removeAttr('disabled').val(textoBotonAgregar);
+                    if (typeof <portlet:namespace />setDetalleAccionEnCurso
+                            == 'function') {
+                        <portlet:namespace />setDetalleAccionEnCurso(false);
+                    }
+                },
+                alFinalizar: function() {
+                    if (form.parentNode) {
+                        form.parentNode.removeChild(form);
+                    }
+                }
+            });
 
         } catch (e) {
 
@@ -943,7 +958,7 @@ String afiliadoInicialAntecedentesFlag =
                             'disabled'
                     )
                     .val(
-                            'Agregar'
+                            textoBotonAgregar
                     );
 
             if (typeof <portlet:namespace />setDetalleAccionEnCurso
