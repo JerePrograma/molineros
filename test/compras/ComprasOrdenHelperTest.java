@@ -22,30 +22,33 @@ public class ComprasOrdenHelperTest {
 
     public static void main(String[] args) throws Exception {
         empresa();
+        entradaLegacyIgnorada();
         importes();
-        textosYFechas();
         estadoYAdjudicacion();
         medicina();
         System.out.println("COMPRAS_ORDEN_HELPER_OFFLINE_OK checks=" + checks);
-        System.out.println("Helper productivo; fronteras de consulta/persistencia simuladas; sin DB ni UI.");
+        System.out.println("Helper productivo; generacion directa con fuentes canonicas; sin DB ni UI.");
     }
 
     private static void empresa() throws Exception {
         Mock h = empresaFixture();
         h.detalles.get(0).setObservaciones("Comentario tecnico del articulo");
-        Map<String, String> entrada = entrada();
-        entrada.put("precio_70", "125,50");
-        entrada.put("iva", "20.50");
-        entrada.put("iibb", "5");
-        entrada.put("proveedor", "Proveedor alterado");
-        entrada.put("proveedorCuit", "00000000000");
-        entrada.put("cantidad_70", "999");
-        RequerimientoCompraOrden resultado = h.crear(40, entrada, "auditoria");
+        RequerimientoCompraOrden resultado = h.crearDirecta(40, "Nombre de Compras", "auditoria");
         igual("proveedor canonico", "Empresa de prueba", resultado.getProveedor());
         igual("CUIT canonico vacio", "", resultado.getProveedorCuit());
-        igual("cantidad fija", Integer.valueOf(2), resultado.getDetalles().get(0).getCantidad());
-        decimal("precio ingresado", "125.50", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
-        decimal("total incluye impuestos", "276.50", resultado.getTotal());
+        igual("cantidad fuente", Integer.valueOf(2), resultado.getDetalles().get(0).getCantidad());
+        decimal("precio fuente", "100", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
+        decimal("subtotal fuente", "200", resultado.getDetalles().get(0).getPrecioTotalEstimado());
+        igual("moneda desconocida", null, resultado.getMoneda());
+        igual("IVA desconocido", null, resultado.getIva());
+        igual("IIBB desconocido", null, resultado.getIibb());
+        igual("total desconocido por impuestos", null, resultado.getTotal());
+        igual("pago no inventado", null, resultado.getFormaPago());
+        igual("entrega no inventada", null, resultado.getEntrega());
+        igual("contacto no inventado", null, resultado.getProveedorContacto());
+        igual("fecha recepcion no inferida", null, resultado.getFechaRecepcion());
+        igual("actor real", "Nombre de Compras", resultado.getConfeccionadoPor());
+        igual("solicitante fuente", "solicitante", resultado.getSolicitante());
         decimal("precio original preservado", "100", h.detalles.get(0).getPrecioUnitarioEstimado());
         igual("comentario tecnico en snapshot", "Equipo de prueba\nComentario tecnico del articulo",
                 resultado.getDetalles().get(0).getDescripcionItemVisible());
@@ -55,220 +58,181 @@ public class ComprasOrdenHelperTest {
         igual("detalle independiente", Boolean.FALSE, Boolean.valueOf(resultado.getDetalles().get(0) == h.detalles.get(0)));
         igual("auditoria", "auditoria", resultado.getAltaUsr());
         igual("un guardado", Integer.valueOf(1), Integer.valueOf(h.guardados));
-        RequerimientoCompraOrden repetida = h.crear(40, entrada(), "auditoria");
-        igual("emision repetida", Integer.valueOf(900), Integer.valueOf(repetida.getIdOrdenCompra()));
+        resultado.setMoneda("USD"); resultado.setFormaPago("Condicion de una OC ya emitida");
+        RequerimientoCompraOrden repetida = h.crearDirecta(40, "Otro nombre", "auditoria");
+        igual("misma orden existente", resultado, repetida);
+        igual("moneda guardada preservada", "USD", repetida.getMoneda());
+        igual("condicion guardada preservada", "Condicion de una OC ya emitida", repetida.getFormaPago());
         igual("idempotente", Integer.valueOf(1), Integer.valueOf(h.guardados));
         igual("hidratacion existente", h.r, h.preparar(40, "nombre").getRequerimiento());
     }
 
-    private static void importes() throws Exception {
-        String[] invalidos = new String[] {"", "0", "-1", "NaN", "Infinity", "1.000,00",
-                "1.001", "100000000000000.00", "1e3", "9999999999999999999999999999999999999"};
-        for (int i = 0; i < invalidos.length; i++) {
-            Map<String, String> entrada = entrada();
-            entrada.put("precio_70", invalidos[i]);
-            rechaza(empresaFixture(), entrada, "precio invalido " + invalidos[i]);
-        }
-        String[] impuestosInvalidos = new String[] {"-1", "NaN", "1.001", "100000000000000.00"};
-        for (int i = 0; i < impuestosInvalidos.length; i++) {
-            Map<String, String> entrada = entrada();
-            entrada.put("iva", impuestosInvalidos[i]);
-            rechaza(empresaFixture(), entrada, "IVA invalido " + impuestosInvalidos[i]);
-        }
-        Map<String, String> entrada = entrada();
-        entrada.put("precio_70", "99999999999999.99");
-        rechaza(empresaFixture(), entrada, "subtotal fuera de rango");
-        Mock limite = empresaFixture();
-        limite.detalles.get(0).setCantidad(Integer.valueOf(1));
-        decimal("importe maximo valido", "99999999999999.99", limite.crear(40, entrada, "auditoria").getTotal());
-        entrada.put("iva", "0.01");
-        Mock total = empresaFixture();
-        total.detalles.get(0).setCantidad(Integer.valueOf(1));
-        rechaza(total, entrada, "total fuera de rango por impuesto");
+    private static void entradaLegacyIgnorada() throws Exception {
+        Map<String, String> entrada = new HashMap<String, String>();
+        entrada.put("precio_70", "999999"); entrada.put("cantidad_70", "999");
+        entrada.put("iva", "999"); entrada.put("iibb", "999"); entrada.put("moneda", "USD");
+        entrada.put("proveedor", "Proveedor alterado"); entrada.put("proveedorCuit", "00000000000");
+        entrada.put("confeccionadoPor", "Actor alterado"); entrada.put("fechaRecepcion", "01/01/2000");
+        entrada.put("formaPago", "Dato inventado"); entrada.put("entrega", "Dato inventado");
+        entrada.put("solicitante", "Dato inventado"); entrada.put("plan", "Dato inventado");
+        RequerimientoCompraOrden resultado = empresaFixture().crear(40, entrada, "auditoria");
+        decimal("legacy ignora precio", "100", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
+        igual("legacy ignora cantidad", Integer.valueOf(2), resultado.getDetalles().get(0).getCantidad());
+        igual("legacy ignora moneda", null, resultado.getMoneda());
+        igual("legacy ignora IVA", null, resultado.getIva());
+        igual("legacy ignora IIBB", null, resultado.getIibb());
+        igual("legacy ignora proveedor", "Empresa de prueba", resultado.getProveedor());
+        igual("legacy ignora actor", "auditoria", resultado.getConfeccionadoPor());
+        igual("legacy ignora solicitante", "solicitante", resultado.getSolicitante());
+        igual("legacy ignora pago", null, resultado.getFormaPago());
+        igual("legacy ignora entrega", null, resultado.getEntrega());
+        igual("legacy ignora plan", null, resultado.getPlan());
+        igual("legacy ignora fecha", null, resultado.getFechaRecepcion());
+        resultado = empresaFixture().crear(40, null, "auditoria");
+        igual("legacy sin mapa", Integer.valueOf(900), Integer.valueOf(resultado.getIdOrdenCompra()));
     }
 
-    private static void textosYFechas() throws Exception {
-        String[] monedas = new String[] {"", "EUR", "ars", "USDX"};
-        for (int i = 0; i < monedas.length; i++) {
-            Map<String, String> entrada = entrada();
-            entrada.put("moneda", monedas[i]);
-            rechaza(empresaFixture(), entrada, "moneda invalida");
+    private static void importes() throws Exception {
+        Mock h = empresaFixture();
+        h.detalles.get(0).setPrecioUnitarioEstimado(null);
+        RequerimientoCompraOrden resultado = h.crearDirecta(40, "Compras", "auditoria");
+        igual("precio faltante conservado", null, resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
+        igual("subtotal faltante conservado", null, resultado.getDetalles().get(0).getPrecioTotalEstimado());
+        igual("sin total parcial", null, resultado.getTotal());
+        h = empresaFixture(); h.detalles.get(0).setPrecioUnitarioEstimado(null);
+        h.detalles.get(0).setPrecioTotalEstimado(new BigDecimal("999"));
+        resultado = h.crearDirecta(40, "Compras", "auditoria");
+        igual("sin subtotal aislado sin precio", null, resultado.getDetalles().get(0).getPrecioTotalEstimado());
+        decimal("subtotal original aislado sin mutar", "999", h.detalles.get(0).getPrecioTotalEstimado());
+        h = empresaFixture(); h.detalles.get(0).setPrecioUnitarioEstimado(BigDecimal.ZERO);
+        resultado = h.crearDirecta(40, "Compras", "auditoria");
+        decimal("cero informado conservado", "0", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
+        decimal("subtotal cero informado", "0", resultado.getDetalles().get(0).getPrecioTotalEstimado());
+        igual("cero no inventa impuestos", null, resultado.getTotal());
+        resultado.setIva(BigDecimal.ZERO); resultado.setIibb(BigDecimal.ZERO);
+        decimal("total cero conocido", "0", resultado.getTotal());
+        resultado.getDetalles().get(0).setPrecioUnitarioEstimado(null);
+        igual("total sin precio no es cero", null, resultado.getTotal());
+        String[] invalidos = new String[] {"-1", "100000000000000.00"};
+        for (int i = 0; i < invalidos.length; i++) {
+            h = empresaFixture(); h.detalles.get(0).setPrecioUnitarioEstimado(new BigDecimal(invalidos[i]));
+            rechaza(h, "precio fuente invalido " + invalidos[i]);
         }
-        Map<String, String> entrada = entrada();
-        entrada.put("moneda", "USD");
-        entrada.put("fechaOrdenMedica", "29/02/2024");
-        entrada.put("fechaRecepcion", "23/10/2026");
-        entrada.put("plan", "Plan de prueba");
-        RequerimientoCompraOrden resultado = empresaFixture().crear(40, entrada, "auditoria");
-        igual("fecha estricta valida", "29/02/2024", new SimpleDateFormat("dd/MM/yyyy").format(resultado.getFechaOrdenMedica()));
-        igual("plan", "Plan de prueba", resultado.getPlan());
-        String[] fechas = new String[] {"29/02/2025", "31/04/2026", "1/01/2026", "01/01/2026extra", "2026-01-01"};
-        for (int i = 0; i < fechas.length; i++) {
-            entrada = entrada();
-            entrada.put("fechaRecepcion", fechas[i]);
-            rechaza(empresaFixture(), entrada, "fecha invalida " + fechas[i]);
-        }
-        String[] campos = new String[] {"formaPago", "entrega", "observaciones", "plan", "proveedorEmail"};
-        int[] largos = new int[] {251, 1001, 4001, 121, 251};
-        for (int i = 0; i < campos.length; i++) {
-            entrada = entrada();
-            entrada.put(campos[i], repetir(largos[i]));
-            rechaza(empresaFixture(), entrada, "sin truncamiento " + campos[i]);
-        }
-        entrada = entrada(); entrada.put("formaPago", " ");
-        rechaza(empresaFixture(), entrada, "pago obligatorio");
-        entrada = entrada(); entrada.put("entrega", " ");
-        rechaza(empresaFixture(), entrada, "entrega obligatoria");
-        entrada = entrada(); entrada.put("confeccionadoPor", " ");
-        rechaza(empresaFixture(), entrada, "confeccionado por obligatorio");
+        h = empresaFixture(); h.detalles.get(0).setPrecioUnitarioEstimado(new BigDecimal("99999999999999.99"));
+        rechaza(h, "subtotal fuente fuera de rango");
+        h = empresaFixture(); h.detalles.get(0).setCantidad(Integer.valueOf(1));
+        h.detalles.get(0).setPrecioUnitarioEstimado(new BigDecimal("99999999999999.99"));
+        resultado = h.crearDirecta(40, "Compras", "auditoria");
+        decimal("importe maximo fuente valido", "99999999999999.99", resultado.getDetalles().get(0).getPrecioTotalEstimado());
+        h = empresaFixture(); h.detalles.get(0).setPrecioTotalEstimado(new BigDecimal("999"));
+        rechaza(h, "subtotal fuente incoherente");
     }
 
     private static void estadoYAdjudicacion() throws Exception {
-        Mock h = empresaFixture();
+        Mock h = empresaFixture(); h.r.setEstado(WebKeysCompras.ESTADO_PENDIENTE);
+        rechaza(h, "estado no autorizado");
+        h = empresaFixture(); h.preparar(40, "nombre");
         h.r.setEstado(WebKeysCompras.ESTADO_PENDIENTE);
-        rechaza(h, entrada(), "estado no autorizado");
-        h = empresaFixture();
-        h.preparar(40, "nombre");
-        h.r.setEstado(WebKeysCompras.ESTADO_PENDIENTE);
-        rechaza(h, entrada(), "estado recargado al confirmar");
+        rechaza(h, "estado recargado al confirmar");
         h = empresaFixture(); h.r.setBajaFecha(new Date());
-        rechaza(h, entrada(), "requerimiento inactivo");
-        h = empresaFixture(); h.empresas.clear();
-        rechaza(h, entrada(), "sin adjudicacion");
-        h = empresaFixture(); h.empresas.add(h.empresas.get(0));
-        rechaza(h, entrada(), "dos empresas adjudicadas");
+        rechaza(h, "requerimiento inactivo");
+        h = empresaFixture(); h.empresas.clear(); rechaza(h, "sin adjudicacion");
+        h = empresaFixture(); h.empresas.add(h.empresas.get(0)); rechaza(h, "dos empresas adjudicadas");
         h = empresaFixture(); h.empresas.get(0).setIdRequerimiento(Integer.valueOf(99));
-        rechaza(h, entrada(), "empresa de otro requerimiento");
+        rechaza(h, "empresa de otro requerimiento");
         h = empresaFixture(); h.detalles.get(0).setCantidad(Integer.valueOf(0));
-        rechaza(h, entrada(), "cantidad no positiva");
-        h = empresaFixture(); h.detalles.get(0).setIdRequerimientoCompra(99);
-        rechaza(h, entrada(), "detalle ajeno");
-        h = empresaFixture(); h.detalles.add(h.detalles.get(0));
-        rechaza(h, entrada(), "detalle duplicado");
+        rechaza(h, "cantidad no positiva");
+        h = empresaFixture(); h.detalles.get(0).setIdRequerimientoCompra(99); rechaza(h, "detalle ajeno");
+        h = empresaFixture(); h.detalles.add(h.detalles.get(0)); rechaza(h, "detalle duplicado");
+        h = empresaFixture();
+        try { h.crearDirecta(40, " ", "auditoria"); throw new AssertionError("Actor vacio aceptado"); }
+        catch (IllegalArgumentException esperado) { igual("actor obligatorio sin guardado", Integer.valueOf(0), Integer.valueOf(h.guardados)); }
+        h = empresaFixture();
+        try { h.crearDirecta(40, "Compras", " "); throw new AssertionError("Auditoria vacia aceptada"); }
+        catch (IllegalArgumentException esperado) { igual("auditoria obligatoria sin guardado", Integer.valueOf(0), Integer.valueOf(h.guardados)); }
     }
 
     private static void medicina() throws Exception {
         Mock h = medicinaFixture();
-        RequerimientoCompraOrden precarga = h.preparar(40, "Compras");
-        igual("moneda requiere eleccion", "", precarga.getMoneda());
-        igual("RP canonico", Integer.valueOf(68030), Integer.valueOf(precarga.getIdReclamoPrestacional()));
-        igual("pago comparativa", "45 dias", precarga.getFormaPago());
-        igual("fecha documento", "02/10/2026", new SimpleDateFormat("dd/MM/yyyy").format(precarga.getFechaOrdenMedica()));
-        Map<String, String> entrada = entrada();
-        entrada.put("precio_70", "999999");
-        entrada.put("cantidad_70", "999");
-        entrada.put("iva", "999");
-        entrada.put("iibb", "999");
-        entrada.put("proveedor", "Proveedor alterado");
-        entrada.put("proveedorCuit", "00000000000");
-        entrada.put("idReclamoPrestacional", "999");
-        RequerimientoCompraOrden resultado = h.crear(40, entrada, "auditoria");
+        RequerimientoCompraOrden resultado = h.crearDirecta(40, "Compras", "auditoria");
+        igual("moneda medica desconocida", null, resultado.getMoneda());
+        igual("RP canonico", Integer.valueOf(68030), Integer.valueOf(resultado.getIdReclamoPrestacional()));
+        igual("pago comparativa", "45 dias", resultado.getFormaPago());
+        igual("fecha documento", "02/10/2026", new SimpleDateFormat("dd/MM/yyyy").format(resultado.getFechaOrdenMedica()));
         igual("proveedor medico canonico", "Prestador de prueba", resultado.getProveedor());
         igual("CUIT medico canonico", "30700000001", resultado.getProveedorCuit());
         igual("cantidad comparativa", Integer.valueOf(3), resultado.getDetalles().get(0).getCantidad());
         decimal("precio comparativa", "50", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
-        decimal("IVA comparativa", "10", resultado.getIva());
-        decimal("IIBB comparativa", "5", resultado.getIibb());
-        decimal("total medico", "165", resultado.getTotal());
+        decimal("IVA comparativa", "10", resultado.getIva()); decimal("IIBB comparativa", "5", resultado.getIibb());
+        decimal("total medico conocido", "165", resultado.getTotal());
         igual("cantidad original preservada", Integer.valueOf(2), h.detalles.get(0).getCantidad());
         decimal("precio original medico preservado", "100", h.detalles.get(0).getPrecioUnitarioEstimado());
-        h = medicinaFixture(); h.relacion = null;
-        rechaza(h, entrada(), "sin RP");
-        h = medicinaFixture(); h.relacion.setIdRequerimientoCompra(99);
-        rechaza(h, entrada(), "RP ajeno");
-        h = medicinaFixture(); h.comparativas.clear();
-        rechaza(h, entrada(), "sin comparativa guardada");
-        h = medicinaFixture(); h.comparativas.get(0).setIdPrestador(99);
-        rechaza(h, entrada(), "comparativa de otro prestador");
-        h = medicinaFixture(); h.comparativas.get(0).getDetalles().clear();
-        rechaza(h, entrada(), "comparativa incompleta");
+        h = medicinaFixture(); h.comparativas.get(0).setIva(null);
+        resultado = h.crearDirecta(40, "Compras", "auditoria");
+        igual("IVA fuente ausente", null, resultado.getIva()); igual("total medico desconocido", null, resultado.getTotal());
+        h = medicinaFixture(); h.comparativas.get(0).getDetalles().get(0).setImporteUnitario(BigDecimal.ZERO);
+        decimal("precio medico cero conocido", "0", h.crearDirecta(40, "Compras", "auditoria").getDetalles().get(0).getPrecioUnitarioEstimado());
+        h = medicinaFixture(); h.relacion = null; rechaza(h, "sin RP");
+        h = medicinaFixture(); h.relacion.setIdRequerimientoCompra(99); rechaza(h, "RP ajeno");
+        h = medicinaFixture(); h.comparativas.clear(); rechaza(h, "sin comparativa guardada");
+        h = medicinaFixture(); h.comparativas.get(0).setIdPrestador(99); rechaza(h, "comparativa de otro prestador");
+        h = medicinaFixture(); h.comparativas.get(0).getDetalles().clear(); rechaza(h, "comparativa incompleta");
         h = medicinaFixture(); h.comparativas.get(0).getDetalles().add(h.comparativas.get(0).getDetalles().get(0));
-        rechaza(h, entrada(), "comparativa duplicada");
-        h = medicinaFixture(); h.comparativas.get(0).setIva(new BigDecimal("-1"));
-        rechaza(h, entrada(), "impuesto adjudicado negativo");
-        h = medicinaFixture(); h.detalles.get(0).setIdPrestador(null);
-        rechaza(h, entrada(), "adjudicacion medica incompleta");
+        rechaza(h, "comparativa duplicada");
+        h = medicinaFixture(); h.comparativas.get(0).setIva(new BigDecimal("-1")); rechaza(h, "impuesto adjudicado negativo");
+        h = medicinaFixture(); h.comparativas.get(0).getDetalles().get(0).setImporteUnitario(null);
+        rechaza(h, "precio medico no informado");
+        h = medicinaFixture(); h.comparativas.get(0).getDetalles().get(0).setImporteUnitario(new BigDecimal("1.001"));
+        rechaza(h, "precio medico con precision no admitida");
+        h = medicinaFixture(); h.detalles.get(0).setIdPrestador(null); rechaza(h, "adjudicacion medica incompleta");
     }
 
     private static Mock empresaFixture() {
-        Mock h = base();
-        h.r.setSectorDescripcion("Sistemas");
+        Mock h = base(); h.r.setSectorDescripcion("Sistemas");
         RequerimientoCompraPresupuesto empresa = new RequerimientoCompraPresupuesto();
-        empresa.setIdRequerimientoPresupuesto(Integer.valueOf(101));
-        empresa.setIdRequerimiento(Integer.valueOf(40));
+        empresa.setIdRequerimientoPresupuesto(Integer.valueOf(101)); empresa.setIdRequerimiento(Integer.valueOf(40));
         empresa.setTipoDocumento(Integer.valueOf(RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_COTIZACION_EMPRESA));
-        empresa.setDescripcionEmpresa("Empresa de prueba");
-        empresa.setEmpresaAdjudicada(true);
-        h.empresas.add(empresa);
+        empresa.setDescripcionEmpresa("Empresa de prueba"); empresa.setEmpresaAdjudicada(true); h.empresas.add(empresa);
         return h;
     }
 
     private static Mock medicinaFixture() throws Exception {
-        Mock h = base();
-        h.r.setSectorDescripcion("Prestaciones Medicas");
+        Mock h = base(); h.r.setSectorDescripcion("Prestaciones Medicas");
         RequerimientoCompraDetalle d = h.detalles.get(0);
-        d.setTipoItem(RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR);
-        d.setIdPrestacion(Integer.valueOf(200));
-        d.setIdTipoNomenclador(Integer.valueOf(10));
-        d.setCodigoNomenclador("INS200");
-        d.setDescripcionNomenclador("Insumo de prueba");
-        d.setIdPrestador(Integer.valueOf(30));
-        d.setPrestadorRazonSocial("Prestador de prueba");
-        d.setPrestadorCuit("30700000001");
+        d.setTipoItem(RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR); d.setIdPrestacion(Integer.valueOf(200));
+        d.setIdTipoNomenclador(Integer.valueOf(10)); d.setCodigoNomenclador("INS200");
+        d.setDescripcionNomenclador("Insumo de prueba"); d.setIdPrestador(Integer.valueOf(30));
+        d.setPrestadorRazonSocial("Prestador de prueba"); d.setPrestadorCuit("30700000001");
         RequerimientoCompraComparativa c = new RequerimientoCompraComparativa();
         c.setIdComparativa(60); c.setIdRequerimiento(40); c.setIdPrestador(30);
         c.setFormaPago(Integer.valueOf(45)); c.setPlazoEntrega("24/48"); c.setEnvio("Obra Social");
         c.setIva(new BigDecimal("10")); c.setIibb(new BigDecimal("5"));
         RequerimientoCompraComparativaDetalle precio = new RequerimientoCompraComparativaDetalle();
         precio.setIdDetalle(61); precio.setIdPrestacion(200); precio.setCantidad(Integer.valueOf(3));
-        precio.setImporteUnitario(new BigDecimal("50")); c.getDetalles().add(precio);
-        h.comparativas.add(c);
-        h.relacion = new RequerimientoCompraReclamoPrestacional();
-        h.relacion.setIdRequerimientoCompra(40);
-        h.relacion.setIdReclamoPrestacional(Integer.valueOf(68030));
-        h.relacion.setEstado(WebKeysCompras.VINCULO_RECLAMO_VINCULADO);
+        precio.setImporteUnitario(new BigDecimal("50")); c.getDetalles().add(precio); h.comparativas.add(c);
+        h.relacion = new RequerimientoCompraReclamoPrestacional(); h.relacion.setIdRequerimientoCompra(40);
+        h.relacion.setIdReclamoPrestacional(Integer.valueOf(68030)); h.relacion.setEstado(WebKeysCompras.VINCULO_RECLAMO_VINCULADO);
         RequerimientoCompraPresupuesto documento = new RequerimientoCompraPresupuesto();
         documento.setIdRequerimiento(Integer.valueOf(40));
-        documento.setFechaDocumento(new SimpleDateFormat("dd/MM/yyyy").parse("02/10/2026"));
-        h.documentos.add(documento);
+        documento.setFechaDocumento(new SimpleDateFormat("dd/MM/yyyy").parse("02/10/2026")); h.documentos.add(documento);
         return h;
     }
 
     private static Mock base() {
-        Mock h = new Mock();
-        h.r = new RequerimientoCompra(); h.r.setIdRequerimientoCompra(40);
-        h.r.setEstado(WebKeysCompras.ESTADO_AUTORIZADO); h.r.setAltaUsr("solicitante");
-        h.r.setAltaFecha(new Date());
+        Mock h = new Mock(); h.r = new RequerimientoCompra(); h.r.setIdRequerimientoCompra(40);
+        h.r.setEstado(WebKeysCompras.ESTADO_AUTORIZADO); h.r.setAltaUsr("solicitante"); h.r.setAltaFecha(new Date());
         RequerimientoCompraDetalle d = new RequerimientoCompraDetalle(Integer.valueOf(70));
         d.setIdRequerimientoCompra(40); d.setTipoItem(RequerimientoCompraDetalle.TIPO_ITEM_OBSERVACION);
-        d.setDescripcionItem("Equipo de prueba"); d.setCantidad(Integer.valueOf(2));
-        d.setPrecioUnitarioEstimado(new BigDecimal("100"));
-        h.detalles.add(d); h.r.setDetalles(h.detalles);
-        return h;
+        d.setDescripcionItem("Equipo de prueba"); d.setCantidad(Integer.valueOf(2)); d.setPrecioUnitarioEstimado(new BigDecimal("100"));
+        h.detalles.add(d); h.r.setDetalles(h.detalles); return h;
     }
 
-    private static Map<String, String> entrada() {
-        Map<String, String> entrada = new HashMap<String, String>();
-        entrada.put("moneda", "ARS"); entrada.put("formaPago", "Transferencia");
-        entrada.put("confeccionadoPor", "Compras de prueba");
-        entrada.put("entrega", "A coordinar"); entrada.put("precio_70", "100");
-        return entrada;
-    }
-
-    private static void rechaza(Mock h, Map<String, String> entrada, String caso) throws Exception {
-        try {
-            h.crear(40, entrada, "auditoria");
-        } catch (IllegalArgumentException esperado) {
-            igual(caso + " sin persistencia", Integer.valueOf(0), Integer.valueOf(h.guardados));
-            return;
+    private static void rechaza(Mock h, String caso) throws Exception {
+        try { h.crearDirecta(40, "Compras", "auditoria"); }
+        catch (IllegalArgumentException esperado) {
+            igual(caso + " sin persistencia", Integer.valueOf(0), Integer.valueOf(h.guardados)); return;
         }
         throw new AssertionError("No rechazo: " + caso);
-    }
-
-    private static String repetir(int cantidad) {
-        StringBuilder texto = new StringBuilder();
-        for (int i = 0; i < cantidad; i++) { texto.append('x'); }
-        return texto.toString();
     }
 
     private static void decimal(String caso, String esperado, BigDecimal actual) {
@@ -298,9 +262,7 @@ public class ComprasOrdenHelperTest {
         protected List<RequerimientoCompraDetalle> obtenerDetalles(int id) { return detalles; }
         protected RequerimientoCompraOrden obtenerOrden(int id) { return guardada; }
         protected RequerimientoCompraOrden guardarOrden(RequerimientoCompraOrden orden, String usuario) {
-            guardados++; orden.setIdOrdenCompra(900); guardada = orden;
-            r.setEstado(WebKeysCompras.ESTADO_ORDEN_COMPRA);
-            return orden;
+            guardados++; orden.setIdOrdenCompra(900); guardada = orden; r.setEstado(WebKeysCompras.ESTADO_ORDEN_COMPRA); return orden;
         }
         protected List<RequerimientoCompraPresupuesto> obtenerCotizacionesEmpresa(int id) { return empresas; }
         protected List<RequerimientoCompraComparativa> obtenerComparativas(int id, int idPrestador) { return comparativas; }

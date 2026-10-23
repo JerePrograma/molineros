@@ -3185,7 +3185,7 @@ CREATE TABLE compras.requerimiento_orden_compra (
     fecha_emision DATE NOT NULL,
     fecha_orden_medica DATE,
     fecha_recepcion DATE,
-    moneda VARCHAR(10) NOT NULL,
+    moneda VARCHAR(10),
     proveedor VARCHAR(250) NOT NULL,
     proveedor_cuit VARCHAR(20),
     proveedor_domicilio VARCHAR(250),
@@ -3202,8 +3202,8 @@ CREATE TABLE compras.requerimiento_orden_compra (
     solicitante VARCHAR(250),
     plan VARCHAR(120),
     id_reclamo_prestacional INTEGER NOT NULL DEFAULT 0,
-    iva NUMERIC(18,2) NOT NULL DEFAULT 0 CHECK (iva >= 0),
-    iibb NUMERIC(18,2) NOT NULL DEFAULT 0 CHECK (iibb >= 0),
+    iva NUMERIC(18,2) CHECK (iva >= 0),
+    iibb NUMERIC(18,2) CHECK (iibb >= 0),
     alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     alta_usr VARCHAR(100) NOT NULL,
     CHECK (btrim(proveedor) <> ''),
@@ -3221,11 +3221,16 @@ CREATE TABLE compras.requerimiento_orden_compra_detalle (
     codigo_item VARCHAR(100),
     descripcion_item TEXT NOT NULL CHECK (btrim(descripcion_item) <> ''),
     cantidad INTEGER NOT NULL CHECK (cantidad > 0),
-    precio_unitario NUMERIC(18,2) NOT NULL CHECK (precio_unitario >= 0),
-    precio_total NUMERIC(18,2) NOT NULL CHECK (precio_total >= 0),
+    precio_unitario NUMERIC(18,2) CHECK (precio_unitario >= 0),
+    precio_total NUMERIC(18,2) CHECK (precio_total >= 0),
     PRIMARY KEY (id_orden_compra, orden),
     UNIQUE (id_orden_compra, id_requerimiento_detalle),
-    CHECK (precio_total = round(cantidad * precio_unitario, 2))
+    CHECK (precio_total = round(cantidad * precio_unitario, 2)),
+    CONSTRAINT ck_compras_oc_detalle_importes_conjuntos CHECK (
+        (precio_unitario IS NULL AND precio_total IS NULL)
+        OR (precio_unitario IS NOT NULL AND precio_total IS NOT NULL
+            AND precio_total = round(cantidad * precio_unitario, 2))
+    )
 );
 
 CREATE OR REPLACE FUNCTION compras.bloquear_creacion_orden_compra(

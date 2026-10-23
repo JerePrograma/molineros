@@ -125,7 +125,8 @@ VALUES (1001, 7, 1, NULL, NULL), (1002, 7, 2, '20111111112', 0),
        (1003, 1, 1, NULL, NULL), (1004, 7, 1, NULL, NULL),
        (1005, 7, 2, '20111111112', 0), (1006, 7, 2, '20111111112', 0),
        (1007, 7, 1, NULL, NULL), (1008, 7, 1, NULL, NULL),
-       (1009, 7, 1, NULL, NULL);
+       (1009, 7, 1, NULL, NULL), (1010, 7, 1, NULL, NULL),
+       (1011, 7, 1, NULL, NULL);
 INSERT INTO compras.requerimiento_detalle
     (id_detalle, id_requerimiento, id_prestador, cantidad,
      precio_unitario_estimado, precio_total_estimado)
@@ -133,11 +134,13 @@ VALUES (2001, 1001, NULL, 2, NULL, NULL), (2002, 1002, 50, 2, 12.34, 24.68),
        (2003, 1003, NULL, 1, NULL, NULL), (2004, 1004, NULL, 1, NULL, NULL),
        (2005, 1005, 50, 1, 10, 10), (2006, 1006, 50, 1, 10, 10),
        (2016, 1006, 51, 1, 20, 20), (2007, 1007, NULL, 1, NULL, NULL),
-       (2008, 1008, NULL, 1, NULL, NULL), (2009, 1009, NULL, 1, NULL, NULL);
+       (2008, 1008, NULL, 1, NULL, NULL), (2009, 1009, NULL, 1, NULL, NULL),
+       (2010, 1010, NULL, 2, NULL, NULL), (2011, 1011, NULL, 2, 0, 0);
 INSERT INTO compras.requerimiento_presupuesto
     (id_requerimiento, tipo_documento, empresa_adjudicada, descripcion_empresa)
 VALUES (1001, 3, TRUE, 'Empresa Fixture'), (1007, 3, TRUE, 'Empresa Fixture'),
-       (1008, 3, TRUE, 'Empresa Fixture'), (1009, 3, TRUE, 'Empresa Fixture');
+       (1008, 3, TRUE, 'Empresa Fixture'), (1009, 3, TRUE, 'Empresa Fixture'),
+       (1010, 3, TRUE, 'Empresa Fixture'), (1011, 3, TRUE, 'Empresa Fixture');
 INSERT INTO compras.requerimiento_presupuesto
     (id_requerimiento, tipo_documento, id_prestador)
 VALUES (1002, 1, 50), (1005, 1, 50), (1006, 1, 50), (1006, 1, 51);
@@ -284,6 +287,71 @@ BEGIN
     END;
     ASSERT NOT EXISTS (SELECT 1 FROM compras.requerimiento_orden_compra WHERE id_requerimiento = 1009);
     ASSERT (SELECT estado FROM compras.requerimiento WHERE id_requerimiento = 1009) = 7;
+END;
+$test$;
+-- Emision directa desde datos existentes: NULL significa no informado.
+DO $test$
+DECLARE
+    v_id INTEGER;
+BEGIN
+    ASSERT compras.bloquear_creacion_orden_compra(1010, 'fixture') = 0;
+    INSERT INTO compras.requerimiento_orden_compra
+        (id_requerimiento, fecha_emision, proveedor, confeccionado_por, alta_usr)
+    VALUES (1010, CURRENT_DATE, 'Empresa Fixture', 'Operador Fixture', 'fixture')
+    RETURNING id_orden_compra INTO v_id;
+    INSERT INTO compras.requerimiento_orden_compra_detalle
+        (id_orden_compra, orden, id_requerimiento_detalle, descripcion_item, cantidad)
+    VALUES (v_id, 1, 2010, 'Equipo sin precio informado', 2);
+    ASSERT compras.confirmar_orden_compra_requerimiento(1010, 'fixture') = 5;
+    ASSERT (SELECT moneda IS NULL AND iva IS NULL AND iibb IS NULL
+              FROM compras.requerimiento_orden_compra WHERE id_orden_compra = v_id);
+    ASSERT (SELECT precio_unitario IS NULL AND precio_total IS NULL
+              FROM compras.requerimiento_orden_compra_detalle WHERE id_orden_compra = v_id);
+    BEGIN
+        UPDATE compras.requerimiento_orden_compra_detalle SET precio_unitario = 10
+         WHERE id_orden_compra = v_id;
+        RAISE EXCEPTION 'Falto rechazar precio unitario sin total.';
+    EXCEPTION WHEN check_violation THEN ASSERT SQLSTATE = '23514';
+    END;
+    BEGIN
+        UPDATE compras.requerimiento_orden_compra_detalle SET precio_total = 20
+         WHERE id_orden_compra = v_id;
+        RAISE EXCEPTION 'Falto rechazar total sin precio unitario.';
+    EXCEPTION WHEN check_violation THEN ASSERT SQLSTATE = '23514';
+    END;
+    ASSERT compras.bloquear_creacion_orden_compra(1010, 'fixture') = v_id;
+END;
+$test$;
+DO $test$
+DECLARE
+    v_id INTEGER;
+BEGIN
+    ASSERT compras.bloquear_creacion_orden_compra(1011, 'fixture') = 0;
+    INSERT INTO compras.requerimiento_orden_compra
+        (id_requerimiento, fecha_emision, proveedor, confeccionado_por, alta_usr, iva, iibb)
+    VALUES (1011, CURRENT_DATE, 'Empresa Fixture', 'Operador Fixture', 'fixture', 0, 0)
+    RETURNING id_orden_compra INTO v_id;
+    INSERT INTO compras.requerimiento_orden_compra_detalle
+        (id_orden_compra, orden, id_requerimiento_detalle, descripcion_item,
+         cantidad, precio_unitario, precio_total)
+    VALUES (v_id, 1, 2011, 'Precio cero informado', 2, 0, 0);
+    ASSERT compras.confirmar_orden_compra_requerimiento(1011, 'fixture') = 5;
+    ASSERT (SELECT iva = 0 AND iibb = 0 FROM compras.requerimiento_orden_compra
+             WHERE id_orden_compra = v_id);
+    ASSERT (SELECT precio_unitario = 0 AND precio_total = 0
+              FROM compras.requerimiento_orden_compra_detalle WHERE id_orden_compra = v_id);
+END;
+$test$;
+-- Tambien debe poder actualizarse nuevamente una instalacion nueva.
+\ir ../../docs/sql/compras/20261023_orden_compra_generacion_directa.sql
+\ir ../../docs/sql/compras/20261023_orden_compra_generacion_directa.sql
+DO $test$
+BEGIN
+    ASSERT (SELECT moneda = 'ARS' AND iva = 4.20 AND iibb = 0.80
+                   AND observaciones = 'Snapshot verificable'
+              FROM compras.requerimiento_orden_compra WHERE id_requerimiento = 1001);
+    ASSERT (SELECT moneda IS NULL AND iva IS NULL AND iibb IS NULL
+              FROM compras.requerimiento_orden_compra WHERE id_requerimiento = 1010);
 END;
 $test$;
 SELECT 'orden_compra_test: OK' AS resultado;

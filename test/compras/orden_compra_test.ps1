@@ -32,7 +32,7 @@ $sources = @(
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'context.txt'), @(
     ('Inicio UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss')),
     ('HEAD inicial: ' + $initialHead),
-    'Estado inicial: OC existente cambia estado sin PDF; no admite prestaciones medicas.',
+    'Estado inicial: OC exige formulario previo; se ajusta a generacion directa con datos existentes.',
     'Log inicial: no hay logs Tomcat en la copia local. Esta prueba no usa DB activa ni UI.',
     'Pruebas: clases productivas Java8/source1.5, reglas con datos simulados, Jasper real.'
 ), $latinEncoding)

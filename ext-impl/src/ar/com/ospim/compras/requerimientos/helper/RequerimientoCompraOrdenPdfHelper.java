@@ -38,8 +38,13 @@ public class RequerimientoCompraOrdenPdfHelper {
             throw new IllegalArgumentException(
                     "La orden de compra no contiene los datos necesarios para imprimir.");
         }
-        if (!"ARS".equals(orden.getMoneda()) && !"USD".equals(orden.getMoneda())) {
+        if (orden.getMoneda() != null && orden.getMoneda().trim().length() > 0
+                && !"ARS".equals(orden.getMoneda()) && !"USD".equals(orden.getMoneda())) {
             throw new IllegalArgumentException("La orden de compra no tiene una moneda válida.");
+        }
+        if ((orden.getIva() != null && orden.getIva().signum() < 0)
+                || (orden.getIibb() != null && orden.getIibb().signum() < 0)) {
+            throw new IllegalArgumentException("La orden de compra contiene impuestos negativos.");
         }
         RequerimientoCompra requerimiento = orden.getRequerimiento();
         SimpleDateFormat fechas = new SimpleDateFormat("dd/MM/yyyy");
@@ -51,7 +56,7 @@ public class RequerimientoCompraOrdenPdfHelper {
         parametros.put("FECHA", fechas.format(orden.getFechaEmision()));
         parametros.put("REQUERIMIENTO", String.valueOf(orden.getIdRequerimientoCompra()));
         parametros.put("SECTOR", texto(requerimiento.getSectorDescripcionVisible()));
-        parametros.put("MONEDA", orden.getMoneda());
+        parametros.put("MONEDA", texto(orden.getMoneda()));
         parametros.put("PROVEEDOR", "Proveedor: " + texto(orden.getProveedor())
                 + "\nCUIT: " + texto(orden.getProveedorCuit())
                 + "\nDomicilio: " + texto(orden.getProveedorDomicilio()));
@@ -80,12 +85,20 @@ public class RequerimientoCompraOrdenPdfHelper {
                 + "\nTeléfono de Compras: " + texto(orden.getTelefonoCompras()));
         List<Map<String, Object>> filas = new ArrayList<Map<String, Object>>();
         BigDecimal subtotal = BigDecimal.ZERO;
+        boolean subtotalInformado = true;
         for (RequerimientoCompraDetalle detalle : orden.getDetalles()) {
-            if (detalle == null || detalle.getCantidadInt() <= 0
-                    || detalle.getPrecioUnitarioEstimado() == null
-                    || detalle.getPrecioUnitarioEstimado().signum() < 0
-                    || detalle.getPrecioTotalEstimado() == null) {
+            if (detalle == null || detalle.getCantidadInt() <= 0) {
                 throw new IllegalArgumentException("La orden de compra contiene un detalle incompleto.");
+            }
+            BigDecimal unitario = detalle.getPrecioUnitarioEstimado();
+            BigDecimal totalDetalle = detalle.getPrecioTotalEstimado();
+            if ((unitario == null) != (totalDetalle == null)
+                    || (unitario != null && unitario.signum() < 0)
+                    || (totalDetalle != null && totalDetalle.signum() < 0)
+                    || (unitario != null && totalDetalle != null
+                            && totalDetalle.compareTo(unitario.multiply(
+                                    new BigDecimal(detalle.getCantidadInt()))) != 0)) {
+                throw new IllegalArgumentException("La orden de compra contiene importes de detalle inconsistentes.");
             }
             Map<String, Object> fila = new HashMap<String, Object>();
             String descripcion = texto(detalle.getDescripcionItemVisible());
@@ -97,15 +110,19 @@ public class RequerimientoCompraOrdenPdfHelper {
             }
             fila.put("cantidad", detalle.getCantidadString());
             fila.put("descripcion", descripcion);
-            fila.put("unitario", importes.format(detalle.getPrecioUnitarioEstimado()));
-            fila.put("importe", importes.format(detalle.getPrecioTotalEstimado()));
+            fila.put("unitario", importe(unitario, importes));
+            fila.put("importe", importe(totalDetalle, importes));
             filas.add(fila);
-            subtotal = subtotal.add(detalle.getPrecioTotalEstimado());
+            if (totalDetalle == null) {
+                subtotalInformado = false;
+            } else {
+                subtotal = subtotal.add(totalDetalle);
+            }
         }
-        parametros.put("SUBTOTAL", importes.format(subtotal));
-        parametros.put("IVA", orden.getIva() != null ? importes.format(orden.getIva()) : "No informado");
-        parametros.put("IIBB", orden.getIibb() != null ? importes.format(orden.getIibb()) : "No informado");
-        parametros.put("TOTAL", importes.format(orden.getTotal()));
+        parametros.put("SUBTOTAL", importe(subtotalInformado ? subtotal : null, importes));
+        parametros.put("IVA", importe(orden.getIva(), importes));
+        parametros.put("IIBB", importe(orden.getIibb(), importes));
+        parametros.put("TOTAL", importe(orden.getTotal(), importes));
         InputStream in = null;
         try {
             in = getClass().getClassLoader().getResourceAsStream(REPORTE);
@@ -129,6 +146,10 @@ public class RequerimientoCompraOrdenPdfHelper {
                 }
             }
         }
+    }
+
+    private String importe(BigDecimal valor, DecimalFormat formato) {
+        return valor != null ? formato.format(valor) : "No informado";
     }
 
     private String texto(String valor) {

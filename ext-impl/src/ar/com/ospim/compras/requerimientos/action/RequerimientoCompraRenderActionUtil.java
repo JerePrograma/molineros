@@ -32,6 +32,9 @@ import javax.portlet.RenderRequest;
 /** Publica el contexto de presentación requerido por los JSP de Compras. */
 public final class RequerimientoCompraRenderActionUtil {
 
+    public static final String ATTR_PUEDE_CREAR_ORDEN_COMPRA =
+            "compras.requerimiento.puedeCrearOrdenCompra";
+
     public static final String ATTR_ORDEN_COMPRA_EMITIDA =
             "compras.requerimiento.ordenCompraEmitida";
 
@@ -78,6 +81,26 @@ public final class RequerimientoCompraRenderActionUtil {
         if (renderRequest == null) {
             return;
         }
+
+        boolean puedeCrearOrdenCompra = false;
+        if (requerimiento != null && requerimiento.getIdRequerimientoCompra() > 0
+                && requerimiento.isActivo() && WebKeysCompras.esAutorizado(requerimiento.getEstado())) {
+            try {
+                User user = PortalUtil.getUser(renderRequest);
+                if (user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
+                    Object token = renderRequest.getAttribute("COMPRAS_SAVE_TOKEN");
+                    if (!(token instanceof String) || ((String) token).length() == 0) {
+                        RequerimientoCompraGuardadoToken.publicar(renderRequest);
+                    }
+                    puedeCrearOrdenCompra = true;
+                }
+            } catch (Exception e) {
+                LogFactoryUtil.getLog(RequerimientoCompraRenderActionUtil.class).warn(
+                        "No se pudo preparar la emision de la Orden de Compra. Requerimiento="
+                                + requerimiento.getIdRequerimientoCompra(), e);
+            }
+        }
+        renderRequest.setAttribute(ATTR_PUEDE_CREAR_ORDEN_COMPRA, Boolean.valueOf(puedeCrearOrdenCompra));
 
         boolean ordenCompraEmitida = false;
         if (requerimiento != null && requerimiento.isActivo() && requerimiento.isOrdenCompra()) {

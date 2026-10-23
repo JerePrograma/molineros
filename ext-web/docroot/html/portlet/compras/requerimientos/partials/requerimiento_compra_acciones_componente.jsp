@@ -140,6 +140,8 @@ boolean botoneraPuedePasarAOrdenCompra =
         && req.isActivo()
         && botoneraTieneRolCotizar
         && WebKeysCompras.esAutorizado(botoneraEstadoActual)
+        && Boolean.TRUE.equals(renderRequest.getAttribute(
+                RequerimientoCompraRenderActionUtil.ATTR_PUEDE_CREAR_ORDEN_COMPRA))
         && req.tieneDetalles()
         && (req.esSectorSinCotizacionPrestador()
                 ? botoneraEmpresasAdjudicadas == 1
@@ -160,6 +162,12 @@ PortletURL botoneraOrdenCompraURL = renderResponse.createRenderURL();
 botoneraOrdenCompraURL.setWindowState(WindowState.MAXIMIZED);
 botoneraOrdenCompraURL.setParameter("struts_action", "/compras/orden_compra");
 botoneraOrdenCompraURL.setParameter("id_requerimiento_compra", String.valueOf(botoneraIdRequerimientoActual));
+
+PortletURL botoneraCrearOrdenCompraURL = renderResponse.createActionURL();
+botoneraCrearOrdenCompraURL.setWindowState(WindowState.MAXIMIZED);
+botoneraCrearOrdenCompraURL.setParameter("struts_action", "/compras/orden_compra");
+String botoneraOrdenCompraFormId = namespaceCompra + "ordenCompraRequerimientoCompraForm";
+String botoneraOrdenCompraToken = (String) renderRequest.getAttribute("COMPRAS_SAVE_TOKEN");
 
 boolean botoneraHayDetalles =
         botoneraRequerimientoPersistido
@@ -299,6 +307,16 @@ String botoneraReclamoPrestacionalFormId =
     </form>
 <% } %>
 
+<% if (botoneraPuedePasarAOrdenCompra) { %>
+    <form action="<%= botoneraCrearOrdenCompraURL.toString() %>" method="post"
+          id="<%= botoneraOrdenCompraFormId %>" style="display:none;">
+        <input type="hidden" name="<portlet:namespace />id_requerimiento_compra"
+               value="<%= botoneraIdRequerimientoActual %>" />
+        <input type="hidden" name="<portlet:namespace />compras_save_token"
+               value="<%= HtmlUtil.escape(botoneraOrdenCompraToken) %>" />
+    </form>
+<% } %>
+
 <% if (botoneraPuedeEnviarAAutorizar || botoneraPuedeAutorizar) { %>
     <form action="<%= botoneraCambiarEstadoURL.toString() %>"
           method="post"
@@ -397,11 +415,14 @@ String botoneraReclamoPrestacionalFormId =
                        );" />
             <% } %>
 
-            <% if (botoneraPuedePasarAOrdenCompra || botoneraPuedeVerOrdenCompra) { %>
-                <input type="button"
-                       id="<portlet:namespace />btnOrdenCompraRequerimientoCompra"
-                       value="<%= botoneraPuedePasarAOrdenCompra ? "Crear Orden de Compra" : "Ver Orden de Compra" %>"
-                       onClick="window.location.href='<%= botoneraOrdenCompraURL.toString() %>';" />
+            <% if (botoneraPuedePasarAOrdenCompra) { %>
+                <input type="button" id="<portlet:namespace />btnOrdenCompraRequerimientoCompra"
+                       value="Crear Orden de Compra"
+                       onclick="return <portlet:namespace />crearOrdenCompraDirecta(this);" />
+            <% } else if (botoneraPuedeVerOrdenCompra) { %>
+                <input type="button" id="<portlet:namespace />btnOrdenCompraRequerimientoCompra"
+                       value="Ver Orden de Compra"
+                       onclick="window.location.href='<%= botoneraOrdenCompraURL.toString() %>';" />
             <% } %>
 
             <% if (botoneraPuedeReintentarCotizacion) { %>
@@ -469,6 +490,21 @@ String botoneraReclamoPrestacionalFormId =
 </iframe>
 
 <script type="text/javascript">
+    function <portlet:namespace />crearOrdenCompraDirecta(boton) {
+        var form = document.getElementById('<%= botoneraOrdenCompraFormId %>');
+        if (!boton || boton.disabled || !form) { return false; }
+        boton.disabled = true;
+        boton.value = 'Generando...';
+        try {
+            form.submit();
+        } catch (e) {
+            boton.disabled = false;
+            boton.value = 'Crear Orden de Compra';
+            alert('No se pudo enviar la solicitud de Orden de Compra.');
+        }
+        return false;
+    }
+
     var <portlet:namespace />popupComparativaCompra = null;
 
     function <portlet:namespace />abrirComparativaCompra() {

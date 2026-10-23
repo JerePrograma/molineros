@@ -259,8 +259,8 @@ public class CambiarEstadoRequerimientoCompraAction
                 );
 
                 throw new IllegalArgumentException(
-                        "Complete el formulario Crear Orden de Compra "
-                                + "para guardar y emitir la orden."
+                        "Utilice Crear Orden de Compra para emitir la orden "
+                                + "directamente con los datos autorizados."
                 );
 
             } else if (estadoNuevo
