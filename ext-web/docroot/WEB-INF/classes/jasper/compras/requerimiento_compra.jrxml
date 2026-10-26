@@ -1,14 +1,24 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="requerimiento_compra" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
 	<property name="ireport.zoom" value="1.5"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="48"/>
 	<parameter name="ID_REQUERIMIENTO" class="java.lang.String"/>
 	<queryString>
-		<![CDATA[SELECT *
+		<![CDATA[SELECT pdf.*,
+    empresa.descripcion_empresa AS empresa_adjudicada_descripcion,
+    empresa.empresa_cuit AS empresa_adjudicada_cuit,
+    empresa.empresa_sucursal AS empresa_adjudicada_sucursal
 FROM compras.get_requerimiento_compra_pdf(
     CAST($P{ID_REQUERIMIENTO} AS INTEGER)
-)]]>
+) pdf
+LEFT JOIN compras.listar_documentos_requerimiento(
+    CAST($P{ID_REQUERIMIENTO} AS INTEGER), 3
+) empresa
+    ON empresa.id_requerimiento = pdf.id_requerimiento
+   AND empresa.empresa_adjudicada
+   AND compras.normalizar_sector(pdf.sector_descripcion) = 'SISTEMAS'
+ORDER BY pdf.detalle_id NULLS LAST]]>
 	</queryString>
 	<field name="id_requerimiento" class="java.lang.Integer"/>
 	<field name="alta_fecha" class="java.sql.Timestamp"/>
@@ -53,11 +63,14 @@ FROM compras.get_requerimiento_compra_pdf(
 	<field name="prestador_razon_social" class="java.lang.String"/>
 	<field name="prestador_cuit" class="java.lang.String"/>
 	<field name="detalle_observaciones" class="java.lang.String"/>
+	<field name="empresa_adjudicada_descripcion" class="java.lang.String"/>
+	<field name="empresa_adjudicada_cuit" class="java.lang.String"/>
+	<field name="empresa_adjudicada_sucursal" class="java.lang.String"/>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="164" splitType="Stretch">
+		<band height="198" splitType="Stretch">
 			<frame>
 				<reportElement x="0" y="0" width="555" height="160"/>
 				<box>
@@ -79,7 +92,7 @@ FROM compras.get_requerimiento_compra_pdf(
 					<textElement>
 						<font fontName="SansSerif" size="8" isBold="true"/>
 					</textElement>
-					<text><![CDATA[NÃºmero:]]></text>
+					<text><![CDATA[Número:]]></text>
 				</staticText>
 				<textField isBlankWhenNull="true">
 					<reportElement x="82" y="38" width="85" height="13"/>
@@ -293,6 +306,26 @@ FROM compras.get_requerimiento_compra_pdf(
 					<textFieldExpression class="java.lang.String"><![CDATA[$F{afiliado_seccional}]]></textFieldExpression>
 				</textField>
 			</frame>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="164" width="555" height="34" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA["SISTEMAS".equalsIgnoreCase(
+    $F{sector_descripcion} == null ? "" : $F{sector_descripcion}.trim())
+    && $F{empresa_adjudicada_descripcion} != null
+    && $F{empresa_adjudicada_descripcion}.trim().length() > 0]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Empresa adjudicada: "
++ ($F{empresa_adjudicada_descripcion} == null
+    ? "" : $F{empresa_adjudicada_descripcion}.trim())
++ ($F{empresa_adjudicada_cuit} == null
+   || $F{empresa_adjudicada_cuit}.trim().length() == 0
+    ? "" : "\nCUIT: " + $F{empresa_adjudicada_cuit}.trim())
++ ($F{empresa_adjudicada_sucursal} == null
+   || $F{empresa_adjudicada_sucursal}.trim().length() == 0
+    ? "" : "\nSucursal: " + $F{empresa_adjudicada_sucursal}.trim())]]></textFieldExpression>
+			</textField>
 		</band>
 	</title>
 	<columnHeader>
@@ -321,7 +354,7 @@ FROM compras.get_requerimiento_compra_pdf(
 					<textElement textAlignment="Center">
 						<font fontName="SansSerif" size="7" isBold="true"/>
 					</textElement>
-					<text><![CDATA[DescripciÃ³n del pedido]]></text>
+					<text><![CDATA[Descripción del pedido]]></text>
 				</staticText>
 				<staticText>
 					<reportElement x="270" y="5" width="62" height="12"/>
