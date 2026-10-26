@@ -27,6 +27,7 @@ public class ComprasOrdenHelperTest {
 
     public static void main(String[] args) throws Exception {
         empresa();
+        observacionesEmpresa();
         entradaLegacyIgnorada();
         importes();
         estadoYAdjudicacion();
@@ -72,6 +73,66 @@ public class ComprasOrdenHelperTest {
         igual("condicion guardada preservada", "Condicion de una OC ya emitida", repetida.getFormaPago());
         igual("idempotente", Integer.valueOf(1), Integer.valueOf(h.guardados));
         igual("hidratacion existente", h.r, h.preparar(40, "nombre").getRequerimiento());
+    }
+
+    private static void observacionesEmpresa() throws Exception {
+        String[] sectores = new String[] { "Sistemas", "RRHH" };
+        for (int i = 0; i < sectores.length; i++) {
+            String sector = sectores[i];
+            Mock h = observacionEmpresaFixture(sector);
+            RequerimientoCompraDetalle original = h.detalles.get(0);
+            igual(sector + " fuente sin descripcion tecnica", "", original.getDescripcionItemVisible());
+            RequerimientoCompraOrden resultado = h.crearDirecta(40, "Compras", "auditoria");
+            RequerimientoCompraDetalle emitido = resultado.getDetalles().get(0);
+            igual(sector + " OC emitida", Integer.valueOf(900), Integer.valueOf(resultado.getIdOrdenCompra()));
+            igual(sector + " cantidad observacion", Integer.valueOf(1), emitido.getCantidad());
+            igual(sector + " texto una sola vez", "CELULAR PRUEBA", emitido.getDescripcionItemVisible());
+            igual(sector + " sin observacion duplicada", "", emitido.getObservacionesVisible());
+            igual(sector + " precio desconocido", null, emitido.getPrecioUnitarioEstimado());
+            igual(sector + " subtotal desconocido", null, emitido.getPrecioTotalEstimado());
+            igual(sector + " total desconocido", null, resultado.getTotal());
+            igual(sector + " original sin descripcion tecnica", null, original.getDescripcionItem());
+            igual(sector + " observacion original preservada", "CELULAR PRUEBA", original.getObservaciones());
+            igual(sector + " precio original preservado", null, original.getPrecioUnitarioEstimado());
+            igual(sector + " copia independiente", Boolean.FALSE, Boolean.valueOf(emitido == original));
+            igual(sector + " un guardado", Integer.valueOf(1), Integer.valueOf(h.guardados));
+            h = observacionEmpresaFixture(sector);
+            h.detalles.get(0).setObservaciones("   ");
+            rechazaDetalleIncompleto(h, sector + " observacion obligatoria");
+        }
+        String[] tipos = new String[] { RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO,
+                RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR };
+        for (int i = 0; i < tipos.length; i++) {
+            Mock h = observacionEmpresaFixture("Sistemas");
+            h.detalles.get(0).setTipoItem(tipos[i]);
+            rechazaDetalleIncompleto(h, tipos[i] + " conserva descripcion tecnica obligatoria");
+        }
+        Mock ajeno = observacionEmpresaFixture("Prestaciones Medicas");
+        rechazaDetalleIncompleto(ajeno, "sector ajeno sin excepcion corporativa");
+    }
+
+    private static Mock observacionEmpresaFixture(String sector) {
+        Mock h = empresaFixture();
+        h.r.setSectorDescripcion(sector);
+        RequerimientoCompraDetalle d = h.detalles.get(0);
+        d.setDescripcionItem(null);
+        d.setObservaciones("CELULAR PRUEBA");
+        d.setCantidad(Integer.valueOf(1));
+        d.setPrecioUnitarioEstimado(null);
+        d.setPrecioTotalEstimado(null);
+        return h;
+    }
+
+    private static void rechazaDetalleIncompleto(Mock h, String caso) throws Exception {
+        try {
+            h.crearDirecta(40, "Compras", "auditoria");
+        } catch (IllegalArgumentException esperado) {
+            igual(caso + " mensaje", "Los detalles del requerimiento estan incompletos. Actualice la pantalla.",
+                    esperado.getMessage());
+            igual(caso + " sin persistencia", Integer.valueOf(0), Integer.valueOf(h.guardados));
+            return;
+        }
+        throw new AssertionError("No rechazo: " + caso);
     }
 
     private static void edicionCondiciones() throws Exception {

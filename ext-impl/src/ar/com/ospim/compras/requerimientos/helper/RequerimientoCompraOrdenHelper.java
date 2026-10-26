@@ -144,7 +144,10 @@ public class RequerimientoCompraOrdenHelper {
             if (d == null || d.getIdInt() <= 0
                     || d.getIdRequerimientoCompra() != r.getIdRequerimientoCompra()
                     || !ids.add(d.getId()) || d.getCantidadInt() <= 0
-                    || d.getDescripcionItemVisible().trim().length() == 0) {
+                    || (d.getDescripcionItemVisible().trim().length() == 0
+                        && !(r.esSectorSinCotizacionPrestador()
+                            && d.esObservacion()
+                            && d.getObservacionesVisible().trim().length() > 0))) {
                 throw new IllegalArgumentException(
                         "Los detalles del requerimiento estan incompletos. Actualice la pantalla.");
             }
