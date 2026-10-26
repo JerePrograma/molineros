@@ -32,6 +32,14 @@ public class RequerimientoCompraOrdenHelper {
 
     public RequerimientoCompraOrden preparar(int id, String nombreUsuario)
             throws Exception {
+        RequerimientoCompraOrden orden = prepararParaGuardar(id, nombreUsuario);
+        completarDatosConsulta(orden, orden.getRequerimiento());
+        return orden;
+    }
+
+    /** Prepara los datos propios para validar y guardar sin consultar padrones de presentacion. */
+    public RequerimientoCompraOrden prepararParaGuardar(int id, String nombreUsuario)
+            throws Exception {
         RequerimientoCompra r = cargarRequerimiento(id);
         RequerimientoCompraOrden existente = obtenerOrden(id);
         if (existente != null) {
@@ -47,8 +55,8 @@ public class RequerimientoCompraOrdenHelper {
         orden.setIdRequerimientoCompra(id);
         orden.setRequerimiento(r);
         orden.setFechaEmision(new Date());
-        orden.setIva(null);
-        orden.setIibb(null);
+        orden.setIva(BigDecimal.ZERO);
+        orden.setIibb(BigDecimal.ZERO);
         orden.setConfeccionadoPor(texto(nombreUsuario, 250, false, "Confeccionado por"));
         orden.setSolicitante(texto(r.getAltaUsr(), 250, false, "Solicitante"));
         orden.setObservaciones(texto(r.getObservaciones(), 4000, false, "Observaciones"));
@@ -62,34 +70,84 @@ public class RequerimientoCompraOrdenHelper {
 
     public RequerimientoCompraOrden crear(int id, Map<String, String> entrada,
             String usuario) throws Exception {
-        // Firma legacy: los datos de la orden provienen exclusivamente del servidor.
-        return crearDirecta(id, usuario, usuario);
+        RequerimientoCompraOrden orden = prepararParaGuardar(id, usuario);
+        if (orden.getIdOrdenCompra() > 0) {
+            return orden;
+        }
+        if (orden.getRequerimiento().esSectorSinCotizacionPrestador()) {
+            if (entrada == null) {
+                throw new IllegalArgumentException("No se recibieron los datos de la Orden de Compra.");
+            }
+            completarPrecios(orden, entrada);
+            if (entrada.containsKey("iva")) {
+                orden.setIva(importeEntrada(entrada.get("iva"), false, "IVA"));
+            }
+            if (entrada.containsKey("iibb")) {
+                orden.setIibb(importeEntrada(entrada.get("iibb"), false, "IIBB"));
+            }
+            if (entrada.containsKey("condicion")) {
+                orden.setCondicion(texto(entrada.get("condicion"), 1000, false, "Condicion"));
+            }
+            if (entrada.containsKey("forma_pago")) {
+                orden.setFormaPago(texto(entrada.get("forma_pago"), 250, false, "Forma de pago"));
+            }
+            if (entrada.containsKey("plazo_pago")) {
+                orden.setPlazoPago(texto(entrada.get("plazo_pago"), 250, false, "Plazo de pago"));
+            }
+            if (entrada.containsKey("entrega")) {
+                orden.setEntrega(texto(entrada.get("entrega"), 1000, false, "Entrega"));
+            }
+            if (entrada.containsKey("observaciones")) {
+                orden.setObservaciones(texto(entrada.get("observaciones"), 4000, false, "Observaciones"));
+            }
+        }
+        return emitir(orden, usuario);
     }
 
     public RequerimientoCompraOrden crearDirecta(int id, String nombreUsuario,
             String usuario) throws Exception {
+        return emitir(prepararParaGuardar(id, nombreUsuario), usuario);
+    }
+
+    public boolean requiereCompletarDatos(RequerimientoCompraOrden orden) {
+        if (orden != null && orden.getRequerimiento() != null
+                && orden.getRequerimiento().esSectorSinCotizacionPrestador()) {
+            for (RequerimientoCompraDetalle d : orden.getDetalles()) {
+                if (d == null || d.getPrecioUnitarioEstimado() == null) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private RequerimientoCompraOrden emitir(RequerimientoCompraOrden orden,
+            String usuario) throws Exception {
         String auditoria = texto(usuario, 100, true, "Usuario de auditoria");
-        RequerimientoCompraOrden orden = preparar(id, nombreUsuario);
         if (orden.getIdOrdenCompra() > 0) {
             return orden;
+        }
+        if (requiereCompletarDatos(orden)) {
+            throw new IllegalArgumentException(
+                    "Debe completar los precios unitarios de la Orden de Compra antes de emitirla.");
         }
         orden.setConfeccionadoPor(auditoria);
         validarImportes(orden);
         orden.setAltaUsr(auditoria);
         RequerimientoCompraOrden guardada = guardarOrden(orden, auditoria);
         if (guardada == null || guardada.getIdOrdenCompra() <= 0
-                || guardada.getIdRequerimientoCompra() != id) {
+                || guardada.getIdRequerimientoCompra() != orden.getIdRequerimientoCompra()) {
             throw new IllegalStateException("No se pudo confirmar la Orden de Compra.");
         }
         guardada.setRequerimiento(orden.getRequerimiento());
         return guardada;
     }
 
-    /** Actualiza solo las condiciones de una OC emitida; conserva su snapshot. */
+    /** Conserva importes aprobados; completa precios ausentes y edita condiciones. */
     public RequerimientoCompraOrden actualizar(int idRequerimiento, int idOrden,
             int version, Map<String, String> entrada, String usuario) throws Exception {
         String auditoria = texto(usuario, 100, true, "Usuario de auditoria");
-        RequerimientoCompraOrden actual = preparar(idRequerimiento, usuario);
+        RequerimientoCompraOrden actual = prepararParaGuardar(idRequerimiento, usuario);
         if (!actual.getRequerimiento().isOrdenCompra()
                 || actual.getIdOrdenCompra() <= 0 || actual.getIdOrdenCompra() != idOrden
                 || actual.getIdRequerimientoCompra() != idRequerimiento) {
@@ -112,6 +170,24 @@ public class RequerimientoCompraOrdenHelper {
         cambio.setPlazoPago(texto(entrada.get("plazo_pago"), 250, false, "Plazo de pago"));
         cambio.setEntrega(texto(entrada.get("entrega"), 1000, false, "Entrega"));
         cambio.setObservaciones(texto(entrada.get("observaciones"), 4000, false, "Observaciones"));
+        if (actual.getRequerimiento().esSectorSinCotizacionPrestador()) {
+            RequerimientoCompraOrden completa = new RequerimientoCompraOrden();
+            completa.setRequerimiento(actual.getRequerimiento());
+            completa.setIva(actual.getIva());
+            completa.setIibb(actual.getIibb());
+            for (RequerimientoCompraDetalle original : actual.getDetalles()) {
+                RequerimientoCompraDetalle copia = copiarDetalle(original);
+                copia.setPrecioUnitarioEstimado(original.getPrecioUnitarioEstimado());
+                completa.getDetalles().add(copia);
+            }
+            completarPrecios(completa, entrada);
+            validarImportes(completa);
+            for (int i = 0; i < actual.getDetalles().size(); i++) {
+                if (actual.getDetalles().get(i).getPrecioUnitarioEstimado() == null) {
+                    cambio.getDetalles().add(completa.getDetalles().get(i));
+                }
+            }
+        }
         RequerimientoCompraOrden guardada = actualizarOrden(cambio, auditoria);
         if (guardada == null || guardada.getIdOrdenCompra() != idOrden
                 || guardada.getIdRequerimientoCompra() != idRequerimiento
@@ -297,6 +373,39 @@ public class RequerimientoCompraOrdenHelper {
         return d;
     }
 
+    private void completarPrecios(RequerimientoCompraOrden orden,
+            Map<String, String> entrada) {
+        Set<String> campos = new HashSet<String>();
+        for (RequerimientoCompraDetalle d : orden.getDetalles()) {
+            String campo = "precio_" + d.getIdInt();
+            campos.add(campo);
+            if (d.getPrecioUnitarioEstimado() == null) {
+                d.setPrecioUnitarioEstimado(importeEntrada(entrada.get(campo), true,
+                        "Precio unitario del detalle " + d.getIdInt()));
+            }
+        }
+        for (String campo : entrada.keySet()) {
+            if (campo != null && campo.startsWith("precio_") && !campos.contains(campo)) {
+                throw new IllegalArgumentException(
+                        "Los detalles de la Orden de Compra cambiaron. Actualice la pantalla.");
+            }
+        }
+    }
+
+    private BigDecimal importeEntrada(String valor, boolean obligatorio, String campo) {
+        String s = valor == null ? "" : valor.trim();
+        if (s.length() == 0 && !obligatorio) {
+            return BigDecimal.ZERO;
+        }
+        if (s.length() > 18 || !s.matches("[0-9]+([.,][0-9]{1,2})?")) {
+            throw new IllegalArgumentException(campo
+                    + ": use un importe sin miles y hasta dos decimales.");
+        }
+        BigDecimal importe = new BigDecimal(s.replace(',', '.'));
+        validarImporte(importe, campo);
+        return importe.setScale(2);
+    }
+
     private void validarImportes(RequerimientoCompraOrden orden) {
         if (orden.getDetalles() == null || orden.getDetalles().isEmpty()) {
             throw new IllegalArgumentException("La Orden de Compra no tiene detalles.");
@@ -362,6 +471,11 @@ public class RequerimientoCompraOrdenHelper {
         String segundo = texto(b, 1000, false, "Envio");
         String entrega = primero + (primero.length() > 0 && segundo.length() > 0 ? " - " : "") + segundo;
         return entrega.length() > 0 ? entrega : null;
+    }
+
+    protected void completarDatosConsulta(RequerimientoCompraOrden orden,
+            RequerimientoCompra requerimiento) throws Exception {
+        RequerimientoCompraOrdenServiceUtil.completarDatosConsulta(orden, requerimiento);
     }
 
     protected RequerimientoCompra obtenerRequerimiento(int id) throws Exception {

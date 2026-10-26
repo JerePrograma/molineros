@@ -27,13 +27,14 @@ $sources = @(
     'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraOrdenServiceUtil.java',
     'ext-impl\src\ar\com\ospim\servlets\PdfServlet.java',
     'test\compras\ComprasOrdenHelperTest.java',
+    'test\compras\ComprasOrdenConsultaTest.java',
     'test\compras\ComprasOrdenEdicionJdbcTest.java',
     'test\compras\ComprasOrdenPdfTest.java'
 ) | ForEach-Object { Join-Path $repoPath $_ }
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'context.txt'), @(
     ('Inicio UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss')),
     ('HEAD inicial: ' + $initialHead),
-    'Estado inicial: OC emitida de solo consulta; edicion limitada de condiciones y observaciones.',
+    'Estado inicial: impuestos sin informar tratados como cero; precios corporativos faltantes requieren formulario; consulta desde padrones.',
     'Log inicial: sin Tomcat ni UI; JDBC opcional solo en una base aislada de fixtures.',
     'Pruebas: Java8/source1.5, helper con fixtures, Jasper real y JDBC aislado opcional.'
 ), $latinEncoding)
@@ -42,7 +43,7 @@ $compileOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encodi
 $compileExit = $LASTEXITCODE
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'javac.log'), ($compileOutput + ('javac_exit=' + $compileExit)), $latinEncoding)
 if ($compileExit -ne 0) { $compileOutput | Write-Output; throw ('javac fallo: ' + $compileExit) }
-foreach ($test in @('ComprasOrdenHelperTest', 'ComprasOrdenPdfTest')) {
+foreach ($test in @('ComprasOrdenHelperTest', 'ComprasOrdenConsultaTest', 'ComprasOrdenPdfTest')) {
     $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath $test $artifactPath 2>&1 | ForEach-Object { $_.ToString() })
     $runExit = $LASTEXITCODE
     [System.IO.File]::WriteAllLines((Join-Path $artifactPath ($test + '.log')), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)

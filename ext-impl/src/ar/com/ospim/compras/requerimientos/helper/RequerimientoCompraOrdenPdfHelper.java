@@ -70,7 +70,12 @@ public class RequerimientoCompraOrdenPdfHelper {
         parametros.put("AFILIADO", "Afiliado: " + texto(requerimiento.getAfiliadoNombreApellidoVisible())
                 + "\nDocumento: " + texto(requerimiento.getAfiliadoDocumentoVisible())
                 + "\nN° afiliado: " + texto(requerimiento.getAfiliadoIdOspimString())
-                + "\nLocalidad: " + texto(requerimiento.getAfiliadoLocalidadVisible()));
+                + "\nDomicilio: " + texto(requerimiento.getAfiliadoDireccionVisible())
+                + "\nLocalidad: " + texto(requerimiento.getAfiliadoLocalidadVisible())
+                + "\nProvincia: " + texto(requerimiento.getAfiliadoProvinciaVisible())
+                + "\nTeléfono: " + texto(requerimiento.getAfiliadoTelefonoVisible())
+                + "\nCelular: " + texto(requerimiento.getAfiliadoCelularVisible())
+                + "\nCorreo: " + texto(requerimiento.getAfiliadoEmailVisible()));
         parametros.put("DATOS_MEDICOS", "Plan: " + texto(orden.getPlan())
                 + "\nReclamo prestacional: " + (orden.getIdReclamoPrestacional() > 0
                         ? String.valueOf(orden.getIdReclamoPrestacional()) : "No informado")
@@ -91,6 +96,11 @@ public class RequerimientoCompraOrdenPdfHelper {
             }
             BigDecimal unitario = detalle.getPrecioUnitarioEstimado();
             BigDecimal totalDetalle = detalle.getPrecioTotalEstimado();
+            if (requerimiento.esSectorSinCotizacionPrestador()
+                    && (unitario == null || totalDetalle == null)) {
+                throw new IllegalArgumentException(
+                        "Debe completar los precios de la Orden de Compra antes de imprimir.");
+            }
             if ((unitario == null) != (totalDetalle == null)
                     || (unitario != null && unitario.signum() < 0)
                     || (totalDetalle != null && totalDetalle.signum() < 0)

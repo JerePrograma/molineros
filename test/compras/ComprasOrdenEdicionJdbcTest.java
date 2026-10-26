@@ -1,9 +1,15 @@
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
+import ar.com.ospim.afiliados.beans.Afiliado;
+import ar.com.ospim.global.beans.Domicilio;
+import ar.com.ospim.global.beans.Telefono;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraOrdenServiceImpl;
 import ar.com.ospim.util.ConnectionHelper;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -57,6 +63,9 @@ public class ComprasOrdenEdicionJdbcTest {
             datasource.set(null, pool);
             instalado = true;
             creacionNormalizada(pool);
+            timestampComparable(pool);
+            consultaAfiliadoJdbc(pool);
+            reparacionPrecios(pool);
             ejecutar(pool);
             System.out.println("COMPRAS_ORDEN_EDICION_JDBC_OK checks=" + checks);
             System.out.println("Servicio productivo: creacion normalizada, origen por FK, auditoria, version, rollback y concurrencia real.");
@@ -86,9 +95,10 @@ public class ComprasOrdenEdicionJdbcTest {
         igual("OC53 observacion desde fuente", "CELULAR PRUEBA", creada.getDetalles().get(0).getDescripcionItemVisible());
         igual("OC53 codigo ajeno ignorado", "", creada.getDetalles().get(0).getCodigoItemVisible());
         igual("OC53 cantidad uno", Integer.valueOf(1), creada.getDetalles().get(0).getCantidad());
-        igual("OC53 precio no informado", null, creada.getDetalles().get(0).getPrecioUnitarioEstimado());
-        igual("OC53 subtotal no informado", null, creada.getDetalles().get(0).getPrecioTotalEstimado());
-        igual("OC53 impuestos no informados", null, creada.getIva());
+        comprobar("OC53 precio informado", new BigDecimal("85000").compareTo(creada.getDetalles().get(0).getPrecioUnitarioEstimado()) == 0);
+        comprobar("OC53 subtotal informado", new BigDecimal("85000").compareTo(creada.getDetalles().get(0).getPrecioTotalEstimado()) == 0);
+        comprobar("OC53 impuestos opcionales cero", creada.getIva().signum() == 0 && creada.getIibb().signum() == 0);
+        comprobar("OC53 total sin impuestos", new BigDecimal("85000").compareTo(creada.getTotal()) == 0);
         List<Map<String, String>> antes = filas(pool,
                 "SELECT * FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null);
         igual("OC53 presupuesto de origen fijo", "53", antes.get(0).get("id_presupuesto"));
@@ -142,8 +152,147 @@ public class ComprasOrdenEdicionJdbcTest {
         RequerimientoCompraDetalle item = new RequerimientoCompraDetalle(Integer.valueOf(detalle));
         item.setIdRequerimientoCompra(requerimiento);
         item.setCantidad(Integer.valueOf(cantidad));
+        item.setPrecioUnitarioEstimado(new BigDecimal("85000"));
         orden.getDetalles().add(item);
         return orden;
+    }
+
+    private static void consultaAfiliadoJdbc(ComboPooledDataSource pool) throws Exception {
+        // Solo en la base descartable validada en main. Reproduce los once tipos
+        // del contrato legacy, no las funciones ni datos de una base operativa.
+        Connection con = pool.getConnection();
+        try {
+            Statement stmt = con.createStatement();
+            try {
+                stmt.execute("CREATE FUNCTION public.buscar_afiliados_componente("
+                        + "VARCHAR,INTEGER,VARCHAR,VARCHAR,INTEGER,VARCHAR,VARCHAR,INTEGER,INTEGER,INTEGER,INTEGER) "
+                        + "RETURNS TABLE(cuil VARCHAR,inte INTEGER,id_parentesco_sss INTEGER,id_ospim INTEGER,"
+                        + "nombre VARCHAR,apellido VARCHAR,tdoc VARCHAR,documento VARCHAR,id_plan INTEGER,nombre_plan VARCHAR,email VARCHAR) "
+                        + "LANGUAGE plpgsql AS $fixture$ BEGIN "
+                        + "IF $8 IS DISTINCT FROM 0 OR $3 IS NOT NULL OR $4 IS NOT NULL OR $5 IS NOT NULL "
+                        + "OR $6 IS NOT NULL OR $7 IS NOT NULL OR $9 IS NOT NULL OR $10 IS NOT NULL OR $11 IS NOT NULL "
+                        + "THEN RAISE EXCEPTION 'Parametros de consulta distintos del contrato legacy'; END IF; "
+                        + "IF $1='20111111111' THEN RETURN; END IF; "
+                        + "IF $1='20333333333' THEN RAISE EXCEPTION USING ERRCODE='22012', MESSAGE='Error SQL sintetico de consulta'; END IF; "
+                        + "RETURN QUERY SELECT CASE WHEN $1='20444444444' THEN '20999999999' ELSE $1 END::VARCHAR,"
+                        + "CASE WHEN $2=2 THEN 99 ELSE $2 END,5,4321,'Ana JDBC'::VARCHAR,'Padron'::VARCHAR,"
+                        + "'DNI'::VARCHAR,'12345678'::VARCHAR,1,'Plan JDBC'::VARCHAR,'jdbc@example.invalid'::VARCHAR "
+                        + "FROM generate_series(1,CASE WHEN $1='20222222222' THEN 2 ELSE 1 END); "
+                        + "END; $fixture$");
+            } finally { stmt.close(); }
+        } finally { con.close(); }
+        ConsultaJdbc service = new ConsultaJdbc();
+        Afiliado afiliado = service.consultar("20123456789", 1);
+        igual("JDBC bind CUIL exacto", "20123456789", afiliado.getCuil_titular());
+        igual("JDBC bind integrante exacto", Integer.valueOf(1), Integer.valueOf(afiliado.getInte()));
+        igual("JDBC mapea nombre", "Ana JDBC", afiliado.getNombre());
+        igual("JDBC mapea apellido", "Padron", afiliado.getApellido());
+        igual("JDBC mapea documento", "12345678", afiliado.getDocu_numero());
+        igual("JDBC mapea idOSPIM", Integer.valueOf(4321), Integer.valueOf(afiliado.getId_ospim()));
+        igual("JDBC mapea plan", "Plan JDBC", afiliado.getNombrePlan());
+        igual("JDBC mapea email", "jdbc@example.invalid", afiliado.getEmail());
+        igual("JDBC cero filas es dato opcional ausente", null, service.consultar("20111111111", 1));
+        String[] claves = { "20222222222", "20444444444", "20123456789" };
+        int[] integrantes = { 1, 1, 2 };
+        for (int i = 0; i < claves.length; i++) {
+            boolean fallo = false;
+            try { service.consultar(claves[i], integrantes[i]); }
+            catch (IllegalArgumentException esperado) { fallo = true; }
+            comprobar("JDBC rechaza duplicado o identidad distinta " + i, fallo);
+        }
+        boolean falloSql = false;
+        try { service.consultar("20333333333", 1); }
+        catch (SQLException esperado) { falloSql = "22012".equals(esperado.getSQLState()); }
+        comprobar("JDBC propaga error SQL sin ocultarlo", falloSql);
+        RequerimientoCompra r = new RequerimientoCompra(); r.setIdRequerimientoCompra(40);
+        r.setSectorDescripcion("Prestaciones Medicas"); r.setRequiereAfiliado(true);
+        r.setAfiliadoCuilTitular("20123456789"); r.setAfiliadoInt(Integer.valueOf(1));
+        RequerimientoCompraOrden orden = new RequerimientoCompraOrden(); orden.setIdRequerimientoCompra(40);
+        service.completarDatosConsulta(orden, r);
+        igual("JDBC consulta completa nombre vigente", "Ana JDBC", r.getAfiliadoNombre());
+        igual("JDBC consulta completa plan vigente", "Plan JDBC", orden.getPlan());
+        igual("JDBC consulta completa email vigente", "jdbc@example.invalid", r.getAfiliadoEmail());
+        r.setAfiliadoCuilTitular("20111111111"); r.setAfiliadoNombre("Dato original"); orden.setPlan("Plan original");
+        service.completarDatosConsulta(orden, r);
+        igual("JDBC consulta sin filas conserva nombre", "Dato original", r.getAfiliadoNombre());
+        igual("JDBC consulta sin filas conserva plan", "Plan original", orden.getPlan());
+    }
+
+    private static class ConsultaJdbc extends RequerimientoCompraOrdenServiceImpl {
+        Afiliado consultar(String cuil, int inte) throws Exception { return buscarAfiliado(cuil, inte); }
+        protected List<Domicilio> buscarDomicilios(String cuil, int inte) { return new ArrayList<Domicilio>(); }
+        protected List<Telefono> buscarTelefonos(String cuil, int inte) { return new ArrayList<Telefono>(); }
+        protected RequerimientoCompraPresupuesto obtenerOrigenProveedor(RequerimientoCompraOrden orden) {
+            return new RequerimientoCompraPresupuesto();
+        }
+    }
+
+    private static void reparacionPrecios(ComboPooledDataSource pool) throws Exception {
+        RequerimientoCompraOrdenServiceImpl service = new RequerimientoCompraOrdenServiceImpl();
+        RequerimientoCompraOrden original = service.obtenerPorRequerimiento(53);
+        List<Map<String, String>> cabeceraAntes = filas(pool,
+                "SELECT * FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null);
+        List<Map<String, String>> detallesAntes = detalles(pool, original.getIdOrdenCompra());
+        RequerimientoCompraOrden cambio = service.obtenerPorRequerimiento(53);
+        cambio.getDetalles().clear(); cambio.getDetalles().add(cambioPrecio(2053, "1"));
+        boolean rechazo = false;
+        try { service.actualizar(cambio, "editor_no_reemplaza"); }
+        catch (IllegalArgumentException esperado) { rechazo = true; }
+        comprobar("precio conocido no se reemplaza", rechazo);
+        igual("rechazo conocido revierte cabecera", cabeceraAntes, filas(pool,
+                "SELECT * FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null));
+        igual("rechazo conocido preserva detalle", detallesAntes, detalles(pool, original.getIdOrdenCompra()));
+        // Solo fixture aislado: simular OC historica emitida con precio NULL.
+        Connection con = pool.getConnection();
+        try {
+            PreparedStatement stmt = con.prepareStatement("UPDATE compras.requerimiento_orden_compra_detalle SET precio_unitario=NULL WHERE id_orden_compra=?");
+            try { stmt.setInt(1, original.getIdOrdenCompra()); igual("fixture precio faltante", Integer.valueOf(1), Integer.valueOf(stmt.executeUpdate())); }
+            finally { stmt.close(); }
+        } finally { con.close(); }
+        detallesAntes = detalles(pool, original.getIdOrdenCompra());
+        cambio = service.obtenerPorRequerimiento(53); cambio.getDetalles().clear();
+        cambio.getDetalles().add(cambioPrecio(2053, "10")); cambio.getDetalles().add(cambioPrecio(99999, "1"));
+        cambio.setObservaciones("No persistir reparacion parcial"); rechazo = false;
+        try { service.actualizar(cambio, "editor_rollback_reparacion"); }
+        catch (IllegalArgumentException esperado) { rechazo = true; }
+        comprobar("detalle ajeno rechaza reparacion completa", rechazo);
+        igual("reparacion fallida revierte cabecera y version", cabeceraAntes, filas(pool,
+                "SELECT * FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null));
+        igual("reparacion fallida revierte primer precio", detallesAntes, detalles(pool, original.getIdOrdenCompra()));
+        RequerimientoCompraOrden uno = service.obtenerPorRequerimiento(53);
+        RequerimientoCompraOrden dos = service.obtenerPorRequerimiento(53);
+        uno.getDetalles().clear(); dos.getDetalles().clear();
+        uno.getDetalles().add(cambioPrecio(2053, "11")); dos.getDetalles().add(cambioPrecio(2053, "22"));
+        CountDownLatch listos = new CountDownLatch(2), inicio = new CountDownLatch(1), fin = new CountDownLatch(2);
+        Editor primero = new Editor(service, uno, "reparador_uno", listos, inicio, fin);
+        Editor segundo = new Editor(service, dos, "reparador_dos", listos, inicio, fin);
+        primero.start(); segundo.start();
+        boolean preparados = listos.await(10, TimeUnit.SECONDS); inicio.countDown();
+        if (!preparados || !fin.await(30, TimeUnit.SECONDS)) throw new AssertionError("Timeout reparacion concurrente");
+        int exitos = (primero.resultado != null ? 1 : 0) + (segundo.resultado != null ? 1 : 0);
+        igual("una sola reparacion concurrente", Integer.valueOf(1), Integer.valueOf(exitos));
+        Editor ganador = primero.resultado != null ? primero : segundo;
+        Editor perdedor = primero.resultado != null ? segundo : primero;
+        comprobar("reparacion perdedora rechazada por version", perdedor.error instanceof IllegalArgumentException);
+        RequerimientoCompraOrden reparada = service.obtenerPorRequerimiento(53);
+        igual("reparacion misma numeracion", Integer.valueOf(original.getIdOrdenCompra()), Integer.valueOf(reparada.getIdOrdenCompra()));
+        igual("reparacion version incrementada", Integer.valueOf(1), Integer.valueOf(reparada.getVersionEdicion()));
+        igual("reparacion auditoria del ganador", ganador.usuario, reparada.getModiUsr());
+        comprobar("reparacion precio ganador", ganador.orden.getDetalles().get(0).getPrecioUnitarioEstimado()
+                .compareTo(reparada.getDetalles().get(0).getPrecioUnitarioEstimado()) == 0);
+        comprobar("reparacion total conocido", reparada.getTotal() != null);
+        igual("reparacion cantidad conservada", Integer.valueOf(1), reparada.getDetalles().get(0).getCantidad());
+        igual("reparacion descripcion fuente conservada", "CELULAR PRUEBA", reparada.getDetalles().get(0).getDescripcionItemVisible());
+        igual("reparacion estado conservado", "5", filas(pool,
+                "SELECT estado FROM compras.requerimiento WHERE id_requerimiento = ?", 53, null).get(0).get("estado"));
+        comprobar("reparacion no muta precio requerimiento", filas(pool,
+                "SELECT precio_unitario_estimado FROM compras.requerimiento_detalle WHERE id_detalle = ?", 2053, null)
+                .get(0).get("precio_unitario_estimado") == null);
+    }
+
+    private static RequerimientoCompraDetalle cambioPrecio(int id, String precio) {
+        RequerimientoCompraDetalle d = new RequerimientoCompraDetalle(Integer.valueOf(id));
+        d.setPrecioUnitarioEstimado(new BigDecimal(precio)); return d;
     }
 
     private static void ejecutar(ComboPooledDataSource pool) throws Exception {
@@ -156,6 +305,7 @@ public class ComprasOrdenEdicionJdbcTest {
         List<Map<String, String>> detalles = detalles(pool, inicial.getIdOrdenCompra());
         comprobar("fixture con detalles", !detalles.isEmpty());
 
+        inicial.getDetalles().clear();
         inicial.setCondicion("Condicion JDBC de prueba");
         inicial.setFormaPago("Transferencia de prueba");
         inicial.setPlazoPago("30 dias");
@@ -175,6 +325,7 @@ public class ComprasOrdenEdicionJdbcTest {
 
         List<Map<String, String>> despuesExito = cabecera(pool, null);
         RequerimientoCompraOrden obsoleta = service.obtenerPorRequerimiento(REQUERIMIENTO);
+        obsoleta.getDetalles().clear();
         obsoleta.setVersionEdicion(0);
         obsoleta.setObservaciones("No debe persistir por version obsoleta");
         boolean rechazo = false;
@@ -187,6 +338,7 @@ public class ComprasOrdenEdicionJdbcTest {
         igual("version obsoleta sin cambios", despuesExito, cabecera(pool, null));
 
         RequerimientoCompraOrden incorrecta = service.obtenerPorRequerimiento(REQUERIMIENTO);
+        incorrecta.getDetalles().clear();
         incorrecta.setIdOrdenCompra(inicial.getIdOrdenCompra() + 100000);
         incorrecta.setObservaciones("No debe persistir por ID incorrecto");
         rechazo = false;
@@ -199,6 +351,7 @@ public class ComprasOrdenEdicionJdbcTest {
         igual("id incorrecto sin cambios", despuesExito, cabecera(pool, null));
 
         RequerimientoCompraOrden invalidaSql = service.obtenerPorRequerimiento(REQUERIMIENTO);
+        invalidaSql.getDetalles().clear();
         char[] extensa = new char[1001];
         Arrays.fill(extensa, 'x');
         invalidaSql.setCondicion(new String(extensa));
@@ -225,6 +378,7 @@ public class ComprasOrdenEdicionJdbcTest {
         RequerimientoCompraOrden dos = service.obtenerPorRequerimiento(REQUERIMIENTO);
         igual("primer formulario version uno", Integer.valueOf(1), Integer.valueOf(uno.getVersionEdicion()));
         igual("segundo formulario version uno", Integer.valueOf(1), Integer.valueOf(dos.getVersionEdicion()));
+        uno.getDetalles().clear(); dos.getDetalles().clear();
         uno.setObservaciones("Observacion concurrente uno");
         dos.setObservaciones("Observacion concurrente dos");
         CountDownLatch listos = new CountDownLatch(2);
@@ -310,6 +464,39 @@ public class ComprasOrdenEdicionJdbcTest {
                 + "WHERE id_orden_compra = ? ORDER BY orden", idOrden, null);
     }
 
+    private static String valorComparable(ResultSet rs, ResultSetMetaData metadata,
+            int columna) throws Exception {
+        // PG42.1.4 cambia getString(TIMESTAMP) al activar protocolo binario:
+        // .32654 y .326540 son el mismo valor. Conservar la precision real y
+        // comparar el valor tipado, incluyendo todas las fechas de auditoria.
+        if (metadata.getColumnType(columna) == java.sql.Types.TIMESTAMP) {
+            java.sql.Timestamp valor = rs.getTimestamp(columna);
+            return valor == null ? null : valor.toString();
+        }
+        return rs.getString(columna);
+    }
+
+    private static void timestampComparable(ComboPooledDataSource pool) throws Exception {
+        Connection con = pool.getConnection(); Set<String> formatos = new HashSet<String>();
+        try {
+            for (int i = 0; i < 12; i++) {
+                PreparedStatement stmt = con.prepareStatement(
+                        "SELECT TIMESTAMP '2026-10-26 16:21:40.326540' AS valor WHERE ?=1");
+                try {
+                    stmt.setInt(1, 1); ResultSet rs = stmt.executeQuery();
+                    try {
+                        comprobar("timestamp fixture devuelve fila " + i, rs.next());
+                        formatos.add(rs.getString(1));
+                        igual("timestamp preserva valor entre protocolos " + i, "2026-10-26 16:21:40.32654",
+                                valorComparable(rs, rs.getMetaData(), 1));
+                    } finally { rs.close(); }
+                } finally { stmt.close(); }
+            }
+        } finally { con.close(); }
+        igual("regresion ejercita protocolo texto y binario", Integer.valueOf(2), Integer.valueOf(formatos.size()));
+        System.out.println("TIMESTAMP_COMPARABLE_TEXTO_BINARIO_OK formatos=" + formatos);
+    }
+
     private static List<Map<String, String>> filas(ComboPooledDataSource pool,
             String sql, int id, Set<String> excluir) throws Exception {
         Connection con = pool.getConnection();
@@ -326,7 +513,7 @@ public class ComprasOrdenEdicionJdbcTest {
                         for (int i = 1; i <= metadata.getColumnCount(); i++) {
                             String columna = metadata.getColumnLabel(i);
                             if (excluir == null || !excluir.contains(columna)) {
-                                fila.put(columna, rs.getString(i));
+                                fila.put(columna, valorComparable(rs, metadata, i));
                             }
                         }
                         filas.add(fila);
@@ -359,7 +546,7 @@ public class ComprasOrdenEdicionJdbcTest {
     }
 
     private static void igual(String mensaje, Object esperado, Object actual) {
-        comprobar(mensaje, esperado == null ? actual == null : esperado.equals(actual));
+        comprobar(mensaje + ": esperado=" + esperado + ", actual=" + actual, esperado == null ? actual == null : esperado.equals(actual));
     }
 
     private static void comprobar(String mensaje, boolean condicion) {

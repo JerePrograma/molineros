@@ -34,8 +34,8 @@ public class RequerimientoCompraOrden {
     private String telefonoCompras;
     private String solicitante;
     private String plan;
-    private BigDecimal iva;
-    private BigDecimal iibb;
+    private BigDecimal iva = BigDecimal.ZERO;
+    private BigDecimal iibb = BigDecimal.ZERO;
     private RequerimientoCompra requerimiento;
     private List<RequerimientoCompraDetalle> detalles =
             new ArrayList<RequerimientoCompraDetalle>();
@@ -123,11 +123,11 @@ public class RequerimientoCompraOrden {
     public String getPlan() { return plan; }
     public void setPlan(String plan) { this.plan = plan; }
 
-    public BigDecimal getIva() { return iva; }
-    public void setIva(BigDecimal iva) { this.iva = iva; }
+    public BigDecimal getIva() { return iva != null ? iva : BigDecimal.ZERO; }
+    public void setIva(BigDecimal iva) { this.iva = iva != null ? iva : BigDecimal.ZERO; }
 
-    public BigDecimal getIibb() { return iibb; }
-    public void setIibb(BigDecimal iibb) { this.iibb = iibb; }
+    public BigDecimal getIibb() { return iibb != null ? iibb : BigDecimal.ZERO; }
+    public void setIibb(BigDecimal iibb) { this.iibb = iibb != null ? iibb : BigDecimal.ZERO; }
 
     public RequerimientoCompra getRequerimiento() { return requerimiento; }
     public void setRequerimiento(RequerimientoCompra requerimiento) { this.requerimiento = requerimiento; }
@@ -139,7 +139,7 @@ public class RequerimientoCompraOrden {
     }
 
     public BigDecimal getTotal() {
-        if (detalles == null || detalles.isEmpty() || iva == null || iibb == null) {
+        if (detalles == null || detalles.isEmpty()) {
             return null;
         }
         BigDecimal total = BigDecimal.ZERO;
@@ -150,6 +150,6 @@ public class RequerimientoCompraOrden {
             }
             total = total.add(detalle.getPrecioTotalEstimado());
         }
-        return total.add(iva).add(iibb);
+        return total.add(getIva()).add(getIibb());
     }
 }

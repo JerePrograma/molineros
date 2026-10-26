@@ -29,12 +29,15 @@ public class ComprasOrdenHelperTest {
         empresa();
         monedaFija();
         observacionesEmpresa();
-        entradaLegacyIgnorada();
+        entradaFormulario();
+        formularioSoloPrecios();
+        repararPrecios();
         importes();
         estadoYAdjudicacion();
         medicina();
         edicionCondiciones();
         permisosEdicion();
+        flujoAction();
         System.out.println("COMPRAS_ORDEN_HELPER_OFFLINE_OK checks=" + checks);
         System.out.println("Helper productivo; generacion directa con fuentes canonicas; sin DB ni UI.");
     }
@@ -49,9 +52,11 @@ public class ComprasOrdenHelperTest {
         decimal("precio fuente", "100", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
         decimal("subtotal fuente", "200", resultado.getDetalles().get(0).getPrecioTotalEstimado());
         igual("moneda fija en pesos", "ARS", resultado.getMoneda());
-        igual("IVA desconocido", null, resultado.getIva());
-        igual("IIBB desconocido", null, resultado.getIibb());
-        igual("total desconocido por impuestos", null, resultado.getTotal());
+        decimal("IVA ausente es cero", "0", resultado.getIva());
+        decimal("IIBB ausente es cero", "0", resultado.getIibb());
+        decimal("total conocido sin impuestos informados", "200", resultado.getTotal());
+        igual("precios completos no requieren formulario", Boolean.FALSE,
+                Boolean.valueOf(h.requiereCompletarDatos(resultado)));
         igual("pago no inventado", null, resultado.getFormaPago());
         igual("entrega no inventada", null, resultado.getEntrega());
         igual("contacto no inventado", null, resultado.getProveedorContacto());
@@ -67,6 +72,7 @@ public class ComprasOrdenHelperTest {
         igual("detalle independiente", Boolean.FALSE, Boolean.valueOf(resultado.getDetalles().get(0) == h.detalles.get(0)));
         igual("auditoria", "auditoria", resultado.getAltaUsr());
         igual("un guardado", Integer.valueOf(1), Integer.valueOf(h.guardados));
+        igual("crear no consulta padrones despues de guardar", Integer.valueOf(0), Integer.valueOf(h.consultasPadron));
         resultado.setMoneda(null); resultado.setFormaPago("Condicion de una OC ya emitida");
         RequerimientoCompraOrden repetida = h.crearDirecta(40, "Otro nombre", "auditoria");
         igual("misma orden existente", resultado, repetida);
@@ -74,6 +80,7 @@ public class ComprasOrdenHelperTest {
         igual("condicion guardada preservada", "Condicion de una OC ya emitida", repetida.getFormaPago());
         igual("idempotente", Integer.valueOf(1), Integer.valueOf(h.guardados));
         igual("hidratacion existente", h.r, h.preparar(40, "nombre").getRequerimiento());
+        igual("solo consulta explicita hidrata", Integer.valueOf(1), Integer.valueOf(h.consultasPadron));
     }
 
     private static void monedaFija() {
@@ -101,16 +108,24 @@ public class ComprasOrdenHelperTest {
             String sector = sectores[i];
             Mock h = observacionEmpresaFixture(sector);
             RequerimientoCompraDetalle original = h.detalles.get(0);
-            igual(sector + " fuente sin descripcion tecnica", "", original.getDescripcionItemVisible());
-            RequerimientoCompraOrden resultado = h.crearDirecta(40, "Compras", "auditoria");
+            RequerimientoCompraOrden borrador = h.preparar(40, "Compras");
+            igual(sector + " formulario por precio ausente", Boolean.TRUE,
+                    Boolean.valueOf(h.requiereCompletarDatos(borrador)));
+            igual(sector + " preparar no guarda", Integer.valueOf(0), Integer.valueOf(h.guardados));
+            rechaza(h, sector + " emision directa incompleta");
+            Map<String, String> entrada = new HashMap<String, String>();
+            entrada.put("precio_70", "85000");
+            RequerimientoCompraOrden resultado = h.crear(40, entrada, "auditoria");
             RequerimientoCompraDetalle emitido = resultado.getDetalles().get(0);
-            igual(sector + " OC emitida", Integer.valueOf(900), Integer.valueOf(resultado.getIdOrdenCompra()));
-            igual(sector + " cantidad observacion", Integer.valueOf(1), emitido.getCantidad());
+            igual(sector + " OC emitida con precio", Integer.valueOf(900), Integer.valueOf(resultado.getIdOrdenCompra()));
+            igual(sector + " cantidad fuente", Integer.valueOf(1), emitido.getCantidad());
             igual(sector + " texto una sola vez", "CELULAR PRUEBA", emitido.getDescripcionItemVisible());
             igual(sector + " sin observacion duplicada", "", emitido.getObservacionesVisible());
-            igual(sector + " precio desconocido", null, emitido.getPrecioUnitarioEstimado());
-            igual(sector + " subtotal desconocido", null, emitido.getPrecioTotalEstimado());
-            igual(sector + " total desconocido", null, resultado.getTotal());
+            decimal(sector + " precio obligatorio", "85000", emitido.getPrecioUnitarioEstimado());
+            decimal(sector + " subtotal conocido", "85000", emitido.getPrecioTotalEstimado());
+            decimal(sector + " IVA opcional cero", "0", resultado.getIva());
+            decimal(sector + " IIBB opcional cero", "0", resultado.getIibb());
+            decimal(sector + " total conocido", "85000", resultado.getTotal());
             igual(sector + " original sin descripcion tecnica", null, original.getDescripcionItem());
             igual(sector + " observacion original preservada", "CELULAR PRUEBA", original.getObservaciones());
             igual(sector + " precio original preservado", null, original.getPrecioUnitarioEstimado());
@@ -206,6 +221,7 @@ public class ComprasOrdenHelperTest {
         igual("version segunda edicion", Integer.valueOf(2), Integer.valueOf(actual.getVersionEdicion()));
         igual("creacion conserva idempotencia tras editar", actual, h.crearDirecta(40, "Nombre", "alta"));
         igual("sin nueva alta", Integer.valueOf(1), Integer.valueOf(h.guardados));
+        igual("editar no consulta padrones tras commit", Integer.valueOf(0), Integer.valueOf(h.consultasPadron));
     }
 
     private static void rechazaEdicion(Mock h, int id, int orden, int version,
@@ -236,52 +252,243 @@ public class ComprasOrdenHelperTest {
         }
     }
 
-    private static void entradaLegacyIgnorada() throws Exception {
+    private static void flujoAction() throws Exception {
+        AccionPrueba accion = new AccionPrueba(observacionEmpresaFixture("Sistemas"), WebKeysCompras.ROL_ABM_COMPRAS);
+        PeticionPrueba peticion = new PeticionPrueba();
+        accion.ejecutar(peticion);
+        igual("Action incompleta no consume token", Integer.valueOf(0), Integer.valueOf(accion.consumidos));
+        igual("Action incompleta no emite", Integer.valueOf(0), Integer.valueOf(accion.modelo.guardados));
+        igual("Action incompleta no autoimprime", null, peticion.atributos.get("ordenCompraCreada"));
+        accion.mostrar(peticion);
+        igual("Action muestra formulario nuevo", Boolean.TRUE, peticion.atributos.get("ordenCompraPuedeCrear"));
+        igual("Action muestra precio faltante", Boolean.TRUE, peticion.atributos.get("ordenCompraRequiereDatos"));
+        igual("Action formulario publica token", Integer.valueOf(1), Integer.valueOf(accion.publicados));
+        peticion.parametros.put("cmd", "create"); peticion.parametros.put("precio_70", "");
+        accion.ejecutar(peticion);
+        igual("Action error de precio conserva entrada", "", ((Map)peticion.atributos.get("ordenCompraEntrada")).get("precio_70"));
+        igual("Action error de precio sin persistencia", Integer.valueOf(0), Integer.valueOf(accion.modelo.guardados));
+        igual("Action error sin autoimprimir", null, peticion.atributos.get("ordenCompraCreada"));
+        peticion.parametros.put("precio_70", "85000");
+        peticion.atributos.clear(); accion.ejecutar(peticion);
+        igual("Action solo precio emite", Integer.valueOf(1), Integer.valueOf(accion.modelo.guardados));
+        decimal("Action propaga precio", "85000", accion.modelo.guardada.getTotal());
+        igual("Action completa permite imprimir", Boolean.TRUE, peticion.atributos.get("ordenCompraCreada"));
+        accion = new AccionPrueba(empresaFixture(), WebKeysCompras.ROL_ABM_COMPRAS);
+        peticion = new PeticionPrueba(); accion.ejecutar(peticion);
+        igual("Action completa emision directa", Integer.valueOf(1), Integer.valueOf(accion.modelo.guardados));
+        igual("Action completa consume token", Integer.valueOf(1), Integer.valueOf(accion.consumidos));
+        accion.ejecutar(peticion);
+        igual("Action repetida idempotente", Integer.valueOf(1), Integer.valueOf(accion.modelo.guardados));
+        igual("Action repetida no consume token", Integer.valueOf(1), Integer.valueOf(accion.consumidos));
+        Mock historica = observacionEmpresaFixture("RRHH");
+        historica.guardada = historica.prepararParaGuardar(40, "Compras"); historica.guardada.setIdOrdenCompra(900);
+        historica.r.setEstado(WebKeysCompras.ESTADO_ORDEN_COMPRA);
+        accion = new AccionPrueba(historica, WebKeysCompras.ROL_ABM_COMPRAS); peticion = new PeticionPrueba();
+        accion.mostrar(peticion);
+        igual("Action historica muestra reparacion", Boolean.TRUE, peticion.atributos.get("ordenCompraRequiereDatos"));
+        igual("Action historica conserva OC", Boolean.FALSE, peticion.atributos.get("ordenCompraPuedeCrear"));
+        peticion.parametros.put("cmd", "update"); peticion.parametros.put("id_orden_compra", "900");
+        peticion.parametros.put("version_edicion", "0"); peticion.parametros.put("precio_70", "20");
+        accion.ejecutar(peticion);
+        igual("Action repara sin nueva OC", Integer.valueOf(0), Integer.valueOf(historica.guardados));
+        igual("Action repara una actualizacion", Integer.valueOf(1), Integer.valueOf(historica.actualizaciones));
+        decimal("Action repara precio", "20", historica.guardada.getTotal());
+        igual("Action reparacion confirmada", Boolean.TRUE, peticion.atributos.get("ordenCompraActualizada"));
+        accion.ejecutar(peticion);
+        igual("Action version obsoleta rechaza doble reparacion", Integer.valueOf(1), Integer.valueOf(historica.actualizaciones));
+        accion = new AccionPrueba(observacionEmpresaFixture("RRHH"), WebKeysCompras.ROL_VIEW_COMPRAS);
+        peticion = new PeticionPrueba(); accion.ejecutar(peticion);
+        igual("Action consulta no crea", Integer.valueOf(0), Integer.valueOf(accion.modelo.guardados));
+        igual("Action consulta sin consumir token", Integer.valueOf(0), Integer.valueOf(accion.consumidos));
+        peticion.atributos.clear(); accion.mostrar(peticion);
+        igual("Action consulta no abre formulario de alta", null, peticion.atributos.get("ordenCompraPuedeCrear"));
+        igual("Action consulta recibe error", Boolean.TRUE, Boolean.valueOf(peticion.atributos.get("ordenCompraError") != null));
+    }
+
+    private static class AccionPrueba extends RequerimientoCompraOrdenAction {
+        Mock modelo;
+        User usuario;
+        int consumidos;
+        int publicados;
+        AccionPrueba(Mock modelo, String nombreRol) {
+            this.modelo = modelo;
+            final List<Role> roles = new ArrayList<Role>();
+            Role rol = new RoleImpl(); rol.setName(nombreRol); roles.add(rol);
+            usuario = new UserImpl() {
+                public List<Role> getRoles() { return roles; }
+                public String getScreenName() { return "auditoria"; }
+                public String getFullName() { return "Nombre de Compras"; }
+            };
+        }
+        protected RequerimientoCompraOrdenHelper obtenerHelper() { return modelo; }
+        protected User obtenerUsuario(javax.portlet.PortletRequest request) { return usuario; }
+        protected void consumirToken(javax.portlet.ActionRequest request) { consumidos++; }
+        protected void publicarToken(javax.portlet.RenderRequest request) { publicados++; }
+        void ejecutar(PeticionPrueba p) throws Exception {
+            processAction(null, null, null, (javax.portlet.ActionRequest)p.proxy(),
+                    (javax.portlet.ActionResponse)java.lang.reflect.Proxy.newProxyInstance(
+                            getClass().getClassLoader(), new Class[] { javax.portlet.ActionResponse.class }, p));
+        }
+        void mostrar(PeticionPrueba p) throws Exception {
+            org.apache.struts.action.ActionMapping mapping = new org.apache.struts.action.ActionMapping() {
+                public org.apache.struts.action.ActionForward findForward(String nombre) {
+                    org.apache.struts.action.ActionForward forward = new org.apache.struts.action.ActionForward();
+                    forward.setPath("/prueba.jsp"); return forward;
+                }
+            };
+            render(mapping, null, null, (javax.portlet.RenderRequest)p.proxy(), null);
+        }
+    }
+
+    private static class PeticionPrueba implements java.lang.reflect.InvocationHandler {
+        Map<String, String> parametros = new HashMap<String, String>();
+        Map<String, Object> atributos = new HashMap<String, Object>();
+        PeticionPrueba() { parametros.put("id_requerimiento_compra", "40"); }
+        Object proxy() {
+            return java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),
+                    new Class[] { javax.portlet.ActionRequest.class, javax.portlet.RenderRequest.class }, this);
+        }
+        public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) {
+            String nombre = method.getName();
+            if ("getParameter".equals(nombre)) return parametros.get(args[0]);
+            if ("getParameterValues".equals(nombre)) {
+                String valor = parametros.get(args[0]); return valor == null ? null : new String[] { valor };
+            }
+            if ("getParameterMap".equals(nombre)) {
+                Map<String, String[]> valores = new HashMap<String, String[]>();
+                for (String clave : parametros.keySet()) valores.put(clave, new String[] { parametros.get(clave) });
+                return valores;
+            }
+            if ("getParameterNames".equals(nombre)) return java.util.Collections.enumeration(parametros.keySet());
+            if ("setAttribute".equals(nombre)) { atributos.put((String)args[0], args[1]); return null; }
+            if ("getAttribute".equals(nombre)) return atributos.get(args[0]);
+            if ("removeAttribute".equals(nombre)) { atributos.remove(args[0]); return null; }
+            if ("getAttributeNames".equals(nombre)) return java.util.Collections.enumeration(atributos.keySet());
+            if ("toString".equals(nombre)) return "PeticionPrueba";
+            if (method.getReturnType().equals(Boolean.TYPE)) return Boolean.FALSE;
+            if (method.getReturnType().equals(Integer.TYPE)) return Integer.valueOf(0);
+            return null;
+        }
+    }
+
+    private static void entradaFormulario() throws Exception {
         Map<String, String> entrada = new HashMap<String, String>();
         entrada.put("precio_70", "999999"); entrada.put("cantidad_70", "999");
-        entrada.put("iva", "999"); entrada.put("iibb", "999"); entrada.put("moneda", "USD");
+        entrada.put("iva", "12.50"); entrada.put("iibb", "2.50"); entrada.put("moneda", "USD");
         entrada.put("proveedor", "Proveedor alterado"); entrada.put("proveedorCuit", "00000000000");
         entrada.put("confeccionadoPor", "Actor alterado"); entrada.put("fechaRecepcion", "01/01/2000");
-        entrada.put("formaPago", "Dato inventado"); entrada.put("entrega", "Dato inventado");
+        entrada.put("condicion", " Acuerdo "); entrada.put("forma_pago", "Transferencia");
+        entrada.put("plazo_pago", "30 dias"); entrada.put("entrega", " Retiro ");
+        entrada.put("observaciones", "Observacion OC");
         entrada.put("solicitante", "Dato inventado"); entrada.put("plan", "Dato inventado");
         RequerimientoCompraOrden resultado = empresaFixture().crear(40, entrada, "auditoria");
-        decimal("legacy ignora precio", "100", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
-        igual("legacy ignora cantidad", Integer.valueOf(2), resultado.getDetalles().get(0).getCantidad());
-        igual("legacy ignora moneda y usa pesos", "ARS", resultado.getMoneda());
-        igual("legacy ignora IVA", null, resultado.getIva());
-        igual("legacy ignora IIBB", null, resultado.getIibb());
-        igual("legacy ignora proveedor", "Empresa de prueba", resultado.getProveedor());
-        igual("legacy ignora actor", "auditoria", resultado.getConfeccionadoPor());
-        igual("legacy ignora solicitante", "solicitante", resultado.getSolicitante());
-        igual("legacy ignora pago", null, resultado.getFormaPago());
-        igual("legacy ignora entrega", null, resultado.getEntrega());
-        igual("legacy ignora plan", null, resultado.getPlan());
-        igual("legacy ignora fecha", null, resultado.getFechaRecepcion());
-        resultado = empresaFixture().crear(40, null, "auditoria");
-        igual("legacy sin mapa", Integer.valueOf(900), Integer.valueOf(resultado.getIdOrdenCompra()));
+        decimal("precio conocido no editable", "100", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
+        igual("cantidad siempre fuente", Integer.valueOf(2), resultado.getDetalles().get(0).getCantidad());
+        igual("moneda siempre pesos", "ARS", resultado.getMoneda());
+        decimal("IVA del formulario", "12.50", resultado.getIva());
+        decimal("IIBB del formulario", "2.50", resultado.getIibb());
+        decimal("total con impuestos", "215", resultado.getTotal());
+        igual("proveedor siempre fuente", "Empresa de prueba", resultado.getProveedor());
+        igual("actor autenticado", "auditoria", resultado.getConfeccionadoPor());
+        igual("solicitante siempre fuente", "solicitante", resultado.getSolicitante());
+        igual("condicion formulario normalizada", "Acuerdo", resultado.getCondicion());
+        igual("pago formulario", "Transferencia", resultado.getFormaPago());
+        igual("plazo formulario", "30 dias", resultado.getPlazoPago());
+        igual("entrega formulario normalizada", "Retiro", resultado.getEntrega());
+        igual("observacion formulario", "Observacion OC", resultado.getObservaciones());
+        igual("plan no editable", null, resultado.getPlan());
+        igual("fecha no editable", null, resultado.getFechaRecepcion());
+    }
+
+    private static void formularioSoloPrecios() throws Exception {
+        String[] validos = { "0", "85000", "85000,25", "85000.25" };
+        String[] normalizados = { "0", "85000", "85000.25", "85000.25" };
+        for (int i = 0; i < validos.length; i++) {
+            Mock h = observacionEmpresaFixture("Sistemas");
+            Map<String, String> entrada = new HashMap<String, String>();
+            entrada.put("precio_70", validos[i]);
+            RequerimientoCompraOrden resultado = h.crear(40, entrada, "auditoria");
+            decimal("precio explicito valido " + validos[i], normalizados[i], resultado.getTotal());
+            igual("solo precio permite emision " + validos[i], Integer.valueOf(1), Integer.valueOf(h.guardados));
+            igual("CUIT opcional " + validos[i], "", resultado.getProveedorCuit());
+        }
+        String[] invalidos = { null, "", "  ", "-1", "texto", "1.001", "100000000000000.00" };
+        for (int i = 0; i < invalidos.length; i++) {
+            Mock h = observacionEmpresaFixture("RRHH");
+            Map<String, String> entrada = new HashMap<String, String>();
+            entrada.put("precio_70", invalidos[i]);
+            entrada.put("cantidad_70", "999");
+            rechazaFormulario(h, entrada, "precio invalido " + invalidos[i]);
+        }
+        Mock h = observacionEmpresaFixture("Sistemas");
+        Map<String, String> ajeno = new HashMap<String, String>();
+        ajeno.put("precio_70", "10"); ajeno.put("precio_999", "20");
+        rechazaFormulario(h, ajeno, "detalle ajeno no se procesa");
+        h = observacionEmpresaFixture("Sistemas");
+        RequerimientoCompraDetalle segundo = new RequerimientoCompraDetalle(Integer.valueOf(71));
+        segundo.setIdRequerimientoCompra(40); segundo.setTipoItem(RequerimientoCompraDetalle.TIPO_ITEM_OBSERVACION);
+        segundo.setObservaciones("SEGUNDO EQUIPO"); segundo.setCantidad(Integer.valueOf(1)); h.detalles.add(segundo);
+        Map<String, String> entrada = new HashMap<String, String>(); entrada.put("precio_70", "10");
+        rechazaFormulario(h, entrada, "no admite total parcial con segundo precio ausente");
+        entrada.put("precio_71", "20");
+        decimal("dos precios completados", "30", h.crear(40, entrada, "auditoria").getTotal());
+        h = medicinaFixture(); entrada = new HashMap<String, String>();
+        entrada.put("precio_70", "99999"); entrada.put("iva", "999"); entrada.put("iibb", "999");
+        RequerimientoCompraOrden medica = h.crear(40, entrada, "auditoria");
+        decimal("form no modifica precio medico", "50", medica.getDetalles().get(0).getPrecioUnitarioEstimado());
+        decimal("form no modifica IVA medico", "10", medica.getIva());
+        decimal("form no modifica IIBB medico", "5", medica.getIibb());
+    }
+
+    private static void rechazaFormulario(Mock h, Map<String, String> entrada, String caso) throws Exception {
+        try { h.crear(40, entrada, "auditoria"); }
+        catch (IllegalArgumentException esperado) {
+            igual(caso + " sin persistencia", Integer.valueOf(0), Integer.valueOf(h.guardados));
+            igual(caso + " sin mutar precio fuente", null, h.detalles.get(0).getPrecioUnitarioEstimado());
+            return;
+        }
+        throw new AssertionError("No rechazo formulario: " + caso);
+    }
+
+    private static void repararPrecios() throws Exception {
+        Mock h = observacionEmpresaFixture("Sistemas");
+        h.guardada = h.preparar(40, "Compras"); h.guardada.setIdOrdenCompra(900);
+        h.r.setEstado(WebKeysCompras.ESTADO_ORDEN_COMPRA);
+        Map<String, String> entrada = new HashMap<String, String>();
+        try { h.actualizar(40, 900, 0, entrada, "editor"); throw new AssertionError("Reparo sin precio"); }
+        catch (IllegalArgumentException esperado) { igual("reparacion incompleta sin UPDATE", Integer.valueOf(0), Integer.valueOf(h.actualizaciones)); }
+        entrada.put("precio_70", "85000"); entrada.put("cantidad_70", "99");
+        RequerimientoCompraOrden reparada = h.actualizar(40, 900, 0, entrada, "editor");
+        decimal("reparacion precio faltante", "85000", reparada.getDetalles().get(0).getPrecioUnitarioEstimado());
+        decimal("reparacion total conocido", "85000", reparada.getTotal());
+        igual("reparacion preserva cantidad", Integer.valueOf(1), reparada.getDetalles().get(0).getCantidad());
+        igual("reparacion version", Integer.valueOf(1), Integer.valueOf(reparada.getVersionEdicion()));
+        igual("reparacion no modifica requerimiento", null, h.detalles.get(0).getPrecioUnitarioEstimado());
+        entrada.put("precio_70", "1");
+        reparada = h.actualizar(40, 900, 1, entrada, "editor2");
+        decimal("precio informado permanece fijo", "85000", reparada.getDetalles().get(0).getPrecioUnitarioEstimado());
+        igual("reparacion no crea otra OC", Integer.valueOf(0), Integer.valueOf(h.guardados));
     }
 
     private static void importes() throws Exception {
-        Mock h = empresaFixture();
-        h.detalles.get(0).setPrecioUnitarioEstimado(null);
-        RequerimientoCompraOrden resultado = h.crearDirecta(40, "Compras", "auditoria");
-        igual("precio faltante conservado", null, resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
-        igual("subtotal faltante conservado", null, resultado.getDetalles().get(0).getPrecioTotalEstimado());
-        igual("sin total parcial", null, resultado.getTotal());
+        Mock h = empresaFixture(); h.detalles.get(0).setPrecioUnitarioEstimado(null);
+        rechaza(h, "precio faltante requiere formulario");
         h = empresaFixture(); h.detalles.get(0).setPrecioUnitarioEstimado(null);
         h.detalles.get(0).setPrecioTotalEstimado(new BigDecimal("999"));
-        resultado = h.crearDirecta(40, "Compras", "auditoria");
-        igual("sin subtotal aislado sin precio", null, resultado.getDetalles().get(0).getPrecioTotalEstimado());
+        RequerimientoCompraOrden borrador = h.preparar(40, "Compras");
+        igual("sin subtotal aislado sin precio", null, borrador.getDetalles().get(0).getPrecioTotalEstimado());
         decimal("subtotal original aislado sin mutar", "999", h.detalles.get(0).getPrecioTotalEstimado());
         h = empresaFixture(); h.detalles.get(0).setPrecioUnitarioEstimado(BigDecimal.ZERO);
-        resultado = h.crearDirecta(40, "Compras", "auditoria");
+        RequerimientoCompraOrden resultado = h.crearDirecta(40, "Compras", "auditoria");
         decimal("cero informado conservado", "0", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
         decimal("subtotal cero informado", "0", resultado.getDetalles().get(0).getPrecioTotalEstimado());
-        igual("cero no inventa impuestos", null, resultado.getTotal());
-        resultado.setIva(BigDecimal.ZERO); resultado.setIibb(BigDecimal.ZERO);
-        decimal("total cero conocido", "0", resultado.getTotal());
+        decimal("total cero con impuestos opcionales", "0", resultado.getTotal());
+        resultado.setIva(null); resultado.setIibb(null);
+        decimal("IVA null equivale cero", "0", resultado.getIva());
+        decimal("IIBB null equivale cero", "0", resultado.getIibb());
+        decimal("total cero con impuestos null", "0", resultado.getTotal());
         resultado.getDetalles().get(0).setPrecioUnitarioEstimado(null);
-        igual("total sin precio no es cero", null, resultado.getTotal());
+        igual("precio ausente no es cero", null, resultado.getTotal());
         String[] invalidos = new String[] {"-1", "100000000000000.00"};
         for (int i = 0; i < invalidos.length; i++) {
             h = empresaFixture(); h.detalles.get(0).setPrecioUnitarioEstimado(new BigDecimal(invalidos[i]));
@@ -339,7 +546,7 @@ public class ComprasOrdenHelperTest {
         decimal("precio original medico preservado", "100", h.detalles.get(0).getPrecioUnitarioEstimado());
         h = medicinaFixture(); h.comparativas.get(0).setIva(null);
         resultado = h.crearDirecta(40, "Compras", "auditoria");
-        igual("IVA fuente ausente", null, resultado.getIva()); igual("total medico desconocido", null, resultado.getTotal());
+        decimal("IVA fuente ausente es cero", "0", resultado.getIva()); decimal("total medico con IVA ausente", "155", resultado.getTotal());
         h = medicinaFixture(); h.comparativas.get(0).getDetalles().get(0).setImporteUnitario(BigDecimal.ZERO);
         decimal("precio medico cero conocido", "0", h.crearDirecta(40, "Compras", "auditoria").getDetalles().get(0).getPrecioUnitarioEstimado());
         h = medicinaFixture(); h.relacion = null; rechaza(h, "sin RP");
@@ -429,6 +636,8 @@ public class ComprasOrdenHelperTest {
         RequerimientoCompraReclamoPrestacional relacion;
         int guardados;
         int actualizaciones;
+        int consultasPadron;
+        protected void completarDatosConsulta(RequerimientoCompraOrden orden, RequerimientoCompra requerimiento) { consultasPadron++; }
         protected RequerimientoCompra obtenerRequerimiento(int id) { return r; }
         protected List<RequerimientoCompraDetalle> obtenerDetalles(int id) { return detalles; }
         protected RequerimientoCompraOrden obtenerOrden(int id) { return guardada; }
@@ -440,6 +649,16 @@ public class ComprasOrdenHelperTest {
             guardada.setCondicion(cambio.getCondicion()); guardada.setFormaPago(cambio.getFormaPago());
             guardada.setPlazoPago(cambio.getPlazoPago()); guardada.setEntrega(cambio.getEntrega());
             guardada.setObservaciones(cambio.getObservaciones()); guardada.setModiUsr(usuario);
+            for (int i = 0; i < cambio.getDetalles().size(); i++) {
+                RequerimientoCompraDetalle nuevo = cambio.getDetalles().get(i);
+                for (int j = 0; j < guardada.getDetalles().size(); j++) {
+                    RequerimientoCompraDetalle previo = guardada.getDetalles().get(j);
+                    if (previo.getId().equals(nuevo.getId()) && previo.getPrecioUnitarioEstimado() == null) {
+                        previo.setPrecioUnitarioEstimado(nuevo.getPrecioUnitarioEstimado());
+                        previo.setPrecioTotalEstimado(nuevo.getPrecioTotalEstimado());
+                    }
+                }
+            }
             guardada.setModiFecha(new Date()); guardada.setVersionEdicion(cambio.getVersionEdicion() + 1);
             return guardada;
         }

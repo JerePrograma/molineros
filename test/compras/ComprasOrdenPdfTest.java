@@ -13,12 +13,20 @@ import com.lowagie.text.pdf.PdfReader;
 public class ComprasOrdenPdfTest {
     public static void main(String[] args) throws Exception {
         String[] nombres = new String[] {"sistemas", "medica", "multipagina", "campos-largos",
-                "sistemas-sin-importes", "detalle-sin-importe", "ceros-informados", "medica-pesos"};
+                "sistemas-opcionales-vacios", "detalle-sin-importe", "ceros-informados", "medica-pesos"};
         for (int caso = 0; caso < nombres.length; caso++) {
             RequerimientoCompraOrden orden = fixture(caso);
             byte[] pdf = new RequerimientoCompraOrdenPdfHelper().generar(orden);
             if (pdf.length < 1000 || pdf[0] != '%' || pdf[1] != 'P') throw new Exception("PDF invalido");
             comprobarPesos(pdf);
+            if (caso == 1) {
+                String afiliado = texto(pdf);
+                String[] datos = { "DOMICILIO_AFILIADO", "PROVINCIA_AFILIADO", "TELEFONO_AFILIADO", "CELULAR_AFILIADO", "EMAIL_AFILIADO@example.invalid", "Plan de prueba" };
+                for (int i = 0; i < datos.length; i++) if (afiliado.indexOf(datos[i]) < 0) {
+                    throw new Exception("El PDF recorto un dato de afiliado: " + datos[i]);
+                }
+                System.out.println("AFILIADO_PDF_DATOS_CRUZADOS_COMPLETOS");
+            }
             PdfReader reader = new PdfReader(pdf);
             int paginas;
             try { paginas = reader.getNumberOfPages(); } finally { reader.close(); }
@@ -35,15 +43,27 @@ public class ComprasOrdenPdfTest {
             throw new Exception("No genero la orden en pesos con moneda legacy vacia.");
         }
         System.out.println("MONEDA_LEGACY_VACIA_USA_PESOS");
-        RequerimientoCompraOrden impuestoDesconocido = fixture(0);
-        impuestoDesconocido.setIva(null);
-        if (impuestoDesconocido.getTotal() != null) {
-            throw new Exception("El impuesto desconocido no debe convertirse en cero.");
+        RequerimientoCompraOrden impuestosOpcionales = fixture(0);
+        impuestosOpcionales.setIva(null); impuestosOpcionales.setIibb(null);
+        if (impuestosOpcionales.getIva().signum() != 0 || impuestosOpcionales.getIibb().signum() != 0
+                || impuestosOpcionales.getTotal().compareTo(new BigDecimal("7407.36")) != 0) {
+            throw new Exception("Los impuestos ausentes deben usar cero y conservar el total conocido.");
         }
-        if (new RequerimientoCompraOrdenPdfHelper().generar(impuestoDesconocido).length < 1000) {
-            throw new Exception("No genero la orden con impuesto sin informar.");
+        String textoImpuestos = texto(new RequerimientoCompraOrdenPdfHelper().generar(impuestosOpcionales));
+        int inicioFinanzas = textoImpuestos.lastIndexOf("IVA");
+        String finanzas = textoImpuestos.substring(inicioFinanzas,
+                Math.min(textoImpuestos.length(), inicioFinanzas + 140));
+        if (finanzas.indexOf("No informado") >= 0 || finanzas.indexOf("0,00") < 0
+                || finanzas.indexOf("7.407,36") < 0) {
+            throw new Exception("El PDF no muestra impuestos cero y total conocido: " + finanzas);
         }
-        System.out.println("IMPUESTO_DESCONOCIDO_ACEPTADO_SIN_TOTAL");
+        System.out.println("IMPUESTOS_OPCIONALES_CERO_TOTAL_CONOCIDO " + finanzas);
+        RequerimientoCompraOrden faltante = fixture(0);
+        faltante.getDetalles().get(0).setPrecioUnitarioEstimado(null);
+        faltante.getDetalles().get(0).setPrecioTotalEstimado(null);
+        rechazar(faltante, "SISTEMAS_SIN_PRECIO");
+        faltante.getRequerimiento().setSectorDescripcion("RRHH");
+        rechazar(faltante, "RRHH_SIN_PRECIO");
         RequerimientoCompraOrden invalida = fixture(0);
         invalida.setDetalles(new ArrayList<RequerimientoCompraDetalle>());
         try { new RequerimientoCompraOrdenPdfHelper().generar(invalida); throw new Exception("Acepto detalle vacio"); }
@@ -66,15 +86,15 @@ public class ComprasOrdenPdfTest {
         try { new RequerimientoCompraOrdenPdfHelper().generar(invalida); throw new Exception("Acepto borrador"); }
         catch (IllegalArgumentException expected) { System.out.println("BORRADOR_RECHAZADO"); }
     }
-    private static void comprobarPesos(byte[] pdf) throws Exception {
+    private static String texto(byte[] pdf) throws Exception {
         PDDocument documento = PDDocument.load(new ByteArrayInputStream(pdf));
-        try {
-            String texto = new PDFTextStripper().getText(documento).replaceAll("\\s+", " ");
-            if (texto.indexOf("Pesos (ARS)") < 0 || texto.indexOf("USD") >= 0) {
-                throw new Exception("El PDF debe mostrar siempre importes en Pesos (ARS).");
-            }
-        } finally {
-            documento.close();
+        try { return new PDFTextStripper().getText(documento).replaceAll("\\s+", " "); }
+        finally { documento.close(); }
+    }
+    private static void comprobarPesos(byte[] pdf) throws Exception {
+        String contenido = texto(pdf);
+        if (contenido.indexOf("Pesos (ARS)") < 0 || contenido.indexOf("USD") >= 0) {
+            throw new Exception("El PDF debe mostrar siempre importes en Pesos (ARS).");
         }
     }
     private static void rechazar(RequerimientoCompraOrden orden, String nombre) throws Exception {
@@ -88,6 +108,9 @@ public class ComprasOrdenPdfTest {
         r.setRequiereAfiliado(caso != 0 && caso != 4 && caso != 6); r.setAfiliadoNombre("AFILIADO"); r.setAfiliadoApellido("DE PRUEBA");
         r.setAfiliadoDocumento("Documento de prueba"); r.setAfiliadoLocalidad("Localidad de prueba");
         r.setAfiliadoIdOspim(Integer.valueOf(1234));
+        r.setAfiliadoDireccion("DOMICILIO_AFILIADO 123 Piso 2 Dto A");
+        r.setAfiliadoProvincia("PROVINCIA_AFILIADO"); r.setAfiliadoTelefono("TELEFONO_AFILIADO");
+        r.setAfiliadoCelular("CELULAR_AFILIADO"); r.setAfiliadoEmail("EMAIL_AFILIADO@example.invalid");
         RequerimientoCompraOrden o = new RequerimientoCompraOrden();
         o.setIdOrdenCompra(100 + caso); o.setIdRequerimientoCompra(123); o.setFechaEmision(new Date(1792713600000L));
         o.setRequerimiento(r); o.setMoneda("ARS");
@@ -121,9 +144,6 @@ public class ComprasOrdenPdfTest {
             o.setCondicion(null); o.setFormaPago(null); o.setPlazoPago(null); o.setEntrega(null);
             o.setProveedorDomicilio(null); o.setProveedorContacto(null); o.setProveedorEmail(null);
             o.setProveedorTelefono(null); o.setObservaciones(null); o.setTelefonoCompras(null);
-            for (RequerimientoCompraDetalle d : detalles) {
-                d.setPrecioUnitarioEstimado(null); d.setPrecioTotalEstimado(null);
-            }
         } else if (caso == 5) {
             detalles.get(1).setPrecioUnitarioEstimado(null);
             detalles.get(1).setPrecioTotalEstimado(null);
@@ -134,7 +154,7 @@ public class ComprasOrdenPdfTest {
             o.setMoneda(null);
         }
         o.setDetalles(detalles);
-        if ((caso == 4 || caso == 5) && o.getTotal() != null) {
+        if (caso == 5 && o.getTotal() != null) {
             throw new IllegalStateException("El total desconocido no debe sumar solo los importes presentes.");
         }
         if (caso == 6 && (o.getTotal() == null || o.getTotal().signum() != 0)) {

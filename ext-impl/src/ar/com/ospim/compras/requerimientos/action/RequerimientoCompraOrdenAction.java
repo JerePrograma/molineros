@@ -2,6 +2,7 @@ package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraOrdenHelper;
 import ar.com.ospim.util.PermissionUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -15,6 +16,7 @@ import java.util.Map;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
+import javax.portlet.PortletRequest;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 import org.apache.struts.action.ActionForm;
@@ -44,29 +46,30 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             ActionRequest request, ActionResponse response) throws Exception {
         int id = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
         try {
-            User user = PortalUtil.getUser(request);
+            User user = obtenerUsuario(request);
             if (!puedeEditar(user)) {
                 throw new IllegalArgumentException("No posee permisos para crear o editar órdenes de compra.");
             }
             String cmd = ParamUtil.getString(request, "cmd");
-            if ("update".equals(cmd)) {
-                RequerimientoCompraGuardadoToken.consumir(request,
-                        ParamUtil.getString(request, RequerimientoCompraGuardadoToken.PARAMETRO));
-                Map<String, String> entrada = new HashMap<String, String>();
-                entrada.put("condicion", ParamUtil.getString(request, "condicion"));
-                entrada.put("forma_pago", ParamUtil.getString(request, "forma_pago"));
-                entrada.put("plazo_pago", ParamUtil.getString(request, "plazo_pago"));
-                entrada.put("entrega", ParamUtil.getString(request, "entrega"));
-                entrada.put("observaciones", ParamUtil.getString(request, "observaciones"));
-                helper.actualizar(id, ParamUtil.getInteger(request, "id_orden_compra", 0),
-                        ParamUtil.getInteger(request, "version_edicion", -1), entrada, user.getScreenName());
-                request.setAttribute("ordenCompraActualizada", Boolean.TRUE);
+            if ("update".equals(cmd) || "create".equals(cmd)) {
+                RequerimientoCompraOrden orden = obtenerHelper().prepararParaGuardar(id, user.getFullName());
+                Map<String, String> entrada = obtenerEntrada(request, orden);
+                request.setAttribute("ordenCompraEntrada", entrada);
+                consumirToken(request);
+                if ("update".equals(cmd)) {
+                    obtenerHelper().actualizar(id, ParamUtil.getInteger(request, "id_orden_compra", 0),
+                            ParamUtil.getInteger(request, "version_edicion", -1), entrada, user.getScreenName());
+                    request.setAttribute("ordenCompraActualizada", Boolean.TRUE);
+                } else {
+                    obtenerHelper().crear(id, entrada, user.getScreenName());
+                    request.setAttribute("ordenCompraCreada", Boolean.TRUE);
+                }
             } else if (cmd.length() == 0) {
-                RequerimientoCompraOrden orden = helper.preparar(id, user.getFullName());
-                if (orden.getIdOrdenCompra() == 0) {
-                    RequerimientoCompraGuardadoToken.consumir(request,
-                            ParamUtil.getString(request, RequerimientoCompraGuardadoToken.PARAMETRO));
-                    helper.crearDirecta(id, user.getFullName(), user.getScreenName());
+                RequerimientoCompraOrden orden = obtenerHelper().prepararParaGuardar(id, user.getFullName());
+                if (orden.getIdOrdenCompra() == 0
+                        && !obtenerHelper().requiereCompletarDatos(orden)) {
+                    consumirToken(request);
+                    obtenerHelper().crearDirecta(id, user.getFullName(), user.getScreenName());
                     request.setAttribute("ordenCompraCreada", Boolean.TRUE);
                 }
             } else {
@@ -88,21 +91,27 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
     public ActionForward render(ActionMapping mapping, ActionForm form, PortletConfig config,
             RenderRequest request, RenderResponse response) throws Exception {
         try {
-            User user = PortalUtil.getUser(request);
+            User user = obtenerUsuario(request);
             if (!puedeConsultar(user)) {
                 throw new IllegalArgumentException("No posee permisos para consultar órdenes de compra.");
             }
-            RequerimientoCompraOrden orden = helper.preparar(
+            RequerimientoCompraOrden orden = obtenerHelper().preparar(
                     ParamUtil.getInteger(request, "id_requerimiento_compra", 0), user.getFullName());
-            if (orden.getIdOrdenCompra() <= 0 || !orden.getRequerimiento().isOrdenCompra()) {
+            boolean editable = puedeEditar(user);
+            boolean nueva = orden.getIdOrdenCompra() <= 0;
+            if ((nueva && (!editable
+                    || !orden.getRequerimiento().esSectorSinCotizacionPrestador()))
+                    || (!nueva && !orden.getRequerimiento().isOrdenCompra())) {
                 throw new IllegalArgumentException(
                         "Todavia no se emitio una Orden de Compra para este requerimiento.");
             }
             request.setAttribute("ordenCompra", orden);
-            boolean editable = puedeEditar(user);
             request.setAttribute("ordenCompraEditable", Boolean.valueOf(editable));
+            request.setAttribute("ordenCompraPuedeCrear", Boolean.valueOf(nueva));
+            request.setAttribute("ordenCompraRequiereDatos",
+                    Boolean.valueOf(obtenerHelper().requiereCompletarDatos(orden)));
             if (editable) {
-                RequerimientoCompraGuardadoToken.publicar(request);
+                publicarToken(request);
             }
         } catch (IllegalArgumentException e) {
             if (request.getAttribute("ordenCompraError") == null) {
@@ -116,6 +125,38 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             }
         }
         return mapping.findForward(FORWARD);
+    }
+
+    private Map<String, String> obtenerEntrada(ActionRequest request,
+            RequerimientoCompraOrden orden) {
+        Map<String, String> entrada = new HashMap<String, String>();
+        String[] campos = { "condicion", "forma_pago", "plazo_pago", "entrega",
+                "observaciones", "iva", "iibb" };
+        for (int i = 0; i < campos.length; i++) {
+            entrada.put(campos[i], ParamUtil.getString(request, campos[i]));
+        }
+        for (RequerimientoCompraDetalle detalle : orden.getDetalles()) {
+            String campo = "precio_" + detalle.getIdInt();
+            entrada.put(campo, ParamUtil.getString(request, campo));
+        }
+        return entrada;
+    }
+
+    protected RequerimientoCompraOrdenHelper obtenerHelper() {
+        return helper;
+    }
+
+    protected User obtenerUsuario(PortletRequest request) throws Exception {
+        return PortalUtil.getUser(request);
+    }
+
+    protected void consumirToken(ActionRequest request) throws Exception {
+        RequerimientoCompraGuardadoToken.consumir(request,
+                ParamUtil.getString(request, RequerimientoCompraGuardadoToken.PARAMETRO));
+    }
+
+    protected void publicarToken(RenderRequest request) {
+        RequerimientoCompraGuardadoToken.publicar(request);
     }
 
 }
