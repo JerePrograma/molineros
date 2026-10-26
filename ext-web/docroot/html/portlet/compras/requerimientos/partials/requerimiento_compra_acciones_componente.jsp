@@ -421,7 +421,7 @@ String botoneraReclamoPrestacionalFormId =
                        onclick="return <portlet:namespace />crearOrdenCompraDirecta(this);" />
             <% } else if (botoneraPuedeVerOrdenCompra) { %>
                 <input type="button" id="<portlet:namespace />btnOrdenCompraRequerimientoCompra"
-                       value="<%= puedeABM ? "Editar Orden de Compra" : "Ver Orden de Compra" %>"
+                       value="Ver Orden de Compra"
                        onclick="window.location.href='<%= botoneraOrdenCompraURL.toString() %>';" />
             <% } %>
 
