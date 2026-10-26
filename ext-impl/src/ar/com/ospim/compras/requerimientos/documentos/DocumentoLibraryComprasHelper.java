@@ -7,6 +7,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import com.liferay.documentlibrary.service.DLLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.NoSuchFolderException;
+import com.liferay.portal.NoSuchRoleException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
@@ -246,10 +247,39 @@ public class DocumentoLibraryComprasHelper
             );
         }
 
-        Role role = RoleLocalServiceUtil.getRole(
-                entry.getCompanyId(),
-                WebKeysCompras.ROL_ABM_COMPRAS
-        );
+        Role role = null;
+        try {
+            role = RoleLocalServiceUtil.getRole(
+                    entry.getCompanyId(),
+                    WebKeysCompras.ROL_ABM_COMPRAS
+            );
+        } catch (NoSuchRoleException e) {
+            // PermissionUtil acepta roles legacy como ABM_Compras.
+            List<Role> roles = RoleLocalServiceUtil.getRoles(
+                    entry.getCompanyId());
+            if (roles == null) {
+                throw new Exception(
+                        "No se pudieron determinar los roles de la empresa.");
+            }
+            for (int i = 0; i < roles.size(); i++) {
+                Role candidato = roles.get(i);
+                if (candidato != null && candidato.getName() != null
+                        && WebKeysCompras.ROL_ABM_COMPRAS.equals(
+                                candidato.getName().toUpperCase(Locale.ENGLISH))) {
+                    role = candidato;
+                    break;
+                }
+            }
+            if (role == null) {
+                // Un rol no configurado no debe impedir crear el adjunto.
+                // No se concede ningun permiso y la descarga mantiene su check DL.
+                _log.warn("No se agrega VIEW de Orden medica: rol "
+                        + WebKeysCompras.ROL_ABM_COMPRAS
+                        + " no configurado. companyId=" + entry.getCompanyId()
+                        + ", fileEntryId=" + entry.getFileEntryId());
+                return;
+            }
+        }
         long roleId = role.getRoleId();
         String nombreRecurso = DLFileEntry.class.getName();
         String primKey = String.valueOf(entry.getFileEntryId());

@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.liferay.portal.NoSuchRoleException;
+import com.liferay.portal.SystemException;
 import com.liferay.portal.model.Permission;
 import com.liferay.portal.model.Resource;
 import com.liferay.portal.model.ResourceAction;
@@ -45,8 +47,13 @@ public class ComprasOrdenMedicaPermisoTest {
         }
         int original = PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM;
         try {
-            permiso(5);
-            permiso(6);
+            permiso(5, "ABM_COMPRAS");
+            permiso(6, "ABM_COMPRAS");
+            permiso(5, "ABM_Compras");
+            permiso(6, "abm_compras");
+            rolAusente();
+            falloInfraestructura(false);
+            falloInfraestructura(true);
             invalida();
         } finally {
             PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM = original;
@@ -55,9 +62,10 @@ public class ComprasOrdenMedicaPermisoTest {
         System.out.println("Helper y check DL productivos; servicios simulados; sin DB, Tomcat ni UI.");
     }
 
-    private static void permiso(int algoritmo) throws Exception {
+    private static void permiso(int algoritmo, String nombreRol) throws Exception {
         PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM = algoritmo;
         Fixture f = new Fixture();
+        f.roleName = nombreRol;
         f.install();
         rechazada(f);
         asegurar(f.entry);
@@ -70,6 +78,30 @@ public class ComprasOrdenMedicaPermisoTest {
         checks++;
         asegurar(f.entry);
         igual("sin escritura repetida", Integer.valueOf(1), Integer.valueOf(f.writes));
+    }
+
+    private static void rolAusente() throws Exception {
+        Fixture f = new Fixture();
+        f.roleName = "VIEW_COMPRAS";
+        f.install();
+        asegurar(f.entry);
+        igual("rol ausente no agrega permisos", Integer.valueOf(0), Integer.valueOf(f.writes));
+        rechazada(f);
+    }
+
+    private static void falloInfraestructura(boolean enListado) throws Exception {
+        Fixture f = new Fixture();
+        f.roleName = enListado ? "ABM_Compras" : "ABM_COMPRAS";
+        f.failLookup = !enListado;
+        f.failList = enListado;
+        f.install();
+        try {
+            asegurar(f.entry);
+            throw new AssertionError("Se oculto un fallo de infraestructura del servicio de roles");
+        } catch (SystemException esperado) {
+            checks++;
+        }
+        igual("fallo de infraestructura no concede", Integer.valueOf(0), Integer.valueOf(f.writes));
     }
 
     private static void invalida() throws Exception {
@@ -140,6 +172,9 @@ public class ComprasOrdenMedicaPermisoTest {
     private static class Fixture implements InvocationHandler {
         private final List<String> allowed = new ArrayList<String>(Arrays.asList(new String[] {"UPDATE"}));
         private int writes;
+        private String roleName = "ABM_COMPRAS";
+        private boolean failLookup;
+        private boolean failList;
         private final DLFileEntry entry = (DLFileEntry) model(DLFileEntry.class, new Object[][] {
             {"getCompanyId", Long.valueOf(900)}, {"getGroupId", Long.valueOf(100)},
             {"getFolderId", Long.valueOf(200)}, {"getFileEntryId", Long.valueOf(300)},
@@ -174,7 +209,21 @@ public class ComprasOrdenMedicaPermisoTest {
             if ("getRole".equals(name)) {
                 igual("empresa del rol", Long.valueOf(900), a[0]);
                 igual("rol autorizado", "ABM_COMPRAS", a[1]);
-                return model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(500)}, {"getName", "ABM_COMPRAS"}});
+                if (failLookup) { throw new SystemException("Servicio de roles no disponible"); }
+                if (!"ABM_COMPRAS".equals(roleName)) {
+                    throw new NoSuchRoleException("No existe el rol exacto ABM_COMPRAS");
+                }
+                return role();
+            }
+            if ("getRoles".equals(name)) {
+                igual("empresa del listado de roles", Long.valueOf(900), a[0]);
+                if (failList) { throw new SystemException("Listado de roles no disponible"); }
+                List<Role> roles = new ArrayList<Role>();
+                roles.add((Role) model(Role.class, new Object[][] {
+                    {"getRoleId", Long.valueOf(501)}, {"getName", "VIEW_COMPRAS"}
+                }));
+                roles.add(role());
+                return roles;
             }
             if ("getResource".equals(name)) {
                 individual(a, 0);
@@ -222,6 +271,12 @@ public class ComprasOrdenMedicaPermisoTest {
                 return null;
             }
             return fallback(p, m, a);
+        }
+
+        private Role role() {
+            return (Role) model(Role.class, new Object[][] {
+                {"getRoleId", Long.valueOf(500)}, {"getName", roleName}
+            });
         }
 
         private void individual(Object[] a, int offset) {
