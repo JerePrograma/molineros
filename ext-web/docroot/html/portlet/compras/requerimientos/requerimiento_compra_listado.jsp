@@ -1602,18 +1602,9 @@ if (tercerizadoras == null) {
         });
 
         jQuery(
-                '#<portlet:namespace />estado, '
-                + '#<portlet:namespace />sector_id, '
-                + '#<portlet:namespace />surge'
-        ).change(function() {
-            <portlet:namespace />buscarRequerimientos();
-        });
-
-        jQuery(
                 '#<portlet:namespace />id_tercerizadora_combo'
         ).change(function() {
             <portlet:namespace />sincronizarTercerizadoraFiltro();
-            <portlet:namespace />buscarRequerimientos();
         });
 
         jQuery(
@@ -1652,7 +1643,6 @@ if (tercerizadoras == null) {
                 + '#<portlet:namespace />nombre'
         ).keypress(function(event) {
             if (event.which == 13) {
-                <portlet:namespace />buscarRequerimientos();
                 return false;
             }
 
@@ -1661,7 +1651,6 @@ if (tercerizadoras == null) {
 
         <portlet:namespace />limpiarFechasAltaFiltro();
         <portlet:namespace />desbloquearTercerizadoraFiltro(false);
-        jQuery('#<portlet:namespace />buscando').show();
-        <portlet:namespace />buscarRequerimientos();
+        jQuery('#<portlet:namespace />buscando').hide();
     });
 </script>
