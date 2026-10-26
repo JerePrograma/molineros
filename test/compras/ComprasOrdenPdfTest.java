@@ -13,12 +13,14 @@ import com.lowagie.text.pdf.PdfReader;
 public class ComprasOrdenPdfTest {
     public static void main(String[] args) throws Exception {
         String[] nombres = new String[] {"sistemas", "medica", "multipagina", "campos-largos",
-                "sistemas-opcionales-vacios", "detalle-sin-importe", "ceros-informados", "medica-pesos"};
+                "sistemas-opcionales-vacios", "detalle-sin-importe", "ceros-informados", "medica-pesos",
+                "medica-opcionales-vacios"};
         for (int caso = 0; caso < nombres.length; caso++) {
             RequerimientoCompraOrden orden = fixture(caso);
             byte[] pdf = new RequerimientoCompraOrdenPdfHelper().generar(orden);
             if (pdf.length < 1000 || pdf[0] != '%' || pdf[1] != 'P') throw new Exception("PDF invalido");
             comprobarPesos(pdf);
+            comprobarCamposVacios(pdf, caso);
             if (caso == 1) {
                 String afiliado = texto(pdf);
                 String[] datos = { "DOMICILIO_AFILIADO", "PROVINCIA_AFILIADO", "TELEFONO_AFILIADO", "CELULAR_AFILIADO", "EMAIL_AFILIADO@example.invalid", "Plan de prueba" };
@@ -97,6 +99,51 @@ public class ComprasOrdenPdfTest {
             throw new Exception("El PDF debe mostrar siempre importes en Pesos (ARS).");
         }
     }
+    private static void comprobarCamposVacios(byte[] pdf, int caso) throws Exception {
+        String contenido = texto(pdf);
+        if (contenido.indexOf("No informado") >= 0 || contenido.indexOf("No informada") >= 0) {
+            throw new Exception("Los campos sin datos deben quedar vacios en el PDF: caso " + caso);
+        }
+        if (caso == 4 || caso == 8) {
+            String[] etiquetas = { "Domicilio:", "Contacto:", "Correo:", "Condición:",
+                    "Forma de pago:", "Plazo de pago:", "Entrega:", "Observaciones:" };
+            for (int i = 0; i < etiquetas.length; i++) {
+                if (contenido.indexOf(etiquetas[i]) < 0) {
+                    throw new Exception("Falta la etiqueta del campo vacio: " + etiquetas[i]);
+                }
+            }
+            if (ocurrencias(contenido, "0,00") < 2) {
+                throw new Exception("IVA e IIBB sin informar deben conservar el cero.");
+            }
+        }
+        if (caso == 5 && contenido.indexOf("0,00") >= 0) {
+            throw new Exception("Un importe desconocido debe quedar vacio y no convertirse en cero.");
+        }
+        if (caso == 6 && ocurrencias(contenido, "0,00") < 10) {
+            throw new Exception("Los precios, subtotales, impuestos y total cero deben conservarse.");
+        }
+        if (caso == 8) {
+            String[] etiquetas = { "Afiliado:", "Documento:", "Localidad:", "Provincia:", "Celular:",
+                    "Plan:", "Reclamo prestacional:", "Fecha orden médica:", "Fecha recepción:" };
+            for (int i = 0; i < etiquetas.length; i++) {
+                if (contenido.indexOf(etiquetas[i]) < 0) {
+                    throw new Exception("Falta la etiqueta del dato medico vacio: " + etiquetas[i]);
+                }
+            }
+            if (contenido.indexOf("Reclamo prestacional: 0") >= 0) {
+                throw new Exception("El reclamo ausente debe quedar vacio y no mostrar cero.");
+            }
+        }
+    }
+    private static int ocurrencias(String texto, String valor) {
+        int cantidad = 0;
+        int posicion = 0;
+        while ((posicion = texto.indexOf(valor, posicion)) >= 0) {
+            cantidad++;
+            posicion += valor.length();
+        }
+        return cantidad;
+    }
     private static void rechazar(RequerimientoCompraOrden orden, String nombre) throws Exception {
         try { new RequerimientoCompraOrdenPdfHelper().generar(orden); throw new Exception("Acepto " + nombre); }
         catch (IllegalArgumentException expected) { System.out.println(nombre + "_RECHAZADO"); }
@@ -152,6 +199,17 @@ public class ComprasOrdenPdfTest {
             for (RequerimientoCompraDetalle d : detalles) d.setPrecioUnitarioEstimado(BigDecimal.ZERO);
         } else if (caso == 7) {
             o.setMoneda(null);
+        } else if (caso == 8) {
+            o.setPlan(null); o.setIdReclamoPrestacional(0);
+            o.setFechaOrdenMedica(null); o.setFechaRecepcion(null);
+            o.setCondicion("  "); o.setFormaPago(null); o.setPlazoPago(null); o.setEntrega(null);
+            o.setProveedorDomicilio(null); o.setProveedorContacto(null); o.setProveedorEmail(null);
+            o.setProveedorTelefono(null); o.setObservaciones(null); o.setTelefonoCompras(null);
+            o.setIva(null); o.setIibb(null);
+            r.setAfiliadoNombre(null); r.setAfiliadoApellido(null); r.setAfiliadoDocumento(null);
+            r.setAfiliadoIdOspim((Integer) null); r.setAfiliadoDireccion(null);
+            r.setAfiliadoLocalidad(null); r.setAfiliadoProvincia(null); r.setAfiliadoTelefono(null);
+            r.setAfiliadoCelular(null); r.setAfiliadoEmail(null);
         }
         o.setDetalles(detalles);
         if (caso == 5 && o.getTotal() != null) {

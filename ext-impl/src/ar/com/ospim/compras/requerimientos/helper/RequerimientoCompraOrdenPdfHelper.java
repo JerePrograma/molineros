@@ -78,11 +78,11 @@ public class RequerimientoCompraOrdenPdfHelper {
                 + "\nCorreo: " + texto(requerimiento.getAfiliadoEmailVisible()));
         parametros.put("DATOS_MEDICOS", "Plan: " + texto(orden.getPlan())
                 + "\nReclamo prestacional: " + (orden.getIdReclamoPrestacional() > 0
-                        ? String.valueOf(orden.getIdReclamoPrestacional()) : "No informado")
+                        ? String.valueOf(orden.getIdReclamoPrestacional()) : "")
                 + "\nFecha orden médica: " + (orden.getFechaOrdenMedica() != null
-                        ? fechas.format(orden.getFechaOrdenMedica()) : "No informada")
+                        ? fechas.format(orden.getFechaOrdenMedica()) : "")
                 + "\nFecha recepción: " + (orden.getFechaRecepcion() != null
-                        ? fechas.format(orden.getFechaRecepcion()) : "No informada"));
+                        ? fechas.format(orden.getFechaRecepcion()) : ""));
         parametros.put("ENTREGA", "Entrega: " + texto(orden.getEntrega()));
         parametros.put("OBSERVACIONES", "Observaciones: " + texto(orden.getObservaciones()));
         parametros.put("CONFECCION", "Confeccionado por: " + texto(orden.getConfeccionadoPor())
@@ -158,10 +158,10 @@ public class RequerimientoCompraOrdenPdfHelper {
     }
 
     private String importe(BigDecimal valor, DecimalFormat formato) {
-        return valor != null ? formato.format(valor) : "No informado";
+        return valor != null ? formato.format(valor) : "";
     }
 
     private String texto(String valor) {
-        return valor != null && valor.trim().length() > 0 ? valor.trim() : "No informado";
+        return valor != null && valor.trim().length() > 0 ? valor.trim() : "";
     }
 }
