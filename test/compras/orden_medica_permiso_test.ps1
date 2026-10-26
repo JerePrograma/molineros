@@ -1,0 +1,45 @@
+param([string]$EvidenceName = 'offline', [switch]$ReproOnly)
+$ErrorActionPreference = 'Stop'
+$repoPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+Set-Location -LiteralPath 'C:\wsmolineros\ext'
+$root = (git rev-parse --show-toplevel).Trim()
+$origin = (git remote get-url origin).Trim()
+if ($LASTEXITCODE -ne 0 -or $root -ne 'C:/wsmolineros/ext' -or $origin -ne 'https://github.com/JerePrograma/molineros.git') { throw 'Repositorio o ruta incorrectos.' }
+$initialHead = (& git rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0) { throw 'No se pudo registrar HEAD inicial.' }
+$artifactPath = Join-Path $repoPath ('output\orden-medica-permiso-qa\' + $EvidenceName)
+$classOutput = Join-Path $artifactPath 'classes'
+$latinEncoding = [System.Text.Encoding]::GetEncoding(28591)
+New-Item -ItemType Directory -Path $classOutput -Force | Out-Null
+# Patron existente de orden_compra_test.ps1: omitir placeholders y usar ECJ local.
+$classpathEntries = @($classOutput, (Join-Path $repoPath 'ext-impl\classes'), (Join-Path $repoPath 'ext-service\classes'), (Join-Path $repoPath 'ext-web\docroot\WEB-INF\classes'))
+foreach ($folder in @('lib\global', 'lib\portal', 'lib\development', 'ext-lib\global', 'modules', 'ext-web\docroot\WEB-INF\lib')) {
+    $classpathEntries += @(Get-ChildItem -LiteralPath (Join-Path $repoPath $folder) -Filter '*.jar' -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 10 -and $_.Name -ne 'ecj.jar' } | ForEach-Object { $_.FullName })
+}
+$classpathEntries += 'C:\apache-tomcat-8.5.23\lib\ecj-4.6.3.jar'
+$classpath = $classpathEntries -join ';'
+$sources = @((Join-Path $PSScriptRoot 'ComprasOrdenMedicaPermisoTest.java'))
+if (-not $ReproOnly) {
+    $sources += Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\documentos\DocumentoLibraryComprasHelper.java'
+    $sources += Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\action\DescargarOrdenMedicaCompraAction.java'
+}
+[System.IO.File]::WriteAllLines((Join-Path $artifactPath 'context.txt'), @(
+    ('Inicio UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss')),
+    ('HEAD inicial: ' + $initialHead),
+    ('Estado inicial: check VIEW real de Liferay con servicios simulados. ReproOnly=' + $ReproOnly),
+    'Log inicial: sin logs Tomcat en esta copia; no se usa DB, servidor, red ni UI.',
+    'Alcance: reproduce PrincipalException y verifica grant individual ABM, acciones previas e idempotencia.'
+), $latinEncoding)
+$sourcepath = @('ext-impl\src', 'ext-service\src', 'ext-web\docroot\WEB-INF\src') | ForEach-Object { Join-Path $repoPath $_ }
+$compileOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encoding' 'ISO-8859-1' '-source' '1.5' '-target' '1.5' '-classpath' $classpath '-sourcepath' ($sourcepath -join ';') '-d' $classOutput @sources 2>&1 | ForEach-Object { $_.ToString() })
+$compileExit = $LASTEXITCODE
+[System.IO.File]::WriteAllLines((Join-Path $artifactPath 'javac.log'), ($compileOutput + ('javac_exit=' + $compileExit)), $latinEncoding)
+if ($compileExit -ne 0) { $compileOutput | Write-Output; throw ('javac fallo: ' + $compileExit) }
+$mode = if ($ReproOnly) { 'repro' } else { 'full' }
+$runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath 'ComprasOrdenMedicaPermisoTest' $mode 2>&1 | ForEach-Object { $_.ToString() })
+$runExit = $LASTEXITCODE
+[System.IO.File]::WriteAllLines((Join-Path $artifactPath 'report.txt'), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
+$compileOutput | Write-Output
+$runOutput | Write-Output
+Write-Output ('javac_exit=' + $compileExit + ' java_exit=' + $runExit)
+if ($runExit -ne 0) { throw ('harness fallo: ' + $runExit) }

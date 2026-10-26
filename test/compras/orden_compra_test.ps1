@@ -1,4 +1,4 @@
-param([string]$EvidenceName = 'offline')
+param([string]$EvidenceName = 'offline', [string]$TestDatabase = '')
 $ErrorActionPreference = 'Stop'
 $repoPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $artifactPath = Join-Path $repoPath ('output\orden-compra-qa\' + $EvidenceName)
@@ -27,14 +27,15 @@ $sources = @(
     'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraOrdenServiceUtil.java',
     'ext-impl\src\ar\com\ospim\servlets\PdfServlet.java',
     'test\compras\ComprasOrdenHelperTest.java',
+    'test\compras\ComprasOrdenEdicionJdbcTest.java',
     'test\compras\ComprasOrdenPdfTest.java'
 ) | ForEach-Object { Join-Path $repoPath $_ }
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'context.txt'), @(
     ('Inicio UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss')),
     ('HEAD inicial: ' + $initialHead),
-    'Estado inicial: OC exige formulario previo; se ajusta a generacion directa con datos existentes.',
-    'Log inicial: no hay logs Tomcat en la copia local. Esta prueba no usa DB activa ni UI.',
-    'Pruebas: clases productivas Java8/source1.5, reglas con datos simulados, Jasper real.'
+    'Estado inicial: OC emitida de solo consulta; edicion limitada de condiciones y observaciones.',
+    'Log inicial: sin Tomcat ni UI; JDBC opcional solo en una base aislada de fixtures.',
+    'Pruebas: Java8/source1.5, helper con fixtures, Jasper real y JDBC aislado opcional.'
 ), $latinEncoding)
 $sourcepath = @('ext-impl\src', 'ext-service\src', 'ext-web\docroot\WEB-INF\src') | ForEach-Object { Join-Path $repoPath $_ }
 $compileOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encoding' 'ISO-8859-1' '-source' '1.5' '-target' '1.5' '-classpath' $classpath '-sourcepath' ($sourcepath -join ';') '-d' $classOutput @sources 2>&1 | ForEach-Object { $_.ToString() })
@@ -47,5 +48,15 @@ foreach ($test in @('ComprasOrdenHelperTest', 'ComprasOrdenPdfTest')) {
     [System.IO.File]::WriteAllLines((Join-Path $artifactPath ($test + '.log')), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
     $runOutput | Write-Output
     if ($runExit -ne 0) { throw ($test + ' fallo: ' + $runExit) }
+}
+if ($TestDatabase.Length -gt 0) {
+    if ($TestDatabase -notmatch '^compras_orden_test_edicion_[a-z0-9_]+$') {
+        throw 'El test JDBC requiere una base aislada compras_orden_test_edicion_*.'
+    }
+    $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath 'ComprasOrdenEdicionJdbcTest' $TestDatabase 2>&1 | ForEach-Object { $_.ToString() })
+    $runExit = $LASTEXITCODE
+    [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'ComprasOrdenEdicionJdbcTest.log'), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
+    $runOutput | Write-Output
+    if ($runExit -ne 0) { throw ('ComprasOrdenEdicionJdbcTest fallo: ' + $runExit) }
 }
 Write-Output ('javac_exit=' + $compileExit + ' tests_exit=0')

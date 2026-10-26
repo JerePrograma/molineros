@@ -131,6 +131,14 @@ public class DescargarOrdenMedicaCompraAction
              * los efectos secundarios de DLFileRank del servicio legacy.
              * Por eso esta comprobación de VIEW no debe quitarse.
              */
+            if (PermissionUtil.userContainsRole(
+                    user,
+                    WebKeysCompras.ROL_ABM_COMPRAS)) {
+
+                DocumentoLibraryComprasHelper
+                        .asegurarPermisoVistaAbm(entry);
+            }
+
             DLFileEntryPermission.check(
                     themeDisplay.getPermissionChecker(),
                     entry.getFolderId(),

@@ -138,7 +138,7 @@ boolean botoneraPuedeEnviarACotizar =
 boolean botoneraPuedePasarAOrdenCompra =
         botoneraRequerimientoPersistido
         && req.isActivo()
-        && botoneraTieneRolCotizar
+        && puedeABM
         && WebKeysCompras.esAutorizado(botoneraEstadoActual)
         && Boolean.TRUE.equals(renderRequest.getAttribute(
                 RequerimientoCompraRenderActionUtil.ATTR_PUEDE_CREAR_ORDEN_COMPRA))
@@ -421,7 +421,7 @@ String botoneraReclamoPrestacionalFormId =
                        onclick="return <portlet:namespace />crearOrdenCompraDirecta(this);" />
             <% } else if (botoneraPuedeVerOrdenCompra) { %>
                 <input type="button" id="<portlet:namespace />btnOrdenCompraRequerimientoCompra"
-                       value="Ver Orden de Compra"
+                       value="<%= puedeABM ? "Editar Orden de Compra" : "Ver Orden de Compra" %>"
                        onclick="window.location.href='<%= botoneraOrdenCompraURL.toString() %>';" />
             <% } %>
 

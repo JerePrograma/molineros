@@ -86,6 +86,43 @@ public class RequerimientoCompraOrdenHelper {
         return guardada;
     }
 
+    /** Actualiza solo las condiciones de una OC emitida; conserva su snapshot. */
+    public RequerimientoCompraOrden actualizar(int idRequerimiento, int idOrden,
+            int version, Map<String, String> entrada, String usuario) throws Exception {
+        String auditoria = texto(usuario, 100, true, "Usuario de auditoria");
+        RequerimientoCompraOrden actual = preparar(idRequerimiento, usuario);
+        if (!actual.getRequerimiento().isOrdenCompra()
+                || actual.getIdOrdenCompra() <= 0 || actual.getIdOrdenCompra() != idOrden
+                || actual.getIdRequerimientoCompra() != idRequerimiento) {
+            throw new IllegalArgumentException("La Orden de Compra emitida ya no esta disponible.");
+        }
+        if (version < 0 || version == Integer.MAX_VALUE
+                || version != actual.getVersionEdicion()) {
+            throw new IllegalArgumentException(
+                    "La Orden de Compra fue modificada por otro usuario. Actualice la pantalla.");
+        }
+        if (entrada == null) {
+            throw new IllegalArgumentException("No se recibieron las condiciones de la Orden de Compra.");
+        }
+        RequerimientoCompraOrden cambio = new RequerimientoCompraOrden();
+        cambio.setIdOrdenCompra(idOrden);
+        cambio.setIdRequerimientoCompra(idRequerimiento);
+        cambio.setVersionEdicion(version);
+        cambio.setCondicion(texto(entrada.get("condicion"), 1000, false, "Condicion"));
+        cambio.setFormaPago(texto(entrada.get("forma_pago"), 250, false, "Forma de pago"));
+        cambio.setPlazoPago(texto(entrada.get("plazo_pago"), 250, false, "Plazo de pago"));
+        cambio.setEntrega(texto(entrada.get("entrega"), 1000, false, "Entrega"));
+        cambio.setObservaciones(texto(entrada.get("observaciones"), 4000, false, "Observaciones"));
+        RequerimientoCompraOrden guardada = actualizarOrden(cambio, auditoria);
+        if (guardada == null || guardada.getIdOrdenCompra() != idOrden
+                || guardada.getIdRequerimientoCompra() != idRequerimiento
+                || guardada.getVersionEdicion() != version + 1) {
+            throw new IllegalStateException("No se pudo confirmar la modificacion de la Orden de Compra.");
+        }
+        guardada.setRequerimiento(actual.getRequerimiento());
+        return guardada;
+    }
+
     private RequerimientoCompra cargarRequerimiento(int id) throws Exception {
         if (id <= 0) {
             throw new IllegalArgumentException("Debe informar el requerimiento de compra.");
@@ -340,6 +377,11 @@ public class RequerimientoCompraOrdenHelper {
     protected RequerimientoCompraOrden guardarOrden(RequerimientoCompraOrden orden,
             String usuario) throws Exception {
         return RequerimientoCompraOrdenServiceUtil.crear(orden, usuario);
+    }
+
+    protected RequerimientoCompraOrden actualizarOrden(RequerimientoCompraOrden orden,
+            String usuario) throws Exception {
+        return RequerimientoCompraOrdenServiceUtil.actualizar(orden, usuario);
     }
 
     protected List<RequerimientoCompraPresupuesto> obtenerCotizacionesEmpresa(int id)

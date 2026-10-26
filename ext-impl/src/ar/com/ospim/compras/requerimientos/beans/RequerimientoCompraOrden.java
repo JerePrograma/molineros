@@ -14,6 +14,9 @@ public class RequerimientoCompraOrden {
     private Date fechaOrdenMedica;
     private Date fechaRecepcion;
     private String altaUsr;
+    private Date modiFecha;
+    private String modiUsr;
+    private int versionEdicion;
     private String moneda;
     private String proveedor;
     private String proveedorCuit;
@@ -56,6 +59,15 @@ public class RequerimientoCompraOrden {
 
     public String getAltaUsr() { return altaUsr; }
     public void setAltaUsr(String altaUsr) { this.altaUsr = altaUsr; }
+
+    public Date getModiFecha() { return modiFecha; }
+    public void setModiFecha(Date modiFecha) { this.modiFecha = modiFecha; }
+
+    public String getModiUsr() { return modiUsr; }
+    public void setModiUsr(String modiUsr) { this.modiUsr = modiUsr; }
+
+    public int getVersionEdicion() { return versionEdicion; }
+    public void setVersionEdicion(int versionEdicion) { this.versionEdicion = versionEdicion; }
 
     public String getMoneda() { return moneda; }
     public void setMoneda(String moneda) { this.moneda = moneda; }

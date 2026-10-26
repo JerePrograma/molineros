@@ -16,4 +16,9 @@ public class RequerimientoCompraOrdenServiceUtil {
             String usuario) throws Exception {
         return service.crear(orden, usuario);
     }
+
+    public static RequerimientoCompraOrden actualizar(RequerimientoCompraOrden orden,
+            String usuario) throws Exception {
+        return service.actualizar(orden, usuario);
+    }
 }

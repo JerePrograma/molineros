@@ -1,4 +1,9 @@
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.model.User;
+import com.liferay.portal.model.impl.RoleImpl;
+import com.liferay.portal.model.impl.UserImpl;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativaDetalle;
@@ -26,6 +31,8 @@ public class ComprasOrdenHelperTest {
         importes();
         estadoYAdjudicacion();
         medicina();
+        edicionCondiciones();
+        permisosEdicion();
         System.out.println("COMPRAS_ORDEN_HELPER_OFFLINE_OK checks=" + checks);
         System.out.println("Helper productivo; generacion directa con fuentes canonicas; sin DB ni UI.");
     }
@@ -65,6 +72,87 @@ public class ComprasOrdenHelperTest {
         igual("condicion guardada preservada", "Condicion de una OC ya emitida", repetida.getFormaPago());
         igual("idempotente", Integer.valueOf(1), Integer.valueOf(h.guardados));
         igual("hidratacion existente", h.r, h.preparar(40, "nombre").getRequerimiento());
+    }
+
+    private static void edicionCondiciones() throws Exception {
+        Mock h = empresaFixture();
+        RequerimientoCompraOrden original = h.crearDirecta(40, "Nombre de Compras", "alta");
+        Date emision = original.getFechaEmision();
+        BigDecimal precio = original.getDetalles().get(0).getPrecioUnitarioEstimado();
+        Map<String, String> campos = new HashMap<String, String>();
+        campos.put("condicion", "  Condicion acordada  ");
+        campos.put("forma_pago", "Transferencia");
+        campos.put("plazo_pago", "30 dias");
+        campos.put("entrega", "Domicilio acordado");
+        campos.put("observaciones", "Observacion actualizada");
+        campos.put("proveedor", "Proveedor manipulado");
+        campos.put("moneda", "USD");
+        RequerimientoCompraOrden actual = h.actualizar(40, 900, 0, campos, "editor");
+        igual("condicion editada y normalizada", "Condicion acordada", actual.getCondicion());
+        igual("forma editada", "Transferencia", actual.getFormaPago());
+        igual("plazo editado", "30 dias", actual.getPlazoPago());
+        igual("entrega editada", "Domicilio acordado", actual.getEntrega());
+        igual("observaciones editadas", "Observacion actualizada", actual.getObservaciones());
+        igual("numero preservado", Integer.valueOf(900), Integer.valueOf(actual.getIdOrdenCompra()));
+        igual("fecha preservada", emision, actual.getFechaEmision());
+        igual("proveedor preservado", "Empresa de prueba", actual.getProveedor());
+        igual("moneda preservada", null, actual.getMoneda());
+        igual("alta preservada", "alta", actual.getAltaUsr());
+        decimal("precio preservado", precio.toPlainString(), actual.getDetalles().get(0).getPrecioUnitarioEstimado());
+        igual("version incrementada", Integer.valueOf(1), Integer.valueOf(actual.getVersionEdicion()));
+        igual("auditoria edicion", "editor", actual.getModiUsr());
+        igual("fecha edicion", Boolean.TRUE, Boolean.valueOf(actual.getModiFecha() != null));
+        rechazaEdicion(h, 40, 900, 0, campos, "editor", "version obsoleta");
+        rechazaEdicion(h, 40, 901, 1, campos, "editor", "orden ajena");
+        rechazaEdicion(h, 40, 900, -1, campos, "editor", "version ausente");
+        rechazaEdicion(h, 40, 900, 1, campos, " ", "auditoria ausente");
+        rechazaEdicion(h, 40, 900, 1, null, "editor", "campos ausentes");
+        String[] nombres = { "condicion", "forma_pago", "plazo_pago", "entrega", "observaciones" };
+        int[] maximos = { 1000, 250, 250, 1000, 4000 };
+        for (int i = 0; i < nombres.length; i++) {
+            String previo = campos.get(nombres[i]);
+            StringBuilder largo = new StringBuilder();
+            for (int j = 0; j <= maximos[i]; j++) { largo.append('a'); }
+            campos.put(nombres[i], largo.toString());
+            rechazaEdicion(h, 40, 900, 1, campos, "editor", nombres[i] + " excedido");
+            campos.put(nombres[i], previo);
+        }
+        h.r.setEstado(WebKeysCompras.ESTADO_ANULADO);
+        rechazaEdicion(h, 40, 900, 1, campos, "editor", "estado distinto a OC");
+        h.r.setEstado(WebKeysCompras.ESTADO_ORDEN_COMPRA);
+        actual = h.actualizar(40, 900, 1, new HashMap<String, String>(), "editor2");
+        igual("limpiar condicion", "", actual.getCondicion());
+        igual("version segunda edicion", Integer.valueOf(2), Integer.valueOf(actual.getVersionEdicion()));
+        igual("creacion conserva idempotencia tras editar", actual, h.crearDirecta(40, "Nombre", "alta"));
+        igual("sin nueva alta", Integer.valueOf(1), Integer.valueOf(h.guardados));
+    }
+
+    private static void rechazaEdicion(Mock h, int id, int orden, int version,
+            Map<String, String> campos, String usuario, String caso) throws Exception {
+        int antes = h.actualizaciones;
+        try { h.actualizar(id, orden, version, campos, usuario); }
+        catch (IllegalArgumentException esperado) {
+            igual(caso + " sin UPDATE", Integer.valueOf(antes), Integer.valueOf(h.actualizaciones));
+            return;
+        }
+        throw new AssertionError("No rechazo edicion: " + caso);
+    }
+
+    private static void permisosEdicion() throws Exception {
+        String[] roles = { WebKeysCompras.ROL_ABM_COMPRAS, WebKeysCompras.ROL_COTIZAR_COMPRAS,
+                WebKeysCompras.ROL_VIEW_COMPRAS, WebKeysCompras.ROL_AUTORIZAR_COMPRAS, "OTRO" };
+        igual("anonimo no edita", Boolean.FALSE, Boolean.valueOf(RequerimientoCompraOrdenAction.puedeEditar(null)));
+        for (int i = 0; i < roles.length; i++) {
+            final List<Role> asignados = new ArrayList<Role>();
+            Role rol = new RoleImpl(); rol.setName(roles[i]); asignados.add(rol);
+            User usuario = new UserImpl() {
+                public List<Role> getRoles() { return asignados; }
+            };
+            igual(roles[i] + " permiso mutacion", Boolean.valueOf(i == 0),
+                    Boolean.valueOf(RequerimientoCompraOrdenAction.puedeEditar(usuario)));
+            igual(roles[i] + " consulta", Boolean.valueOf(i < 4),
+                    Boolean.valueOf(RequerimientoCompraOrdenAction.puedeConsultar(usuario)));
+        }
     }
 
     private static void entradaLegacyIgnorada() throws Exception {
@@ -258,11 +346,20 @@ public class ComprasOrdenHelperTest {
         List<RequerimientoCompraPresupuesto> documentos = new ArrayList<RequerimientoCompraPresupuesto>();
         RequerimientoCompraReclamoPrestacional relacion;
         int guardados;
+        int actualizaciones;
         protected RequerimientoCompra obtenerRequerimiento(int id) { return r; }
         protected List<RequerimientoCompraDetalle> obtenerDetalles(int id) { return detalles; }
         protected RequerimientoCompraOrden obtenerOrden(int id) { return guardada; }
         protected RequerimientoCompraOrden guardarOrden(RequerimientoCompraOrden orden, String usuario) {
             guardados++; orden.setIdOrdenCompra(900); guardada = orden; r.setEstado(WebKeysCompras.ESTADO_ORDEN_COMPRA); return orden;
+        }
+        protected RequerimientoCompraOrden actualizarOrden(RequerimientoCompraOrden cambio, String usuario) {
+            actualizaciones++;
+            guardada.setCondicion(cambio.getCondicion()); guardada.setFormaPago(cambio.getFormaPago());
+            guardada.setPlazoPago(cambio.getPlazoPago()); guardada.setEntrega(cambio.getEntrega());
+            guardada.setObservaciones(cambio.getObservaciones()); guardada.setModiUsr(usuario);
+            guardada.setModiFecha(new Date()); guardada.setVersionEdicion(cambio.getVersionEdicion() + 1);
+            return guardada;
         }
         protected List<RequerimientoCompraPresupuesto> obtenerCotizacionesEmpresa(int id) { return empresas; }
         protected List<RequerimientoCompraComparativa> obtenerComparativas(int id, int idPrestador) { return comparativas; }

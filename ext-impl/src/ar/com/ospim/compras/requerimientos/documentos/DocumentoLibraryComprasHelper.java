@@ -11,6 +11,18 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.PropsUtil;
+import com.liferay.portal.model.Permission;
+import com.liferay.portal.model.Resource;
+import com.liferay.portal.model.ResourceAction;
+import com.liferay.portal.model.ResourceConstants;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.security.permission.ActionKeys;
+import com.liferay.portal.service.PermissionLocalServiceUtil;
+import com.liferay.portal.service.ResourceActionLocalServiceUtil;
+import com.liferay.portal.service.ResourceLocalServiceUtil;
+import com.liferay.portal.service.ResourcePermissionLocalServiceUtil;
+import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceContextFactory;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -28,6 +40,8 @@ import java.io.InputStream;
 import java.sql.Date;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -213,6 +227,120 @@ public class DocumentoLibraryComprasHelper
         );
 
         return entry;
+    }
+
+    /**
+     * ABM_COMPRAS puede consultar la Orden medica validada por Compras.
+     * Concede solamente VIEW sobre la entrada individual y conserva las
+     * otras acciones que el rol ya tuviera sobre ese documento.
+     */
+    public static void asegurarPermisoVistaAbm(
+            DLFileEntry entry) throws Exception {
+
+        if (entry == null
+                || entry.getCompanyId() <= 0L
+                || entry.getFileEntryId() <= 0L) {
+
+            throw new Exception(
+                    "No se puede autorizar un adjunto sin identidad DL."
+            );
+        }
+
+        Role role = RoleLocalServiceUtil.getRole(
+                entry.getCompanyId(),
+                WebKeysCompras.ROL_ABM_COMPRAS
+        );
+        long roleId = role.getRoleId();
+        String nombreRecurso = DLFileEntry.class.getName();
+        String primKey = String.valueOf(entry.getFileEntryId());
+        int scope = ResourceConstants.SCOPE_INDIVIDUAL;
+        int algoritmo = PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM;
+        List<String> acciones = new ArrayList<String>();
+        long resourceId = 0L;
+
+        if (algoritmo == 6) {
+            List<ResourceAction> recursosAccion =
+                    ResourceActionLocalServiceUtil
+                            .getResourceActions(nombreRecurso);
+            List<String> disponibles = new ArrayList<String>();
+            for (int i = 0; recursosAccion != null
+                    && i < recursosAccion.size(); i++) {
+
+                ResourceAction accion = recursosAccion.get(i);
+                if (accion != null && accion.getActionId() != null) {
+                    disponibles.add(accion.getActionId());
+                }
+            }
+            if (disponibles.isEmpty()) {
+                throw new Exception(
+                        "No se pudieron determinar las acciones de DL."
+                );
+            }
+            List<String> concedidas =
+                    ResourcePermissionLocalServiceUtil
+                            .getAvailableResourcePermissionActionIds(
+                                    entry.getCompanyId(),
+                                    nombreRecurso,
+                                    scope,
+                                    primKey,
+                                    roleId,
+                                    disponibles
+                            );
+            if (concedidas == null) {
+                throw new Exception(
+                        "No se pudieron determinar los permisos de DL."
+                );
+            }
+            acciones.addAll(concedidas);
+        } else if (algoritmo >= 1 && algoritmo <= 5) {
+            Resource recurso = ResourceLocalServiceUtil.getResource(
+                    entry.getCompanyId(),
+                    nombreRecurso,
+                    scope,
+                    primKey
+            );
+            resourceId = recurso.getResourceId();
+            List<Permission> permisos =
+                    PermissionLocalServiceUtil.getRolePermissions(
+                            roleId,
+                            resourceId
+                    );
+            for (int i = 0; permisos != null && i < permisos.size(); i++) {
+                Permission permiso = permisos.get(i);
+                if (permiso != null && permiso.getActionId() != null
+                        && !acciones.contains(permiso.getActionId())) {
+
+                    acciones.add(permiso.getActionId());
+                }
+            }
+        } else {
+            throw new Exception(
+                    "Algoritmo de permisos de Liferay no soportado."
+            );
+        }
+
+        if (acciones.contains(ActionKeys.VIEW)) {
+            return;
+        }
+        acciones.add(ActionKeys.VIEW);
+        String[] accionesActualizadas =
+                acciones.toArray(new String[acciones.size()]);
+        if (algoritmo == 6) {
+            ResourcePermissionLocalServiceUtil.setResourcePermissions(
+                    entry.getCompanyId(),
+                    nombreRecurso,
+                    scope,
+                    primKey,
+                    roleId,
+                    accionesActualizadas
+            );
+        } else {
+            PermissionLocalServiceUtil.setRolePermissions(
+                    roleId,
+                    accionesActualizadas,
+                    resourceId
+            );
+        }
     }
 
     public static void validarIdentidadOrdenMedicaPersistida(
@@ -463,6 +591,7 @@ public class DocumentoLibraryComprasHelper
                 );
             }
 
+            asegurarPermisoVistaAbm(entry);
             return documento;
 
         } catch (Exception postAddError) {

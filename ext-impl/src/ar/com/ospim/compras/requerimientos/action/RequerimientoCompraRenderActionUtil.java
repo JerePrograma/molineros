@@ -87,7 +87,7 @@ public final class RequerimientoCompraRenderActionUtil {
                 && requerimiento.isActivo() && WebKeysCompras.esAutorizado(requerimiento.getEstado())) {
             try {
                 User user = PortalUtil.getUser(renderRequest);
-                if (user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
+                if (user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
                     Object token = renderRequest.getAttribute("COMPRAS_SAVE_TOKEN");
                     if (!(token instanceof String) || ((String) token).length() == 0) {
                         RequerimientoCompraGuardadoToken.publicar(renderRequest);

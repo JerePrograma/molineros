@@ -44,6 +44,9 @@ public class RequerimientoCompraOrdenServiceImpl {
                     orden.setIdOrdenCompra(rs.getInt("id_orden_compra"));
                     orden.setIdRequerimientoCompra(rs.getInt("id_requerimiento"));
                     orden.setAltaUsr(rs.getString("alta_usr"));
+                    orden.setModiFecha(rs.getTimestamp("modi_fecha"));
+                    orden.setModiUsr(rs.getString("modi_usr"));
+                    orden.setVersionEdicion(rs.getInt("version_edicion"));
                     orden.setFechaEmision(rs.getDate("fecha_emision"));
                     orden.setFechaOrdenMedica(rs.getDate("fecha_orden_medica"));
                     orden.setFechaRecepcion(rs.getDate("fecha_recepcion"));
@@ -140,7 +143,59 @@ public class RequerimientoCompraOrdenServiceImpl {
         }
     }
 
-    private void bloquearCreacion(Connection con, int idRequerimiento,
+    public RequerimientoCompraOrden actualizar(RequerimientoCompraOrden orden,
+            String usuario) throws Exception {
+        Connection con = ConnectionHelper.getConnectionForTransaction();
+        if (con == null) {
+            throw new SQLException("No se pudo obtener la conexion de Compras.");
+        }
+        try {
+            int idExistente = bloquearCreacion(con, orden.getIdRequerimientoCompra(), usuario);
+            if (idExistente <= 0 || idExistente != orden.getIdOrdenCompra()
+                    || orden.getVersionEdicion() < 0
+                    || orden.getVersionEdicion() == Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("La Orden de Compra emitida ya no esta disponible.");
+            }
+            PreparedStatement stmt = con.prepareStatement(
+                    "UPDATE compras.requerimiento_orden_compra "
+                    + "SET condicion = ?, forma_pago = ?, plazo_pago = ?, entrega = ?, "
+                    + "observaciones = ?, modi_fecha = now(), modi_usr = ?, "
+                    + "version_edicion = version_edicion + 1 "
+                    + "WHERE id_orden_compra = ? AND id_requerimiento = ? AND version_edicion = ?");
+            try {
+                stmt.setString(1, orden.getCondicion());
+                stmt.setString(2, orden.getFormaPago());
+                stmt.setString(3, orden.getPlazoPago());
+                stmt.setString(4, orden.getEntrega());
+                stmt.setString(5, orden.getObservaciones());
+                stmt.setString(6, usuario);
+                stmt.setInt(7, orden.getIdOrdenCompra());
+                stmt.setInt(8, orden.getIdRequerimientoCompra());
+                stmt.setInt(9, orden.getVersionEdicion());
+                if (stmt.executeUpdate() != 1) {
+                    throw new IllegalArgumentException(
+                            "La Orden de Compra fue modificada por otro usuario. Actualice la pantalla.");
+                }
+            } finally {
+                stmt.close();
+            }
+            RequerimientoCompraOrden persistida = obtenerPorRequerimiento(
+                    con, orden.getIdRequerimientoCompra());
+            con.commit();
+            return persistida;
+        } catch (Exception e) {
+            try {
+                con.rollback();
+            } catch (SQLException rollbackError) {
+                _log.error("No se pudo revertir la modificacion de la Orden de Compra.", rollbackError);
+            }
+            throw e;
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    private int bloquearCreacion(Connection con, int idRequerimiento,
             String usuario) throws Exception {
         CallableStatement stmt = con.prepareCall(
                 "{ ? = call compras.bloquear_creacion_orden_compra(?,?) }");
@@ -149,6 +204,7 @@ public class RequerimientoCompraOrdenServiceImpl {
             stmt.setInt(2, idRequerimiento);
             stmt.setString(3, usuario);
             stmt.execute();
+            return stmt.getInt(1);
         } finally {
             stmt.close();
         }

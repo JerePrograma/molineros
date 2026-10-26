@@ -10,6 +10,8 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
+import java.util.HashMap;
+import java.util.Map;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
@@ -34,21 +36,42 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
                 || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS));
     }
 
+    public static boolean puedeEditar(User user) throws Exception {
+        return user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+    }
+
     public void processAction(ActionMapping mapping, ActionForm form, PortletConfig config,
             ActionRequest request, ActionResponse response) throws Exception {
         int id = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
         try {
             User user = PortalUtil.getUser(request);
-            if (user == null || !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)) {
-                throw new IllegalArgumentException("No posee permisos para crear órdenes de compra.");
+            if (!puedeEditar(user)) {
+                throw new IllegalArgumentException("No posee permisos para crear o editar órdenes de compra.");
             }
-            RequerimientoCompraOrden orden = helper.preparar(id, user.getFullName());
-            if (orden.getIdOrdenCompra() == 0) {
+            String cmd = ParamUtil.getString(request, "cmd");
+            if ("update".equals(cmd)) {
                 RequerimientoCompraGuardadoToken.consumir(request,
                         ParamUtil.getString(request, RequerimientoCompraGuardadoToken.PARAMETRO));
-                helper.crearDirecta(id, user.getFullName(), user.getScreenName());
+                Map<String, String> entrada = new HashMap<String, String>();
+                entrada.put("condicion", ParamUtil.getString(request, "condicion"));
+                entrada.put("forma_pago", ParamUtil.getString(request, "forma_pago"));
+                entrada.put("plazo_pago", ParamUtil.getString(request, "plazo_pago"));
+                entrada.put("entrega", ParamUtil.getString(request, "entrega"));
+                entrada.put("observaciones", ParamUtil.getString(request, "observaciones"));
+                helper.actualizar(id, ParamUtil.getInteger(request, "id_orden_compra", 0),
+                        ParamUtil.getInteger(request, "version_edicion", -1), entrada, user.getScreenName());
+                request.setAttribute("ordenCompraActualizada", Boolean.TRUE);
+            } else if (cmd.length() == 0) {
+                RequerimientoCompraOrden orden = helper.preparar(id, user.getFullName());
+                if (orden.getIdOrdenCompra() == 0) {
+                    RequerimientoCompraGuardadoToken.consumir(request,
+                            ParamUtil.getString(request, RequerimientoCompraGuardadoToken.PARAMETRO));
+                    helper.crearDirecta(id, user.getFullName(), user.getScreenName());
+                    request.setAttribute("ordenCompraCreada", Boolean.TRUE);
+                }
+            } else {
+                throw new IllegalArgumentException("La operación de la Orden de Compra no es válida.");
             }
-            request.setAttribute("ordenCompraCreada", Boolean.TRUE);
         } catch (ValidacionCompraException e) {
             request.setAttribute("ordenCompraError", e.getMessage());
         } catch (IllegalArgumentException e) {
@@ -76,6 +99,11 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
                         "Todavia no se emitio una Orden de Compra para este requerimiento.");
             }
             request.setAttribute("ordenCompra", orden);
+            boolean editable = puedeEditar(user);
+            request.setAttribute("ordenCompraEditable", Boolean.valueOf(editable));
+            if (editable) {
+                RequerimientoCompraGuardadoToken.publicar(request);
+            }
         } catch (IllegalArgumentException e) {
             if (request.getAttribute("ordenCompraError") == null) {
                 request.setAttribute("ordenCompraError", e.getMessage());
