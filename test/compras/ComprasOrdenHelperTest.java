@@ -27,6 +27,7 @@ public class ComprasOrdenHelperTest {
 
     public static void main(String[] args) throws Exception {
         empresa();
+        monedaFija();
         observacionesEmpresa();
         entradaLegacyIgnorada();
         importes();
@@ -47,7 +48,7 @@ public class ComprasOrdenHelperTest {
         igual("cantidad fuente", Integer.valueOf(2), resultado.getDetalles().get(0).getCantidad());
         decimal("precio fuente", "100", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
         decimal("subtotal fuente", "200", resultado.getDetalles().get(0).getPrecioTotalEstimado());
-        igual("moneda desconocida", null, resultado.getMoneda());
+        igual("moneda fija en pesos", "ARS", resultado.getMoneda());
         igual("IVA desconocido", null, resultado.getIva());
         igual("IIBB desconocido", null, resultado.getIibb());
         igual("total desconocido por impuestos", null, resultado.getTotal());
@@ -55,7 +56,7 @@ public class ComprasOrdenHelperTest {
         igual("entrega no inventada", null, resultado.getEntrega());
         igual("contacto no inventado", null, resultado.getProveedorContacto());
         igual("fecha recepcion no inferida", null, resultado.getFechaRecepcion());
-        igual("actor real", "Nombre de Compras", resultado.getConfeccionadoPor());
+        igual("actor autenticado", "auditoria", resultado.getConfeccionadoPor());
         igual("solicitante fuente", "solicitante", resultado.getSolicitante());
         decimal("precio original preservado", "100", h.detalles.get(0).getPrecioUnitarioEstimado());
         igual("comentario tecnico en snapshot", "Equipo de prueba\nComentario tecnico del articulo",
@@ -66,13 +67,32 @@ public class ComprasOrdenHelperTest {
         igual("detalle independiente", Boolean.FALSE, Boolean.valueOf(resultado.getDetalles().get(0) == h.detalles.get(0)));
         igual("auditoria", "auditoria", resultado.getAltaUsr());
         igual("un guardado", Integer.valueOf(1), Integer.valueOf(h.guardados));
-        resultado.setMoneda("USD"); resultado.setFormaPago("Condicion de una OC ya emitida");
+        resultado.setMoneda(null); resultado.setFormaPago("Condicion de una OC ya emitida");
         RequerimientoCompraOrden repetida = h.crearDirecta(40, "Otro nombre", "auditoria");
         igual("misma orden existente", resultado, repetida);
-        igual("moneda guardada preservada", "USD", repetida.getMoneda());
+        igual("moneda fija en reconsulta", "ARS", repetida.getMoneda());
         igual("condicion guardada preservada", "Condicion de una OC ya emitida", repetida.getFormaPago());
         igual("idempotente", Integer.valueOf(1), Integer.valueOf(h.guardados));
         igual("hidratacion existente", h.r, h.preparar(40, "nombre").getRequerimiento());
+    }
+
+    private static void monedaFija() {
+        RequerimientoCompraOrden orden = new RequerimientoCompraOrden();
+        igual("moneda por defecto", "ARS", orden.getMoneda());
+        String[] compatibles = new String[] { null, "", "   ", "ARS" };
+        for (int i = 0; i < compatibles.length; i++) {
+            orden.setMoneda(compatibles[i]);
+            igual("moneda legacy siempre pesos " + i, "ARS", orden.getMoneda());
+        }
+        String[] ajenas = new String[] { "USD", "EUR" };
+        for (int i = 0; i < ajenas.length; i++) {
+            try {
+                orden.setMoneda(ajenas[i]);
+                throw new AssertionError("Acepto moneda ajena a pesos: " + ajenas[i]);
+            } catch (IllegalArgumentException esperado) {
+                igual("rechazo no cambia moneda " + ajenas[i], "ARS", orden.getMoneda());
+            }
+        }
     }
 
     private static void observacionesEmpresa() throws Exception {
@@ -157,7 +177,7 @@ public class ComprasOrdenHelperTest {
         igual("numero preservado", Integer.valueOf(900), Integer.valueOf(actual.getIdOrdenCompra()));
         igual("fecha preservada", emision, actual.getFechaEmision());
         igual("proveedor preservado", "Empresa de prueba", actual.getProveedor());
-        igual("moneda preservada", null, actual.getMoneda());
+        igual("moneda fija preservada", "ARS", actual.getMoneda());
         igual("alta preservada", "alta", actual.getAltaUsr());
         decimal("precio preservado", precio.toPlainString(), actual.getDetalles().get(0).getPrecioUnitarioEstimado());
         igual("version incrementada", Integer.valueOf(1), Integer.valueOf(actual.getVersionEdicion()));
@@ -227,7 +247,7 @@ public class ComprasOrdenHelperTest {
         RequerimientoCompraOrden resultado = empresaFixture().crear(40, entrada, "auditoria");
         decimal("legacy ignora precio", "100", resultado.getDetalles().get(0).getPrecioUnitarioEstimado());
         igual("legacy ignora cantidad", Integer.valueOf(2), resultado.getDetalles().get(0).getCantidad());
-        igual("legacy ignora moneda", null, resultado.getMoneda());
+        igual("legacy ignora moneda y usa pesos", "ARS", resultado.getMoneda());
         igual("legacy ignora IVA", null, resultado.getIva());
         igual("legacy ignora IIBB", null, resultado.getIibb());
         igual("legacy ignora proveedor", "Empresa de prueba", resultado.getProveedor());
@@ -294,8 +314,9 @@ public class ComprasOrdenHelperTest {
         h = empresaFixture(); h.detalles.get(0).setIdRequerimientoCompra(99); rechaza(h, "detalle ajeno");
         h = empresaFixture(); h.detalles.add(h.detalles.get(0)); rechaza(h, "detalle duplicado");
         h = empresaFixture();
-        try { h.crearDirecta(40, " ", "auditoria"); throw new AssertionError("Actor vacio aceptado"); }
-        catch (IllegalArgumentException esperado) { igual("actor obligatorio sin guardado", Integer.valueOf(0), Integer.valueOf(h.guardados)); }
+        RequerimientoCompraOrden sinNombreDuplicado = h.crearDirecta(40, " ", "auditoria");
+        igual("actor por identidad sin nombre duplicado", "auditoria", sinNombreDuplicado.getConfeccionadoPor());
+        igual("identidad autenticada permite emision", Integer.valueOf(1), Integer.valueOf(h.guardados));
         h = empresaFixture();
         try { h.crearDirecta(40, "Compras", " "); throw new AssertionError("Auditoria vacia aceptada"); }
         catch (IllegalArgumentException esperado) { igual("auditoria obligatoria sin guardado", Integer.valueOf(0), Integer.valueOf(h.guardados)); }
@@ -304,7 +325,7 @@ public class ComprasOrdenHelperTest {
     private static void medicina() throws Exception {
         Mock h = medicinaFixture();
         RequerimientoCompraOrden resultado = h.crearDirecta(40, "Compras", "auditoria");
-        igual("moneda medica desconocida", null, resultado.getMoneda());
+        igual("moneda medica en pesos", "ARS", resultado.getMoneda());
         igual("RP canonico", Integer.valueOf(68030), Integer.valueOf(resultado.getIdReclamoPrestacional()));
         igual("pago comparativa", "45 dias", resultado.getFormaPago());
         igual("fecha documento", "02/10/2026", new SimpleDateFormat("dd/MM/yyyy").format(resultado.getFechaOrdenMedica()));

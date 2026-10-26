@@ -41,7 +41,7 @@ ordenVolverURL.setParameter("id_requerimiento_compra", ParamUtil.getString(rende
     <td><label>Área solicitante:</label></td><td><%= ordenCompraTexto(ordenRequerimiento.getSectorDescripcionVisible()) %></td></tr>
 <tr><td><label>Proveedor adjudicado:</label></td><td><%= ordenCompraTexto(ordenCompra.getProveedor()) %></td>
     <td><label>CUIT:</label></td><td><%= ordenCompraTexto(ordenCompra.getProveedorCuit()) %></td></tr>
-<tr><td><label>Moneda:</label></td><td><%= ordenCompraTexto(ordenCompra.getMoneda()) %></td>
+<tr><td><label>Importes:</label></td><td>Pesos argentinos (ARS)</td>
     <td><label>Forma de pago:</label></td><td><%= ordenCompraTexto(ordenCompra.getFormaPago()) %></td></tr>
 </table>
 </fieldset>

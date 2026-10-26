@@ -3181,42 +3181,27 @@ END;
 $func$
 LANGUAGE plpgsql;
 
--- Orden de Compra emitida: cabecera y detalle independientes del formulario.
+-- La OC conserva identidad, condiciones propias e importes aprobados.
+-- Proveedor y datos descriptivos se resuelven por relaciones existentes.
 CREATE TABLE compras.requerimiento_orden_compra (
     id_orden_compra SERIAL PRIMARY KEY,
     id_requerimiento INTEGER NOT NULL UNIQUE
         REFERENCES compras.requerimiento (id_requerimiento),
+    id_presupuesto INTEGER NOT NULL
+        REFERENCES compras.requerimiento_presupuesto (id_requerimiento_presupuesto),
     fecha_emision DATE NOT NULL,
-    fecha_orden_medica DATE,
-    fecha_recepcion DATE,
-    moneda VARCHAR(10),
-    proveedor VARCHAR(250) NOT NULL,
-    proveedor_cuit VARCHAR(20),
-    proveedor_domicilio VARCHAR(250),
-    proveedor_contacto VARCHAR(250),
-    proveedor_email VARCHAR(250),
-    proveedor_telefono VARCHAR(100),
     condicion VARCHAR(1000),
     forma_pago VARCHAR(250),
     plazo_pago VARCHAR(250),
     entrega VARCHAR(1000),
     observaciones VARCHAR(4000),
-    confeccionado_por VARCHAR(250) NOT NULL,
-    telefono_compras VARCHAR(100),
-    solicitante VARCHAR(250),
-    plan VARCHAR(120),
-    id_reclamo_prestacional INTEGER NOT NULL DEFAULT 0,
     iva NUMERIC(18,2) CHECK (iva >= 0),
     iibb NUMERIC(18,2) CHECK (iibb >= 0),
     alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    alta_usr VARCHAR(100) NOT NULL,
+    alta_usr VARCHAR(100) NOT NULL CHECK (btrim(alta_usr) <> ''),
     modi_fecha TIMESTAMP WITHOUT TIME ZONE,
     modi_usr VARCHAR(100),
-    version_edicion INTEGER NOT NULL DEFAULT 0 CHECK (version_edicion >= 0),
-    CHECK (btrim(proveedor) <> ''),
-    CHECK (btrim(confeccionado_por) <> ''),
-    CHECK (btrim(alta_usr) <> ''),
-    CHECK (moneda IN ('ARS', 'USD'))
+    version_edicion INTEGER NOT NULL DEFAULT 0 CHECK (version_edicion >= 0)
 );
 
 CREATE TABLE compras.requerimiento_orden_compra_detalle (
@@ -3225,20 +3210,98 @@ CREATE TABLE compras.requerimiento_orden_compra_detalle (
     orden INTEGER NOT NULL CHECK (orden > 0),
     id_requerimiento_detalle INTEGER NOT NULL
         REFERENCES compras.requerimiento_detalle (id_detalle),
-    codigo_item VARCHAR(100),
-    descripcion_item TEXT NOT NULL CHECK (btrim(descripcion_item) <> ''),
     cantidad INTEGER NOT NULL CHECK (cantidad > 0),
     precio_unitario NUMERIC(18,2) CHECK (precio_unitario >= 0),
-    precio_total NUMERIC(18,2) CHECK (precio_total >= 0),
     PRIMARY KEY (id_orden_compra, orden),
-    UNIQUE (id_orden_compra, id_requerimiento_detalle),
-    CHECK (precio_total = round(cantidad * precio_unitario, 2)),
-    CONSTRAINT ck_compras_oc_detalle_importes_conjuntos CHECK (
-        (precio_unitario IS NULL AND precio_total IS NULL)
-        OR (precio_unitario IS NOT NULL AND precio_total IS NOT NULL
-            AND precio_total = round(cantidad * precio_unitario, 2))
-    )
+    UNIQUE (id_orden_compra, id_requerimiento_detalle)
 );
+
+-- Referencia legacy: buscar_ordenes_pago_ospim_reporte.sql cruza el acreedor.
+-- La FK de presupuesto conserva el origen incluso ante una baja logica posterior.
+CREATE OR REPLACE VIEW compras.requerimiento_orden_compra_consulta AS
+SELECT o.id_orden_compra, o.id_requerimiento, o.id_presupuesto,
+       o.fecha_emision,
+       om.fecha AS fecha_orden_medica,
+       NULL::DATE AS fecha_recepcion,
+       'ARS'::VARCHAR(10) AS moneda,
+       CASE WHEN rp.tipo_documento = 3 THEN rp.descripcion_empresa
+            ELSE COALESCE(NULLIF(btrim(rp.descripcion_prestador), ''), p.descripcion)
+       END::VARCHAR AS proveedor,
+       CASE WHEN rp.tipo_documento = 3 THEN COALESCE(rp.empresa_cuit, '')
+            ELSE COALESCE(p.cuit::VARCHAR, '') END::VARCHAR AS proveedor_cuit,
+       NULL::VARCHAR AS proveedor_domicilio,
+       NULL::VARCHAR AS proveedor_contacto,
+       NULL::VARCHAR AS proveedor_email,
+       NULL::VARCHAR AS proveedor_telefono,
+       o.condicion, o.forma_pago, o.plazo_pago, o.entrega, o.observaciones,
+       o.alta_usr::VARCHAR AS confeccionado_por,
+       NULL::VARCHAR AS telefono_compras,
+       r.alta_usr::VARCHAR AS solicitante,
+       NULL::VARCHAR AS plan,
+       COALESCE(rr.id_reclamo_prestacional, 0)::INTEGER AS id_reclamo_prestacional,
+       o.iva, o.iibb, o.alta_fecha, o.alta_usr, o.modi_fecha, o.modi_usr,
+       o.version_edicion
+  FROM compras.requerimiento_orden_compra o
+  JOIN compras.requerimiento r ON r.id_requerimiento = o.id_requerimiento
+  LEFT JOIN compras.requerimiento_presupuesto rp
+    ON rp.id_requerimiento_presupuesto = o.id_presupuesto
+   AND rp.id_requerimiento = o.id_requerimiento
+  LEFT JOIN public.prestador p ON p.id_prestador = rp.id_prestador
+  LEFT JOIN compras.requerimiento_reclamo_prestacional rr
+    ON rr.id_requerimiento = o.id_requerimiento
+  LEFT JOIN LATERAL (
+       SELECT CASE WHEN count(DISTINCT fecha_documento) = 1
+                   THEN min(fecha_documento) END AS fecha
+         FROM compras.requerimiento_presupuesto
+        WHERE id_requerimiento = o.id_requerimiento
+          AND tipo_documento = 2 AND baja_fecha IS NULL
+  ) om ON TRUE;
+
+CREATE OR REPLACE VIEW compras.requerimiento_orden_compra_detalle_consulta AS
+SELECT od.id_orden_compra, od.orden, od.id_requerimiento_detalle,
+       CASE WHEN d.tipo_item = 'MEDICAMENTO'
+            THEN COALESCE(d.troquel::VARCHAR, d.id_medicamento::VARCHAR, '')
+            WHEN d.tipo_item = 'NOMENCLADOR'
+            THEN COALESCE(btrim(d.codigo_nomenclador, E' \t\n\r\f' || chr(11)), '')
+            ELSE '' END::VARCHAR AS codigo_item,
+       concat_ws(E'\n',
+           NULLIF(btrim(CASE WHEN d.tipo_item = 'MEDICAMENTO' THEN d.nombre_medicamento
+                            WHEN d.tipo_item = 'NOMENCLADOR' THEN d.descripcion_nomenclador
+                            ELSE '' END, E' \t\n\r\f' || chr(11)), ''),
+           NULLIF(btrim(d.observaciones, E' \t\n\r\f' || chr(11)), '')
+       )::TEXT AS descripcion_item,
+       od.cantidad, od.precio_unitario,
+       round(od.cantidad * od.precio_unitario, 2)::NUMERIC AS precio_total
+  FROM compras.requerimiento_orden_compra_detalle od
+  JOIN compras.requerimiento_orden_compra o USING (id_orden_compra)
+  JOIN compras.requerimiento_detalle d
+    ON d.id_detalle = od.id_requerimiento_detalle
+   AND d.id_requerimiento = o.id_requerimiento;
+
+-- Una vista requiere su propio SELECT: conservar los roles del contrato previo.
+-- No se revocan permisos existentes ni se agrega PUBLIC si la tabla no lo tenia.
+DO $permisos_consulta$
+DECLARE v_permiso RECORD; v_rol TEXT;
+BEGIN
+    FOR v_permiso IN
+        SELECT DISTINCT f.vista, p.grantee, p.is_grantable
+          FROM (VALUES
+             ('requerimiento_orden_compra', 'requerimiento_orden_compra_consulta'),
+             ('requerimiento_orden_compra_detalle', 'requerimiento_orden_compra_detalle_consulta')
+          ) f(tabla,vista)
+          JOIN information_schema.table_privileges p
+            ON p.table_schema = 'compras' AND p.table_name = f.tabla
+         WHERE p.privilege_type = 'SELECT'
+         ORDER BY f.vista, p.grantee, p.is_grantable
+    LOOP
+        v_rol := CASE WHEN v_permiso.grantee = 'PUBLIC' THEN 'PUBLIC'
+                      ELSE quote_ident(v_permiso.grantee) END;
+        EXECUTE format('GRANT SELECT ON TABLE compras.%I TO %s%s',
+            v_permiso.vista, v_rol,
+            CASE WHEN v_permiso.is_grantable = 'YES' THEN ' WITH GRANT OPTION' ELSE '' END);
+    END LOOP;
+END;
+$permisos_consulta$;
 
 CREATE OR REPLACE FUNCTION compras.bloquear_creacion_orden_compra(
     p_id_requerimiento INTEGER,
@@ -3399,10 +3462,42 @@ BEGIN
         RAISE EXCEPTION 'No se encontro el requerimiento activo.';
     END IF;
     IF v_estado = 5 THEN
+        SELECT o.id_orden_compra INTO v_id_orden
+          FROM compras.requerimiento_orden_compra o
+          JOIN compras.requerimiento_presupuesto rp
+            ON rp.id_requerimiento_presupuesto = o.id_presupuesto
+           AND rp.id_requerimiento = o.id_requerimiento
+         WHERE o.id_requerimiento = p_id_requerimiento;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'No existe una Orden de Compra emitida para el requerimiento.';
+        END IF;
         RETURN 5;
     END IF;
     v_id_orden := compras.bloquear_creacion_orden_compra(p_id_requerimiento, p_usuario);
-    IF v_id_orden > 0 AND (
+    IF v_id_orden <= 0 THEN
+        RAISE EXCEPTION 'La Orden de Compra debe guardarse antes de confirmar.';
+    END IF;
+    -- La FK simple evita un indice redundante; el contrato atomico valida el origen.
+    IF NOT EXISTS (
+        SELECT 1 FROM compras.requerimiento_orden_compra o
+        JOIN compras.requerimiento_presupuesto rp
+          ON rp.id_requerimiento_presupuesto = o.id_presupuesto
+         AND rp.id_requerimiento = o.id_requerimiento
+        JOIN compras.requerimiento r ON r.id_requerimiento = o.id_requerimiento
+        JOIN compras.sector_requerimiento sr ON sr.id_sector = r.id_sector
+        WHERE o.id_orden_compra = v_id_orden AND rp.baja_fecha IS NULL
+          AND ((compras.normalizar_sector(sr.descripcion) IN ('RRHH', 'SISTEMAS')
+                AND rp.tipo_documento = 3 AND rp.empresa_adjudicada)
+            OR (compras.normalizar_sector(sr.descripcion) NOT IN ('RRHH', 'SISTEMAS')
+                AND rp.tipo_documento = 1 AND rp.id_prestador = (
+                    SELECT min(id_prestador) FROM compras.requerimiento_detalle
+                     WHERE id_requerimiento = p_id_requerimiento AND baja_fecha IS NULL
+                    HAVING count(DISTINCT id_prestador) = 1
+                       AND count(*) = count(id_prestador))))
+    ) THEN
+        RAISE EXCEPTION 'La cotizacion de origen de la Orden de Compra no corresponde al requerimiento adjudicado.';
+    END IF;
+    IF (
         NOT EXISTS (SELECT 1 FROM compras.requerimiento_orden_compra_detalle
                      WHERE id_orden_compra = v_id_orden)
         OR EXISTS (
@@ -3419,6 +3514,11 @@ BEGIN
                     WHERE od.id_orden_compra = v_id_orden
                       AND od.id_requerimiento_detalle = d.id_detalle))) THEN
         RAISE EXCEPTION 'El detalle de la Orden de Compra no coincide con el requerimiento.';
+    END IF;
+    IF EXISTS (SELECT 1 FROM compras.requerimiento_orden_compra_detalle_consulta
+                WHERE id_orden_compra = v_id_orden
+                  AND NULLIF(btrim(descripcion_item), '') IS NULL) THEN
+        RAISE EXCEPTION 'Los detalles de la Orden de Compra deben conservar su descripcion de origen.';
     END IF;
 
     UPDATE compras.requerimiento

@@ -1,4 +1,4 @@
-param([string]$EvidenceName = 'offline', [string]$TestDatabase = '')
+param([string]$EvidenceName = 'offline', [string]$TestDatabase = '', [ValidateRange(1, 65535)][int]$TestPort = 5432)
 $ErrorActionPreference = 'Stop'
 $repoPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $artifactPath = Join-Path $repoPath ('output\orden-compra-qa\' + $EvidenceName)
@@ -53,7 +53,7 @@ if ($TestDatabase.Length -gt 0) {
     if ($TestDatabase -notmatch '^compras_orden_test_edicion_[a-z0-9_]+$') {
         throw 'El test JDBC requiere una base aislada compras_orden_test_edicion_*.'
     }
-    $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath 'ComprasOrdenEdicionJdbcTest' $TestDatabase 2>&1 | ForEach-Object { $_.ToString() })
+    $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' ('-Dcompras.test.port=' + $TestPort) '-cp' $classpath 'ComprasOrdenEdicionJdbcTest' $TestDatabase 2>&1 | ForEach-Object { $_.ToString() })
     $runExit = $LASTEXITCODE
     [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'ComprasOrdenEdicionJdbcTest.log'), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
     $runOutput | Write-Output

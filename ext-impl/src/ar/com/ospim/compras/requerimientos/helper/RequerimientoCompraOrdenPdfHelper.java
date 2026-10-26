@@ -38,8 +38,7 @@ public class RequerimientoCompraOrdenPdfHelper {
             throw new IllegalArgumentException(
                     "La orden de compra no contiene los datos necesarios para imprimir.");
         }
-        if (orden.getMoneda() != null && orden.getMoneda().trim().length() > 0
-                && !"ARS".equals(orden.getMoneda()) && !"USD".equals(orden.getMoneda())) {
+        if (!RequerimientoCompraOrden.MONEDA_PESOS.equals(orden.getMoneda())) {
             throw new IllegalArgumentException("La orden de compra no tiene una moneda válida.");
         }
         if ((orden.getIva() != null && orden.getIva().signum() < 0)
@@ -56,7 +55,7 @@ public class RequerimientoCompraOrdenPdfHelper {
         parametros.put("FECHA", fechas.format(orden.getFechaEmision()));
         parametros.put("REQUERIMIENTO", String.valueOf(orden.getIdRequerimientoCompra()));
         parametros.put("SECTOR", texto(requerimiento.getSectorDescripcionVisible()));
-        parametros.put("MONEDA", texto(orden.getMoneda()));
+        parametros.put("MONEDA", "Pesos (ARS)");
         parametros.put("PROVEEDOR", "Proveedor: " + texto(orden.getProveedor())
                 + "\nCUIT: " + texto(orden.getProveedorCuit())
                 + "\nDomicilio: " + texto(orden.getProveedorDomicilio()));

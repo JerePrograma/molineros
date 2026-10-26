@@ -1,4 +1,5 @@
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraOrdenServiceImpl;
 import ar.com.ospim.util.ConnectionHelper;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
@@ -8,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -38,7 +41,9 @@ public class ComprasOrdenEdicionJdbcTest {
         boolean instalado = false;
         try {
             pool.setDriverClass("org.postgresql.Driver");
-            pool.setJdbcUrl("jdbc:postgresql://127.0.0.1:5432/" + args[0]);
+            int puerto = Integer.parseInt(System.getProperty("compras.test.port", "5432"));
+            if (puerto <= 0 || puerto > 65535) throw new IllegalArgumentException("Puerto de prueba invalido.");
+            pool.setJdbcUrl("jdbc:postgresql://127.0.0.1:" + puerto + "/" + args[0]);
             pool.setUser("postgres");
             pool.setPassword("");
             pool.setMinPoolSize(1);
@@ -51,9 +56,10 @@ public class ComprasOrdenEdicionJdbcTest {
             anterior = datasource.get(null);
             datasource.set(null, pool);
             instalado = true;
+            creacionNormalizada(pool);
             ejecutar(pool);
             System.out.println("COMPRAS_ORDEN_EDICION_JDBC_OK checks=" + checks);
-            System.out.println("Servicio productivo: cinco campos, snapshot, auditoria, version, rollback y concurrencia real.");
+            System.out.println("Servicio productivo: creacion normalizada, origen por FK, auditoria, version, rollback y concurrencia real.");
         } finally {
             try {
                 if (instalado) {
@@ -63,6 +69,81 @@ public class ComprasOrdenEdicionJdbcTest {
                 pool.close();
             }
         }
+    }
+
+    private static void creacionNormalizada(ComboPooledDataSource pool) throws Exception {
+        RequerimientoCompraOrdenServiceImpl service = new RequerimientoCompraOrdenServiceImpl();
+        RequerimientoCompraOrden entrada = nuevaOrden(53, 2053, 1);
+        entrada.setProveedor("Proveedor enviado que debe ignorarse");
+        entrada.getDetalles().get(0).setCodigoItem("CODIGO_ENVIADO");
+        entrada.getDetalles().get(0).setDescripcionItem("Descripcion enviada que debe ignorarse");
+        RequerimientoCompraOrden creada = service.crear(entrada, "emisor_jdbc");
+        comprobar("OC53 emitida", creada != null && creada.getIdOrdenCompra() > 0);
+        igual("OC53 moneda fija", "ARS", creada.getMoneda());
+        igual("OC53 proveedor de presupuesto", "LA PRUEBA", creada.getProveedor());
+        igual("OC53 CUIT de presupuesto", "30700000001", creada.getProveedorCuit());
+        igual("OC53 actor por identidad", "emisor_jdbc", creada.getConfeccionadoPor());
+        igual("OC53 observacion desde fuente", "CELULAR PRUEBA", creada.getDetalles().get(0).getDescripcionItemVisible());
+        igual("OC53 codigo ajeno ignorado", "", creada.getDetalles().get(0).getCodigoItemVisible());
+        igual("OC53 cantidad uno", Integer.valueOf(1), creada.getDetalles().get(0).getCantidad());
+        igual("OC53 precio no informado", null, creada.getDetalles().get(0).getPrecioUnitarioEstimado());
+        igual("OC53 subtotal no informado", null, creada.getDetalles().get(0).getPrecioTotalEstimado());
+        igual("OC53 impuestos no informados", null, creada.getIva());
+        List<Map<String, String>> antes = filas(pool,
+                "SELECT * FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null);
+        igual("OC53 presupuesto de origen fijo", "53", antes.get(0).get("id_presupuesto"));
+        igual("cabecera solo16columnas", Integer.valueOf(16), Integer.valueOf(antes.get(0).size()));
+        comprobar("cabecera sin moneda duplicada", !antes.get(0).containsKey("moneda"));
+        comprobar("cabecera sin proveedor duplicado", !antes.get(0).containsKey("proveedor"));
+        igual("detalle solo5columnas", Integer.valueOf(5), Integer.valueOf(detalles(pool, creada.getIdOrdenCompra()).get(0).size()));
+        RequerimientoCompraOrden repetida = service.crear(entrada, "otro_emisor");
+        igual("creacion idempotente misma OC", Integer.valueOf(creada.getIdOrdenCompra()), Integer.valueOf(repetida.getIdOrdenCompra()));
+        igual("creacion repetida conserva auditoria", antes, filas(pool,
+                "SELECT * FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null));
+        boolean fallo = false;
+        try {
+            service.crear(nuevaOrden(54, 2054, 0), "emisor_fallido");
+        } catch (SQLException e) {
+            fallo = "23514".equals(e.getSQLState());
+        }
+        comprobar("creacion invalida rechazada por SQL", fallo);
+        comprobar("rollback de cabecera nueva", filas(pool,
+                "SELECT id_orden_compra FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 54, null).isEmpty());
+        igual("rollback conserva AUTORIZADO", "7", filas(pool,
+                "SELECT estado FROM compras.requerimiento WHERE id_requerimiento = ?", 54, null).get(0).get("estado"));
+        // Solo fixture: simular baja logica del origen y otra adjudicacion posterior.
+        Connection con = pool.getConnection();
+        try {
+            Statement stmt = con.createStatement();
+            try {
+                stmt.executeUpdate("UPDATE compras.requerimiento_presupuesto SET baja_fecha=now(), empresa_adjudicada=FALSE WHERE id_requerimiento_presupuesto=53");
+                stmt.executeUpdate("INSERT INTO compras.requerimiento_presupuesto (id_requerimiento_presupuesto,id_requerimiento,tipo_documento,empresa_adjudicada,descripcion_empresa,empresa_cuit) VALUES (153,53,3,TRUE,'OTRO PROVEEDOR','30700000002')");
+            } finally {
+                stmt.close();
+            }
+        } finally {
+            con.close();
+        }
+        RequerimientoCompraOrden consultada = service.obtenerPorRequerimiento(53);
+        igual("consulta origen dado de baja", "LA PRUEBA", consultada.getProveedor());
+        igual("consulta conserva CUIT de FK original", "30700000001", consultada.getProveedorCuit());
+        igual("otra adjudicacion no cambia OC", antes, filas(pool,
+                "SELECT * FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null));
+        repetida = service.crear(entrada, "tercer_emisor");
+        igual("idempotente tras baja de origen", Integer.valueOf(creada.getIdOrdenCompra()), Integer.valueOf(repetida.getIdOrdenCompra()));
+        igual("sin nueva numeracion tras baja", "53", filas(pool,
+                "SELECT id_presupuesto FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null).get(0).get("id_presupuesto"));
+    }
+
+    private static RequerimientoCompraOrden nuevaOrden(int requerimiento, int detalle, int cantidad) {
+        RequerimientoCompraOrden orden = new RequerimientoCompraOrden();
+        orden.setIdRequerimientoCompra(requerimiento);
+        orden.setFechaEmision(new Date());
+        RequerimientoCompraDetalle item = new RequerimientoCompraDetalle(Integer.valueOf(detalle));
+        item.setIdRequerimientoCompra(requerimiento);
+        item.setCantidad(Integer.valueOf(cantidad));
+        orden.getDetalles().add(item);
+        return orden;
     }
 
     private static void ejecutar(ComboPooledDataSource pool) throws Exception {

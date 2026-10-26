@@ -32,7 +32,7 @@ public class RequerimientoCompraOrdenServiceImpl {
     private RequerimientoCompraOrden obtenerPorRequerimiento(Connection con,
             int idRequerimiento) throws Exception {
         PreparedStatement stmt = con.prepareStatement(
-                "SELECT * FROM compras.requerimiento_orden_compra "
+                "SELECT * FROM compras.requerimiento_orden_compra_consulta "
                 + "WHERE id_requerimiento = ?");
         RequerimientoCompraOrden orden = null;
         try {
@@ -80,7 +80,7 @@ public class RequerimientoCompraOrdenServiceImpl {
             return null;
         }
         stmt = con.prepareStatement(
-                "SELECT * FROM compras.requerimiento_orden_compra_detalle "
+                "SELECT * FROM compras.requerimiento_orden_compra_detalle_consulta "
                 + "WHERE id_orden_compra = ? ORDER BY orden");
         try {
             stmt.setInt(1, orden.getIdOrdenCompra());
@@ -227,44 +227,66 @@ public class RequerimientoCompraOrdenServiceImpl {
         }
     }
 
+    private int obtenerPresupuestoAdjudicado(Connection con, int idRequerimiento)
+            throws Exception {
+        PreparedStatement stmt = con.prepareStatement(
+                "SELECT rp.id_requerimiento_presupuesto "
+                + "FROM compras.requerimiento_presupuesto rp "
+                + "JOIN compras.requerimiento r ON r.id_requerimiento = rp.id_requerimiento "
+                + "JOIN compras.sector_requerimiento sr ON sr.id_sector = r.id_sector "
+                + "WHERE rp.id_requerimiento = ? AND rp.baja_fecha IS NULL "
+                + "AND ((compras.normalizar_sector(sr.descripcion) IN ('RRHH', 'SISTEMAS') "
+                + "AND rp.tipo_documento = 3 AND rp.empresa_adjudicada) "
+                + "OR (compras.normalizar_sector(sr.descripcion) NOT IN ('RRHH', 'SISTEMAS') "
+                + "AND rp.tipo_documento = 1 AND rp.id_prestador = ("
+                + "SELECT min(d.id_prestador) FROM compras.requerimiento_detalle d "
+                + "WHERE d.id_requerimiento = r.id_requerimiento AND d.baja_fecha IS NULL "
+                + "HAVING count(DISTINCT d.id_prestador) = 1 "
+                + "AND count(*) = count(d.id_prestador))))");
+        try {
+            stmt.setInt(1, idRequerimiento);
+            ResultSet rs = stmt.executeQuery();
+            try {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException(
+                            "Debe existir una cotizacion adjudicada unica del requerimiento para emitir la Orden de Compra.");
+                }
+                int idPresupuesto = rs.getInt("id_requerimiento_presupuesto");
+                if (idPresupuesto <= 0 || rs.next()) {
+                    throw new IllegalArgumentException(
+                            "Debe existir una cotizacion adjudicada unica del requerimiento para emitir la Orden de Compra.");
+                }
+                return idPresupuesto;
+            } finally {
+                rs.close();
+            }
+        } finally {
+            stmt.close();
+        }
+    }
+
     private void guardarCabecera(Connection con, RequerimientoCompraOrden orden,
             String usuario) throws Exception {
+        int idPresupuesto = obtenerPresupuestoAdjudicado(con,
+                orden.getIdRequerimientoCompra());
         PreparedStatement stmt = con.prepareStatement(
                 "INSERT INTO compras.requerimiento_orden_compra "
-                + "(id_requerimiento, alta_usr, fecha_emision, fecha_orden_medica, fecha_recepcion, "
-                + "moneda, proveedor, proveedor_cuit, proveedor_domicilio, proveedor_contacto, "
-                + "proveedor_email, proveedor_telefono, condicion, forma_pago, plazo_pago, "
-                + "entrega, observaciones, confeccionado_por, telefono_compras, solicitante, "
-                + "plan, id_reclamo_prestacional, iva, iibb) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id_orden_compra");
+                + "(id_requerimiento, id_presupuesto, alta_usr, fecha_emision, "
+                + "condicion, forma_pago, plazo_pago, entrega, observaciones, iva, iibb) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id_orden_compra");
         try {
             stmt.setInt(1, orden.getIdRequerimientoCompra());
-            stmt.setString(2, usuario);
-            stmt.setDate(3, orden.getFechaEmision() == null ? null
+            stmt.setInt(2, idPresupuesto);
+            stmt.setString(3, usuario);
+            stmt.setDate(4, orden.getFechaEmision() == null ? null
                     : new java.sql.Date(orden.getFechaEmision().getTime()));
-            stmt.setDate(4, orden.getFechaOrdenMedica() == null ? null
-                    : new java.sql.Date(orden.getFechaOrdenMedica().getTime()));
-            stmt.setDate(5, orden.getFechaRecepcion() == null ? null
-                    : new java.sql.Date(orden.getFechaRecepcion().getTime()));
-            stmt.setString(6, orden.getMoneda());
-            stmt.setString(7, orden.getProveedor());
-            stmt.setString(8, orden.getProveedorCuit());
-            stmt.setString(9, orden.getProveedorDomicilio());
-            stmt.setString(10, orden.getProveedorContacto());
-            stmt.setString(11, orden.getProveedorEmail());
-            stmt.setString(12, orden.getProveedorTelefono());
-            stmt.setString(13, orden.getCondicion());
-            stmt.setString(14, orden.getFormaPago());
-            stmt.setString(15, orden.getPlazoPago());
-            stmt.setString(16, orden.getEntrega());
-            stmt.setString(17, orden.getObservaciones());
-            stmt.setString(18, orden.getConfeccionadoPor());
-            stmt.setString(19, orden.getTelefonoCompras());
-            stmt.setString(20, orden.getSolicitante());
-            stmt.setString(21, orden.getPlan());
-            stmt.setInt(22, orden.getIdReclamoPrestacional());
-            stmt.setBigDecimal(23, orden.getIva());
-            stmt.setBigDecimal(24, orden.getIibb());
+            stmt.setString(5, orden.getCondicion());
+            stmt.setString(6, orden.getFormaPago());
+            stmt.setString(7, orden.getPlazoPago());
+            stmt.setString(8, orden.getEntrega());
+            stmt.setString(9, orden.getObservaciones());
+            stmt.setBigDecimal(10, orden.getIva());
+            stmt.setBigDecimal(11, orden.getIibb());
             ResultSet rs = stmt.executeQuery();
             try {
                 if (!rs.next()) {
@@ -283,18 +305,14 @@ public class RequerimientoCompraOrdenServiceImpl {
             int posicion, RequerimientoCompraDetalle detalle) throws Exception {
         PreparedStatement stmt = con.prepareStatement(
                 "INSERT INTO compras.requerimiento_orden_compra_detalle "
-                + "(id_orden_compra, orden, id_requerimiento_detalle, codigo_item, "
-                + "descripcion_item, cantidad, precio_unitario, precio_total) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                + "(id_orden_compra, orden, id_requerimiento_detalle, cantidad, precio_unitario) "
+                + "VALUES (?, ?, ?, ?, ?)");
         try {
             stmt.setInt(1, idOrdenCompra);
             stmt.setInt(2, posicion);
             stmt.setInt(3, detalle.getIdInt());
-            stmt.setString(4, detalle.getCodigoItemVisible());
-            stmt.setString(5, detalle.getDescripcionItemVisible());
-            stmt.setInt(6, detalle.getCantidadInt());
-            stmt.setBigDecimal(7, detalle.getPrecioUnitarioEstimado());
-            stmt.setBigDecimal(8, detalle.getPrecioTotalEstimado());
+            stmt.setInt(4, detalle.getCantidadInt());
+            stmt.setBigDecimal(5, detalle.getPrecioUnitarioEstimado());
             if (stmt.executeUpdate() != 1) {
                 throw new SQLException("No se pudo guardar el detalle de la Orden de Compra.");
             }

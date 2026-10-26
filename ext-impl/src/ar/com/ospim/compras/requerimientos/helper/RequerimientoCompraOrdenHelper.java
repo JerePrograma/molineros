@@ -47,7 +47,6 @@ public class RequerimientoCompraOrdenHelper {
         orden.setIdRequerimientoCompra(id);
         orden.setRequerimiento(r);
         orden.setFechaEmision(new Date());
-        orden.setMoneda(null);
         orden.setIva(null);
         orden.setIibb(null);
         orden.setConfeccionadoPor(texto(nombreUsuario, 250, false, "Confeccionado por"));
@@ -74,7 +73,7 @@ public class RequerimientoCompraOrdenHelper {
         if (orden.getIdOrdenCompra() > 0) {
             return orden;
         }
-        orden.setConfeccionadoPor(texto(nombreUsuario, 250, true, "Confeccionado por"));
+        orden.setConfeccionadoPor(auditoria);
         validarImportes(orden);
         orden.setAltaUsr(auditoria);
         RequerimientoCompraOrden guardada = guardarOrden(orden, auditoria);

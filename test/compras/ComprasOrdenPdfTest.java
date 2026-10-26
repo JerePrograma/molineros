@@ -5,16 +5,20 @@ import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
+import org.pdfbox.pdmodel.PDDocument;
+import org.pdfbox.util.PDFTextStripper;
 import com.lowagie.text.pdf.PdfReader;
 
 public class ComprasOrdenPdfTest {
     public static void main(String[] args) throws Exception {
         String[] nombres = new String[] {"sistemas", "medica", "multipagina", "campos-largos",
-                "sistemas-sin-importes", "detalle-sin-importe", "ceros-informados", "medica-sin-moneda"};
+                "sistemas-sin-importes", "detalle-sin-importe", "ceros-informados", "medica-pesos"};
         for (int caso = 0; caso < nombres.length; caso++) {
             RequerimientoCompraOrden orden = fixture(caso);
             byte[] pdf = new RequerimientoCompraOrdenPdfHelper().generar(orden);
             if (pdf.length < 1000 || pdf[0] != '%' || pdf[1] != 'P') throw new Exception("PDF invalido");
+            comprobarPesos(pdf);
             PdfReader reader = new PdfReader(pdf);
             int paginas;
             try { paginas = reader.getNumberOfPages(); } finally { reader.close(); }
@@ -26,10 +30,11 @@ public class ComprasOrdenPdfTest {
         }
         RequerimientoCompraOrden monedaVacia = fixture(4);
         monedaVacia.setMoneda("  ");
+        if (!"ARS".equals(monedaVacia.getMoneda())) throw new Exception("La moneda legacy vacia debe usar pesos.");
         if (new RequerimientoCompraOrdenPdfHelper().generar(monedaVacia).length < 1000) {
-            throw new Exception("No genero la orden con moneda sin informar.");
+            throw new Exception("No genero la orden en pesos con moneda legacy vacia.");
         }
-        System.out.println("MONEDA_VACIA_ACEPTADA");
+        System.out.println("MONEDA_LEGACY_VACIA_USA_PESOS");
         RequerimientoCompraOrden impuestoDesconocido = fixture(0);
         impuestoDesconocido.setIva(null);
         if (impuestoDesconocido.getTotal() != null) {
@@ -44,9 +49,8 @@ public class ComprasOrdenPdfTest {
         try { new RequerimientoCompraOrdenPdfHelper().generar(invalida); throw new Exception("Acepto detalle vacio"); }
         catch (IllegalArgumentException expected) { System.out.println("DETALLES_VACIOS_RECHAZADOS"); }
         invalida = fixture(0);
-        invalida.setMoneda("EUR");
-        try { new RequerimientoCompraOrdenPdfHelper().generar(invalida); throw new Exception("Acepto moneda invalida"); }
-        catch (IllegalArgumentException expected) { System.out.println("MONEDA_INVALIDA_RECHAZADA"); }
+        try { invalida.setMoneda("EUR"); throw new Exception("Acepto moneda distinta de pesos"); }
+        catch (IllegalArgumentException expected) { System.out.println("MONEDA_AJENA_RECHAZADA"); }
         invalida = fixture(0); invalida.setIva(new BigDecimal("-1"));
         rechazar(invalida, "IMPUESTO_NEGATIVO");
         invalida = fixture(0); invalida.getDetalles().get(0).setPrecioUnitarioEstimado(new BigDecimal("-1"));
@@ -62,6 +66,17 @@ public class ComprasOrdenPdfTest {
         try { new RequerimientoCompraOrdenPdfHelper().generar(invalida); throw new Exception("Acepto borrador"); }
         catch (IllegalArgumentException expected) { System.out.println("BORRADOR_RECHAZADO"); }
     }
+    private static void comprobarPesos(byte[] pdf) throws Exception {
+        PDDocument documento = PDDocument.load(new ByteArrayInputStream(pdf));
+        try {
+            String texto = new PDFTextStripper().getText(documento).replaceAll("\\s+", " ");
+            if (texto.indexOf("Pesos (ARS)") < 0 || texto.indexOf("USD") >= 0) {
+                throw new Exception("El PDF debe mostrar siempre importes en Pesos (ARS).");
+            }
+        } finally {
+            documento.close();
+        }
+    }
     private static void rechazar(RequerimientoCompraOrden orden, String nombre) throws Exception {
         try { new RequerimientoCompraOrdenPdfHelper().generar(orden); throw new Exception("Acepto " + nombre); }
         catch (IllegalArgumentException expected) { System.out.println(nombre + "_RECHAZADO"); }
@@ -75,7 +90,7 @@ public class ComprasOrdenPdfTest {
         r.setAfiliadoIdOspim(Integer.valueOf(1234));
         RequerimientoCompraOrden o = new RequerimientoCompraOrden();
         o.setIdOrdenCompra(100 + caso); o.setIdRequerimientoCompra(123); o.setFechaEmision(new Date(1792713600000L));
-        o.setRequerimiento(r); o.setMoneda(caso == 0 ? "USD" : "ARS");
+        o.setRequerimiento(r); o.setMoneda("ARS");
         o.setProveedor("PROVEEDOR DE PRUEBA"); o.setProveedorCuit("CUIT de prueba");
         o.setProveedorDomicilio("Domicilio de prueba"); o.setProveedorContacto("Contacto de prueba");
         o.setProveedorEmail("compras@example.invalid"); o.setProveedorTelefono("Telefono de prueba");

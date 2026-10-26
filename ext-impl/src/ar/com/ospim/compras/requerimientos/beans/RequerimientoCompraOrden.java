@@ -7,6 +7,8 @@ import java.util.List;
 
 public class RequerimientoCompraOrden {
 
+    public static final String MONEDA_PESOS = "ARS";
+
     private int idOrdenCompra;
     private int idRequerimientoCompra;
     private int idReclamoPrestacional;
@@ -17,7 +19,6 @@ public class RequerimientoCompraOrden {
     private Date modiFecha;
     private String modiUsr;
     private int versionEdicion;
-    private String moneda;
     private String proveedor;
     private String proveedorCuit;
     private String proveedorDomicilio;
@@ -69,8 +70,13 @@ public class RequerimientoCompraOrden {
     public int getVersionEdicion() { return versionEdicion; }
     public void setVersionEdicion(int versionEdicion) { this.versionEdicion = versionEdicion; }
 
-    public String getMoneda() { return moneda; }
-    public void setMoneda(String moneda) { this.moneda = moneda; }
+    public String getMoneda() { return MONEDA_PESOS; }
+    public void setMoneda(String moneda) {
+        String valor = moneda != null ? moneda.trim() : "";
+        if (valor.length() > 0 && !MONEDA_PESOS.equals(valor)) {
+            throw new IllegalArgumentException("La Orden de Compra solo admite pesos argentinos (ARS).");
+        }
+    }
 
     public String getProveedor() { return proveedor; }
     public void setProveedor(String proveedor) { this.proveedor = proveedor; }
