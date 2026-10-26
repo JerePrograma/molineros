@@ -8108,6 +8108,7 @@ AS $func$
           AND d.id_tipo_nomenclador IS NOT NULL
           AND d.id_tipo_nomenclador > 0
           AND NULLIF(BTRIM(d.codigo_nomenclador), '') IS NOT NULL
+          AND BTRIM(d.codigo_nomenclador) NOT IN ('101002', '9999009')
           AND NULLIF(BTRIM(d.descripcion_nomenclador), '') IS NOT NULL
         ORDER BY
             d.id_prestacion,
@@ -8171,6 +8172,7 @@ AS $func$
           AND d.id_tipo_nomenclador IS NOT NULL
           AND d.id_tipo_nomenclador > 0
           AND NULLIF(BTRIM(d.codigo_nomenclador), '') IS NOT NULL
+          AND BTRIM(d.codigo_nomenclador) NOT IN ('101002', '9999009')
           AND NULLIF(BTRIM(d.descripcion_nomenclador), '') IS NOT NULL
         ORDER BY
             d.id_prestacion,
