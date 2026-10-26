@@ -30,10 +30,10 @@ if (tabs1 == null) {
 }
 
 String tabs1Values =
-        "requerimientos,cotizados";
+        "requerimientos,orden-de-compra";
 
 String tabs1Names =
-        "Requerimientos,Cotizados";
+        "Requerimientos,Orden de Compra";
 
 if (mostrarParaAutorizar) {
     tabs1Values += ",para-autorizar";
@@ -47,7 +47,7 @@ if (mostrarConfiguracionCorreos) {
 
 boolean tabValida =
         "requerimientos".equals(tabs1)
-        || "cotizados".equals(tabs1)
+        || "orden-de-compra".equals(tabs1)
         || (mostrarParaAutorizar && "para-autorizar".equals(tabs1))
         || (
                 mostrarConfiguracionCorreos
@@ -88,9 +88,9 @@ currentURL = PortalUtil.getCurrentURL(request);
                 page="/html/portlet/compras/requerimientos/requerimiento_compra_listado.jsp" />
     </c:when>
 
-    <c:when test='<%= "cotizados".equals(tabs1) %>'>
+    <c:when test='<%= "orden-de-compra".equals(tabs1) %>'>
         <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimiento_compra_cotizados.jsp" />
+                page="/html/portlet/compras/requerimientos/requerimiento_compra_ordenes.jsp" />
     </c:when>
 
     <c:when test='<%= mostrarParaAutorizar && "para-autorizar".equals(tabs1) %>'>
