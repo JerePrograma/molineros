@@ -46,7 +46,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "WITH candidatos AS ("
                     + "SELECT r.id_requerimiento FROM compras.requerimiento r "
                     + "JOIN compras.sector_requerimiento s ON s.id_sector = r.id_sector "
-                    + "WHERE r.baja_fecha IS NULL"
+                    + "WHERE (r.baja_fecha IS NULL OR r.estado = 99)"
                     + "), pagina AS ("
                     + "SELECT id_requerimiento FROM candidatos "
                     + "ORDER BY id_requerimiento DESC LIMIT ? OFFSET ?"

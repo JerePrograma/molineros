@@ -1684,8 +1684,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                 user,
                 WebKeysCompras.ROL_ABM_COMPRAS
         );
+        boolean puedeAutorizar = PermissionUtil.userContainsRole(
+                user,
+                WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+        );
 
-        if (!puedeVer && !puedeAdministrar && !puedeCotizar && !puedeAnular) {
+        if (!puedeVer && !puedeAdministrar && !puedeCotizar
+                && !puedeAnular && !puedeAutorizar) {
             errorCampo(
                     "permisos",
                     "No posee permisos para consultar requerimientos de compras."

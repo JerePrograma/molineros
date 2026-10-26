@@ -738,6 +738,10 @@ public class UploadPresupuestosComprasAction extends PortletAction {
                         || PermissionUtil.userContainsRole(
                         user,
                         WebKeysCompras.ROL_COTIZAR_COMPRAS
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        WebKeysCompras.ROL_AUTORIZAR_COMPRAS
                 );
 
         if (!permitido) {

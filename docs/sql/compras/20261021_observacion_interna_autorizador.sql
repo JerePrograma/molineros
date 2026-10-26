@@ -1,5 +1,5 @@
--- Compras: guardado exclusivo de observacion interna en requerimientos activos.
--- Estados habilitados 1 a 7; no modifica estructura, detalles ni estado.
+-- Compras: guardado exclusivo de observacion interna en requerimientos.
+-- Estados 1 a 7 activos y 99 anulado; no modifica estructura, detalles ni estado.
 -- El permiso AUTORIZAR_COMPRAS se valida en la Action; la funcion controla estado y baja.
 -- Requiere la columna observacion_interna (migracion 20261008).
 -- Instalar antes del Java/JSP de esta entrega. No aplicada a QA por Codex.
@@ -27,8 +27,8 @@ BEGIN
            modi_fecha = now(),
            modi_usr = v_usuario
      WHERE id_requerimiento = p_id_requerimiento
-       AND estado IN (1, 2, 3, 4, 5, 6, 7)
-       AND baja_fecha IS NULL
+       AND ((estado IN (1, 2, 3, 4, 5, 6, 7) AND baja_fecha IS NULL)
+            OR estado = 99)
      RETURNING id_requerimiento INTO v_id;
 
     IF NOT FOUND THEN

@@ -94,9 +94,16 @@ public class VerSituacionMedicaVigenteCompraAction
                             WebKeysCompras.ROL_COTIZAR_COMPRAS
                     );
 
+            boolean puedeAutorizar =
+                    PermissionUtil.userContainsRole(
+                            user,
+                            WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+                    );
+
             if (!puedeVer
                     && !puedeAdministrar
-                    && !puedeCotizar) {
+                    && !puedeCotizar
+                    && !puedeAutorizar) {
 
                 throw new Exception(
                         "El usuario no posee permisos de Compras."

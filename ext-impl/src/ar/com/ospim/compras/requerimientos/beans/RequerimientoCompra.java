@@ -633,9 +633,9 @@ public class RequerimientoCompra {
     }
 
     public boolean puedeEditarObservacionInterna() {
-        return getIdRequerimientoCompra() > 0 && isActivo()
+        return getIdRequerimientoCompra() > 0
                 && WebKeysCompras.esEstadoValido(getEstado())
-                && !WebKeysCompras.esAnulado(getEstado());
+                && (isActivo() || WebKeysCompras.esAnulado(getEstado()));
     }
 
     public boolean puedeEditarSurge() {

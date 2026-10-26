@@ -1187,6 +1187,7 @@ DECLARE
     v_usuario VARCHAR(100);
     v_fila_anulacion compras.requerimiento%ROWTYPE;
     v_fila_transicion compras.requerimiento%ROWTYPE;
+    v_fila_observacion compras.requerimiento%ROWTYPE;
 BEGIN
     -- Anulacion acotada: preserva cabecera y comprueba el RP bajo bloqueo.
     IF TG_OP = 'UPDATE' AND NEW.estado = 99 AND OLD.estado IN (1, 2, 3, 4) THEN
@@ -1206,6 +1207,18 @@ BEGIN
         NEW.baja_fecha := COALESCE(NEW.baja_fecha, now());
         NEW.baja_usr := compras.normalizar_usuario(COALESCE(NEW.baja_usr, NEW.modi_usr));
         RETURN NEW;
+    END IF;
+    -- Permite solo observacion interna y auditoria, incluso en estados finales.
+    IF TG_OP = 'UPDATE'
+       AND ((OLD.estado IN (1, 2, 3, 4, 5, 6, 7)
+             AND OLD.baja_fecha IS NULL) OR OLD.estado = 99) THEN
+        v_fila_observacion := NEW;
+        v_fila_observacion.observacion_interna := OLD.observacion_interna;
+        v_fila_observacion.modi_fecha := OLD.modi_fecha;
+        v_fila_observacion.modi_usr := OLD.modi_usr;
+        IF v_fila_observacion IS NOT DISTINCT FROM OLD THEN
+            RETURN NEW;
+        END IF;
     END IF;
 SELECT
     s.requiere_afiliado,
@@ -1233,8 +1246,8 @@ END IF;
 ELSE
 
         /*
-         * ORDEN_COMPRA y ANULADO son completamente
-         * inmutables una vez alcanzados.
+         * ORDEN_COMPRA y ANULADO solo admiten la observacion interna
+         * validada antes; el resto de los datos permanece inmutable.
          */
         IF OLD.estado IN (5, 99)
            AND NEW IS DISTINCT FROM OLD THEN
@@ -2463,16 +2476,7 @@ BEGIN
     RETURN QUERY
     SELECT rb.*
     FROM compras.requerimiento_base() rb
-    WHERE (
-        (
-            p_estado = 99
-            AND rb.id_estado = 99
-        )
-        OR (
-            p_estado IS DISTINCT FROM 99
-            AND rb.baja_fecha IS NULL
-        )
-    )
+    WHERE (rb.baja_fecha IS NULL OR rb.id_estado = 99)
     AND (
         p_estado IS NULL
         OR rb.id_estado = p_estado
@@ -3689,8 +3693,8 @@ BEGIN
            modi_fecha = now(),
            modi_usr = v_usuario
      WHERE id_requerimiento = p_id_requerimiento
-       AND estado IN (1, 2, 3, 4, 5, 6, 7)
-       AND baja_fecha IS NULL
+       AND ((estado IN (1, 2, 3, 4, 5, 6, 7) AND baja_fecha IS NULL)
+            OR estado = 99)
      RETURNING id_requerimiento INTO v_id;
 
     IF NOT FOUND THEN
