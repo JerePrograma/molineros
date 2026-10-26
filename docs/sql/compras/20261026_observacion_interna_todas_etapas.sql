@@ -1,20 +1,14 @@
 -- Compras: observacion interna en todas las etapas y consulta de anulados.
--- Aplicar luego de 20261023_orden_compra_formulario.sql. Reejecutable.
--- El rol AUTORIZAR_COMPRAS se valida en la Action; PostgreSQL controla estado y fila.
+-- Aplicar cuando existan las tres funciones de la precondicion. Reejecutable.
+-- El rol AUTORIZAR_COMPRAS se valida en la Action; el guardado SQL limita campos y estado.
 BEGIN;
 
 DO $precondicion$
 BEGIN
     IF to_regprocedure('compras.validar_requerimiento_fila()') IS NULL
        OR to_regprocedure('compras.buscar_requerimientos(integer,integer,character varying,integer,character varying,boolean,boolean,character varying,date,date,integer)') IS NULL
-       OR to_regprocedure('compras.guardar_observacion_interna_requerimiento(integer,text,character varying)') IS NULL
-       OR NOT EXISTS (
-           SELECT 1 FROM pg_trigger
-            WHERE tgrelid = to_regclass('compras.requerimiento')
-              AND tgname = 'trg_compras_requerimiento_validar'
-              AND NOT tgisinternal
-       ) THEN
-        RAISE EXCEPTION 'Faltan funciones o trigger de Compras; instale primero las migraciones anteriores.';
+       OR to_regprocedure('compras.guardar_observacion_interna_requerimiento(integer,text,character varying)') IS NULL THEN
+        RAISE EXCEPTION 'Faltan funciones de Compras; instale primero las migraciones anteriores.';
     END IF;
 END;
 $precondicion$;
