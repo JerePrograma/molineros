@@ -1455,7 +1455,7 @@ public class ReporteDebitosaTercerizadorasExcel extends ReporteXLS {
 		cell7.setCellStyle(styleAll);
 
 		HSSFCell cell8 = rowHeader.createCell(8);
-		cell8.setCellValue(new HSSFRichTextString(debitosaReintegros.getFechaOP().toString()));
+		cell8.setCellValue(new HSSFRichTextString(DateUtils.format(debitosaReintegros.getFechaOP(), DateUtils.SHORT)));
 		cell8.setCellStyle(styleAll);
 
 		HSSFCell cell9 = rowHeader.createCell(9);
