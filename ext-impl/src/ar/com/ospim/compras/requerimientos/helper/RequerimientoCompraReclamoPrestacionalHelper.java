@@ -2,6 +2,7 @@ package ar.com.ospim.compras.requerimientos.helper;
 
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
+import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
@@ -13,6 +14,7 @@ import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPre
 
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portal.security.permission.PermissionChecker;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -202,6 +204,74 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         }
 
         return true;
+    }
+
+    /** Genera una sola copia y sincroniza el adjunto del RP si cambio. */
+    public byte[] imprimirComparativa(
+            int idRequerimientoCompra,
+            User user,
+            ServiceContext serviceContext,
+            PermissionChecker permissionChecker) throws Exception {
+
+        validarIdRequerimiento(idRequerimientoCompra);
+        RequerimientoCompraReclamoPrestacional relacion =
+                obtenerPorRequerimiento(idRequerimientoCompra);
+        if (relacion == null || !relacion.isVinculado()) {
+            return new PdfServlet().crearComparativaCompraComoAdjunto(
+                    idRequerimientoCompra);
+        }
+        if (user == null || serviceContext == null
+                || user.getUserId() != serviceContext.getUserId()
+                || user.getCompanyId() != serviceContext.getCompanyId()) {
+            throw new Exception(
+                    "No se pudo identificar al usuario de la impresion de comparativa.");
+        }
+
+        RequerimientoCompraReclamoPrestacionalTransaccion transaccion = null;
+        try {
+            transaccion = RequerimientoCompraReclamoPrestacionalServiceUtil
+                    .abrirTransaccion();
+            bloquearRequerimiento(transaccion, idRequerimientoCompra);
+            relacion = transaccion.obtenerPorRequerimiento(idRequerimientoCompra);
+            boolean vinculado = relacion != null && relacion.isVinculado();
+            if (vinculado) {
+                if (relacion.getIdRequerimientoCompra() != idRequerimientoCompra
+                        || relacion.getBajaFecha() != null) {
+                    throw new Exception("El vinculo de la comparativa con el RP no es valido.");
+                }
+                ReclamoPrestacional reclamo = ReclamosPrestacionesServiceUtil
+                        .getReclamoPrestacional(relacion.getIdReclamoPrestacionalInt());
+                if (reclamo == null
+                        || reclamo.getId_reclamo() != relacion.getIdReclamoPrestacionalInt()
+                        || reclamo.getBaja_fecha() != null) {
+                    throw new Exception("El RP de la comparativa no existe o no esta activo.");
+                }
+            }
+
+            // Generar despues del bloqueo evita sobrescribir con otra impresion atrasada.
+            byte[] contenido = new PdfServlet().crearComparativaCompraComoAdjunto(
+                    idRequerimientoCompra);
+            if (vinculado) {
+                DocumentoLibraryComprasHelper.actualizarComparativaReclamoPrestacional(
+                        idRequerimientoCompra, relacion.getIdReclamoPrestacionalInt(),
+                        contenido, serviceContext, permissionChecker);
+            }
+            transaccion.commit();
+            return contenido;
+        } catch (Exception e) {
+            if (transaccion != null) {
+                try {
+                    transaccion.rollback();
+                } catch (Exception rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+            }
+            throw e;
+        } finally {
+            if (transaccion != null) {
+                transaccion.cerrar();
+            }
+        }
     }
 
     public static RevisionesReclamo crearRevisionInicialCompra() {

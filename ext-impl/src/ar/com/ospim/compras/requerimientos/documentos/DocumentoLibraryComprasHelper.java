@@ -18,6 +18,8 @@ import com.liferay.portal.model.ResourceAction;
 import com.liferay.portal.model.ResourceConstants;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.security.permission.ActionKeys;
+import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portlet.documentlibrary.service.permission.DLFileEntryPermission;
 import com.liferay.portal.service.PermissionLocalServiceUtil;
 import com.liferay.portal.service.ResourceActionLocalServiceUtil;
 import com.liferay.portal.service.ResourceLocalServiceUtil;
@@ -34,6 +36,7 @@ import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 import javax.portlet.ActionRequest;
 
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -45,6 +48,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.pdfbox.pdmodel.PDDocument;
+import org.pdfbox.util.PDFTextStripper;
 
 public class DocumentoLibraryComprasHelper
         implements GestorOrdenMedicaDocumento {
@@ -1885,6 +1890,98 @@ public class DocumentoLibraryComprasHelper
                 );
             }
         }
+    }
+
+    /** Compara datos visibles; ignora fechas y otros metadatos del PDF. */
+    public static boolean mismoContenidoComparativa(
+            byte[] anterior, byte[] nuevo) throws Exception {
+
+        return textoComparativa(anterior).equals(textoComparativa(nuevo));
+    }
+
+    private static String textoComparativa(byte[] contenido) throws Exception {
+        if (contenido == null || contenido.length < 5
+                || contenido[0] != '%' || contenido[1] != 'P'
+                || contenido[2] != 'D' || contenido[3] != 'F'
+                || contenido[4] != '-') {
+            throw new Exception("La comparativa no contiene un PDF valido.");
+        }
+
+        PDDocument documento = PDDocument.load(
+                new ByteArrayInputStream(contenido));
+        try {
+            String texto = new PDFTextStripper().getText(documento)
+                    .replaceAll("\\s+", " ").trim();
+            if (texto.length() == 0) {
+                throw new Exception(
+                        "No se pudieron comparar los datos de la comparativa.");
+            }
+            return texto;
+        } finally {
+            documento.close();
+        }
+    }
+
+    /** Se invoca con el requerimiento bloqueado durante la impresion. */
+    public static boolean actualizarComparativaReclamoPrestacional(
+            int idRequerimientoCompra,
+            int idReclamoPrestacional,
+            byte[] contenido,
+            ServiceContext serviceContext,
+            PermissionChecker permissionChecker) throws Exception {
+
+        validarContextoDocumentLibrary(serviceContext);
+        if (permissionChecker == null
+                || permissionChecker.getUserId() != serviceContext.getUserId()) {
+            throw new Exception(
+                    "No se pudo validar al usuario de la comparativa.");
+        }
+        if (contenido == null
+                || contenido.length > obtenerMaximoTamanoDocumento()) {
+            throw new Exception("El PDF de comparativa tiene un tamano invalido.");
+        }
+
+        DLFileEntry anterior = obtenerComparativaReclamoPrestacional(
+                idRequerimientoCompra, idReclamoPrestacional,
+                serviceContext.getScopeGroupId());
+        if (anterior == null
+                || anterior.getCompanyId() != serviceContext.getCompanyId()) {
+            throw new Exception(
+                    "La comparativa asociada al RP no esta disponible en el sitio actual.");
+        }
+
+        DLFileEntryPermission.check(permissionChecker, anterior.getFolderId(),
+                anterior.getName(), ActionKeys.VIEW);
+        byte[] guardado = leerContenidoDocumentLibrary(anterior);
+        if (mismoContenidoComparativa(guardado, contenido)) {
+            return false;
+        }
+
+        DLFileEntryPermission.check(permissionChecker, anterior.getFolderId(),
+                anterior.getName(), ActionKeys.UPDATE);
+        long companyId = anterior.getCompanyId();
+        DocumentoComprasCreado identidad = new DocumentoComprasCreado(
+                anterior.getGroupId(), anterior.getFolderId(), anterior.getFileEntryId(),
+                anterior.getUuid(), anterior.getName(), anterior.getTitle());
+        DLFileEntry actualizado = DLFileEntryLocalServiceUtil.updateFileEntry(
+                serviceContext.getUserId(),
+                identidad.getFolderId(), identidad.getFolderId(),
+                identidad.getNombrePersistido(), identidad.getNombrePersistido(),
+                identidad.getTitulo(), anterior.getDescription(), anterior.getExtraSettings(),
+                contenido, serviceContext);
+
+        if (actualizado == null
+                || actualizado.getFileEntryId() != identidad.getFileEntryId()
+                || actualizado.getCompanyId() != companyId
+                || actualizado.getGroupId() != identidad.getGroupId()
+                || actualizado.getFolderId() != identidad.getFolderId()
+                || !identidad.getNombrePersistido().equals(actualizado.getName())
+                || !identidad.getTitulo().equals(actualizado.getTitle())
+                || !identidad.getUuid().equals(actualizado.getUuid())) {
+            throw new Exception(
+                    "La actualizacion no conservo la identidad de la comparativa del RP.");
+        }
+        return true;
     }
 
     public static DLFileEntry obtenerComparativaReclamoPrestacional(

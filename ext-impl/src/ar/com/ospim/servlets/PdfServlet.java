@@ -40,6 +40,7 @@ import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
 import ar.com.ospim.compras.requerimientos.action.RequerimientoCompraComparativaAction;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
@@ -57,6 +58,9 @@ import ar.com.ospim.util.PermissionUtil;
 
 import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
+import com.liferay.portal.security.auth.PrincipalException;
+import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -1462,42 +1466,45 @@ public class PdfServlet extends HttpServlet {
     private void generaComparativaCompra(HttpServletRequest req,
                                          HttpServletResponse res) throws IOException {
 
+        User user;
         try {
-            RequerimientoCompraComparativaAction.validarPermiso(
-                    PortalUtil.getUser(req), false);
+            user = PortalUtil.getUser(req);
+            RequerimientoCompraComparativaAction.validarPermiso(user, false);
         } catch (Exception e) {
             res.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
         int id = ParamUtil.getInteger(req, "id_requerimiento", 0);
-
         if (id <= 0) {
             res.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
         try {
-            crearPdfFromByteArray(
-                    req,
-                    res,
-                    crearComparativaCompraComoAdjunto(id),
+            ServiceContext contexto = new ServiceContext();
+            contexto.setUserId(user.getUserId());
+            contexto.setCompanyId(user.getCompanyId());
+            contexto.setScopeGroupId(WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS);
+            byte[] contenido = new RequerimientoCompraReclamoPrestacionalHelper()
+                    .imprimirComparativa(id, user, contexto,
+                            PermissionCheckerFactoryUtil.create(user, true));
+            crearPdfFromByteArray(req, res, contenido,
                     "ComparativaCompra_" + id + ".pdf");
 
+        } catch (PrincipalException e) {
+            res.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "No posee permisos para actualizar la comparativa asociada al RP.");
         } catch (IllegalArgumentException e) {
-            res.sendError(
-                    HttpServletResponse.SC_BAD_REQUEST,
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST,
                     "No hay una comparativa disponible para imprimir.");
-
         } catch (Exception e) {
             _log.error(
-                    "No se pudo generar el PDF de comparativa. Requerimiento=" + id,
+                    "No se pudo generar o actualizar la comparativa del RP. Requerimiento=" + id,
                     e);
-
             if (!res.isCommitted()) {
-                res.sendError(
-                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        "No se pudo generar el PDF de la comparativa.");
+                res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "No se pudo generar o actualizar la comparativa asociada al RP.");
             }
         }
     }
