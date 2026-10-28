@@ -236,12 +236,19 @@ public class DocumentoLibraryComprasHelper
     }
 
     /**
-     * ABM_COMPRAS puede consultar la Orden medica validada por Compras.
+     * ABM_COMPRAS puede consultar los documentos validados por Compras.
      * Concede solamente VIEW sobre la entrada individual y conserva las
      * otras acciones que el rol ya tuviera sobre ese documento.
      */
     public static void asegurarPermisoVistaAbm(
             DLFileEntry entry) throws Exception {
+
+        asegurarPermisosAbm(entry, false);
+    }
+
+    /* UPDATE se agrega solo al crear la comparativa regenerable del RP. */
+    private static void asegurarPermisosAbm(
+            DLFileEntry entry, boolean permitirUpdate) throws Exception {
 
         if (entry == null
                 || entry.getCompanyId() <= 0L
@@ -278,7 +285,7 @@ public class DocumentoLibraryComprasHelper
             if (role == null) {
                 // Un rol no configurado no debe impedir crear el adjunto.
                 // No se concede ningun permiso y la descarga mantiene su check DL.
-                _log.warn("No se agrega VIEW de Orden medica: rol "
+                _log.warn("No se agregan permisos de documento de Compras: rol "
                         + WebKeysCompras.ROL_ABM_COMPRAS
                         + " no configurado. companyId=" + entry.getCompanyId()
                         + ", fileEntryId=" + entry.getFileEntryId());
@@ -354,10 +361,18 @@ public class DocumentoLibraryComprasHelper
             );
         }
 
-        if (acciones.contains(ActionKeys.VIEW)) {
+        boolean cambio = false;
+        if (!acciones.contains(ActionKeys.VIEW)) {
+            acciones.add(ActionKeys.VIEW);
+            cambio = true;
+        }
+        if (permitirUpdate && !acciones.contains(ActionKeys.UPDATE)) {
+            acciones.add(ActionKeys.UPDATE);
+            cambio = true;
+        }
+        if (!cambio) {
             return;
         }
-        acciones.add(ActionKeys.VIEW);
         String[] accionesActualizadas =
                 acciones.toArray(new String[acciones.size()]);
         if (algoritmo == 6) {
@@ -1844,6 +1859,7 @@ public class DocumentoLibraryComprasHelper
                 );
             }
 
+            asegurarPermisoVistaAbm(entry);
             return documento;
 
         } catch (Exception error) {
@@ -2148,6 +2164,7 @@ public class DocumentoLibraryComprasHelper
                 );
             }
 
+            asegurarPermisosAbm(entry, true);
             return documento;
 
         } catch (Exception error) {

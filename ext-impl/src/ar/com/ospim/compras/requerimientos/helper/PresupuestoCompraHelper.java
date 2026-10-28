@@ -928,14 +928,34 @@ public final class PresupuestoCompraHelper {
             );
         }
 
-        return new DocumentoPresupuestoCreado(
-                entry.getGroupId(),
-                entry.getFolderId(),
-                entry.getFileEntryId(),
-                entry.getUuid(),
-                entry.getName(),
-                entry.getTitle()
-        );
+        try {
+            DocumentoLibraryComprasHelper.asegurarPermisoVistaAbm(entry);
+
+            return new DocumentoPresupuestoCreado(
+                    entry.getGroupId(),
+                    entry.getFolderId(),
+                    entry.getFileEntryId(),
+                    entry.getUuid(),
+                    entry.getName(),
+                    entry.getTitle()
+            );
+        } catch (Exception errorCreacion) {
+            try {
+                DLFileEntryLocalServiceUtil.deleteFileEntry(entry);
+            } catch (Exception cleanupError) {
+                errorCreacion.addSuppressed(cleanupError);
+                _log.error(
+                        "No se pudo compensar un presupuesto sin permisos. "
+                                + "fileEntryId=" + entry.getFileEntryId(),
+                        cleanupError);
+                throw new Exception(
+                        "No se pudo autorizar el documento de Compras "
+                                + "ni retirar el archivo creado. "
+                                + "Informe a Sistemas antes de reintentar.",
+                        errorCreacion);
+            }
+            throw errorCreacion;
+        }
     }
 
     private RequerimientoCompraPresupuesto registrarAsociacionPresupuesto(
