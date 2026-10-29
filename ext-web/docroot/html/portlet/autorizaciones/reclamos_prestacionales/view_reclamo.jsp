@@ -9,7 +9,6 @@
 ReclamoPrestacional reclamoprestacional = (ReclamoPrestacional) request.getSession().getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
 boolean reclamoPersistido = reclamoprestacional != null && reclamoprestacional.getId_reclamo() > 0;
 String nonceReclamoCompras = ParamUtil.getString(request, WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE, "");
-String nonceRecuperacionReclamo = ParamUtil.getString(request, WebKeysCompras.PARAM_RECUPERACION_RECLAMO_NONCE, "");
 String origenReclamoCompras = ParamUtil.getString(request, "origen", "");
 Object contextoReclamoComprasObj = request.getSession().getAttribute(WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA);
 ReclamoPrestacionalCompraContexto contextoReclamoCompras = contextoReclamoComprasObj instanceof ReclamoPrestacionalCompraContexto
@@ -23,7 +22,6 @@ boolean handoffReclamoComprasValido = !reclamoPersistido && reclamoprestacional 
 if (handoffReclamoComprasValido) {
     request.setAttribute(Constants.CMD, Constants.ADD);
 } else if (!reclamoPersistido
-        && StringUtils.checkEmpty(nonceRecuperacionReclamo)
         && (!StringUtils.checkEmpty(nonceReclamoCompras) || "compras".equalsIgnoreCase(origenReclamoCompras))) {
     request.setAttribute(Constants.CMD, Constants.VIEW);
 }
