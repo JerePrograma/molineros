@@ -664,6 +664,12 @@ if (cantidadOrdenesMedicasInicial > maxOrdenesMedicasPorCarga) {
                 return false;
             }
 
+            if (fecha > new Date()) {
+                alert('La fecha del adjunto no puede ser posterior al día de hoy.');
+                dia.focus();
+                return false;
+            }
+
             fechaValor.value =
                     String(anioNumero)
                             + '-'

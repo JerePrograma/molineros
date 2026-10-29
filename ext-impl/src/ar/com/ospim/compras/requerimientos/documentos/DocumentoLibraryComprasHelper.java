@@ -1007,6 +1007,13 @@ public class DocumentoLibraryComprasHelper
             );
         }
 
+        if (parsed.after(new java.util.Date())) {
+            throw new Exception(
+                    "Fecha del adjunto: "
+                            + "no puede ser posterior al día de hoy."
+            );
+        }
+
         return new Date(
                 parsed.getTime()
         );

@@ -107,7 +107,7 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                                 yearValue="<%= fechaPresupuestoComparativa == null ? -1 : calendarioFechaComparativa.get(Calendar.YEAR) %>"
                                 yearNullable="<%= true %>"
                                 yearRangeStart="<%= 2025 %>"
-                                yearRangeEnd="<%= calendarioFechaComparativa.get(Calendar.YEAR) %>"
+                                yearRangeEnd="<%= Calendar.getInstance().get(Calendar.YEAR) %>"
                                 firstDayOfWeek="<%= calendarioFechaComparativa.getFirstDayOfWeek() - 1 %>" />
                         </span>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getFechaPresupuesto()) %><% } %>
@@ -221,7 +221,7 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
         <% if (comparativaEditable) { %>
             <div style="text-align:right;">
                 <input type="button" id="<portlet:namespace />guardarComparativaBoton" value="Guardar"
-                       onclick="<portlet:namespace />actualizarFechaComparativa(); return <portlet:namespace />uploadPresupuestoRequerimientoCompra();" />
+                       onclick="return <portlet:namespace />uploadPresupuestoRequerimientoCompra();" />
                 <input type="button" value="Eliminar"
                        onclick="return <portlet:namespace />limpiarPresupuestoComparativa();" />
             </div>
@@ -234,6 +234,7 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
 <% if (comparativaEditable) { %>
 <script type="text/javascript">
 function <portlet:namespace />actualizarFechaComparativa() {
+    var valido = true;
     jQuery('#<portlet:namespace />comparativaPrestadorContenido .comparativa-fecha').each(function() {
         var sufijo = jQuery(this).attr('data-sufijo');
         var dia = jQuery('#<portlet:namespace />fechaDia' + sufijo).val();
@@ -244,9 +245,16 @@ function <portlet:namespace />actualizarFechaComparativa() {
             fecha.val('');
             return;
         }
+        if (new Date(parseInt(anio, 10), parseInt(mes, 10), parseInt(dia, 10)) > new Date()) {
+            alert('La fecha del presupuesto no puede ser posterior al día de hoy.');
+            jQuery('#<portlet:namespace />fechaDia' + sufijo).focus();
+            valido = false;
+            return false;
+        }
         mes = parseInt(mes, 10) + 1;
         fecha.val(('0' + dia).slice(-2) + '/' + ('0' + mes).slice(-2) + '/' + anio);
     });
+    return valido;
 }
 jQuery(function() {
     jQuery('#<portlet:namespace />comparativaPrestadorContenido .comparativa-fecha select')

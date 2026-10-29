@@ -1640,6 +1640,10 @@ boolean msgPresupuestoBorrado =
             alert('Seleccione un prestador y espere a que se carguen sus datos.');
             return false;
         }
+        if (typeof <portlet:namespace />actualizarFechaComparativa != 'function'
+                || !<portlet:namespace />actualizarFechaComparativa()) {
+            return false;
+        }
         var archivo = jQuery('#<portlet:namespace />presupuesto_0').val();
         if (!archivo && seccion.find('#<portlet:namespace />comparativaTieneArchivo').val() != 'true') {
             alert('Debe seleccionar el PDF del primer presupuesto.');
