@@ -99,6 +99,7 @@ public class BusquedaLiquidacionServiceImpl {
 						);
 				
 				liquidacion.setFecha_emitido(rs.getDate("fecha_emitido"));
+				liquidacion.setFecha_recibido(rs.getDate("fecha_recibido"));
 				liquidacion.setOp_baja_existente(rs.getBoolean("baja_fecha_op"));
 				
 				try {

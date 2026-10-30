@@ -223,20 +223,6 @@ span-fixed-size {
 		name="<portlet:namespace />tipoNomencladorSeguimiento_filtro" size="8"
 		value='0' />
 		
-	<input
-	    type="hidden"
-	    id="<portlet:namespace/>plan_reclamo_bloqueado"
-	    name="<portlet:namespace/>plan_reclamo_bloqueado"
-	    value="0"
-	/>
-	
-	<input
-	    type="hidden"
-	    id="<portlet:namespace/>nombre_plan_reclamo_bloqueado"
-	    name="<portlet:namespace/>nombre_plan_reclamo_bloqueado"
-	    value=""
-	/>	
-		
 	
 	<div id="helpComprobantes" class="containerPlus draggable {buttons:'c', skin:'default', width:'700',title:'Ayuda',closed:'true'}" style="top: 500px; left: 200px">
 			Ejemplo de factura: CUIT 30999999999 FCP B 00001 - 00000028 F. Emisión 2/07/2020 <br>
@@ -877,100 +863,6 @@ var addprestacion = false;
 var load = false;
 var sectorIni = '';
 
-function normalizarNombrePlan(nombrePlan) {
-
-    if (nombrePlan == null) {
-        return "";
-    }
-
-    return String(nombrePlan)
-        .toUpperCase()
-        .replace(/^\s+|\s+$/g, "")
-        .replace(/\s+/g, " ");
-}
-
-
-function esPlanBloqueadoParaReclamo(nombrePlan) {
-
-    var planNormalizado =
-        normalizarNombrePlan(nombrePlan);
-
-    return planNormalizado == "COBERTURA" ||
-           planNormalizado == "COBERTURA TOTAL O" ||
-           planNormalizado == "COBERTURA TOTAL M";
-}
-
-
-function <portlet:namespace/>validarPlanParaReclamo(
-    nombrePlan,
-    mostrarMensaje
-) {
-
-    var bloqueado =
-        esPlanBloqueadoParaReclamo(nombrePlan);
-
-    jQuery(
-        "#<portlet:namespace/>plan_reclamo_bloqueado"
-    ).val(
-        bloqueado ? "1" : "0"
-    );
-
-    jQuery(
-        "#<portlet:namespace/>nombre_plan_reclamo_bloqueado"
-    ).val(
-        nombrePlan || ""
-    );
-
-    if (bloqueado) {
-
-        if (mostrarMensaje) {
-            alert(
-                'Afiliado con plan "' +
-                nombrePlan +
-                '" no puede cargar un reclamo.'
-            );
-        }
-
-        return false;
-    }
-
-    return true;
-}
-
-
-var ultimoPlanAfiliadoDetectado = null;
-
-
-function verificarPlanAfiliadoDelReclamo() {
-
-    var campoPlan = jQuery(
-        "#<portlet:namespace/>plan"
-    );
-
-    if (campoPlan.length == 0) {
-        return;
-    }
-
-    var nombrePlan = campoPlan.val();
-
-    if (nombrePlan == null) {
-        nombrePlan = "";
-    }
-
-    nombrePlan = String(nombrePlan);
-
-    if (nombrePlan == ultimoPlanAfiliadoDetectado) {
-        return;
-    }
-
-    ultimoPlanAfiliadoDetectado = nombrePlan;
-
-    <portlet:namespace/>validarPlanParaReclamo(
-        nombrePlan,
-        true
-    );
-}
-
 function <portlet:namespace />actualizarAfiliadoPorFecha(diaId, mesId, anioId) {
 	var diaPrest = jQuery("#<portlet:namespace />" + diaId).val();
 	var mesPrest = jQuery("#<portlet:namespace />" + mesId).val();
@@ -1063,9 +955,6 @@ jQuery(document).on("change", "#<portlet:namespace />fechaPrestacionAnioEdicion"
 jQuery(document).ready(function() {
 	load = true;
 	sectorIni = jQuery("#<portlet:namespace />sector").val();
-	
-    verificarPlanAfiliadoDelReclamo();
-    window.setInterval( verificarPlanAfiliadoDelReclamo,500);
 });
 
 jQuery("#<portlet:namespace />sector").change(function(){
@@ -1305,25 +1194,6 @@ function DatosRevisionOk(){
 }
 
 function ValidarDatosObligatorios(Edicion){
-	
-	var planBloqueado = jQuery(
-		    "#<portlet:namespace/>plan_reclamo_bloqueado"
-		).val();
-
-		if (planBloqueado == "1") {
-
-		    var nombrePlan = jQuery(
-		        "#<portlet:namespace/>nombre_plan_reclamo_bloqueado"
-		    ).val();
-
-		    alert(
-		        'Afiliado con plan "' +
-		        nombrePlan +
-		        '" no puede cargar un reclamo.'
-		    );
-
-		    return false;
-		}
 		
 	var date = new Date();
 //	var baja_fecha = jQuery('#<portlet:namespace />baja_fecha').val();
@@ -1461,21 +1331,6 @@ function <portlet:namespace />editaReclamo(fromAutoriza) {
 
 
 function <portlet:namespace />siguienteSolapa() {
-
-	var planBloqueado = jQuery(
-		    "#<portlet:namespace/>plan_reclamo_bloqueado"
-		).val();
-
-		if (planBloqueado == "1") {
-
-		    var nombrePlan = jQuery(
-		        "#<portlet:namespace/>nombre_plan_reclamo_bloqueado"
-		    ).val();
-
-		    alert('No se permite cargar un reclamo para el afiliado con plan "' + nombrePlan);
-
-		    return false;
-		}
 		
 	    var accionEnCurso = document.<portlet:namespace />reclamo_fm.<portlet:namespace /><%= Constants.CMD %>.value;
 		document.<portlet:namespace />reclamo_fm.<portlet:namespace /><%= Constants.CMD %>.value='<%=Constants.MOVE %>';

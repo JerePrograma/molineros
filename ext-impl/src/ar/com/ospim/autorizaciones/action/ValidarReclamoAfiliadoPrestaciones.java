@@ -18,6 +18,8 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.struts.JSONAction;
 import com.liferay.portal.util.PortalUtil;
 
+import ar.com.ospim.afiliados.beans.AfiPlan;
+import ar.com.ospim.afiliados.services.PlanServiceUtil;
 import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
 import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
@@ -46,7 +48,9 @@ public class ValidarReclamoAfiliadoPrestaciones extends JSONAction  {
 		
 		
         String baja = ParamUtil.getString(req, "baja");
-		
+        String cuil = ParamUtil.getString(req, "cuil");
+        String tipoPedido = ParamUtil.getString(req, "tipoPedido");
+        	
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 		Date bajaFecha =null;
 		try {
@@ -67,9 +71,30 @@ public class ValidarReclamoAfiliadoPrestaciones extends JSONAction  {
 			codError = "6";
 		}
 		
-		return  resultado = "{ \"codError\" : \"" 
-								    + codError 
-							        + "\" }";
+		boolean planBloqueado = false;
+
+		if (cuil != null && !cuil.trim().equals("")) {
+
+		    try {
+		        AfiPlan afiPlan = PlanServiceUtil.getInstance().buscarUltimoPlanAportes(cuil);
+
+		        if (afiPlan != null && afiPlan.getPlan() != null) {
+
+		            Integer idPlan =afiPlan.getPlan().getId();
+		            planBloqueado = EditarReclamosEntryAction.esPlanBloqueadoParaReclamo(idPlan, tipoPedido);
+		        }
+
+		    } catch (Exception e) {
+		        _log.error("Error validando plan del afiliado " + cuil, e);
+		    }
+		}
+		
+		return resultado =
+			    "{ \"codError\" : \"" +
+			    codError +
+			    "\", \"planBloqueado\" : \"" +
+			    planBloqueado +
+			    "\" }";
 		  
 	}
 			

@@ -292,21 +292,7 @@ span-fixed-size {
 	
 <div id="<portlet:namespace />global"
 		align="left"
-		style="width:75%;">	
-	
-	<input
-	    type="hidden"
-	    id="<portlet:namespace/>plan_reclamo_bloqueado"
-	    name="<portlet:namespace/>plan_reclamo_bloqueado"
-	    value="0"
-	/>
-	
-	<input
-	    type="hidden"
-	    id="<portlet:namespace/>nombre_plan_reclamo_bloqueado"
-	    name="<portlet:namespace/>nombre_plan_reclamo_bloqueado"
-	    value=""
-	/>
+		style="width:75%;">
 
 	<input type="hidden" id="<portlet:namespace />fprest"
 		name="<portlet:namespace />fprest" value="<%=prestacionFechaString%>" />
@@ -1796,91 +1782,6 @@ function cargarObservacionesMedicas(lista,observacionSeleccionada) {
 	    }
 	}
 
-function normalizarNombrePlan(nombrePlan) {
-
-    if (nombrePlan == null) {
-        return "";
-    }
-
-    return String(nombrePlan)
-        .toUpperCase()
-        .replace(/^\s+|\s+$/g, "")
-        .replace(/\s+/g, " ");
-}
-
-
-function esPlanBloqueadoParaReclamo(nombrePlan, tipoPedido) {
-
-	    if (tipoPedido != "REINTEGRO") {
-	        return false;
-	    }
-
-	    var planNormalizado =
-	        normalizarNombrePlan(nombrePlan);
-
-	    return planNormalizado == "COBERTURA" ||
-	           planNormalizado == "COBERTURA TOTAL O" ||
-	           planNormalizado == "COBERTURA TOTAL M";
-	}
-
-
-function <portlet:namespace/>validarPlanParaReclamo(nombrePlan,mostrarMensaje) {
-
-	    var tipoPedido = jQuery("#<portlet:namespace/>tipopedido").val();
-
-	    var bloqueado = esPlanBloqueadoParaReclamo(nombrePlan,tipoPedido);
-
-	    jQuery("#<portlet:namespace/>plan_reclamo_bloqueado").val(bloqueado ? "1" : "0");
-
-	    jQuery("#<portlet:namespace/>nombre_plan_reclamo_bloqueado").val(bloqueado ? nombrePlan : "");
-
-	    if (bloqueado) {
-
-	        if (mostrarMensaje) {
-	            alert('Afiliado con plan "' + nombrePlan +'" no puede cargar un reclamo de tipo REINTEGRO.');
-	        }
-
-	        return false;
-	    }
-
-	    return true;
-	}
-
-var ultimaValidacionPlanDetectada = null;
-
-function verificarPlanAfiliadoDelReclamo() {
-
-    var campoPlan = jQuery("#<portlet:namespace/>plan");
-
-    if (campoPlan.length == 0) {
-        return;
-    }
-
-    var nombrePlan = campoPlan.val();
-
-    if (nombrePlan == null) {
-        nombrePlan = "";
-    }
-
-    nombrePlan = String(nombrePlan);
-
-    var tipoPedido = jQuery("#<portlet:namespace/>tipopedido").val();
-
-    if (tipoPedido == null) {
-        tipoPedido = "";
-    }
-    
-    var claveValidacion =
-        nombrePlan + "|" + tipoPedido;
-
-    if (claveValidacion == ultimaValidacionPlanDetectada) {
-        return;
-    }
-
-    ultimaValidacionPlanDetectada = claveValidacion;
-
-    <portlet:namespace/>validarPlanParaReclamo(nombrePlan, true);
-}
 
 jQuery(document).ready(function() {
 	load = true;
@@ -1927,11 +1828,6 @@ jQuery(document).ready(function() {
 
 	filtrarLetraComprobante();
 	integracionReclamo();
-
-	//Revisa el afiliado que ya vino cargado, por ejemplo desde la aplicación.
-	verificarPlanAfiliadoDelReclamo();
-
-	window.setInterval(verificarPlanAfiliadoDelReclamo,500);
 
 });
 
@@ -2003,10 +1899,8 @@ jQuery("#<portlet:namespace />tipopedido").change(function() {
 
 	        filtrarLetraComprobante();
 	        integracionReclamo();
-
 	        tipoGestionCierreReclamo();
 
-	        verificarPlanAfiliadoDelReclamo();
 	        
 	    } catch (err) {
 	        alert("Error al cambiar el tipo de pedido");
@@ -2429,17 +2323,6 @@ function DatosRevisionOk(){
 }
 
 function ValidarDatosObligatorios(Edicion){
-
-	var planBloqueado = jQuery("#<portlet:namespace/>plan_reclamo_bloqueado").val();
-
-		if (planBloqueado == "1") {
-
-		    var nombrePlan = jQuery("#<portlet:namespace/>nombre_plan_reclamo_bloqueado").val();
-
-		    alert('Afiliado con plan "' +nombrePlan +'" no puede cargar un reclamo.');
-
-		    return false;
-		}
 		
 	var valor = 0;
 	valor=jQuery('#<portlet:namespace />cantprestacioneslista').val();

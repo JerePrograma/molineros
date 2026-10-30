@@ -81,6 +81,7 @@ import ar.com.ospim.procesaArchivos.beans.opcionesss.DetalleOpcionesSS;
 import ar.com.ospim.tesoreria.WebKeysCajaChica;
 import ar.com.ospim.tesoreria.beans.caja_chica.CajaChica;
 import ar.com.ospim.tesoreria.beans.caja_chica.ComprobanteCajaChica;
+import ar.com.ospim.tesoreria.reportes.ReportePadronesPPP;
 import ar.com.ospim.tesoreria.services.LiquidaDesreguladosServiceUtil;
 import ar.com.ospim.util.StringUtils;
 import ar.com.uoma.facturacion.Factura;
@@ -125,7 +126,7 @@ public class TxtServlet extends HttpServlet {
 	private static final String INTERBANKING_OPS_EMAIL = "INTERBANKING_OPS_EMAIL";
 	private static final String R331_ZIP = "R331_ZIP";
 	private static final String RETENCIONES_ARBA_IIBB_A122 = "RETENCIONES_ARBA_IIBB_A122";
-	
+	private static final String REPORTE_PADRONES_PPP = "REPORTE_PADRONES_PPP";
 
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
@@ -1234,6 +1235,10 @@ public class TxtServlet extends HttpServlet {
 					sos.close();
 
 				}
+			}else if (accion.equals(REPORTE_PADRONES_PPP)) {
+				
+			    ReportePadronesPPP.generarCSV(req, res);
+			    
 			} else if (accion.equals(ORDENES_PAGO_EXPORTAR_IMAGENES)) {
 
 				String zipNombre;

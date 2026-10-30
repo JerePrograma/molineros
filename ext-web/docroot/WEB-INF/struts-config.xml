@@ -7315,6 +7315,8 @@
 			<forward name="portlet.tesoreria.aportes.contribuciones.historico" path="portlet.tesoreria.aportes.contribuciones.historico"/>
 		</action>
 
+		<action path="/afiliados/reporte_padrones_ppp" forward="portlet.afiliados.reporte.reporte_padrones_ppp" />
+
  </action-mappings>
   
 </struts-config>

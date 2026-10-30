@@ -192,29 +192,33 @@ public class ReporteLiquidacionesExcel extends ReporteXLS {
 		cell6H.setCellValue(new HSSFRichTextString("Fecha Emisión"));
 		cell6H.setCellStyle(styleBold);
 		
-		HSSFCell cell7H = rowHeader.createCell(9);
+		HSSFCell cellFechaRecibidoH = rowHeader.createCell(9);
+		cellFechaRecibidoH.setCellValue(new HSSFRichTextString("Fecha Recibido"));
+		cellFechaRecibidoH.setCellStyle(styleBold);
+		
+		HSSFCell cell7H = rowHeader.createCell(10);
 		cell7H.setCellValue(new HSSFRichTextString("N° Orden Compra"));
 		cell7H.setCellStyle(styleBold);
 
-		HSSFCell cell71H = rowHeader.createCell(10);
+		HSSFCell cell71H = rowHeader.createCell(11);
 		cell71H.setCellValue(new HSSFRichTextString("Alta Usuario"));
 		cell71H.setCellStyle(styleBold);
 		
 		
-		HSSFCell cell72H = rowHeader.createCell(11);
+		HSSFCell cell72H = rowHeader.createCell(12);
 		cell72H.setCellValue(new HSSFRichTextString("Alta Fecha"));
 		cell72H.setCellStyle(styleBold);
 		
-		HSSFCell cell8H = rowHeader.createCell(12);
+		HSSFCell cell8H = rowHeader.createCell(13);
 		cell8H.setCellValue(new HSSFRichTextString("Observaciones"));
 		cell8H.setCellStyle(styleBold);
 		
-		HSSFCell cell9H = rowHeader.createCell(13);
+		HSSFCell cell9H = rowHeader.createCell(14);
 		cell9H.setCellValue(new HSSFRichTextString("Imágenes"));
 		cell9H.setCellStyle(styleBold);
 
 		
-		HSSFCell cell14H = rowHeader.createCell(14);
+		HSSFCell cell14H = rowHeader.createCell(15);
 		cell14H.setCellValue(new HSSFRichTextString("Días Transcurridos"));
 		cell14H.setCellStyle(styleBold);
 		
@@ -255,6 +259,7 @@ public class ReporteLiquidacionesExcel extends ReporteXLS {
 		sheet.autoSizeColumn((short) 12);
 		sheet.autoSizeColumn((short) 13);
 		sheet.autoSizeColumn((short) 14);
+		sheet.autoSizeColumn((short) 15);
 		return wb;
 	}
 
@@ -322,33 +327,40 @@ public class ReporteLiquidacionesExcel extends ReporteXLS {
 				.toString() : ""));
 		cell6.setCellStyle(styleDate);
 
-		HSSFCell cell7 = rowHeader.createCell(9);
+		HSSFCell cellFechaRecibido = rowHeader.createCell(9);
+		cellFechaRecibido.setCellValue(new HSSFRichTextString(
+				liquidacion.getFecha_recibido() != null 
+				? liquidacion.getFecha_recibido().toString() 
+				: ""));
+		cellFechaRecibido.setCellStyle(styleDate);
+		
+		HSSFCell cell7 = rowHeader.createCell(10);
 		cell7.setCellValue(new HSSFRichTextString(liquidacion
 				.getIdOC() != 0 ? String.valueOf(liquidacion.getIdOC()) : ""));
 		cell7.setCellStyle(styleAll);
 		
-		HSSFCell cell71 = rowHeader.createCell(10);
+		HSSFCell cell71 = rowHeader.createCell(11);
 		cell71.setCellValue(new HSSFRichTextString(liquidacion
 				.getAlta_usr() != null ? String.valueOf(liquidacion.getAlta_usr()) : ""));
 		cell71.setCellStyle(styleAll);
 		
-		HSSFCell cell72 = rowHeader.createCell(11);
+		HSSFCell cell72 = rowHeader.createCell(12);
 		cell72.setCellValue(new HSSFRichTextString(liquidacion.getAlta_fecha() != null ? String.valueOf(liquidacion.getAlta_fecha().toString()) : ""));
 		cell72.setCellStyle(styleAll);
 		
-		HSSFCell cell8 = rowHeader.createCell(12);
+		HSSFCell cell8 = rowHeader.createCell(13);
 		cell8.setCellValue(new HSSFRichTextString(liquidacion
 				.getObservaciones() != null ? liquidacion.getObservaciones()
 				: ""));
 		cell8.setCellStyle(styleAll);
 		
 		
-		HSSFCell cell9 = rowHeader.createCell(13);
+		HSSFCell cell9 = rowHeader.createCell(14);
 		cell9.setCellValue(new HSSFRichTextString(imagenes!=null && imagenes.size()>0  ? "SI"
 				: ""));
 		cell9.setCellStyle(styleAll);
 
-		HSSFCell cell14 = rowHeader.createCell(14);
+		HSSFCell cell14 = rowHeader.createCell(15);
 		cell14.setCellValue(liquidacion.getDiasTranscurridos());
 		cell14.setCellStyle(styleAll);
 		

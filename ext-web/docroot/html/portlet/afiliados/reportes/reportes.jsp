@@ -21,7 +21,7 @@
 		boolean padron_afiliaciones= PermissionUtil.userContainsRole(user,"reporte_padron_afiliados") || 
 				PermissionUtil.userContainsRole(user,"padron_afiliados_consulta_externa");
 		boolean empleadores=PermissionUtil.userContainsRole(user,WebKeysTesoreria.REPORTE_EMPLEADORES);
-				
+		boolean reporte_padrones_ppp = PermissionUtil.userContainsRole(user, "reporte_padrones_ppp");	
 		
 		
 		int total = 1;
@@ -128,6 +128,15 @@
 			row28.addText("Informe Aportes Monotributistas", rowURL28);
 			resultRows.add(row28);
 		}	
+		
+		if (reporte_padrones_ppp) {
+		    ResultRow rowPPP = new ResultRow(1, 1, 29);
+		    PortletURL rowURLPPP = renderResponse.createRenderURL();
+		    rowURLPPP.setWindowState(LiferayWindowState.MAXIMIZED);
+		    rowURLPPP.setParameter("struts_action", "/afiliados/reporte_padrones_ppp");
+		    rowPPP.addText("Listado de Padrones PPP", rowURLPPP);
+		    resultRows.add(rowPPP);
+		}
 	%>	
 	
 <liferay-ui:search-iterator paginate="false" searchContainer="<%= searchContainer %>" />

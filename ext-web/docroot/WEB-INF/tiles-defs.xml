@@ -4656,5 +4656,9 @@
     </definition>
 
     <!-- COMPRAS -->
+    
+    <definition name="portlet.afiliados.reporte.reporte_padrones_ppp" extends="portlet.afiliados">
+    	<put name="portlet_content" value="/portlet/afiliados/reportes/reporte_padrones_ppp.jsp" />
+    </definition>
 
 </tiles-definitions>

@@ -81,7 +81,6 @@ import ar.com.ospim.mail.MailUtils;
 import ar.com.ospim.util.DateUtils;
 import ar.com.ospim.util.StringUtils;
 
-
 public class PreAutorizacionAction extends PortletAction {
 	
 	private Logger _log = Logger.getLogger(this.getClass());
@@ -1431,9 +1430,11 @@ public class PreAutorizacionAction extends PortletAction {
  		
 // 		Seccional seccional =SeccionalServiceUtil.buscarSeccionalById(preautorizacion.getAfiliado().getSeccional().getId());
  		
-//Agregado para el manejo de DIABETES 	2026-04-10	
+ 		//Agregado para el manejo de DIABETES 	2026-04-10	
+ 		boolean esDiabetes = false;
+ 		String destinoDIABETES = null;
+ 		String destinoNUTRAR = null;
  		if(!preautorizacion.isAlojamiento()) {
- 		   boolean esDiabetes=false;
 		   if(preautorizacion.getAfiliado()!=null) {
 			BusquedaSituacionMedicaFiltro   busquedaSituacionFiltro  = new BusquedaSituacionMedicaFiltro(preautorizacion.getFecha(), preautorizacion.getFecha(),
 					preautorizacion.getAfiliado().getInte() ,preautorizacion.getAfiliado().getCuil_titular(),2,0);
@@ -1442,15 +1443,17 @@ public class PreAutorizacionAction extends PortletAction {
 				if(busqueda!=null && busqueda.size()>0) esDiabetes=true;
 			} catch (Exception e) {}
 		   }
- 		
+		   
  		   if(esDiabetes) {
- 			String destinoDIABETES=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_DIABETES");
+ 			destinoDIABETES=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_DIABETES");
+ 			destinoNUTRAR = TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_NUTRAR");
+ 			
  			if(destinoDIABETES!=null && destinoDIABETES.length()>0) {
  			  if(!destino.isEmpty() && !";".equals(destino.substring(destino.length() - 1))){
  				destino+=";";
  			  }
  			  destino +=destinoDIABETES;
- 			}  
+ 			}
  		   }
  		}
 //Fin Agregado Manejo de DIABETES 		
@@ -1497,7 +1500,68 @@ public class PreAutorizacionAction extends PortletAction {
 	 				" SECC.: " + secc + " " +
 	 			(preautorizacion.isDiscapacidad()?"-DISCA":"" )	;
  		
+ 		// Asunto adicional para Nutrar - Diabetes
+ 		String asuntoNutrar = "";
+
+ 		if (esDiabetes) {
+ 		    String tercMONO = TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_TERCERIZADORA_MONOTRIBUTO");
+ 		    boolean esMonotributista = tercMONO != null 
+ 		    		&& preautorizacion.getAfiliado() != null 
+ 		    		&& tercMONO.equals(preautorizacion.getAfiliado().getId_tercerizadora());
+
+ 		    asuntoNutrar = (esMonotributista ? "OSPIM 501 DBT - " : "OSPIM 526 DBT - ") + preautorizacion.getAfiliado().getApeNombre();
+ 		}
  		
+ 		// Cuerpo adicional para Nutrar
+ 		String cuerpoNutrar = "";
+ 		String emailAfiliado = "";
+ 		String celularAfiliado = "";
+
+ 		if (esDiabetes) {
+
+ 		    Afiliado afiliado = preautorizacion.getAfiliado();
+
+ 		    if (afiliado == null) {
+ 		        _log.error("Afiliado nulo al preparar correo Nutrar. ID: "+ preautorizacion.getId());
+ 		    } else {
+
+ 		        try {
+ 		            Afiliado afiliadoCompleto = EditarAfiliadoServiceUtil.getAfiliadoEntryInclusoDadoBaja(afiliado.getCuil_titular(), afiliado.getInte());
+
+ 		            if (afiliadoCompleto != null) {
+ 		                afiliado = afiliadoCompleto;
+ 		            }
+
+ 		        } catch (Exception e) {
+ 		            _log.error("Error recuperando datos de contacto para Nutrar. ID: " + preautorizacion.getId(), e);
+ 		        }
+
+ 		        if (afiliado.getEmail() != null) {
+ 		            emailAfiliado = afiliado.getEmail().trim();
+ 		        }
+
+ 		       if (afiliado.getDomicilios() != null
+ 		    	        && afiliado.getDomicilios().length > 0
+ 		    	        && afiliado.getDomicilioDefault() != null) {
+
+ 		    	    String codigoArea = afiliado.getDomicilioDefault().getCod_area_celular();
+ 		    	    String numeroCelular = afiliado.getDomicilioDefault().getCelular();
+
+ 		    	    codigoArea = codigoArea != null ? codigoArea.trim() : "";
+ 		    	    numeroCelular = numeroCelular != null ? numeroCelular.trim() : "";
+
+ 		    	    celularAfiliado = numeroCelular.isEmpty() ? "" : (codigoArea.isEmpty() ? numeroCelular : codigoArea + " " + numeroCelular);
+ 		    	}
+
+ 		        String nombreAfiliado = afiliado.getApeNombre();
+
+ 		        cuerpoNutrar =
+ 		            "Se envía documentación adjunta.\n\n" +
+ 		            "Nombre y apellido: " + nombreAfiliado + "\n" +
+ 		            "Email: " + emailAfiliado + "\n" +
+ 		            "Celular: " + celularAfiliado;
+ 		    }
+ 		}
  		
  		if(preautorizacion.isAlojamiento()) {
  		  subject += "-ALOJAMIENTO";	
@@ -1582,15 +1646,85 @@ public class PreAutorizacionAction extends PortletAction {
 // 		result=MailUtils.enviarMailGmailconAdjuntoYRespuesta(from, password, emails, subject, body, adjunto);
  		
 //DS - Agregado para segmentar los adjuntos a 25 MB 
- 		//DS -20230307 agregado para subsanar error envio mail gmail
- 		List<String>em=new ArrayList<String>();
- 		for(ArrayList<MimeBodyPart> adj:lAdjuntos) {
- 			for(String email:emails) {
- 			  em.clear();
- 			  em.add(email);
- 			  result=MailUtils.enviarMailGmailconAdjuntoYRespuesta(from, password, em, subject, body, adj);
- 			}  
+ 		//DS -20230307 agregado para subsanar error envio mail gmail	
+ 		List<String> em = new ArrayList<String>();
+
+ 		for (ArrayList<MimeBodyPart> adj : lAdjuntos) {
+ 		    for (String email : emails) {
+ 		        em.clear();
+ 		        em.add(email);
+
+ 		        result = MailUtils.enviarMailGmailconAdjuntoYRespuesta(from, password, em, subject, body, adj);
+ 		    }
  		}
+ 		
+ 		// ENVIO ADICIONAL A NUTRAR POR DIABETES
+ 		if (esDiabetes) {
+ 			if (destinoNUTRAR == null || destinoNUTRAR.trim().isEmpty()) {
+ 		        _log.error("No hay destinatario configurado para Diabetes");
+ 		    } else if (lAdjuntos.isEmpty()) {
+ 		        _log.error("No hay adjuntos para enviar a Nutrar. ID: "+ preautorizacion.getId());
+ 		    } else {
+ 		       List<String> emailsNutrar = new ArrayList<String>();
+ 		       
+ 		      for (String email : destinoNUTRAR.split(";")) {
+ 		    	    if (!email.trim().isEmpty()) {
+ 		    	        emailsNutrar.add(email.trim());
+ 		    	    }
+ 		    	}
+ 		       
+ 		        if (emailsNutrar.isEmpty()) {
+ 		            _log.error("No hay destinatarios para Nutrar. ID: " + preautorizacion.getId());
+ 		        } else {
+
+ 		            boolean envioNutrarCorrecto = true;
+ 		            boolean intentoEnvio = false;
+
+ 		            for (ArrayList<MimeBodyPart> adj : lAdjuntos) {
+
+ 		                if (adj == null || adj.isEmpty()) {
+ 		                    continue;
+ 		                }
+
+ 		                intentoEnvio = true;
+ 		                boolean enviado = true;
+
+ 		                for (String emailNutrar : emailsNutrar) {
+
+ 		                  List<String> destinatarioNutrar = new ArrayList<String>();
+ 		                  destinatarioNutrar.add(emailNutrar);
+
+ 		                  boolean resultadoEnvio =
+ 		                      MailUtils.enviarMailGmailconAdjuntoYRespuesta(
+ 		                          from,
+ 		                          password,
+ 		                          destinatarioNutrar,
+ 		                          asuntoNutrar,
+ 		                          cuerpoNutrar,
+ 		                          adj
+ 		                      );
+
+ 		                  if (!resultadoEnvio) {
+ 		                      enviado = false;
+ 		                  }
+ 		              }
+
+ 		                if (!enviado) {
+ 		                    envioNutrarCorrecto = false;
+ 		                }
+ 		            }
+
+ 		            if (!intentoEnvio) {
+ 		                _log.error("No hay archivos para Nutrar. ID: " + preautorizacion.getId());
+ 		            } else if (envioNutrarCorrecto) {
+ 		                _log.info("Mail Nutrar enviado. ID: " + preautorizacion.getId());
+ 		            } else {
+ 		                _log.error("Error enviando mail Nutrar. ID: " + preautorizacion.getId());
+ 		            }
+ 		        }
+ 		    }
+ 		}
+ 		// FIN ENVIO NUTRAR
  		
  		if(preautorizacion.isART()) {
  	 		  String d=TraeListasServiceUtil.getSystemConfig("PREAUTORIZACION_EMAIL_DESTINATARIO_POSIBLE_ART");
@@ -1698,6 +1832,5 @@ public class PreAutorizacionAction extends PortletAction {
 		session.setAttribute(WebKeysAutorizaciones.PREAUTORIZACION_EN_EDICION, pa);
 		
 	}
-	
 	
 }

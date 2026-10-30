@@ -74,9 +74,6 @@ import ar.com.ospim.util.StringUtils;
 	
 	private static final String RECLAMO_PRESTACION_ESTADO_ORIGINAL =
             "RECLAMO_PRESTACION_ESTADO_ORIGINAL";
-	private static final int PLAN_COBERTURA = 3;
-	private static final int PLAN_COBERTURA_TOTAL_O = 9;
-	private static final int PLAN_COBERTURA_TOTAL_M = 20;
 	public void processAction(ActionMapping mapping, ActionForm form,
 			PortletConfig portletConfig, ActionRequest actionRequest,
 			ActionResponse actionResponse) throws Exception {
@@ -607,7 +604,7 @@ import ar.com.ospim.util.StringUtils;
 				}
 
 				boolean planBloqueado = esPlanBloqueadoParaReclamo(idPlanActual, reclamoPrestacional.getTipoPedido());
-
+				
 				if (planBloqueado) {
 
 				    String mensajePlan = "Afiliado con plan \"" + nombrePlanActual + "\" no puede cargar un reclamo.";
@@ -1767,25 +1764,39 @@ import ar.com.ospim.util.StringUtils;
 	    return cuenta;
 	}
 
-	private boolean esPlanBloqueadoParaReclamo(
-	        Integer idPlan,
-	        String tipoPedido) {
+	private static final String CONFIG_PLANES_BLOQUEADOS =
+		    "RECLAMO_REINTEGRO_PLANES_BLOQUEADOS";
 
-	    if (!"REINTEGRO".equalsIgnoreCase(tipoPedido)) {
-	        return false;
-	    }
 
-	    if (idPlan == null) {
-	        return false;
-	    }
+		public static boolean esPlanBloqueadoParaReclamo(Integer idPlan,String tipoPedido) {
 
-	    return idPlan.intValue() ==
-	            PLAN_COBERTURA
-	        || idPlan.intValue() ==
-	            PLAN_COBERTURA_TOTAL_O
-	        || idPlan.intValue() ==
-	            PLAN_COBERTURA_TOTAL_M;
-	}
+		    if (!"REINTEGRO".equalsIgnoreCase(tipoPedido)) {
+		        return false;
+		    }
+
+		    if (idPlan == null) {
+		        return false;
+		    }
+
+		    String planesBloqueados = TraeListasServiceUtil.getSystemConfig(CONFIG_PLANES_BLOQUEADOS);
+
+		    if (StringUtils.checkEmpty(planesBloqueados)) {
+		        return false;
+		    }
+
+		    String[] ids = planesBloqueados.split(",");
+
+		    for (String id : ids) {
+
+		        if (
+		            String.valueOf(idPlan).equals(id.trim())
+		        ) {
+		            return true;
+		        }
+		    }
+
+		    return false;
+		}
 	
 	private AfiPlan obtenerPlanActual(ReclamoPrestacional reclamo) {
 
