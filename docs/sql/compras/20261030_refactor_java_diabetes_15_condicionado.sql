@@ -1,17 +1,29 @@
--- Nueva seleccion Diabetes: requiere el catalogo y canonicos dedicados
--- aprobados en la proxima migracion. NO crea prestaciones ni cambia IDs.
--- No ejecutar hasta instalar Java compatible y certificar los escritores.
+-- Nueva seleccion Diabetes SOLO QA12/devmolineros, con catalogo dedicado verificado.
+-- No crea prestaciones ni cambia IDs. Aplicar despues del Java compatible.
+-- Los efectos SQL vigentes se conservan; este archivo no autoriza retirarlos.
 -- 1388 y sus detalles se conservan exactamente; correccion externa autorizada.
 BEGIN;
 SET LOCAL statement_timeout = '15s';
 SET LOCAL lock_timeout = '2s';
+DO $destino_qa12$
+BEGIN
+    IF inet_server_addr() IS DISTINCT FROM '12.1.1.12'::inet
+       OR current_database() IS DISTINCT FROM 'devmolineros' THEN
+        RAISE EXCEPTION 'La asociacion Diabetes solo se activa en QA12/devmolineros.';
+    END IF;
+    IF (SELECT count(*) FROM public.system_config WHERE id='COMPRAS_REFACTOR_CONFIG_VERSION')<>1
+       OR NOT EXISTS(SELECT 1 FROM public.system_config
+                     WHERE id='COMPRAS_REFACTOR_CONFIG_VERSION' AND valor='20261030') THEN
+        RAISE EXCEPTION 'Falta la configuracion de la entrega Java; no activar tipo15.';
+    END IF;
+END;
+$destino_qa12$;
 LOCK TABLE compras.sector_nomenclador IN SHARE ROW EXCLUSIVE MODE;
 DO $diabetes$
 DECLARE
-    -- Completar con la identidad aprobada en la migracion de catalogo.
-    -- NULL mantiene el script bloqueado; no asumir el significado de 15.
-    descripcion_aprobada VARCHAR := NULL;
-    codigo_aprobado VARCHAR := NULL;
+    -- Identidad real verificada en QA12; altas dedicadas copiadas de fuente comprobada.
+    descripcion_aprobada VARCHAR := 'INSUMOS DIABETES';
+    codigo_aprobado VARCHAR := 'ID';
 BEGIN
     IF descripcion_aprobada IS NULL THEN
         RAISE EXCEPTION 'Falta indicar descripcion y codigo aprobados para el catalogo 15 de Diabetes.';

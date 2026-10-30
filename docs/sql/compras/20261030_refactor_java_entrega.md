@@ -142,11 +142,17 @@ El informe externo identifica por host los resultados posteriores.
 2. `20261030_refactor_java_configuracion_reversion.sql`: retira solo esas
    claves si version y valores siguen exactamente iguales. Detiene la reversion
    ante drift. Aplicar unicamente coordinado con el artefacto correspondiente.
-3. `20261030_refactor_java_diabetes_15_condicionado.sql`: cambia solamente
-   la asociacion especifica de nuevas selecciones de Diabetes. Permanece
-   bloqueado hasta completar la identidad aprobada del catalogo 15 y comprobar
-   canonicos dedicados activos. El catalogo real relevado aun no contiene 15.
-   No crea identidades ficticias, no modifica 10415/11452 ni detalles historicos.
+3. `20261030_refactor_java_diabetes_15_catalogo_qa.sql`: altas dedicadas en QA12,
+   con tres maestros, tres planes y 16 conceptos de fuente comprobada. Resuelve
+   las secuencias reales del DEFAULT y avanza solo con nextval, incluso si estan
+   atrasadas; nunca retrocede ni renumera filas. Rechaza deriva/duplicados y la
+   repeticion conserva xmin/ctid y secuencias. No cambia la asociacion.
+   `20261030_refactor_java_diabetes_15_catalogo_qa_reversion.sql` conserva las
+   identidades activas y detiene un rollback destructivo; no borra cargas.
+   `20261030_refactor_java_diabetes_15_condicionado.sql` activa solamente la
+   asociacion de nuevas selecciones de Diabetes en QA12, despues de instalar
+   Java compatible. El tipo real es 15, codigo ID, INSUMOS DIABETES. Comprueba
+   host/base, version de configuracion, catalogo activo y fila objetivo exacta.
 4. `20261030_refactor_java_efectos_validar.sql`,
    `20261030_refactor_java_notificaciones_validar.sql` y
    `20261030_refactor_java_orden_validar.sql`: verificaciones de definiciones
@@ -205,3 +211,100 @@ La entrega no acredita cierre total mientras falte el catalogo 15 real,
 certificar escritores externos antes de retirar efectos SQL, aplicar el
 artefacto compatible y ejecutar smoke/UI reales. No deben borrarse cargas
 tipo 15 para facilitar una reversion.
+
+## QA12: ejecucion y control del despliegue local
+
+El usuario confirmo QA como PostgreSQL 12.1.1.12/devmolineros y despliegue
+Java LOCAL en C:\apache-tomcat-8.5.23. El servidor remoto .12 detras de Apache
+no es el destino de los JAR de esta tarea. La DB QA usa PostgreSQL 9.6.15.
+
+Se relevaron 104 funciones de Compras y cinco triggers en QA12. El anexo del
+informe registra cinco diferencias de cuerpo frente al corte .28 y una funcion
+legacy extra sin caller Java conocido. La variante de duplicidad solo cambia
+el mensaje; la compatibilidad legacy omite una excepcion puntual que el Java
+lee de configuracion. Esa excepcion no tiene requerimiento ni par vigente en
+QA. Los validadores aceptan exclusivamente las dos variantes QA conocidas,
+por firma/hash y solo en el host .12; no se equiparan sus reglas ni se cambian
+funciones. Las 104 definiciones y los cinco triggers se conservaron.
+
+Se aplicaron en QA12 las 67 claves nuevas mas el marcador, con backup objetivo
+vacio. Avance y repeticion terminaron en 0; las 68 entradas son unicas y el
+segundo paso no cambio xmin/ctid. Una sonda Java/JDBC real de solo lectura paso
+314 comprobaciones usando las clases reales y sin inicializar pools globales.
+
+El catalogo dedicado se obtuvo solo de tres prestaciones activas con uso real
+en el rubro 8 de produccion: 11504/9100059 SET DE INFUSION MMT 397,
+11505/9100060 SENSORES 7020 y 11506/9100061 RESERVORIO MMT 332. Se excluyeron
+Farmacia, la bomba sin uso en ese rubro y los genericos compartidos. En QA se
+crearon 11507, 11508 y 11509 de tipo 15, sus tres planes y sus 16 conceptos,
+incluidas las versiones solapadas originales. No se reclasificaron maestros.
+La prueba aislada en QA12 aprobo 110 casos, incluida secuencia atrasada,
+repeticion y rechazo de deriva/duplicados. La aplicacion real y su repeticion
+aprobaron 15 comprobaciones; las demas filas y asociaciones quedaron intactas.
+
+Los JAR instalados son ext-service SHA256
+70c14877943cd1866e4eff932d4585683ecdaa689b7bae8c7b7baefe1f7a7338 y
+ext-impl SHA256
+836ac9831bee44c95ce598b57d49e0e271732b77f7e64a2ff1f62b348a29b66f.
+Los targets existentes usados fueron ext-service deploy y ext-impl
+deploy-impl-jar, sin deploy-properties ni despliegue global. Se respaldaron
+los dos JAR y 28 archivos web; las cuatro propiedades runtime no cambiaron.
+
+El primer arranque fallo con HTTP 500 por un error de esta instalacion: se
+copiaron struts-config.xml y tiles-defs.xml fuente sobre las bases runtime.
+El contrato legacy usa BASE y EXTENSION separadas: el target ext-web merge
+conserva las bases de modules/portal-web.war y lleva los fuentes a *-ext.xml.
+La ausencia de message-resources explico PortalInstances._initCompany NPE;
+la clase Liferay no fue modificada ni hubo un defecto de Compras en esa causa.
+Se restauraron las dos bases, identicas a WAR y backup, y se verificaron las
+extensiones contra los fuentes. El paquete web runtime corregido de 26 JSP y
+dos *-ext.xml tiene SHA256
+b6a21acb3f6023ecd64f64247b94b7021122fdf595d8afa7b90a95a2de8e3367.
+
+La parada graceful cerro 8080 pero dejo hilos Quartz no daemon. Con autorizacion
+expresa posterior se termino solo el PID 91036, previamente identificado; no
+se inicio otra instancia mientras seguia vivo. El segundo arranque y el estado
+final HTTP/asociacion se acreditan en el informe externo de esta ejecucion.
+
+La automatizacion de navegador se detuvo porque no pudo determinar con certeza
+la URL activa de Windows. No se eludio ese control ni se ejecutaron clics
+funcionales. PRUEBA UI MANUAL PENDIENTE. Las pruebas JDBC/SQL/HTTP no equivalen
+a una ejecucion UI ni end-to-end. El retiro de efectos SQL sigue condicionado
+a certificar todos los escritores externos; no hay DROP habilitado.
+
+El segundo arranque recupero HTTP 200, pero PostgreSQL rechazo conexiones con
+SQLSTATE 53300. El diagnostico posterior al apagado confirmo max_connections
+100 y unas 50 sesiones restantes; el Tomcat local habia mantenido 50 conexiones
+TCP. Se mitigo exclusivamente el perfil local, sin cambiar el servidor DB ni
+cerrar clientes ajenos: pool principal 2/2/10, portal-ospim 2/2/10,
+portal-lportal 2/2/3 y reportes 0/0/2 (min/inicial/max). El techo local es 25,
+minimo 6. Empleadores, URLs y credenciales conservaron sus bytes. Las cuatro
+claves nuevas del pool principal y cinco numeros XML son el unico cambio en
+portal-ext.properties y c3p0-config.xml; la inversa restaura sus hashes iniciales.
+Los hashes finales son 5eae14cd26cbb8840bcfb441f2b60aae13ce23cf0889fea05b784b528444d461
+para portal-ext.properties y
+34a3f9d13b6f653b1b5c355bfaee37d81ce19d26b7c463a5ba0dcb5cbadf4334 para c3p0-config.xml.
+No se copiaron configuraciones con credenciales a la evidencia ni al repositorio.
+
+El tercer arranque termino en 0 con TOMCAT_OK HTTP=200. Se observaron 23
+conexiones de la instancia, dentro del techo de 25, sin nuevos rechazos de
+capacidad en ese segmento. La asociacion sector2/rubro8 se activo en tipo 15;
+avance y repeticion terminaron en 0, con 41 comprobaciones aprobadas. Las otras
+21 asociaciones, los tres maestros, tres planes, 16 conceptos y las secuencias
+quedaron intactos; la repeticion tampoco modifico xmin/ctid.
+
+La sonda LIVE final paso 118 comprobaciones en el mismo JVM3220: antes de la
+activacion, el Helper real rechazo los tres canonicostipo15 con asociacion10;
+despues los acepto con asociacion15, abriendo una conexion READ ONLY nueva,
+sin reiniciar el JVM ni inicializar sus ocho pools globales. Insumos/rubro6
+mantuvo tipo10 y rechazo los mismos15. Los intentos previos vencidos o fallidos
+por capacidad y los dos errores del adaptador Python2 previos a SQL se
+conservaron en el informe, junto al reintento aprobado. No son pruebas UI.
+
+El control HTTP posterior registro dos timeouts de 20 segundos y una respuesta
+200 de 5453 ms en tres solicitudes consecutivas. Por eso no se declara un
+smoke HTTP uniformemente aprobado. El jstack del PID 88392 mostro dos workers
+esperando el BlockingCache/FinderCache de Liferay al leer organizaciones de
+usuario; las clases de ese portal no forman parte del cambio de Compras.
+Esa latencia y la prueba UI siguen como riesgos abiertos, junto a la
+certificacion de escritores necesaria para retirar los efectos SQL conservados.

@@ -1,7 +1,9 @@
 -- MOLINEROS / COMPRAS - Precondiciones notificaciones Java, 2026-10-30.
--- Solo catalogo. No ejecutado; no cambia datos, funciones ni triggers.
+-- Solo catalogo; ejecucion identificada por host en el informe. Sin cambios SQL.
 BEGIN TRANSACTION READ ONLY;
 DO $validar_notificaciones$
+DECLARE
+    hash_compatibilidad TEXT;
 BEGIN
     IF md5(pg_get_functiondef(to_regprocedure('compras.confirmar_envio_a_cotizar(integer,character varying)'))) IS DISTINCT FROM '756448bd5d5c0301a5312ad3c652cf00' THEN
         RAISE EXCEPTION 'Deriva de definicion: compras.confirmar_envio_a_cotizar';
@@ -9,7 +11,12 @@ BEGIN
     IF md5(pg_get_functiondef(to_regprocedure('compras.diagnosticar_prestadores_notificacion_cotizacion(integer)'))) IS DISTINCT FROM 'dc616bff8d95f7d33cf8d93fc9ae4912' THEN
         RAISE EXCEPTION 'Deriva de definicion: compras.diagnosticar_prestadores_notificacion_cotizacion';
     END IF;
-    IF md5(pg_get_functiondef(to_regprocedure('compras.es_prestador_compatible_cotizacion(integer,integer)'))) IS DISTINCT FROM 'eaca26218b09570bf5499fff3768ba58' THEN
+    hash_compatibilidad := md5(pg_get_functiondef(to_regprocedure('compras.es_prestador_compatible_cotizacion(integer,integer)')));
+    -- Variante legacy QA12 sin la excepcion puntual que Java lee de configuracion.
+    -- No se equiparan sus reglas ni se modifica ese cuerpo: se constata el instalado.
+    IF hash_compatibilidad IS DISTINCT FROM 'eaca26218b09570bf5499fff3768ba58' AND NOT (
+        host(inet_server_addr()) IS NOT DISTINCT FROM '12.1.1.12'
+        AND hash_compatibilidad IS NOT DISTINCT FROM '7f43af5b4c6d0f2b950013d8a11f1357') THEN
         RAISE EXCEPTION 'Deriva de definicion: compras.es_prestador_compatible_cotizacion';
     END IF;
     IF md5(pg_get_functiondef(to_regprocedure('compras.finalizar_notificacion_cotizacion_prestador(integer,integer,character varying,text,character varying)'))) IS DISTINCT FROM '0938df17a62e92549b7119adc4fd8f17' THEN
