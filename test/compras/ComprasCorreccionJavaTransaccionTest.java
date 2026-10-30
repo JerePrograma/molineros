@@ -27,6 +27,31 @@ public class ComprasCorreccionJavaTransaccionTest {
             comprobar(e.commits==1 && e.rollbacks==0 && e.cerrada && e.llamadasReglaSQL==0,
                     "No-op cierra su TX sin CALL de correccion legacy");
 
+            e=nuevo(445,11503,3); instalar(e,buscar,editar);
+            id=new EditarRequerimientoCompraHelper().corregirItem(copiar(e.origen),"prueba");
+            comprobar(id==445&&e.origen.getIdPrestacionInt()==11503&&e.detallesEscritos==0
+                    &&e.comparativasEscritas==0&&e.matricesLeidas==0&&e.commits==1
+                    &&"HISTORICO".equals(e.origen.getDescripcionNomenclador())
+                    &&new BigDecimal("77.00").equals(e.origen.getPrecioTotalEstimadoInformado()),
+                    "Actual QA445 canonico11503 tipo3 es no-op y conserva snapshots e importes sin reclasificar historicos10415");
+
+            e=nuevo(445,11503,3);e.origen.setIdTipoPrestacion(null);
+            e.origen.setPrecioUnitarioEstimado(null);e.origen.setPrecioTotalEstimado(null);
+            e.configuracionAutomatico.put("COMPRAS_CONCEPTOS_AUTOMATICOS","1=10609;2=11503;3=0;4=0;5=10609;6=10609");
+            e.configuracionAutomatico.put("COMPRAS_RUBROS_CONCEPTO_AUTOMATICO","1=0;2=0;3=0;4=0;5=0;6=0");
+            e.configuracionAutomatico.put("COMPRAS_CANTIDAD_CONCEPTO_AUTOMATICO","1");instalar(e,buscar,editar);
+            EditarRequerimientoCompraServiceUtil.Transaccion automatica=EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            try{
+                Method asegurar=EditarRequerimientoCompraHelper.class.getDeclaredMethod("asegurarConceptoAutomatico",
+                        RequerimientoCompra.class,Integer.TYPE,EditarRequerimientoCompraServiceUtil.Transaccion.class,String.class);
+                asegurar.setAccessible(true);asegurar.invoke(new EditarRequerimientoCompraHelper(),e.requerimiento,Integer.valueOf(1388),automatica,"prueba");
+                comprobar(e.lecturasDetallesAutomaticos==1&&e.intentosInsertarAutomatico==0&&e.detallesEscritos==0
+                        &&e.requerimiento.getDetalles().size()==1&&e.origen.getIdPrestacionInt()==11503
+                        &&e.origen.getIdTipoNomencladorInt()==3&&e.origen.getIdTipoPrestacion()==null
+                        &&e.commits==0&&!e.cerrada&&e.matricesLeidas==0,
+                        "Automatico11503 configurado acepta fila compatible ya creada por trigger sin duplicar ni cambiar TX caller");
+            }finally{automatica.cerrar();}
+
             e=nuevo(446,11452,10); instalar(e,buscar,editar);
             id=new EditarRequerimientoCompraHelper().corregirItem(copiar(e.origen),"prueba");
             comprobar(id==446 && e.detallesEscritos==0 && e.matricesLeidas==0,
@@ -333,6 +358,11 @@ public class ComprasCorreccionJavaTransaccionTest {
         private void con(Connection con)throws Exception{if(con!=e.con)throw new Exception("Otra conexion");}
         public RequerimientoCompra getRequerimientoCompra(Connection con,int id)throws Exception{con(con);return e.requerimiento;}
         public Nomenclador obtenerNomencladorCanonico(Connection con,int id)throws Exception{con(con);return e.canonicos.get(Integer.valueOf(id));}
+        public List<RequerimientoCompraDetalle> getDetalles(Connection con,int id)throws Exception{
+            con(con);if(id!=e.requerimiento.getIdRequerimientoCompra())throw new Exception("Otro requerimiento");
+            e.lecturasDetallesAutomaticos++;return e.requerimiento.getDetalles();
+        }
+
         public List<TipoPrestacionCompra> listarTiposPrestacion(Connection con)throws Exception{
             con(con);TipoPrestacionCompra t=new TipoPrestacionCompra();t.setId(Integer.valueOf(8));
             t.setIdSector(Integer.valueOf(2));t.setDescripcion("INSUMOS DIABETES");
@@ -361,6 +391,7 @@ public class ComprasCorreccionJavaTransaccionTest {
                 p.setEmpresaAdjudicada(true);p.setDescripcionEmpresa("EMPRESA TEST");p.setDlFileEntryId(Long.valueOf(12));l.add(p);}return l;
         }
         public String getConfiguracionCompra(String clave)throws Exception{
+            if(e.configuracionAutomatico.containsKey(clave))return e.configuracionAutomatico.get(clave);
             if("COMPRAS_ESTADOS_IDS".equals(clave))return e.estados;
             if("COMPRAS_TRANSICIONES_ESTADO".equals(clave))return e.transiciones;
             if("COMPRAS_ESTADOS_ANULAR".equals(clave))return "1;2;3";
@@ -378,6 +409,9 @@ public class ComprasCorreccionJavaTransaccionTest {
     private static class Estado implements InvocationHandler{
         Connection con;RequerimientoCompra requerimiento;RequerimientoCompraDetalle origen;
         Map<Integer,Nomenclador> canonicos=new HashMap<Integer,Nomenclador>();
+        Map<String,String> configuracionAutomatico=new HashMap<String,String>();
+        int lecturasDetallesAutomaticos,intentosInsertarAutomatico;
+
         List<Integer> comparativa=new ArrayList<Integer>();List<String> rubrosPrestador=new ArrayList<String>();
         List<String> eventos=new ArrayList<String>();Map<Integer,Object> parametrosDetalle;
         String excepcion="1297=33719082799";boolean proveedorSolicita=true,proveedorBaja;
@@ -399,6 +433,10 @@ public class ComprasCorreccionJavaTransaccionTest {
         private Object sentencia(final String sql)throws Exception{
             final Estado estado=this;
             if(sql.contains("corregir_item_requerimiento")){llamadasReglaSQL++;throw new Exception("CALL legacy prohibido en prueba");}
+            if(sql.startsWith("INSERT INTO compras.requerimiento_detalle")){
+                intentosInsertarAutomatico++;throw new Exception("No debe insertar un automatico compatible ya existente");
+            }
+
             Class<?> api=sql.startsWith("{call")?CallableStatement.class:PreparedStatement.class;
             return Proxy.newProxyInstance(ComprasCorreccionJavaTransaccionTest.class.getClassLoader(),new Class[]{api},
                 new InvocationHandler(){Map<Integer,Object> parametros=new HashMap<Integer,Object>();

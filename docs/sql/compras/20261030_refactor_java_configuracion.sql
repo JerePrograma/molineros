@@ -20,6 +20,14 @@ BEGIN
                      AND md5(pg_get_functiondef(p.oid))='962ff12f5aa8e584699c44aa9b83126a') THEN
         RAISE EXCEPTION 'La definicion instalada de trae_system_config difiere del diagnostico.';
     END IF;
+    -- Las semillas reflejan el corte 11503; contrastar su presencia en el QA destino.
+    -- No instalar valores de un gasto distinto del efecto SQL que aun convive.
+    IF NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                   WHERE n.nspname='compras' AND p.proname='agregar_gastos_envio_requerimiento'
+                     AND pg_get_function_identity_arguments(p.oid)=''
+                     AND md5(pg_get_functiondef(p.oid))='ef9951e6eac71d8301599030962c816e') THEN
+        RAISE EXCEPTION 'El gasto automatico instalado no coincide con la semilla QA 11503; reconciliar antes de activar Java.';
+    END IF;
     SELECT count(*) INTO cantidad FROM public.system_config
     WHERE id='COMPRAS_REFACTOR_CONFIG_VERSION';
     IF cantidad > 1 THEN
@@ -38,7 +46,7 @@ BEGIN
             ('COMPRAS_COMPARATIVA_PAGO', '30;45;60'),
             ('COMPRAS_COMPARATIVA_PLAZO', '24/48;48/72'),
             ('COMPRAS_COMPARATIVA_VALIDEZ', '24;48'),
-            ('COMPRAS_CONCEPTOS_AUTOMATICOS', '1=10609;2=10415;3=0;4=0;5=10609;6=10609'),
+            ('COMPRAS_CONCEPTOS_AUTOMATICOS', '1=10609;2=11503;3=0;4=0;5=10609;6=10609'),
             ('COMPRAS_CONTACTO_PRIORIDADES_EMAIL', 'E=1'),
             ('COMPRAS_CONTACTO_TIPOS_EMAIL', 'E'),
             ('COMPRAS_DL_GRUPO_LEGACY', '10136'),
@@ -118,7 +126,7 @@ BEGIN
             ('COMPRAS_COMPARATIVA_PAGO', '30;45;60'),
             ('COMPRAS_COMPARATIVA_PLAZO', '24/48;48/72'),
             ('COMPRAS_COMPARATIVA_VALIDEZ', '24;48'),
-            ('COMPRAS_CONCEPTOS_AUTOMATICOS', '1=10609;2=10415;3=0;4=0;5=10609;6=10609'),
+            ('COMPRAS_CONCEPTOS_AUTOMATICOS', '1=10609;2=11503;3=0;4=0;5=10609;6=10609'),
             ('COMPRAS_CONTACTO_PRIORIDADES_EMAIL', 'E=1'),
             ('COMPRAS_CONTACTO_TIPOS_EMAIL', 'E'),
             ('COMPRAS_DL_GRUPO_LEGACY', '10136'),

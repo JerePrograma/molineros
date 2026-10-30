@@ -17,7 +17,7 @@ public class ConfiguracionComprasDatosFixture extends BusquedaRequerimientoCompr
         datos.put("COMPRAS_COMPARATIVA_PAGO", "30;45;60");
         datos.put("COMPRAS_COMPARATIVA_PLAZO", "24/48;48/72");
         datos.put("COMPRAS_COMPARATIVA_VALIDEZ", "24;48");
-        datos.put("COMPRAS_CONCEPTOS_AUTOMATICOS", "1=10609;2=10415;3=0;4=0;5=10609;6=10609");
+        datos.put("COMPRAS_CONCEPTOS_AUTOMATICOS", "1=10609;2=11503;3=0;4=0;5=10609;6=10609");
         datos.put("COMPRAS_CONTACTO_PRIORIDADES_EMAIL", "E=1");
         datos.put("COMPRAS_CONTACTO_TIPOS_EMAIL", "E");
         datos.put("COMPRAS_DL_GRUPO_LEGACY", "10136");

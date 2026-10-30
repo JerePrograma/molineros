@@ -25,7 +25,7 @@ DECLARE
 BEGIN
     FOR esperado IN
         SELECT * FROM (VALUES
-            ('compras.agregar_gastos_envio_requerimiento()', '1001331fac5332e2429526992765c13e'),
+            ('compras.agregar_gastos_envio_requerimiento()', 'ef9951e6eac71d8301599030962c816e'),
             ('compras.baja_vinculo_reclamo_prestacional(integer,character varying)', 'a05aa540deefc8d2a5a93f042b2ca102'),
             ('compras.baja_vinculo_reclamo_prestacional_trigger()', 'a33c36ade63ab98bceba282309bf283f'),
             ('compras.calcular_total_detalle_fila()', '757c0cf62a2b28b0782fdfad56e49d1a'),
