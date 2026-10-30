@@ -28,10 +28,10 @@ public final class ExportarRequerimientosCompraHelper {
 
     public static boolean puedeConsultar(User user) throws Exception {
         return user != null
-                && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS));
+                && (PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
+                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
+                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
+                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()));
     }
 
     public static void validarPermiso(User user) throws Exception {

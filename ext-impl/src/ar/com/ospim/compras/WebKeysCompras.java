@@ -1,22 +1,22 @@
 package ar.com.ospim.compras;
 
+import ar.com.ospim.compras.requerimientos.helper.ImportesCompraHelper;
+
+import ar.com.ospim.compras.requerimientos.helper.TextoCompraHelper;
+
+import ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper;
+
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.Normalizer;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
 
 public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
 
-    private static final Pattern DIACRITICOS_TEXTO_COMPRAS =
-            Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 
-    private static final Pattern ESPACIOS_TEXTO_COMPRAS =
-            Pattern.compile("\\s+");
 
     public static final String TITULO_ORDEN_MEDICA =
             "Orden médica";
@@ -29,65 +29,25 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
      * el resultado seleccionado devuelve el tipo real y positivo.
      */
     public static final int FILTRO_NOMENCLADOR_GENERAL = 0;
-    public static final int FILTRO_NOMENCLADOR_ODONTOLOGIA = 1;
-    public static final int FILTRO_NOMENCLADOR_DISCAPACIDAD = 8;
-    public static final int FILTRO_NOMENCLADOR_FARMACIA = 9;
-    public static final int MARCA_REIN_LIQ_DISCAPACIDAD = 6;
 
-    public static final int TIPO_NOMENCLADOR_PRACTICAS_ESPECIALIZADAS = 2;
-    public static final int TIPO_NOMENCLADOR_PROPIO = 3;
-    public static final int TIPO_NOMENCLADOR_ANALISIS_CLINICOS = 4;
-    public static final int TIPO_NOMENCLADOR_QUIRURGICO = 6;
-    public static final int TIPO_NOMENCLADOR_PROTESIS_INSUMOS = 10;
-    public static final int TIPO_NOMENCLADOR_PROTESIS = 14;
 
-    public static final int TIPO_PRESTACION_PROTESIS_TRAUMATOLOGIA = 3;
-    public static final int TIPO_PRESTACION_PROTESIS_CARDIOLOGIA = 4;
-    public static final int TIPO_PRESTACION_PROTESIS_GENERAL = 5;
-    public static final int TIPO_PRESTACION_INSUMOS = 6;
 
     public static boolean esTipoPrestacionInsumos(
             int idTipoPrestacion) {
-
-        return idTipoPrestacion == TIPO_PRESTACION_INSUMOS;
+        return ConfiguracionComprasHelper.contieneEntero("COMPRAS_RUBROS_INSUMOS", ConfiguracionComprasHelper.leerObligatoria("COMPRAS_RUBROS_INSUMOS"), idTipoPrestacion);
     }
 
     public static boolean esTipoPrestacionProtesis(
             int idTipoPrestacion) {
-
-        return idTipoPrestacion
-                == TIPO_PRESTACION_PROTESIS_TRAUMATOLOGIA
-                || idTipoPrestacion
-                == TIPO_PRESTACION_PROTESIS_CARDIOLOGIA
-                || idTipoPrestacion
-                == TIPO_PRESTACION_PROTESIS_GENERAL;
+        return ConfiguracionComprasHelper.contieneEntero("COMPRAS_RUBROS_PROTESIS", ConfiguracionComprasHelper.leerObligatoria("COMPRAS_RUBROS_PROTESIS"), idTipoPrestacion);
     }
 
     public static boolean esTipoNomencladorPrestacionesMedicas(
             int idTipoNomenclador) {
-
-        return idTipoNomenclador
-                == TIPO_NOMENCLADOR_ANALISIS_CLINICOS
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PRACTICAS_ESPECIALIZADAS
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROTESIS_INSUMOS
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_QUIRURGICO
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROPIO
-                || idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROTESIS;
+        return NomencladorCompraBusquedaHelper.esNomencladorValidoParaSector(ConfiguracionComprasHelper.leerObligatoria("COMPRAS_SECTOR_MEDICO"), idTipoNomenclador, 0, null);
     }
 
-    public static final String
-            CODIGO_ESPECIAL_DISCAPACIDAD = "431003";
 
-    public static final String ROL_VIEW_COMPRAS = "VIEW_COMPRAS";
-    public static final String ROL_ABM_COMPRAS = "ABM_COMPRAS";
-    public static final String ROL_ANULAR_COMPRAS = "ANULAR_COMPRAS";
-    public static final String ROL_COTIZAR_COMPRAS = "COTIZAR_COMPRAS";
-    public static final String ROL_AUTORIZAR_COMPRAS = "AUTORIZAR_COMPRAS";
 
     public static final String BUSQUEDA_REQUERIMIENTOS_COMPRA =
             "BUSQUEDA_REQUERIMIENTOS_COMPRA";
@@ -202,14 +162,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String PARAM_ID_PRESTADOR_ADJUDICADO =
             "id_prestador_adjudicado";
 
-    public static final int ESTADO_PENDIENTE = 1;
-    public static final int ESTADO_A_COTIZAR = 2;
-    public static final int ESTADO_COTIZADO = 3;
-    public static final int ESTADO_RECLAMO_RP = 4;
-    public static final int ESTADO_ORDEN_COMPRA = 5;
-    public static final int ESTADO_PARA_AUTORIZAR = 6;
-    public static final int ESTADO_AUTORIZADO = 7;
-    public static final int ESTADO_ANULADO = 99;
 
     public static final String ENVIO_PENDIENTE = "PENDIENTE";
     public static final String ENVIO_PROCESANDO = "PROCESANDO";
@@ -218,10 +170,10 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String ENVIO_ERROR = "ERROR";
     public static final String ENVIO_EMAIL_INVALIDO = "EMAIL_INVALIDO";
 
-    public static final int ESCALA_IMPORTE = 2;
+    public static final int ESCALA_IMPORTE = ImportesCompraHelper.ESCALA_IMPORTE;
 
     public static final RoundingMode REDONDEO_IMPORTE =
-            RoundingMode.HALF_UP;
+            ImportesCompraHelper.REDONDEO_IMPORTE;
 
     public static final String ERROR_PARA_ALERT =
             "ERROR_PARA_ALERT";
@@ -265,10 +217,9 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     /*
      * Compatibilidad legacy con JSP existentes.
      *
-     * Las operaciones nuevas de Document Library no deben depender de este
-     * valor fijo: deben usar el scopeGroupId de la request actual.
+     * El grupo legacy se lee de configuracion. Las operaciones nuevas
+     * deben usar el scopeGroupId de la request actual.
      */
-    public static final long DOCUMENT_LIBRARY_GROUP_ID_COMPRAS = 10136L;
 
     public static final long DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS = 0L;
 
@@ -281,10 +232,6 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     public static final String DOCUMENT_LIBRARY_PREFIJO_PRESUPUESTO_COMPRA =
             "PRESUPUESTO-COMPRA-";
 
-    public static final int DOCUMENT_LIBRARY_MAX_EXTENSION_LENGTH = 20;
-    public static final int DOCUMENT_LIBRARY_MAX_TITLE_LENGTH = 240;
-    public static final int MAX_PRESUPUESTOS_POR_CARGA = 10;
-    public static final int MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO = 500;
 
     public static final String
             PARAM_TIPO_DOCUMENTO_COMPRA_RECLAMO =
@@ -315,81 +262,43 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
     }
 
     public static String getEstadoDescripcion(int estado) {
-        switch (estado) {
-            case ESTADO_PENDIENTE:
-                return "PENDIENTE";
-            case ESTADO_A_COTIZAR:
-                return "ENVIADO A COTIZAR";
-            case ESTADO_COTIZADO:
-                return "COTIZADO";
-            case ESTADO_RECLAMO_RP:
-                return "RECLAMO (RP)";
-            case ESTADO_ORDEN_COMPRA:
-                return "ORDEN DE COMPRA";
-            case ESTADO_PARA_AUTORIZAR:
-                return "PARA AUTORIZAR";
-            case ESTADO_AUTORIZADO:
-                return "AUTORIZADO";
-            case ESTADO_ANULADO:
-                return "ANULADO";
-            default:
-                return "";
-        }
+        return ConfiguracionComprasHelper.getEstadoDescripcion(estado);
     }
 
     public static List<RequerimientoCompraEstado> listarEstados() {
-        List<RequerimientoCompraEstado> estados =
-                new ArrayList<RequerimientoCompraEstado>();
-
-        agregarEstado(estados, ESTADO_PENDIENTE);
-        agregarEstado(estados, ESTADO_A_COTIZAR);
-        agregarEstado(estados, ESTADO_COTIZADO);
-        agregarEstado(estados, ESTADO_RECLAMO_RP);
-        agregarEstado(estados, ESTADO_PARA_AUTORIZAR);
-        agregarEstado(estados, ESTADO_AUTORIZADO);
-        agregarEstado(estados, ESTADO_ORDEN_COMPRA);
-        agregarEstado(estados, ESTADO_ANULADO);
-
-        return estados;
+        return ConfiguracionComprasHelper.listarEstados();
     }
 
     public static boolean esEstadoValido(int estado) {
-        return estado == ESTADO_PENDIENTE
-                || estado == ESTADO_A_COTIZAR
-                || estado == ESTADO_COTIZADO
-                || estado == ESTADO_RECLAMO_RP
-                || estado == ESTADO_ORDEN_COMPRA
-                || estado == ESTADO_PARA_AUTORIZAR
-                || estado == ESTADO_AUTORIZADO
-                || estado == ESTADO_ANULADO;
+        return ConfiguracionComprasHelper.esEstadoValido(estado);
     }
 
     public static boolean esPendiente(int estado) {
-        return estado == ESTADO_PENDIENTE;
+        return ConfiguracionComprasHelper.esPendiente(estado);
     }
 
     public static boolean esACotizar(int estado) {
-        return estado == ESTADO_A_COTIZAR;
+        return ConfiguracionComprasHelper.esACotizar(estado);
     }
 
     public static boolean esCotizado(int estado) {
-        return estado == ESTADO_COTIZADO;
+        return ConfiguracionComprasHelper.esCotizado(estado);
     }
 
     public static boolean esReclamoRP(int estado) {
-        return estado == ESTADO_RECLAMO_RP;
+        return ConfiguracionComprasHelper.esReclamoRP(estado);
     }
 
     public static boolean esParaAutorizar(int estado) {
-        return estado == ESTADO_PARA_AUTORIZAR;
+        return ConfiguracionComprasHelper.esParaAutorizar(estado);
     }
 
     public static boolean esAutorizado(int estado) {
-        return estado == ESTADO_AUTORIZADO;
+        return ConfiguracionComprasHelper.esAutorizado(estado);
     }
 
     public static boolean puedeEnviarAAutorizar(int estado) {
-        return esReclamoRP(estado);
+        return ConfiguracionComprasHelper.puedeEnviarAAutorizar(estado);
     }
 
     public static boolean puedeEnviarAAutorizar(
@@ -397,82 +306,65 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             String sectorDescripcion,
             boolean hayDetalles,
             boolean hayCotizacionesEmpresa) {
-
-        if (esSectorSinCotizacionPrestador(sectorDescripcion)) {
-            return esPendiente(estado) && hayDetalles && hayCotizacionesEmpresa;
-        }
-        return puedeEnviarAAutorizar(estado);
+        return ConfiguracionComprasHelper.puedeEnviarAAutorizar(estado, sectorDescripcion, hayDetalles, hayCotizacionesEmpresa);
     }
 
     public static boolean puedeConsultarReclamoPrestacional(int estado) {
-        return esCotizado(estado)
-                || esReclamoRP(estado)
-                || esParaAutorizar(estado)
-                || esAutorizado(estado)
-                || esOrdenCompra(estado);
+        return ConfiguracionComprasHelper.puedeConsultarReclamoPrestacional(estado);
     }
 
     public static boolean esOrdenCompra(int estado) {
-        return estado == ESTADO_ORDEN_COMPRA;
+        return ConfiguracionComprasHelper.esOrdenCompra(estado);
     }
 
     public static boolean esAnulado(int estado) {
-        return estado == ESTADO_ANULADO;
+        return ConfiguracionComprasHelper.esAnulado(estado);
     }
 
     public static boolean puedeCorregirItem(int estado) {
-        return esPendiente(estado) || esACotizar(estado) || esCotizado(estado);
+        return ConfiguracionComprasHelper.puedeCorregirItem(estado);
     }
 
     public static boolean puedeEditarEstructura(int estado) {
-        return esPendiente(estado);
+        return ConfiguracionComprasHelper.puedeEditarEstructura(estado);
     }
 
     public static boolean puedeEliminarDetalle(int estado) {
-        return esPendiente(estado)
-                || esACotizar(estado);
+        return ConfiguracionComprasHelper.puedeEliminarDetalle(estado);
     }
 
     public static boolean puedeEditarSurge(int estado) {
-        return esPendiente(estado) || esACotizar(estado);
+        return ConfiguracionComprasHelper.puedeEditarSurge(estado);
     }
 
     public static boolean puedeEditarCotizacion(int estado) {
-        return esACotizar(estado);
+        return ConfiguracionComprasHelper.puedeEditarCotizacion(estado);
     }
 
     public static boolean puedeAdministrarPresupuestos(int estado) {
-        return esACotizar(estado);
+        return ConfiguracionComprasHelper.puedeAdministrarPresupuestos(estado);
     }
 
     public static boolean puedeVerCotizacion(int estado) {
-        return esACotizar(estado) || esSoloLectura(estado);
+        return ConfiguracionComprasHelper.puedeVerCotizacion(estado);
     }
 
     public static boolean puedeVerPresupuestos(int estado) {
-        return esACotizar(estado)
-                || esCotizado(estado)
-                || esReclamoRP(estado)
-                || esParaAutorizar(estado)
-                || esAutorizado(estado)
-                || esOrdenCompra(estado)
-                || esAnulado(estado);
+        return ConfiguracionComprasHelper.puedeVerPresupuestos(estado);
     }
 
     public static boolean puedeEnviarACotizar(int estado) {
-        return esPendiente(estado);
+        return ConfiguracionComprasHelper.puedeEnviarACotizar(estado);
     }
 
     public static boolean puedeReintentarNotificaciones(int estado) {
-        return esACotizar(estado);
+        return ConfiguracionComprasHelper.puedeReintentarNotificaciones(estado);
     }
 
     public static boolean puedeReintentarNotificaciones(
             int estado,
             boolean hayPrestadoresPendientes) {
-
-        return puedeReintentarNotificaciones(estado)
-                && hayPrestadoresPendientes;
+        return ConfiguracionComprasHelper.puedeReintentarNotificaciones(estado, hayPrestadoresPendientes);
     }
 
     public static boolean puedePasarAOrdenCompra(
@@ -480,148 +372,45 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             String sectorDescripcion,
             boolean hayDetalles,
             boolean hayCotizacionesEmpresa) {
-
-        return esAutorizado(estado)
-                && esSectorSinCotizacionPrestador(
-                        sectorDescripcion
-                )
-                && hayDetalles
-                && hayCotizacionesEmpresa;
+        return ConfiguracionComprasHelper.puedePasarAOrdenCompra(estado, sectorDescripcion, hayDetalles, hayCotizacionesEmpresa);
     }
 
     public static boolean puedeAnular(int estado) {
-        return esPendiente(estado) || esACotizar(estado)
-                || esCotizado(estado);
+        return ConfiguracionComprasHelper.puedeAnular(estado);
     }
 
     public static boolean puedeAnular(
             int estado,
             boolean reclamoPrestacionalDeBaja) {
-
-        return puedeAnular(estado)
-                || (esReclamoRP(estado) && reclamoPrestacionalDeBaja);
+        return ConfiguracionComprasHelper.puedeAnular(estado, reclamoPrestacionalDeBaja);
     }
 
     public static boolean esSoloLectura(int estado) {
-        return esCotizado(estado)
-                || esReclamoRP(estado)
-                || esParaAutorizar(estado)
-                || esAutorizado(estado)
-                || esOrdenCompra(estado)
-                || esAnulado(estado);
+        return ConfiguracionComprasHelper.esSoloLectura(estado);
     }
 
     public static boolean validarTransicionEstado(
             int estadoActual,
             int estadoNuevo) {
-
-        if (!esEstadoValido(estadoActual)
-                || !esEstadoValido(estadoNuevo)) {
-
-            return false;
-        }
-
-        /*
-         * RECLAMO_RP se activa únicamente cuando existe un Reclamo
-         * Prestacional real y correctamente vinculado. ORDEN_COMPRA utiliza
-         * una operación explícita según sector, por lo que no forma parte
-         * de esta matriz genérica del flujo de prestadores.
-         */
-        if (estadoActual == estadoNuevo
-                || esAnulado(estadoActual)) {
-
-            return false;
-        }
-
-        if (esAnulado(estadoNuevo)) {
-            return puedeAnular(
-                    estadoActual
-            );
-        }
-
-        if (esCotizado(estadoActual)) {
-            return esReclamoRP(
-                    estadoNuevo
-            );
-        }
-
-        if (esReclamoRP(estadoActual)) {
-            return esParaAutorizar(estadoNuevo);
-        }
-
-        if (esParaAutorizar(estadoActual)) {
-            return esAutorizado(estadoNuevo);
-        }
-
-        if (esPendiente(estadoActual)
-                && esACotizar(estadoNuevo)) {
-
-            return true;
-        }
-
-        return esACotizar(estadoActual)
-                && esCotizado(estadoNuevo);
+        return ConfiguracionComprasHelper.validarTransicionEstado(estadoActual, estadoNuevo);
     }
 
     public static boolean validarTransicionEstado(
             int estadoActual,
             int estadoNuevo,
             String sectorDescripcion) {
-
-        if (esParaAutorizar(estadoNuevo)) {
-            return puedeEnviarAAutorizar(
-                    estadoActual, sectorDescripcion, true, true);
-        }
-        return validarTransicionEstado(estadoActual, estadoNuevo);
+        return ConfiguracionComprasHelper.validarTransicionEstado(estadoActual, estadoNuevo, sectorDescripcion);
     }
 
     public static boolean puedeCambiarEstado(
             int estadoActual,
             int estadoNuevo) {
-
-        return validarTransicionEstado(
-                estadoActual,
-                estadoNuevo
-        );
+        return ConfiguracionComprasHelper.puedeCambiarEstado(estadoActual, estadoNuevo);
     }
 
     public static Integer getFiltroTipoNomencladorCompras(
             String sectorDescripcion) {
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        if ("FARMACIA".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_FARMACIA
-            );
-        }
-
-        if ("DISCAPACIDAD".equals(sector)) {
-            /*
-             * Reclamos Prestacionales parte del tipo 8,
-             * pero la consulta efectiva utiliza marca ReinLiq 6.
-             */
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_DISCAPACIDAD
-            );
-        }
-
-        if ("ODONTOLOGIA".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_ODONTOLOGIA
-            );
-        }
-
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
-            return Integer.valueOf(
-                    FILTRO_NOMENCLADOR_GENERAL
-            );
-        }
-
-        return null;
+        return ConfiguracionComprasHelper.getFiltroTipoNomenclador(sectorDescripcion);
     }
 
     public static boolean esNomencladorValidoParaSectorCompras(
@@ -629,45 +418,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             int idTipoNomenclador,
             int marcaReinLiq,
             String codigoNomenclador) {
-
-        if (idTipoNomenclador <= 0) {
-            return false;
-        }
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        String codigo =
-                codigoNomenclador == null
-                        ? ""
-                        : codigoNomenclador.trim();
-
-        if ("FARMACIA".equals(sector)) {
-            return idTipoNomenclador
-                    == FILTRO_NOMENCLADOR_FARMACIA;
-        }
-
-        if ("DISCAPACIDAD".equals(sector)) {
-            return marcaReinLiq
-                    == MARCA_REIN_LIQ_DISCAPACIDAD
-                    || CODIGO_ESPECIAL_DISCAPACIDAD
-                    .equals(codigo);
-        }
-
-        if ("ODONTOLOGIA".equals(sector)) {
-            return idTipoNomenclador
-                    == FILTRO_NOMENCLADOR_ODONTOLOGIA;
-        }
-
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
-            return esTipoNomencladorPrestacionesMedicas(
-                    idTipoNomenclador
-            );
-        }
-
-        return false;
+        return NomencladorCompraBusquedaHelper.esNomencladorValidoParaSector(sectorDescripcion, idTipoNomenclador, marcaReinLiq, codigoNomenclador);
     }
 
     public static boolean esNomencladorValidoParaTipoPrestacionCompras(
@@ -676,81 +427,22 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
             int idTipoNomenclador,
             int marcaReinLiq,
             String codigoNomenclador) {
-
-        if (!esNomencladorValidoParaSectorCompras(
-                sectorDescripcion,
-                idTipoNomenclador,
-                marcaReinLiq,
-                codigoNomenclador
-        )) {
-            return false;
-        }
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        if (!"PRESTACIONES MEDICAS".equals(sector)) {
-            return true;
-        }
-
-        if (idTipoPrestacion <= 0) {
-            return false;
-        }
-
-        if (esTipoPrestacionInsumos(idTipoPrestacion)) {
-            return idTipoNomenclador
-                    == TIPO_NOMENCLADOR_PROTESIS_INSUMOS;
-        }
-
-        if (idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROTESIS_INSUMOS) {
-
-            return false;
-        }
-
-        if (idTipoNomenclador
-                == TIPO_NOMENCLADOR_PROTESIS) {
-
-            return esTipoPrestacionProtesis(
-                    idTipoPrestacion
-            );
-        }
-
-        return true;
+        return NomencladorCompraBusquedaHelper.esNomencladorValidoParaTipoPrestacion(sectorDescripcion, idTipoPrestacion, idTipoNomenclador, marcaReinLiq, codigoNomenclador);
     }
 
     public static boolean esSectorDetalleObservacionCompras(
             String sectorDescripcion) {
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        return "RRHH".equals(sector)
-                || "LEGALES".equals(sector)
-                || "SISTEMAS".equals(sector)
-                || "OTROS".equals(sector);
+        return ConfiguracionComprasHelper.esSectorDetalleObservacion(sectorDescripcion);
     }
 
     public static boolean esSectorSinCotizacionPrestador(
             String sectorDescripcion) {
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        return "RRHH".equals(sector)
-                || "SISTEMAS".equals(sector);
+        return ConfiguracionComprasHelper.esSectorSinCotizacionPrestador(sectorDescripcion);
     }
 
     public static String normalizarSectorCompra(
             String value) {
-
-        return normalizarClaveTexto(value);
+        return TextoCompraHelper.normalizarSectorCompra(value);
     }
 
     /**
@@ -759,15 +451,7 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
      */
     public static String normalizarTexto(
             String value) {
-
-        if (value == null) {
-            return "";
-        }
-
-        return Normalizer.normalize(
-                value,
-                Normalizer.Form.NFC
-        ).trim();
+        return TextoCompraHelper.normalizarTexto(value);
     }
 
     /**
@@ -776,198 +460,60 @@ public class WebKeysCompras implements com.liferay.portal.kernel.util.WebKeys {
      */
     public static String normalizarClaveTexto(
             String value) {
-
-        String texto = normalizarTexto(value);
-
-        if (texto.length() == 0) {
-            return "";
-        }
-
-        String normalizado =
-                Normalizer.normalize(
-                        texto,
-                        Normalizer.Form.NFD
-                );
-
-        normalizado =
-                DIACRITICOS_TEXTO_COMPRAS
-                        .matcher(normalizado)
-                        .replaceAll("");
-
-        normalizado =
-                ESPACIOS_TEXTO_COMPRAS
-                        .matcher(normalizado)
-                        .replaceAll(" ");
-
-        return normalizado.toUpperCase(Locale.ROOT).trim();
+        return TextoCompraHelper.normalizarClaveTexto(value);
     }
 
     public static boolean esTituloOrdenMedica(
             String value) {
-
-        return normalizarClaveTexto(TITULO_ORDEN_MEDICA).equals(
-                normalizarClaveTexto(value)
-        );
+        return TextoCompraHelper.esTituloOrdenMedica(value);
     }
 
     public static String getSectorDescripcionVisible(
             String value) {
-
-        String clave = normalizarSectorCompra(value);
-
-        if ("PRESTACIONES MEDICAS".equals(clave)) {
-            return "PRESTACIONES MÉDICAS";
-        }
-
-        if ("ODONTOLOGIA".equals(clave)) {
-            return "ODONTOLOGÍA";
-        }
-
-        String texto = normalizarTexto(value);
-
-        return texto.length() > 0
-                ? texto.toUpperCase(Locale.ROOT)
-                : "";
+        return ConfiguracionComprasHelper.getSectorDescripcionVisible(value);
     }
 
     public static String getSectorReclamoPrestacional(
             String sectorDescripcion) {
-
-        String sector =
-                normalizarSectorCompra(
-                        sectorDescripcion
-                );
-
-        if ("PRESTACIONES MEDICAS".equals(sector)) {
-            return "PRESTACIONES MEDICAS";
-        }
-
-        if ("DISCAPACIDAD".equals(sector)
-                || sector.indexOf("DISCAPAC") >= 0) {
-
-            return "DISCAPACIDAD";
-        }
-
-        if ("FARMACIA".equals(sector)
-                || sector.indexOf("FARMAC") >= 0) {
-
-            return "FARMACIA";
-        }
-
-        if ("ODONTOLOGIA".equals(sector)
-                || sector.indexOf("ODONTO") >= 0) {
-
-            return "ODONTOLOGIA";
-        }
-
-        if ("LEGALES".equals(sector)
-                || sector.indexOf("LEGAL") >= 0) {
-
-            return "LEGALES";
-        }
-
-        /*
-         * OTROS, SISTEMAS, RRHH y cualquier sector no reconocido
-         * no pueden generar Reclamos Prestacionales.
-         *
-         * La regla es deliberadamente fail closed: un sector nuevo
-         * tampoco queda habilitado accidentalmente.
-         */
-        return "";
+        return ConfiguracionComprasHelper.getSectorReclamoPrestacional(sectorDescripcion);
     }
 
     public static boolean puedeGenerarReclamoPrestacional(
             String sectorDescripcion) {
 
-        return !isEmpty(
-                getSectorReclamoPrestacional(
-                        sectorDescripcion
-                )
-        );
+        return ConfiguracionComprasHelper.puedeGenerarReclamoPrestacional(sectorDescripcion);
     }
 
     public static BigDecimal normalizarImporte(
             BigDecimal value) {
-
-        if (value == null) {
-            return null;
-        }
-
-        return value.setScale(
-                ESCALA_IMPORTE,
-                REDONDEO_IMPORTE
-        );
+        return ImportesCompraHelper.normalizarImporte(value);
     }
 
     public static BigDecimal calcularPrecioTotal(
             Integer cantidad,
             BigDecimal precioUnitario) {
-
-        if (cantidad == null
-                || precioUnitario == null) {
-
-            return null;
-        }
-
-        return normalizarImporte(
-                precioUnitario.multiply(
-                        new BigDecimal(cantidad.intValue())
-                )
-        );
+        return ImportesCompraHelper.calcularPrecioTotal(cantidad, precioUnitario);
     }
 
     public static String formatearImporte(
             BigDecimal value) {
-
-        BigDecimal normalizado =
-                normalizarImporte(value);
-
-        return normalizado != null
-                ? normalizado.toPlainString()
-                : "";
+        return ImportesCompraHelper.formatearImporte(value);
     }
 
     public static String getBooleanDescripcion(
             Boolean value) {
-
-        if (value == null) {
-            return "";
-        }
-
-        return value.booleanValue()
-                ? "Sí"
-                : "No";
+        return TextoCompraHelper.getBooleanDescripcion(value);
     }
 
     public static boolean isEmpty(String value) {
-        return value == null
-                || value.trim().length() == 0;
+        return TextoCompraHelper.isEmpty(value);
     }
 
     public static String trimToNull(String value) {
-        String normalizado = normalizarTexto(value);
-
-        if (normalizado.length() == 0) {
-            return null;
-        }
-
-        return normalizado;
+        return TextoCompraHelper.trimToNull(value);
     }
 
-    private static void agregarEstado(
-            List<RequerimientoCompraEstado> estados,
-            int id) {
 
-        RequerimientoCompraEstado estado =
-                new RequerimientoCompraEstado();
-
-        estado.setId(Integer.valueOf(id));
-        estado.setDescripcion(
-                getEstadoDescripcion(id)
-        );
-
-        estados.add(estado);
-    }
 
     private WebKeysCompras() {
     }

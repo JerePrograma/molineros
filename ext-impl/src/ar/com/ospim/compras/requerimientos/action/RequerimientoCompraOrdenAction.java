@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
@@ -32,14 +34,14 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
     private final RequerimientoCompraOrdenHelper helper = new RequerimientoCompraOrdenHelper();
 
     public static boolean puedeConsultar(User user) throws Exception {
-        return user != null && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS));
+        return user != null && (PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
+                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
+                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
+                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()));
     }
 
     public static boolean puedeEditar(User user) throws Exception {
-        return user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+        return user != null && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras());
     }
 
     public void processAction(ActionMapping mapping, ActionForm form, PortletConfig config,

@@ -38,25 +38,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     private static final String RECLAMO_PRESTACION_ESTADO_ORIGINAL =
             "RECLAMO_PRESTACION_ESTADO_ORIGINAL";
 
-    private static final int RECUPERABLE_SUR = 1;
-    private static final int NO_RECUPERABLE = 2;
-    private static final String
-            DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE =
-            "NO ES RECUPERABLE";
-    private static final String COMPROBANTE_TIPO_INICIAL = "OTR";
-    private static final String
-            COMPROBANTE_CUIT_SUCURSAL_INICIAL =
-            "000";
     private static final String RECLAMOS_PROCESAR_IMAGENES =
             "RECLAMOS_PROCESAR_IMAGENES";
-
-    private static final int ESTADO_PRESTACION_CARGADA = 0;
-
-    /*
-     * La pantalla informa un máximo funcional de 200 caracteres, aunque
-     * algunos textareas legacy tengan maxlength=250.
-     */
-    private static final int MAX_OBSERVACION = 200;
 
     private static final BigDecimal CIEN =
             BigDecimal.valueOf(
@@ -270,6 +253,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                                 )
                         );
 
+                registrarDetallesOrigen(contexto, requerimiento, prestaciones);
                 contexto.setReclamoEnEdicion(reclamo);
 
                 session.setAttribute(
@@ -792,6 +776,12 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         Integer idPrestadorComprobante =
                 null;
 
+        String frecuenciaInicial = ConfiguracionComprasHelper.getFrecuenciaInicialRP();
+        String comprobanteInicial = ConfiguracionComprasHelper.getComprobanteInicialRP();
+        String sucursalInicial = ConfiguracionComprasHelper.getSucursalComprobanteInicialRP();
+        int estadoInicial = ConfiguracionComprasHelper.getEstadoPrestacionInicialRP();
+        int tipoInicial = ConfiguracionComprasHelper.getTipoPrestacionInicialRP();
+        int maxObservacion = ConfiguracionComprasHelper.getMaxObservacionRP();
         int idRegistro = 1;
 
         for (RequerimientoCompraDetalle detalle
@@ -806,7 +796,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                             requerimiento,
                             detalle,
                             idRegistro,
-                            fechaPrestacion
+                            fechaPrestacion, frecuenciaInicial, comprobanteInicial,
+                            sucursalInicial, estadoInicial, tipoInicial, maxObservacion
                     );
 
             String cuitDetalle =
@@ -962,8 +953,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 TraeListasServiceUtil
                         .getReclamosPrestacionalesIntegracion();
 
-        Integer codigoEncontrado =
-                null;
+        String descripcionNoRecuperable = ConfiguracionComprasHelper.getDescripcionNoRecuperableRP();
+        Integer codigoEncontrado = null;
 
         if (integraciones != null) {
             for (ReclamosPrestacionalesIntegracion integracion
@@ -971,7 +962,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
                 if (integracion == null
                         || integracion.getDescripcion() == null
-                        || !DESCRIPCION_INTEGRACION_CABECERA_NO_RECUPERABLE
+                        || !descripcionNoRecuperable
                         .equalsIgnoreCase(
                                 integracion
                                         .getDescripcion()
@@ -1026,10 +1017,10 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         if (requerimiento != null
                 && requerimiento.isSurge()) {
 
-            return RECUPERABLE_SUR;
+            return ConfiguracionComprasHelper.getRecuperableSur();
         }
 
-        return NO_RECUPERABLE;
+        return ConfiguracionComprasHelper.getNoRecuperable();
     }
 
     public static void validarRecuperablesParaGuardar(
@@ -1088,7 +1079,9 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             RequerimientoCompra requerimiento,
             RequerimientoCompraDetalle detalle,
             int idRegistro,
-            Date fechaPrestacion) throws Exception {
+            Date fechaPrestacion, String frecuenciaInicial, String comprobanteInicial,
+            String sucursalInicial, int estadoInicial, int tipoInicial, int maxObservacion)
+            throws Exception {
 
         validarDetalleCotizado(
                 detalle
@@ -1172,12 +1165,10 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         aplicarReferenciaTecnica(
                 prestacion,
                 requerimiento,
-                detalle
+                detalle, tipoInicial, maxObservacion
         );
 
-        prestacion.setFrecuencia(
-                "UNICA"
-        );
+        prestacion.setFrecuencia(frecuenciaInicial);
 
         /*
          * Precarga exclusivamente los datos de comprobante que tienen
@@ -1188,7 +1179,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 detalle,
                 cantidad,
                 importeUnitario,
-                total
+                total, comprobanteInicial, sucursalInicial
         );
 
         /* Propuesta para Autorizado por Área Médica. */
@@ -1271,7 +1262,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
 
         /* CARGADO: no implica autorización médica. */
         prestacion.setEstadoRechazoAprobado(
-                ESTADO_PRESTACION_CARGADA
+                estadoInicial
         );
 
         return prestacion;
@@ -1294,7 +1285,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
             RequerimientoCompraDetalle detalle,
             BigDecimal cantidad,
             BigDecimal importeUnitario,
-            BigDecimal total) {
+            BigDecimal total, String comprobanteInicial, String sucursalInicial) {
 
         if (prestacion == null
                 || detalle == null) {
@@ -1303,11 +1294,11 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
         }
 
         prestacion.setComprobanteTipo(
-                COMPROBANTE_TIPO_INICIAL
+                comprobanteInicial
         );
 
         prestacion.setComprobanteCUITSucursal(
-                COMPROBANTE_CUIT_SUCURSAL_INICIAL
+                sucursalInicial
         );
 
         if (cantidad != null) {
@@ -1412,7 +1403,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
     private static void aplicarReferenciaTecnica(
             PrestacionesReclamo prestacion,
             RequerimientoCompra requerimiento,
-            RequerimientoCompraDetalle detalle)
+            RequerimientoCompraDetalle detalle, int tipoInicial, int maxObservacion)
             throws Exception {
 
         String sector =
@@ -1433,9 +1424,7 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 0
         );
 
-        prestacion.setTipoPrestacion(
-                1
-        );
+        prestacion.setTipoPrestacion(tipoInicial);
 
         /*
          * Los nuevos detalles de Compras utilizan NOMENCLADOR.
@@ -1477,84 +1466,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 );
             }
 
-            boolean nomencladorValido;
-
-            if (detalle.getIdTipoPrestacionInt() > 0) {
-                nomencladorValido =
-                        WebKeysCompras
-                                .esNomencladorValidoParaTipoPrestacionCompras(
-                                        sector,
-                                        detalle.getIdTipoPrestacionInt(),
-                                        nomenclador
-                                                .getId_tipo_nomenclador(),
-                                        nomenclador
-                                                .getMarcaReintegroLiquidacion(),
-                                        nomenclador.getCodigo()
-                                );
-            } else {
-                nomencladorValido =
-                        WebKeysCompras.esNomencladorValidoParaSectorCompras(
-                                sector,
-                                nomenclador.getId_tipo_nomenclador(),
-                                nomenclador.getMarcaReintegroLiquidacion(),
-                                nomenclador.getCodigo()
-                        );
-            }
-
-            if (!nomencladorValido) {
-
-                if ("FARMACIA".equals(sector)) {
-                    throw new IllegalArgumentException(
-                            "Para Farmacia debe utilizarse una "
-                                    + "prestación del nomenclador tipo 9."
-                    );
-                }
-
-                if ("DISCAPACIDAD".equals(sector)) {
-                    throw new IllegalArgumentException(
-                            "Para Discapacidad debe utilizarse una "
-                                    + "prestación con marca ReinLiq 6 "
-                                    + "o el código 431003."
-                    );
-                }
-
-                if ("ODONTOLOGIA".equals(sector)) {
-                    throw new IllegalArgumentException(
-                            "Para Odontologia debe utilizarse una "
-                                    + "prestación del nomenclador tipo 1."
-                    );
-                }
-
-                if ("PRESTACIONES MEDICAS".equals(sector)) {
-                    if (detalle.getIdTipoPrestacionInt() <= 0) {
-                        throw new IllegalArgumentException(
-                                "PRESTACIONES MÉDICAS requiere un "
-                                        + "nomenclador tipo 2, 3, 4, 6 o 10."
-                        );
-                    }
-
-                    if (WebKeysCompras.esTipoPrestacionInsumos(
-                            detalle.getIdTipoPrestacionInt()
-                    )) {
-                        throw new IllegalArgumentException(
-                                "Para Insumos debe utilizarse una "
-                                        + "prestación del nomenclador tipo 10."
-                        );
-                    }
-
-                    throw new IllegalArgumentException(
-                            "Debe utilizarse un nomenclador tipo 2, 3, 4 o 6; "
-                                    + "el tipo 10 corresponde exclusivamente "
-                                    + "a Insumos."
-                    );
-                }
-
-                throw new IllegalArgumentException(
-                        "La prestación seleccionada no corresponde "
-                                + "al sector del requerimiento."
-                );
-            }
-
+            // La seleccion ya persistida conserva identidad y tipo canonicos.
+            // La matriz vigente se aplica solo a selecciones nuevas o cambios.
             String codigoCanonico =
                     nomenclador.getCodigo() == null
                             ? ""
@@ -1618,9 +1531,8 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
          * No se habilitan nuevas altas de este tipo.
          */
         if (detalle.tieneMedicamento()) {
-            if (!"FARMACIA".equals(
-                    sector
-            )) {
+            if (!NomencladorCompraBusquedaHelper.esSectorFarmacia(
+                    requerimiento.getSectorDescripcion())) {
                 throw new IllegalArgumentException(
                         "Un medicamento histórico solo puede "
                                 + "utilizarse en Farmacia."
@@ -1690,11 +1602,11 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 );
             }
 
-            if (descripcionPendiente.length() > MAX_OBSERVACION) {
+            if (descripcionPendiente.length() > maxObservacion) {
                 descripcionPendiente =
                         descripcionPendiente.substring(
                                 0,
-                                MAX_OBSERVACION
+                                maxObservacion
                         );
             }
 
@@ -1734,6 +1646,17 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                 "El detalle de Compras no contiene "
                         + "una referencia técnica válida."
         );
+    }
+
+    public static void validarRequerimientoOrigen(RequerimientoCompra requerimiento,
+            ReclamoPrestacionalCompraContexto contexto, ReclamoPrestacional reclamo) throws Exception {
+        validarRequerimiento(requerimiento, contexto);
+        String cuil = normalizarCuit(reclamo.getCuit_titular());
+        if (cuil == null || !cuil.equals(normalizarCuit(requerimiento.getAfiliadoCuilTitular()))
+                || requerimiento.getAfiliadoInt() == null
+                || requerimiento.getAfiliadoInt().intValue() != reclamo.getInte()) {
+            throw new Exception("El afiliado del reclamo no coincide con el requerimiento persistido.");
+        }
     }
 
     private static void validarRequerimiento(
@@ -1921,6 +1844,157 @@ public final class ReclamoPrestacionalCompraPrecargaHelper {
                     "Los porcentajes de cargo deben estar "
                             + "entre 0 y 100 y sumar 100."
             );
+        }
+    }
+
+
+    private static void registrarDetallesOrigen(ReclamoPrestacionalCompraContexto contexto,
+            RequerimientoCompra requerimiento, List<PrestacionesReclamo> prestaciones)
+            throws Exception {
+        java.util.Map<Integer, Integer> origen = new java.util.HashMap<Integer, Integer>();
+        int posicion = 0;
+        for (int i = 0; i < requerimiento.getDetalles().size(); i++) {
+            RequerimientoCompraDetalle detalle = requerimiento.getDetalles().get(i);
+            if (detalle == null) {
+                continue;
+            }
+            if (detalle.getIdInt() <= 0 || posicion >= prestaciones.size()) {
+                throw new Exception("No se pudo identificar el detalle de origen de la precarga.");
+            }
+            PrestacionesReclamo prestacion = prestaciones.get(posicion++);
+            if (origen.put(Integer.valueOf(prestacion.getIdRegistro()),
+                    Integer.valueOf(detalle.getIdInt())) != null) {
+                throw new Exception("La precarga contiene identificadores de fila duplicados.");
+            }
+        }
+        if (posicion != prestaciones.size()) {
+            throw new Exception("La precarga no coincide con los detalles persistidos.");
+        }
+        contexto.definirDetallesOrigen(origen);
+    }
+
+    /** La validacion de contexto HTTP/usuario ya se ejecuta en ReclamosBaseAction. */
+    public static Nomenclador resolverNomencladorEdicion(HttpSession session,
+            PrestacionesReclamo prestacion, int tipo, String codigo, int idResuelto)
+            throws Exception {
+        return resolverNomencladorEdicion(session, prestacion, tipo, codigo, idResuelto, 1, 0);
+    }
+
+    public static Nomenclador resolverNomencladorEdicion(HttpSession session,
+            PrestacionesReclamo prestacion, int tipo, String codigo, int idResuelto,
+            int nomSeleccionado, int idMedicamentoRecibido) throws Exception {
+        Object objeto = session.getAttribute(WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA);
+        if (!(objeto instanceof ReclamoPrestacionalCompraContexto)) {
+            throw new Exception("El contexto de Compras ya no esta disponible.");
+        }
+        ReclamoPrestacionalCompraContexto contexto = (ReclamoPrestacionalCompraContexto) objeto;
+        Object reclamo = session.getAttribute(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION);
+        if (!contexto.esBorradorEnEdicion(reclamo) || prestacion == null) {
+            throw new Exception("La prestacion no pertenece al borrador vigente de Compras.");
+        }
+        Integer idDetalle = contexto.getIdDetalleOrigen(prestacion.getIdRegistro());
+        if (idDetalle == null) {
+            throw new Exception("No se puede verificar el detalle de origen. Vuelva al requerimiento.");
+        }
+        RequerimientoCompra requerimiento = BusquedaRequerimientoCompraServiceUtil
+                .getRequerimientoCompra(contexto.getIdRequerimientoCompra());
+        validarRequerimiento(requerimiento, contexto);
+        RequerimientoCompraDetalle origen = encontrarDetalleOrigen(requerimiento, idDetalle.intValue());
+        Nomenclador canonicoOrigen = origen.tieneNomenclador()
+                ? BusquedaRequerimientoCompraServiceUtil.obtenerNomencladorCanonico(
+                    origen.getIdPrestacionInt()) : null;
+        String codigoRecibido = codigo != null ? codigo.trim() : "";
+        if (origen.tieneNomenclador() && idMedicamentoRecibido > 0) {
+            throw new Exception("Una referencia canonica de Compras no puede sustituirse por un medicamento.");
+        }
+        if (canonicoOrigen != null && nomSeleccionado != 1
+                && prestacion.getId_prestacion() == origen.getIdPrestacionInt()
+                && (tipo <= 0 || tipo == canonicoOrigen.getId_tipo_nomenclador())
+                && (codigoRecibido.length() == 0 || codigoRecibido.equals(
+                    canonicoOrigen.getCodigo() != null ? canonicoOrigen.getCodigo().trim() : ""))) {
+            validarReferenciaPersistida(origen, canonicoOrigen);
+            return canonicoOrigen;
+        }
+        if (!origen.tieneNomenclador() && nomSeleccionado != 1
+                && prestacion.getId_prestacion() <= 0) {
+            if (origen.tieneMedicamento()
+                    && (idMedicamentoRecibido == 0 || idMedicamentoRecibido == origen.getIdMedicamentoInt())
+                    && prestacion.getId_medicamento() == origen.getIdMedicamentoInt()) {
+                return null;
+            }
+            if (origen.esObservacion() && idMedicamentoRecibido <= 0 && idResuelto <= 0
+                    && prestacion.getId_medicamento() <= 0) {
+                return null;
+            }
+            throw new Exception("La seleccion no conserva la referencia persistida del detalle de Compras.");
+        }
+        if (idMedicamentoRecibido > 0) {
+            throw new Exception("La seleccion de nomenclador no puede contener un medicamento.");
+        }
+        if (canonicoOrigen != null && tipo == canonicoOrigen.getId_tipo_nomenclador()
+                && codigoRecibido.equals(canonicoOrigen.getCodigo() != null
+                    ? canonicoOrigen.getCodigo().trim() : "")) {
+            validarReferenciaPersistida(origen, canonicoOrigen);
+            return canonicoOrigen;
+        }
+        int idSeleccionado = idResuelto;
+        int tipoSeleccionado = tipo;
+        String codigoSeleccionado = codigoRecibido;
+        Nomenclador seleccionado;
+        if (nomSeleccionado != 1 && prestacion.getId_prestacion() > 0) {
+            // Una edicion posterior conserva la seleccion temporal ya validada,
+            // pero debe volver a comprobar su configuracion vigente.
+            seleccionado = BusquedaRequerimientoCompraServiceUtil
+                    .obtenerNomencladorCanonico(prestacion.getId_prestacion());
+            if (seleccionado == null || seleccionado.getBaja_fecha() != null
+                    || (tipo > 0 && tipo != seleccionado.getId_tipo_nomenclador())
+                    || (codigoRecibido.length() > 0 && !codigoRecibido.equals(
+                        seleccionado.getCodigo() != null ? seleccionado.getCodigo().trim() : ""))) {
+                throw new Exception("La edicion no coincide con la seleccion temporal del nomenclador.");
+            }
+            idSeleccionado = seleccionado.getId_prestacion();
+            tipoSeleccionado = seleccionado.getId_tipo_nomenclador();
+            codigoSeleccionado = seleccionado.getCodigo() != null ? seleccionado.getCodigo().trim() : "";
+        } else {
+            seleccionado = BusquedaRequerimientoCompraServiceUtil.obtenerNomencladorCanonico(idSeleccionado);
+        }
+        if (seleccionado == null || seleccionado.getId_prestacion() != idSeleccionado
+                || seleccionado.getId_tipo_nomenclador() != tipoSeleccionado
+                || seleccionado.getBaja_fecha() != null
+                || !codigoSeleccionado.equals(seleccionado.getCodigo() != null
+                    ? seleccionado.getCodigo().trim() : "")) {
+            throw new Exception("La seleccion no coincide con el nomenclador vigente.");
+        }
+        List<ar.com.ospim.compras.requerimientos.beans.SectorNomencladorCompra> configuracion =
+                BusquedaRequerimientoCompraServiceUtil.getConfiguracionNomenclador(
+                        requerimiento.getIdSector().intValue(), origen.getIdTipoPrestacion());
+        if (!NomencladorCompraBusquedaHelper.esNomencladorConfigurado(configuracion, seleccionado)) {
+            throw new Exception("La prestacion no pertenece a los nomencladores configurados para el detalle.");
+        }
+        return seleccionado;
+    }
+
+    public static RequerimientoCompraDetalle encontrarDetalleOrigen(
+            RequerimientoCompra requerimiento, int idDetalle) throws Exception {
+        if (requerimiento != null && requerimiento.getDetalles() != null) {
+            for (int i = 0; i < requerimiento.getDetalles().size(); i++) {
+                RequerimientoCompraDetalle detalle = requerimiento.getDetalles().get(i);
+                if (detalle != null && detalle.getIdInt() == idDetalle) {
+                    return detalle;
+                }
+            }
+        }
+        throw new Exception("El detalle de origen ya no esta disponible en el requerimiento.");
+    }
+
+    public static void validarReferenciaPersistida(RequerimientoCompraDetalle origen,
+            Nomenclador canonico) throws Exception {
+        if (origen == null || !origen.tieneNomenclador() || canonico == null
+                || canonico.getId_prestacion() != origen.getIdPrestacionInt()
+                || canonico.getBaja_fecha() != null
+                || canonico.getId_tipo_nomenclador() <= 0
+                || canonico.getId_tipo_nomenclador() != origen.getIdTipoNomencladorInt()) {
+            throw new Exception("La referencia persistida no coincide con una prestacion canonica activa.");
         }
     }
 

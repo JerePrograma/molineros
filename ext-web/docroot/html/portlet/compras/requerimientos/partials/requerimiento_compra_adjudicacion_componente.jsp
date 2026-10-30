@@ -97,7 +97,7 @@ boolean puedeCotizarAdjudicacion =
                 : user != null
                         && PermissionUtil.userContainsRole(
                                 user,
-                                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras()
                         )
                         && reqAdjudicacion.puedeEditarCotizacion()
                         && !soloLecturaAdjudicacion;
@@ -117,7 +117,7 @@ boolean rolCotizarEmpresasAdjudicacion =
         puedeCotizarEmpresasAttrAdjudicacion instanceof Boolean
                 ? Boolean.TRUE.equals(puedeCotizarEmpresasAttrAdjudicacion)
                 : user != null && PermissionUtil.userContainsRole(
-                        user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
+                        user, ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras());
 boolean altaEmpresaAdjudicacion =
         !requerimientoPersistidoAdjudicacion
         && Boolean.TRUE.equals(request.getAttribute("compras.requerimiento.esNuevo"))

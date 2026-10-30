@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
@@ -57,7 +59,7 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
 
         if (idRequerimientoCompra == 0
                 && "alta".equalsIgnoreCase(ParamUtil.getString(renderRequest, "modo", ""))) {
-            if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+            if (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())) {
                 throw new Exception("No posee permisos para crear requerimientos de compra.");
             }
             validarSectorAlta(ParamUtil.getInteger(renderRequest, "id_sector", 0));
@@ -238,7 +240,7 @@ public class BuscarEmpresasCotizacionCompraAction extends PortletAction {
         if (user == null
                 || !PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        ConfiguracionComprasHelper.getRolCotizarCompras()
                 )) {
 
             throw new Exception(

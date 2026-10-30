@@ -26,6 +26,7 @@ $sources = @(
     'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraOrdenServiceImpl.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraOrdenServiceUtil.java',
     'ext-impl\src\ar\com\ospim\servlets\PdfServlet.java',
+    'test\compras\fixtures\datos\ComprasFuenteDatosFixture.java',
     'test\compras\ComprasOrdenHelperTest.java',
     'test\compras\ComprasOrdenConsultaTest.java',
     'test\compras\ComprasOrdenEdicionJdbcTest.java',

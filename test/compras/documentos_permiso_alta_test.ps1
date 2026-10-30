@@ -1,4 +1,4 @@
-param([ValidatePattern('^[A-Za-z0-9_-]+$')][string]$EvidenceName = 'offline')
+param([ValidatePattern('^[A-Za-z0-9_-]+$')][string]$EvidenceName = 'offline', [string]$EvidencePath = '')
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath 'C:\wsmolineros\ext'
 $root = (git rev-parse --show-toplevel).Trim()
@@ -8,6 +8,10 @@ $repoPath = 'C:\wsmolineros\ext'
 $initialHead = (& git rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'No se pudo registrar HEAD inicial.' }
 $artifactPath = Join-Path $repoPath ('output\documentos-permiso-alta-qa\' + $EvidenceName)
+if ($EvidencePath.Length -gt 0) {
+    $artifactPath = [IO.Path]::GetFullPath($EvidencePath)
+    if ($artifactPath -eq $repoPath -or $artifactPath.StartsWith($repoPath + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'La evidencia indicada debe quedar fuera del repositorio.' }
+}
 $classOutput = Join-Path $artifactPath 'classes'
 $latinEncoding = [System.Text.Encoding]::GetEncoding(28591)
 New-Item -ItemType Directory -Path $classOutput -Force | Out-Null
@@ -19,6 +23,7 @@ foreach ($folder in @('lib\global', 'lib\portal', 'lib\development', 'ext-lib\gl
 $classpathEntries += 'C:\apache-tomcat-8.5.23\lib\ecj-4.6.3.jar'
 $classpath = $classpathEntries -join ';'
 $sources = @(
+    'test\compras\fixtures\configuracion\ConfiguracionComprasDatosFixture.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\documentos\DocumentoLibraryComprasHelper.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\helper\PresupuestoCompraHelper.java',
     'test\compras\ComprasDocumentosPermisoAltaTest.java'
@@ -31,12 +36,16 @@ $sources = @(
     'Alcance: VIEW individual ABM; UPDATE solo comparativa; preservacion, idempotencia y compensacion.'
 ), $latinEncoding)
 $sourcepath = @('ext-impl\src', 'ext-service\src', 'ext-web\docroot\WEB-INF\src') | ForEach-Object { Join-Path $repoPath $_ }
+$ErrorActionPreference = 'Continue' # Registrar stderr nativo y comprobar exit code.
 $compileOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encoding' 'ISO-8859-1' '-source' '1.5' '-target' '1.5' '-classpath' $classpath '-sourcepath' ($sourcepath -join ';') '-d' $classOutput @sources 2>&1 | ForEach-Object { $_.ToString() })
 $compileExit = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'javac.log'), ($compileOutput + ('javac_exit=' + $compileExit)), $latinEncoding)
 if ($compileExit -ne 0) { $compileOutput | Write-Output; throw ('javac fallo: ' + $compileExit) }
+$ErrorActionPreference = 'Continue' # Registrar stderr nativo y comprobar exit code.
 $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-Dfile.encoding=UTF-8' '-cp' $classpath 'ComprasDocumentosPermisoAltaTest' $artifactPath 2>&1 | ForEach-Object { $_.ToString() })
 $runExit = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'report.txt'), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
 $compileOutput | Write-Output
 $runOutput | Write-Output

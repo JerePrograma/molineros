@@ -166,7 +166,7 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                 ? detalle.getTroquelInt()
                 : (detalle.esNomenclador()
                         && detalle.getIdTipoNomencladorInt()
-                                == WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA
+                                == ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getTipoNomencladorFarmacia()
                         ? GetterUtil.getInteger(detalle.getCodigoNomencladorVisible(), 0)
                         : 0);
         String drogaDetalle = drogasDetalleFarmacia.get(Integer.valueOf(troquelDrogaDetalle));

@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
@@ -87,7 +89,7 @@ public final class RequerimientoCompraRenderActionUtil {
                 && requerimiento.isActivo() && WebKeysCompras.esAutorizado(requerimiento.getEstado())) {
             try {
                 User user = PortalUtil.getUser(renderRequest);
-                if (user != null && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)) {
+                if (user != null && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())) {
                     Object token = renderRequest.getAttribute("COMPRAS_SAVE_TOKEN");
                     if (!(token instanceof String) || ((String) token).length() == 0) {
                         RequerimientoCompraGuardadoToken.publicar(renderRequest);
@@ -123,8 +125,8 @@ public final class RequerimientoCompraRenderActionUtil {
             try {
                 User user = PortalUtil.getUser(renderRequest);
                 boolean permiso = user != null
-                        && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                        || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS));
+                        && (PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
+                        || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras()));
                 puedeCorregirItem = permiso && new RequerimientoCompraReclamoPrestacionalHelper()
                         .obtenerPorRequerimiento(requerimiento.getIdRequerimientoCompra()) == null;
             } catch (Exception e) {
@@ -186,6 +188,10 @@ public final class RequerimientoCompraRenderActionUtil {
                                     )
                     );
 
+                    String estadosEnvio = ConfiguracionComprasHelper.leerObligatoria(ConfiguracionComprasHelper.CONFIG_ESTADOS_ENVIO);
+                    String estadoEnviado = ConfiguracionComprasHelper.resolverEstadoEnvio("ENVIADO", estadosEnvio);
+                    String estadoCotizado = ConfiguracionComprasHelper.resolverEstadoEnvio("COTIZADO", estadosEnvio);
+
                     for (int i = 0;
                             i < prestadoresEnviados.size();
                             i++) {
@@ -195,9 +201,9 @@ public final class RequerimientoCompraRenderActionUtil {
 
                         if (prestador != null
                                 && prestador.getIdPrestador() > 0
-                                && (WebKeysCompras.ENVIO_ENVIADO.equals(
+                                && (estadoEnviado.equals(
                                         prestador.getEstadoEnvio())
-                                    || WebKeysCompras.ENVIO_COTIZADO.equals(
+                                    || estadoCotizado.equals(
                                         prestador.getEstadoEnvio()))) {
 
                             prestadoresDisponiblesPresupuesto.add(

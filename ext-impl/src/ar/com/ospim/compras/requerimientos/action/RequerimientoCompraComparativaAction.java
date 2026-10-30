@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
@@ -34,14 +36,14 @@ public class RequerimientoCompraComparativaAction extends PortletAction {
 
     public static boolean puedeEditar(User user) throws Exception {
         return user != null
-                && (PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                || PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS));
+                && (PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
+                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras()));
     }
 
     public static void validarPermiso(User user, boolean editar) throws Exception {
         if (!puedeEditar(user) && (editar || user == null
-                || (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)))) {
+                || (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
+                && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras())))) {
             throw new IllegalArgumentException("No posee permisos para la comparativa de Compras.");
         }
     }
@@ -68,7 +70,7 @@ public class RequerimientoCompraComparativaAction extends PortletAction {
             List<RequerimientoCompraComparativa> lista;
             if (editar) {
                 validarPermiso(user, true);
-                if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
+                if (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
                         || !r.puedeAdministrarPresupuestos()) {
                     throw new IllegalArgumentException("No se pueden administrar presupuestos en este contexto.");
                 }
@@ -87,10 +89,10 @@ public class RequerimientoCompraComparativaAction extends PortletAction {
             }
             boolean puedeEnviarAAutorizar = !editar && r.isActivo()
                     && WebKeysCompras.puedeEnviarAAutorizar(r.getEstado())
-                    && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
+                    && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras());
             boolean puedeAutorizar = !editar && r.isActivo()
-                    && r.getEstado() == WebKeysCompras.ESTADO_PARA_AUTORIZAR
-                    && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
+                    && r.getEstado() == ConfiguracionComprasHelper.getEstadoParaAutorizar()
+                    && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras());
             if (puedeEnviarAAutorizar || puedeAutorizar) {
                 try {
                     RequerimientoCompraReclamoPrestacional relacion =

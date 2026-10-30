@@ -19,6 +19,7 @@ import java.util.List;
 public class ComprasOrdenConsultaTest {
     private static int checks;
     public static void main(String[] args) throws Exception {
+        ComprasOrdenHelperTest.instalarConfiguracionPrueba();
         afiliado(); empresaOpcional(); fuentesAusentesYClaves(); telefonoFallback();
         System.out.println("COMPRAS_ORDEN_CONSULTA_OK checks=" + checks);
     }

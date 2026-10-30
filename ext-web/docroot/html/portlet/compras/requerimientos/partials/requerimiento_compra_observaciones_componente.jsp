@@ -60,7 +60,7 @@ Efectos secundarios:
             !puedeEditarEstructuraPantalla
             && req.puedeEditarObservacionInterna()
             && user != null
-            && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
+            && PermissionUtil.userContainsRole(user, ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAutorizarCompras());
     %>
     <fieldset class="block-labels compras-observaciones">
         <legend>

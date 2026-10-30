@@ -35,6 +35,12 @@ public final class RequerimientoCompraReclamoPrestacionalTransaccion {
         this.con = con;
     }
 
+    public static RequerimientoCompraReclamoPrestacionalTransaccion sobreConexion(
+            RequerimientoCompraReclamoPrestacionalServiceImpl service,Connection con) {
+        if(service==null||con==null)throw new IllegalArgumentException("Debe informar la persistencia y conexion caller.");
+        return new RequerimientoCompraReclamoPrestacionalTransaccion(service,con);
+    }
+
     public static RequerimientoCompraReclamoPrestacionalTransaccion abrir(
             RequerimientoCompraReclamoPrestacionalServiceImpl
                     comprasPersistence) throws Exception {
@@ -74,28 +80,22 @@ public final class RequerimientoCompraReclamoPrestacionalTransaccion {
             String tokenReserva,
             String usuario) throws Exception {
 
-        return comprasPersistence.reservarCreacion(
-                getConnection(),
-                idRequerimientoCompra,
-                tokenReserva,
-                usuario
-        );
+        return new ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper()
+                .reservarCreacionEnTransaccion(this,idRequerimientoCompra,tokenReserva,usuario);
     }
 
-    public boolean finalizarCreacion(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            int idReclamoPrestacional,
-            String usuario) throws Exception {
-
-        return comprasPersistence.finalizarCreacion(
-                getConnection(),
-                idRequerimientoCompra,
-                tokenReserva,
-                idReclamoPrestacional,
-                usuario
-        );
+    public boolean finalizarCreacion(int id,String token,int reclamo,String usuario)throws Exception {
+        return new ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper()
+                .finalizarCreacionEnTransaccion(this,id,token,reclamo,usuario);
     }
+
+    public java.util.Map<String,Object> obtenerCabeceraReserva(int id)throws Exception {return comprasPersistence.obtenerCabeceraReserva(getConnection(),id);}
+    public int insertarReserva(int id,String estado,String token,String usuario)throws Exception {return comprasPersistence.insertarReserva(getConnection(),id,estado,token,usuario);}
+    public int actualizarVinculo(int id,String anterior,String token,int reclamo,String nuevo,String error,boolean limpiarToken,String usuario)throws Exception {
+        return comprasPersistence.actualizarVinculo(getConnection(),id,anterior,token,reclamo,nuevo,error,limpiarToken,usuario);
+    }
+    public int eliminarReserva(int id,String estado,String token)throws Exception {return comprasPersistence.eliminarReserva(getConnection(),id,estado,token);}
+    public String resolverUsuarioAuditoria(String usuario)throws Exception {return new EditarRequerimientoCompraServiceImpl().resolverUsuarioAuditoria(getConnection(),usuario);}
 
     public boolean bloquearRequerimiento(
             int idRequerimientoCompra) throws Exception {
@@ -120,12 +120,7 @@ public final class RequerimientoCompraReclamoPrestacionalTransaccion {
             int idEstadoNuevo,
             String usuario) throws Exception {
 
-        comprasPersistence.cambiarEstado(
-                getConnection(),
-                idRequerimientoCompra,
-                idEstadoNuevo,
-                usuario
-        );
+        comprasPersistence.cambiarEstado(getConnection(), idRequerimientoCompra, idEstadoNuevo, usuario);
     }
 
     public int insertarReclamoPrestacional(
@@ -152,6 +147,55 @@ public final class RequerimientoCompraReclamoPrestacionalTransaccion {
         );
     }
 
+    public String getConfiguracionCompra(String clave) throws Exception {
+        return BusquedaRequerimientoCompraServiceUtil.getConfiguracionCompra(clave, getConnection());
+    }
+
+    public ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra getRequerimientoCompra(
+            int idRequerimiento) throws Exception {
+        getEstadoRequerimientoForUpdate(idRequerimiento);
+        return BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(getConnection(), idRequerimiento);
+    }
+
+    public ar.com.ospim.autorizaciones.beans.Nomenclador obtenerNomencladorCanonico(int id)
+            throws Exception {
+        return BusquedaRequerimientoCompraServiceUtil.obtenerNomencladorCanonico(getConnection(), id);
+    }
+
+    public java.util.List<ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector>
+            listarSectores() throws Exception {
+        return BusquedaRequerimientoCompraServiceUtil.listarSectores(getConnection());
+    }
+
+    public java.util.List<ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra>
+            listarTiposPrestacion() throws Exception {
+        return BusquedaRequerimientoCompraServiceUtil.listarTiposPrestacion(getConnection());
+    }
+
+    public java.util.List<ar.com.ospim.compras.requerimientos.beans.SectorNomencladorCompra>
+            listarAsociacionesNomenclador(int idSector) throws Exception {
+        return BusquedaRequerimientoCompraServiceUtil.listarAsociacionesNomenclador(getConnection(), idSector);
+    }
+
+    public java.sql.Timestamp bloquearReclamoPrestacional(int idReclamo) throws Exception {
+        return comprasPersistence.bloquearReclamoPrestacional(getConnection(), idReclamo);
+    }
+
+    public java.util.List<RequerimientoCompraReclamoPrestacional>
+            obtenerVinculosPorRPForUpdate(int idReclamo) throws Exception {
+        return comprasPersistence.obtenerVinculosPorRPForUpdate(getConnection(), idReclamo);
+    }
+
+    public int guardarBajaVinculo(RequerimientoCompraReclamoPrestacional vinculo,
+            java.sql.Timestamp fecha, String usuario, String estadoEsperado) throws Exception {
+        return comprasPersistence.guardarBajaVinculo(
+                getConnection(), vinculo, fecha, usuario, estadoEsperado);
+    }
+
+    public int borrarReclamoPrestacional(int idReclamo, String usuario) throws Exception {
+        return ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil
+                .borrar(getConnection(), idReclamo, usuario);
+    }
     public void commit() throws Exception {
         getConnection().commit();
     }

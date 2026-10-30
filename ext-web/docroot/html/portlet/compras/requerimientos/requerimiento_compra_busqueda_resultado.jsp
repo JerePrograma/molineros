@@ -68,7 +68,7 @@ SearchContainer searchContainer = new SearchContainer(
         null,
         null,
         SearchContainer.DEFAULT_CUR_PARAM,
-        BusquedaRequerimientoCompraServiceUtil.REQUERIMIENTOS_POR_PAGINA,
+        ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRequerimientosPorPagina(),
         portletURL,
         headerNames,
         "No se encontraron requerimientos de compras."
@@ -105,7 +105,7 @@ for (int i = 0; i < requerimientos.size(); i++) {
 <%
 int totalRegistros = requerimientos.isEmpty() ? 0 : requerimientos.get(0).getTotalRegistros();
 int totalPaginas = totalRegistros == 0 ? 0 : 1 + (totalRegistros - 1)
-        / BusquedaRequerimientoCompraServiceUtil.REQUERIMIENTOS_POR_PAGINA;
+        / ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRequerimientosPorPagina();
 Integer paginaListado = (Integer) renderRequest.getAttribute(
         WebKeysCompras.PAGINA_REQUERIMIENTOS_COMPRA);
 int paginaActual = paginaListado != null ? paginaListado.intValue() : 1;

@@ -5,8 +5,11 @@
 <%@ page import="ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper" %>
 <%!
 private String valorComparativa(Map<String, String> entrada, String clave, Object valor) {
-    return HtmlUtil.escape(entrada != null && entrada.containsKey(clave)
-            ? entrada.get(clave) : RequerimientoCompraComparativaHelper.texto(valor));
+    return HtmlUtil.escape(valorComparativaCrudo(entrada, clave, valor));
+}
+private String valorComparativaCrudo(Map<String, String> entrada, String clave, Object valor) {
+    return entrada != null && entrada.containsKey(clave)
+            ? RequerimientoCompraComparativaHelper.texto(entrada.get(clave)) : RequerimientoCompraComparativaHelper.texto(valor);
 }
 %>
 <%
@@ -19,6 +22,16 @@ boolean comparativaEditable = Boolean.TRUE.equals(renderRequest.getAttribute("co
 boolean comparativaExiste = Boolean.TRUE.equals(renderRequest.getAttribute("comparativaExiste"));
 String comparativaError = (String) renderRequest.getAttribute("comparativaError");
 String comparativaArchivoActual = (String) renderRequest.getAttribute("comparativaArchivoActual");
+Map<String, List<String>> comparativaOpciones = null;
+boolean comparativaOpcionesDisponibles = true;
+if (comparativaEditable) {
+    try {
+        comparativaOpciones = RequerimientoCompraComparativaHelper.cargarOpciones();
+    } catch (ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.ConfiguracionInvalidaException errorConfiguracion) {
+        comparativaOpcionesDisponibles = false;
+        comparativaError = errorConfiguracion.getMessage();
+    }
+}
 %>
 <style type="text/css">
     .compras-comparativa-campos > tbody > tr > td {
@@ -43,7 +56,7 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
 <% if (Boolean.TRUE.equals(renderRequest.getAttribute("comparativaGuardada"))) { %>
     <div class="portlet-msg-success">Comparativa guardada.</div>
 <% } %>
-<% if (comparativaReq != null && comparativas != null) { %>
+<% if (comparativaReq != null && comparativas != null && (!comparativaEditable || comparativaOpcionesDisponibles)) { %>
     <% if (!comparativaEditable) { %>
     <h3>Comparativa del requerimiento <%= comparativaReq.getIdRequerimientoCompra() %></h3>
         <% if (!comparativaExiste) { %>
@@ -60,7 +73,6 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                 continue;
             }
             String sufijoComparativa = "_" + comparativa.getIdPrestador();
-            boolean comparativaNueva = comparativa.getIdComparativa() == 0;
         %>
         <fieldset class="block-labels">
             <legend><%= HtmlUtil.escape(comparativa.getPrestador()) %>
@@ -116,8 +128,8 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                     <td class="compras-celda-control">
                         <% if (comparativaEditable) { %>
                         <select id="<portlet:namespace />pago<%= sufijoComparativa %>" name="<portlet:namespace />pago<%= sufijoComparativa %>">
-                            <% for (String opcion : new String[] {"30", "45", "60"}) { %>
-                            <option value="<%= opcion %>" <%= opcion.equals(valorComparativa(comparativaEntrada, "pago" + sufijoComparativa, comparativaNueva ? Integer.valueOf(45) : comparativa.getFormaPago())) ? "selected=\"selected\"" : "" %>><%= opcion %> días</option>
+                            <% for (String opcion : comparativaOpciones.get("PAGO")) { %>
+                            <option value="<%= HtmlUtil.escape(opcion) %>" <%= opcion.equals(valorComparativaCrudo(comparativaEntrada, "pago" + sufijoComparativa, comparativa.getFormaPago())) ? "selected=\"selected\"" : "" %>><%= HtmlUtil.escape(opcion) %> días</option>
                             <% } %>
                         </select>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getFormaPago()) %> días<% } %>
@@ -127,8 +139,8 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                         <% if (comparativaEditable) { %>
                         <select id="<portlet:namespace />plazo<%= sufijoComparativa %>" name="<portlet:namespace />plazo<%= sufijoComparativa %>">
                             <option value=""></option>
-                            <% for (String opcion : new String[] {"24/48", "48/72"}) { %>
-                            <option value="<%= opcion %>" <%= opcion.equals(valorComparativa(comparativaEntrada, "plazo" + sufijoComparativa, comparativaNueva ? "48/72" : comparativa.getPlazoEntrega())) ? "selected=\"selected\"" : "" %>><%= opcion %></option>
+                            <% for (String opcion : comparativaOpciones.get("PLAZO")) { %>
+                            <option value="<%= HtmlUtil.escape(opcion) %>" <%= opcion.equals(valorComparativaCrudo(comparativaEntrada, "plazo" + sufijoComparativa, comparativa.getPlazoEntrega())) ? "selected=\"selected\"" : "" %>><%= HtmlUtil.escape(opcion) %></option>
                             <% } %>
                         </select>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getPlazoEntrega()) %><% } %>
@@ -138,8 +150,8 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                         <% if (comparativaEditable) { %>
                         <select id="<portlet:namespace />validez<%= sufijoComparativa %>" name="<portlet:namespace />validez<%= sufijoComparativa %>">
                             <option value=""></option>
-                            <% for (String opcion : new String[] {"24", "48"}) { %>
-                            <option value="<%= opcion %>" <%= opcion.equals(valorComparativa(comparativaEntrada, "validez" + sufijoComparativa, comparativaNueva ? Integer.valueOf(48) : comparativa.getValidezPresupuesto())) ? "selected=\"selected\"" : "" %>><%= opcion %></option>
+                            <% for (String opcion : comparativaOpciones.get("VALIDEZ")) { %>
+                            <option value="<%= HtmlUtil.escape(opcion) %>" <%= opcion.equals(valorComparativaCrudo(comparativaEntrada, "validez" + sufijoComparativa, comparativa.getValidezPresupuesto())) ? "selected=\"selected\"" : "" %>><%= HtmlUtil.escape(opcion) %></option>
                             <% } %>
                         </select>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getValidezPresupuesto()) %><% } %>
@@ -151,8 +163,8 @@ String comparativaArchivoActual = (String) renderRequest.getAttribute("comparati
                         <% if (comparativaEditable) { %>
                         <select id="<portlet:namespace />envio<%= sufijoComparativa %>" name="<portlet:namespace />envio<%= sufijoComparativa %>">
                             <option value=""></option>
-                            <% for (String opcion : new String[] {"Obra Social", "Beneficiario", "Delegación"}) { %>
-                            <option value="<%= HtmlUtil.escape(opcion) %>" <%= HtmlUtil.escape(opcion).equals(valorComparativa(comparativaEntrada, "envio" + sufijoComparativa, comparativaNueva ? "Beneficiario" : comparativa.getEnvio())) ? "selected=\"selected\"" : "" %>><%= HtmlUtil.escape(opcion) %></option>
+                            <% for (String opcion : comparativaOpciones.get("ENVIO")) { %>
+                            <option value="<%= HtmlUtil.escape(opcion) %>" <%= opcion.equals(valorComparativaCrudo(comparativaEntrada, "envio" + sufijoComparativa, comparativa.getEnvio())) ? "selected=\"selected\"" : "" %>><%= HtmlUtil.escape(opcion) %></option>
                             <% } %>
                         </select>
                         <% } else { %><%= valorComparativa(null, "", comparativa.getEnvio()) %><% } %>

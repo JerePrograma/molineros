@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.documentos;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
@@ -259,11 +261,13 @@ public class DocumentoLibraryComprasHelper
             );
         }
 
+        String rolAbmCompras = ConfiguracionComprasHelper.getRolAbmCompras();
+
         Role role = null;
         try {
             role = RoleLocalServiceUtil.getRole(
                     entry.getCompanyId(),
-                    WebKeysCompras.ROL_ABM_COMPRAS
+                    rolAbmCompras
             );
         } catch (NoSuchRoleException e) {
             // PermissionUtil acepta roles legacy como ABM_Compras.
@@ -276,7 +280,7 @@ public class DocumentoLibraryComprasHelper
             for (int i = 0; i < roles.size(); i++) {
                 Role candidato = roles.get(i);
                 if (candidato != null && candidato.getName() != null
-                        && WebKeysCompras.ROL_ABM_COMPRAS.equals(
+                        && rolAbmCompras.toUpperCase(Locale.ENGLISH).equals(
                                 candidato.getName().toUpperCase(Locale.ENGLISH))) {
                     role = candidato;
                     break;
@@ -286,7 +290,7 @@ public class DocumentoLibraryComprasHelper
                 // Un rol no configurado no debe impedir crear el adjunto.
                 // No se concede ningun permiso y la descarga mantiene su check DL.
                 _log.warn("No se agregan permisos de documento de Compras: rol "
-                        + WebKeysCompras.ROL_ABM_COMPRAS
+                        + rolAbmCompras
                         + " no configurado. companyId=" + entry.getCompanyId()
                         + ", fileEntryId=" + entry.getFileEntryId());
                 return;
@@ -878,8 +882,7 @@ public class DocumentoLibraryComprasHelper
                 );
 
         if (extension.length()
-                > WebKeysCompras
-                .DOCUMENT_LIBRARY_MAX_EXTENSION_LENGTH
+                > ConfiguracionComprasHelper.getMaxExtensionDocumento()
                 || !extension.matches(
                 "^\\.[A-Za-z0-9]+$"
         )) {
@@ -1259,8 +1262,7 @@ public class DocumentoLibraryComprasHelper
                 nombreOriginal
         )
                 || nombreOriginal.length()
-                > WebKeysCompras
-                .DOCUMENT_LIBRARY_MAX_TITLE_LENGTH) {
+                > ConfiguracionComprasHelper.getMaxTituloDocumento()) {
 
             throw new Exception(
                     "El adjunto validado tiene "
@@ -2101,7 +2103,7 @@ public class DocumentoLibraryComprasHelper
         }
 
         DLFolder folder = DLFolderLocalServiceUtil.getFolder(
-                WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS,
+                ConfiguracionComprasHelper.getGrupoDocumentLibraryLegacy(),
                 WebKeysCompras.DOCUMENT_LIBRARY_PARENT_FOLDER_ID_COMPRAS,
                 "ReclamosPrestacionales"
         );
@@ -2384,5 +2386,78 @@ public class DocumentoLibraryComprasHelper
                 .deleteFileEntry(
                         entry
                 );
+    }
+
+    public static int registrarOrdenMedicaEnTransaccion(
+            ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            int idRequerimiento, OrdenMedicaValidada orden,
+            DocumentoComprasCreado documento, String usuario) throws Exception {
+        if (tx == null || idRequerimiento <= 0 || orden == null
+                || orden.getFechaDocumento() == null || documento == null) {
+            throw new IllegalArgumentException("Debe informar la transaccion y los datos de la orden medica.");
+        }
+        ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra actual =
+                tx.bloquearYObtenerRequerimiento(idRequerimiento);
+        String estados = tx.getConfiguracionCompra("COMPRAS_ESTADOS_IDS");
+        if (actual == null || !actual.isActivo() || actual.getEstado()
+                != ConfiguracionComprasHelper.resolverEstado("PENDIENTE", estados)) {
+            throw new IllegalArgumentException("La orden medica solo puede registrarse en un requerimiento PENDIENTE activo.");
+        }
+        java.util.Map<String,String> limites = ConfiguracionComprasHelper.parsearPares(
+                "COMPRAS_LIMITES", tx.getConfiguracionCompra("COMPRAS_LIMITES"));
+        for (String limite : limites.values()) {
+            ConfiguracionComprasHelper.parsearEntero("COMPRAS_LIMITES", limite, false);
+        }
+        int maxReceta = ConfiguracionComprasHelper.parsearEntero("COMPRAS_LIMITES",
+                limites.get("RECETA_ORDEN_MEDICA"), false);
+        // El techo estructural corresponde al VARCHAR(100) instalado.
+        if (maxReceta > 100) {
+            throw new ConfiguracionComprasHelper.ConfiguracionInvalidaException("COMPRAS_LIMITES");
+        }
+        String receta = normalizarNumeroReceta(orden.getNumeroReceta(), maxReceta);
+        if (receta != null && !WebKeysCompras.isEmpty(actual.getAfiliadoCuilTitular())
+                && actual.getAfiliadoInt() != null) {
+            tx.bloquearClaveReceta(idRequerimiento, orden.getFechaDocumento(), receta);
+            Integer duplicado = tx.buscarRequerimientoRecetaDuplicada(idRequerimiento,
+                    orden.getFechaDocumento(), receta,
+                    ConfiguracionComprasHelper.resolverEstado("ANULADO", estados));
+            if (duplicado != null) {
+                throw new IllegalArgumentException("La orden medica ya fue cargada con esa fecha y receta en el requerimiento " + duplicado + ".");
+            }
+        }
+        RequerimientoCompraPresupuesto asociacion = new RequerimientoCompraPresupuesto();
+        asociacion.setIdRequerimiento(Integer.valueOf(idRequerimiento));
+        asociacion.setTipoDocumento(Integer.valueOf(RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_ORDEN_MEDICA));
+        asociacion.setFechaDocumento(orden.getFechaDocumento());
+        asociacion.setNumeroReceta(receta);
+        asociacion.setDlGroupId(Long.valueOf(documento.getGroupId()));
+        asociacion.setDlFolderId(Long.valueOf(documento.getFolderId()));
+        asociacion.setDlFileEntryId(Long.valueOf(documento.getFileEntryId()));
+        asociacion.setDlFileUuid(WebKeysCompras.trimToNull(documento.getUuid()));
+        asociacion.setNombreOriginal(WebKeysCompras.trimToNull(orden.getNombreOriginal()));
+        asociacion.setNombrePersistido(WebKeysCompras.trimToNull(documento.getNombrePersistido()));
+        asociacion.setTitulo(WebKeysCompras.TITULO_ORDEN_MEDICA);
+        validarIdentidadAsociacionDocumento(asociacion);
+        if (asociacion.getDlFileUuid() == null || asociacion.getNombreOriginal() == null) {
+            throw new IllegalArgumentException("La orden medica no conserva una identidad documental completa.");
+        }
+        int id = tx.insertarDocumento(asociacion,
+                usuario);
+        if (id <= 0) {
+            throw new IllegalStateException("La orden medica no devolvio una asociacion valida.");
+        }
+        return id;
+    }
+
+    public static String normalizarNumeroReceta(String numero, int maximo) {
+        if (numero != null && numero.length() > maximo) {
+            throw new IllegalArgumentException("El numero de receta supera el limite configurado.");
+        }
+        String normalizado = numero != null
+                ? numero.trim().toUpperCase(java.util.Locale.ROOT).replaceAll("\\s+", "") : "";
+        if (normalizado.length() > maximo) {
+            throw new IllegalArgumentException("El numero de receta supera el limite configurado.");
+        }
+        return normalizado.length() == 0 ? null : normalizado;
     }
 }

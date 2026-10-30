@@ -159,12 +159,15 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             String descripcionSector = WebKeysCompras.normalizarSectorCompra(
                     sector.getDescripcion());
             Integer idTipoPrestacion = resolverTipoPrestacion(request);
-            if (!"FARMACIA".equals(descripcionSector)) {
+            boolean farmacia = NomencladorCompraBusquedaHelper.esSectorFarmacia(descripcionSector);
+            boolean sinAcentos = ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper
+                    .compararBusquedaSinAcentos(descripcionSector);
+            if (!farmacia) {
                 droga = "";
             }
             if (codigo.length() == 0 && descripcion.length() == 0
                     && droga.length() == 0) {
-                publicarError(request, "FARMACIA".equals(descripcionSector)
+                publicarError(request, farmacia
                         ? "Ingrese código, descripción o droga."
                         : "Ingrese código o descripción.");
                 return;
@@ -172,7 +175,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             request.setAttribute("COMPRAS_SECTOR_NOMENCLADOR", descripcionSector);
             request.setAttribute("COMPRAS_MARCA_REIN_LIQ", "0");
             request.setAttribute("COMPRAS_ES_PREST_MED",
-                    "PRESTACIONES MEDICAS".equals(descripcionSector) ? "1" : "0");
+                    sinAcentos ? "1" : "0");
             request.setAttribute("COMPRAS_CODIGO_NOMENCLADOR", codigo);
             request.setAttribute("COMPRAS_DESCRIPCION_NOMENCLADOR", descripcion);
             // 0 es contexto de búsqueda múltiple; nunca se persiste como tipo real.
@@ -180,7 +183,7 @@ public class BuscarItemTecnicoComprasAction extends PortletAction {
             List<Nomenclador> resultados = nomencladorHelper.buscar(
                     sector.getIdSector(), descripcionSector, idTipoPrestacion,
                     codigo, descripcion, droga);
-            if ("FARMACIA".equals(descripcionSector)) {
+            if (farmacia) {
                 request.setAttribute("COMPRAS_DROGAS_NOMENCLADOR",
                         BusquedaRequerimientoCompraServiceUtil
                                 .obtenerDrogasNomencladorFarmacia(resultados));

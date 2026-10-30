@@ -19,9 +19,9 @@ import java.util.Map;
  */
 public class BusquedaRequerimientoCompraServiceUtil {
 
+    @Deprecated
     public static final int REQUERIMIENTOS_POR_PAGINA = 50;
 
-    private static final int MAX_ITEMS_HISTORICOS_AFILIADO = 20;
 
     private static BusquedaRequerimientoCompraServiceImpl instance = null;
 
@@ -58,7 +58,7 @@ public class BusquedaRequerimientoCompraServiceUtil {
         try {
             filtroEfectivo.setIdEstado(
                     Integer.valueOf(
-                            WebKeysCompras.ESTADO_RECLAMO_RP
+                            ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoReclamoRP()
                     )
             );
 
@@ -147,154 +147,35 @@ public class BusquedaRequerimientoCompraServiceUtil {
     }
 
     public static List<RequerimientoCompraDetalle> buscarItemsHistoricosAfiliado(
-            String cuilTitular,
-            int inte,
-            int idSector,
-            int idRequerimientoExcluir) throws Exception {
-
-        String cuil = WebKeysCompras.trimToNull(cuilTitular);
-
-        if (cuil == null || !cuil.matches("^[0-9]{11}$")) {
-            throw new Exception(
-                    "Debe informar un CUIL titular válido."
-            );
-        }
-
-        if (inte < 0) {
-            throw new Exception(
-                    "Debe informar un integrante válido."
-            );
-        }
-
-        if (idSector <= 0) {
-            throw new Exception(
-                    "Debe informar el sector del requerimiento."
-            );
-        }
-
-        List<RequerimientoCompraDetalle> items =
-                getInstance().buscarItemsHistoricosAfiliado(
-                        cuil,
-                        inte,
-                        idSector,
-                        idRequerimientoExcluir > 0
-                                ? idRequerimientoExcluir
-                                : 0,
-                        MAX_ITEMS_HISTORICOS_AFILIADO
-                );
-
-        for (int i = 0; i < items.size(); i++) {
-            RequerimientoCompraDetalle detalle = items.get(i);
-
-            if (detalle == null) {
-                continue;
-            }
-
-            detalle.setTipoItem(
-                    RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR
-            );
-            detalle.setCodigoItem(
-                    detalle.getCodigoNomenclador()
-            );
-            detalle.setDescripcionItem(
-                    detalle.getDescripcionNomenclador()
-            );
-            detalle.setCantidad(Integer.valueOf(1));
-        }
-
-        return items;
+            String cuilTitular, int inte, int idSector, int idRequerimientoExcluir) throws Exception {
+        return ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper
+                .buscarItemsHistoricosAfiliado(cuilTitular, inte, idSector, idRequerimientoExcluir);
     }
 
-    public static Map<Integer, String> obtenerDrogasNomencladorFarmacia(
-            List<Nomenclador> nomencladores) throws Exception {
-
-        List<Integer> troqueles = new ArrayList<Integer>();
-        Map<Integer, Integer> troquelesPorPrestacion =
-                new HashMap<Integer, Integer>();
-
-        for (int i = 0;
-                nomencladores != null && i < nomencladores.size();
-                i++) {
-
-            Nomenclador nomenclador = nomencladores.get(i);
-
-            if (nomenclador == null
-                    || nomenclador.getId_tipo_nomenclador()
-                    != WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA) {
-                continue;
-            }
-
-            String codigo = nomenclador.getCodigo() != null
-                    ? nomenclador.getCodigo().trim()
-                    : "";
-            int troquel = codigo.matches("^[0-9]+$")
-                    ? GetterUtil.getInteger(codigo, 0)
-                    : 0;
-
-            if (troquel > 0) {
-                Integer claveTroquel = Integer.valueOf(troquel);
-                if (!troqueles.contains(claveTroquel)) {
-                    troqueles.add(claveTroquel);
-                }
-                troquelesPorPrestacion.put(
-                        Integer.valueOf(nomenclador.getId_prestacion()),
-                        claveTroquel
-                );
-            }
-        }
-
-        Map<Integer, String> drogasPorTroquel =
-                getInstance().listarDrogasMedicamentosBatch(troqueles);
-        Map<Integer, String> drogasPorPrestacion =
-                new HashMap<Integer, String>();
-
-        for (Map.Entry<Integer, Integer> item
-                : troquelesPorPrestacion.entrySet()) {
-            String droga = drogasPorTroquel.get(item.getValue());
-            drogasPorPrestacion.put(
-                    item.getKey(),
-                    droga != null ? droga : ""
-            );
-        }
-
-        return drogasPorPrestacion;
+    public static List<RequerimientoCompraDetalle> consultarItemsHistoricosAfiliado(
+            String cuilTitular, int inte, int idSector, int idRequerimientoExcluir, int limite)
+            throws Exception {
+        return getInstance().buscarItemsHistoricosAfiliado(
+                cuilTitular, inte, idSector, idRequerimientoExcluir, limite);
     }
 
-    public static Map<Integer, String> obtenerDrogasDetalleFarmacia(
-            List<RequerimientoCompraDetalle> detalles) throws Exception {
+    public static Map<Integer, String> obtenerDrogasNomencladorFarmacia(List<Nomenclador> nomencladores) throws Exception {
+        return ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper
+                .obtenerDrogasNomencladorFarmacia(nomencladores);
+    }
 
-        List<Integer> troqueles = new ArrayList<Integer>();
-
-        for (int i = 0; detalles != null && i < detalles.size(); i++) {
-            RequerimientoCompraDetalle detalle = detalles.get(i);
-            if (detalle == null) {
-                continue;
-            }
-
-            int troquel = 0;
-            if (detalle.esMedicamento()) {
-                troquel = detalle.getTroquelInt();
-            } else if (detalle.esNomenclador()
-                    && detalle.getIdTipoNomencladorInt()
-                    == WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA) {
-                String codigo = detalle.getCodigoNomencladorVisible().trim();
-                if (codigo.matches("^[0-9]+$")) {
-                    troquel = GetterUtil.getInteger(codigo, 0);
-                }
-            }
-
-            Integer claveTroquel = Integer.valueOf(troquel);
-            if (troquel > 0 && !troqueles.contains(claveTroquel)) {
-                troqueles.add(claveTroquel);
-            }
-        }
-
-        return getInstance().listarDrogasMedicamentosBatch(troqueles);
+    public static Map<Integer, String> obtenerDrogasDetalleFarmacia(List<RequerimientoCompraDetalle> detalles) throws Exception {
+        return ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper
+                .obtenerDrogasDetalleFarmacia(detalles);
     }
 
     public static List<RequerimientoCompraEstado> listarEstados()
             throws Exception {
         return WebKeysCompras.listarEstados();
+    }
+
+    public static java.util.List<java.util.Map<String,Object>> listarCatalogoSectores(java.sql.Connection con)throws Exception {
+        return getInstance().listarCatalogoSectores(con);
     }
 
     public static List<RequerimientoCompraSector> listarSectores()
@@ -352,58 +233,20 @@ public class BusquedaRequerimientoCompraServiceUtil {
         );
     }
 
-    public static boolean existeRequerimientoDuplicado(
-            String cuilTitular,
-            int inte,
-            int idPrestacion,
-            java.util.Date fechaOrdenMedica,
-            int idRequerimientoExcluir)
-            throws Exception {
+    public static boolean existeRequerimientoDuplicado(String cuil,int integrante,int prestacion,
+            java.util.Date fecha,int excluir)throws Exception {
+        String normalizado=ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper.validarConsultaDuplicado(cuil,integrante,prestacion,fecha);
+        return getInstance().existeRequerimientoDuplicado(normalizado,integrante,prestacion,fecha,excluir);
+    }
 
-        String cuil =
-                WebKeysCompras.trimToNull(
-                        cuilTitular
-                );
+    public static java.util.List<java.util.Map<String,Object>> listarDatosDuplicado(java.sql.Connection con,
+            String cuil,int integrante,int prestacion)throws Exception {
+        return getInstance().listarDatosDuplicado(con,cuil,integrante,prestacion);
+    }
 
-        if (cuil == null
-                || !cuil.matches("^[0-9]{11}$")) {
-
-            throw new Exception(
-                    "Debe informar un CUIL titular válido."
-            );
-        }
-
-        if (inte < 0) {
-            throw new Exception(
-                    "Debe informar un integrante válido."
-            );
-        }
-
-        if (idPrestacion <= 0) {
-            throw new Exception(
-                    "Debe informar una prestación válida."
-            );
-        }
-
-        if (fechaOrdenMedica == null) {
-            throw new Exception(
-                    "Debe informar la fecha del adjunto."
-            );
-        }
-
-        int idExcluir =
-                idRequerimientoExcluir > 0
-                        ? idRequerimientoExcluir
-                        : 0;
-
-        return getInstance()
-                .existeRequerimientoDuplicado(
-                        cuil,
-                        inte,
-                        idPrestacion,
-                        fechaOrdenMedica,
-                        idExcluir
-                );
+    public static List<PrestadorCotizacion> listarPrestadoresEnviados(java.sql.Connection con,
+            int idRequerimientoCompra, int limite) throws Exception {
+        return getInstance().listarPrestadoresEnviados(con, idRequerimientoCompra, limite);
     }
 
     public static List<PrestadorCotizacion> listarPrestadoresEnviados(
@@ -414,14 +257,12 @@ public class BusquedaRequerimientoCompraServiceUtil {
         List<PrestadorCotizacion> prestadores =
                 getInstance().listarPrestadoresEnviados(
                         idRequerimientoCompra,
-                        WebKeysCompras
-                                .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO
+                        ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getMaxPrestadoresEnviados()
                                 + 1
                 );
 
         if (prestadores.size()
-                > WebKeysCompras
-                .MAX_PRESTADORES_ENVIADOS_REQUERIMIENTO) {
+                > ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getMaxPrestadoresEnviados()) {
 
             throw new Exception(
                     "El requerimiento supera el máximo permitido de "
@@ -699,38 +540,103 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static boolean esNomencladorConfigurado(
             List<SectorNomencladorCompra> asociaciones,
             Nomenclador nomenclador) throws Exception {
-        if (asociaciones == null) {
-            throw new Exception("No se pudo resolver la configuración de nomencladores.");
-        }
-        if (nomenclador == null || nomenclador.getId_prestacion() <= 0
-                || nomenclador.getId_tipo_nomenclador() <= 0
-                || nomenclador.getBaja_fecha() != null) {
-            return false;
-        }
-        boolean permitido = false;
-        for (int i = 0; i < asociaciones.size(); i++) {
-            SectorNomencladorCompra asociacion = asociaciones.get(i);
-            if (asociacion == null || (asociacion.getIdTipoNomenclador() == null
-                    && asociacion.getMarcaReinLiq() == null
-                    && asociacion.getCodigoNomenclador() == null)) {
-                throw new Exception("Hay una asociación sin criterios de nomenclador.");
-            }
-            if ((asociacion.getIdTipoNomenclador() == null
-                    || asociacion.getIdTipoNomenclador().intValue()
-                            == nomenclador.getId_tipo_nomenclador())
-                    && (asociacion.getMarcaReinLiq() == null
-                    || asociacion.getMarcaReinLiq().intValue()
-                            == nomenclador.getMarcaReintegroLiquidacion())
-                    && (asociacion.getCodigoNomenclador() == null
-                    || asociacion.getCodigoNomenclador().equals(
-                            nomenclador.getCodigo() != null
-                                    ? nomenclador.getCodigo().trim() : ""))) {
-                permitido = true;
-            }
-        }
-        return permitido;
+        return ar.com.ospim.compras.requerimientos.helper.NomencladorCompraBusquedaHelper
+                .esNomencladorConfigurado(asociaciones, nomenclador);
+    }
+    public static String getConfiguracionCompra(String clave) throws Exception {
+        return getInstance().getConfiguracionCompra(clave);
+    }
+
+    public static String getConfiguracionCompra(String clave, java.sql.Connection con)
+            throws Exception {
+        return getInstance().getConfiguracionCompra(clave, con);
+    }
+
+    public static RequerimientoCompra getRequerimientoCompra(java.sql.Connection con,
+            int idRequerimiento) throws Exception {
+        return getInstance().getRequerimientoCompra(con, idRequerimiento);
+    }
+
+    public static RequerimientoCompra getCabeceraRequerimiento(java.sql.Connection con,
+            int idRequerimiento) throws Exception {
+        return getInstance().getCabeceraRequerimiento(con, idRequerimiento);
+    }
+
+    public static List<RequerimientoCompraDetalle> getDetalles(java.sql.Connection con,
+            int idRequerimiento) throws Exception {
+        return getInstance().getDetalles(con, idRequerimiento);
+    }
+
+    public static List<RequerimientoCompraSector> listarSectores(java.sql.Connection con)
+            throws Exception {
+        return getInstance().listarSectores(con);
+    }
+
+    public static List<TipoPrestacionCompra> listarTiposPrestacion(java.sql.Connection con)
+            throws Exception {
+        return getInstance().listarTiposPrestacion(con);
+    }
+
+    public static List<SectorNomencladorCompra> listarAsociacionesNomenclador(
+            java.sql.Connection con, int idSector) throws Exception {
+        return getInstance().listarAsociacionesNomenclador(con, idSector);
+    }
+
+    public static List<SectorNomencladorCompra> listarAsociacionesNomenclador(int idSector)
+            throws Exception {
+        return getInstance().listarAsociacionesNomenclador(idSector);
+    }
+
+    public static Nomenclador obtenerNomencladorCanonico(java.sql.Connection con,
+            int idPrestacion) throws Exception {
+        return getInstance().obtenerNomencladorCanonico(con, idPrestacion);
+    }
+
+    public static Nomenclador obtenerNomencladorCanonico(int idPrestacion) throws Exception {
+        return getInstance().obtenerNomencladorCanonico(idPrestacion);
+    }
+
+    public static List<Nomenclador> buscarNomencladoresCandidatos(Integer idTipo,
+            String descripcion, String codigo) throws Exception {
+        return getInstance().buscarNomencladoresCandidatos(idTipo, descripcion, codigo);
+    }
+    public static boolean existeRequerimientoDuplicado(java.sql.Connection con, String cuil,
+            int inte, int idPrestacion, java.util.Date fecha, int idRequerimientoExcluir)
+            throws Exception {
+        return getInstance().existeRequerimientoDuplicado(
+                con, cuil, inte, idPrestacion, fecha, idRequerimientoExcluir);
+    }
+
+    public static List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(
+            java.sql.Connection con, int idRequerimiento) throws Exception {
+        return getInstance().listarOrdenesMedicas(con, idRequerimiento);
+    }
+
+    public static List<RequerimientoCompraPresupuesto> listarPresupuestos(
+            java.sql.Connection con, int idRequerimiento) throws Exception {
+        return getInstance().listarPresupuestos(con, idRequerimiento);
+    }
+
+    public static Map<Integer, String> listarDrogasMedicamentosBatch(List<Integer> troqueles)
+            throws Exception {
+        return getInstance().listarDrogasMedicamentosBatch(troqueles);
     }
 
     private BusquedaRequerimientoCompraServiceUtil() {
+    }
+
+    public static RequerimientoCompraPresupuesto bloquearDocumento(java.sql.Connection con,
+            int idRequerimiento, int idDocumento) throws Exception {
+        return getInstance().bloquearDocumento(con, idRequerimiento, idDocumento);
+    }
+
+    public static List<RequerimientoCompraPresupuesto> listarDocumentos(java.sql.Connection con,
+            int idRequerimiento, int tipoDocumento) throws Exception {
+        return getInstance().listarDocumentos(con, idRequerimiento, tipoDocumento);
+    }
+
+    public static List<Empresa> buscarEmpresasCotizacion(java.sql.Connection con,
+            String cuit, String descripcion, String sucursal, int limite) throws Exception {
+        return getInstance().buscarEmpresasCotizacion(con, cuit, descripcion, sucursal, limite);
     }
 }

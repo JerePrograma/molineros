@@ -36,6 +36,8 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -54,6 +56,7 @@ public class EditarRequerimientoCompraHelper {
                     EditarRequerimientoCompraHelper.class
             );
 
+    @Deprecated
     public static final int MAX_ORDENES_MEDICAS_POR_CARGA = 20;
 
     /**
@@ -83,38 +86,33 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
-    public int guardarObservacionInterna(
-            int idRequerimientoCompra,
-            String observacionInterna,
-            String usuario) throws Exception {
-        try {
-            if (idRequerimientoCompra <= 0) {
-                throw errorUsuario("Debe informar el requerimiento de compra que desea editar.");
-            }
-            RequerimientoCompra actual = BusquedaRequerimientoCompraServiceUtil
-                    .getRequerimientoCompra(idRequerimientoCompra);
-            if (actual == null || !actual.puedeEditarObservacionInterna()) {
-                throw errorUsuario("La observación interna no puede modificarse en el estado actual. "
-                        + "Actualice la pantalla.");
-            }
-            int idGuardado = EditarRequerimientoCompraServiceUtil.guardarObservacionInterna(
-                    idRequerimientoCompra, WebKeysCompras.trimToNull(observacionInterna),
-                    normalizarUsuario(usuario));
-            if (idGuardado != idRequerimientoCompra) {
-                throw new IllegalStateException("El guardado no devolvió el mismo requerimiento.");
-            }
-            return idGuardado;
-        } catch (Exception e) {
-            throw manejarErrorOperacion("guardar la observación interna",
-                    "No se pudo guardar la observación interna. Actualice la pantalla e intente nuevamente.",
-                    e, "idRequerimiento=" + idRequerimientoCompra + ", usuario=" + usuario);
-        }
+    public int guardarObservacionInterna(int id,String observacion,String usuario)throws Exception {
+        EditarRequerimientoCompraServiceUtil.Transaccion tx=null;
+        try{
+            if(id<=0)throw errorUsuario("Debe informar el requerimiento de compra que desea editar.");
+            tx=EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            RequerimientoCompra r=tx.bloquearYObtenerRequerimiento(id);
+            if(r==null)throw errorUsuario("El requerimiento ya no esta disponible.");
+            String estados=tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS);
+            int anulado=ConfiguracionComprasHelper.resolverEstado("ANULADO",estados);
+            if((!r.isActivo()&&r.getEstado()!=anulado)
+                    || !ConfiguracionComprasHelper.resolverEstadoPermitido("EDITAR_OBSERVACION_INTERNA",r.getEstado(),
+                    tx.getConfiguracionCompra("COMPRAS_ESTADOS_EDITAR_OBSERVACION_INTERNA")))
+                throw errorUsuario("La observacion interna no puede modificarse en el estado actual. Actualice la pantalla.");
+            if(tx.persistirObservacionInterna(id,r.getEstado(),emptyToNull(observacion),normalizarUsuario(usuario))!=1)
+                throw errorUsuario("El requerimiento cambio mientras se guardaba la observacion interna.");
+            tx.commit();return id;
+        }catch(Exception e){
+            if(tx!=null)try{tx.rollback();}catch(Exception fallo){e.addSuppressed(fallo);}
+            throw manejarErrorOperacion("guardar la observacion interna","No se pudo guardar la observacion interna. Actualice la pantalla e intente nuevamente.",e,"idRequerimiento="+id);
+        }finally{if(tx!=null)tx.cerrar();}
     }
 
     public int guardarRequerimientoCompra(
             RequerimientoCompra requerimiento,
             String usuario) throws Exception {
 
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion = null;
         try {
             if (requerimiento == null
                     || requerimiento.getIdRequerimientoCompra() <= 0) {
@@ -124,12 +122,9 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
-            RequerimientoCompra actual =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .getRequerimientoCompra(
-                                    requerimiento
-                                            .getIdRequerimientoCompra()
-                            );
+            transaccion = EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            RequerimientoCompra actual = transaccion.bloquearYObtenerRequerimiento(
+                    requerimiento.getIdRequerimientoCompra());
 
             if (actual == null) {
                 throw errorUsuario(
@@ -144,7 +139,7 @@ public class EditarRequerimientoCompraHelper {
              * El flujo de cotización utiliza sus operaciones específicas
              * y no debe ingresar por este guardado de cabecera.
              */
-            if (!actual.puedeEditarEstructura()) {
+            if (!actual.isActivo() || actual.getEstado() != estadoEnTransaccion(transaccion, "PENDIENTE")) {
                 throw errorUsuario(
                         "El requerimiento solo puede modificarse mientras "
                                 + "se encuentra PENDIENTE."
@@ -312,9 +307,8 @@ public class EditarRequerimientoCompraHelper {
              * El resto de los datos estructurales permanece editable
              * porque el requerimiento sigue PENDIENTE.
              */
-            prepararRequerimientoParaGuardar(
-                    requerimiento
-            );
+            prepararRequerimientoParaGuardar(requerimiento, transaccion);
+            requerimiento.setEstado(actual.getEstado());
 
             validarRequerimientoParaGuardar(
                     requerimiento
@@ -322,7 +316,7 @@ public class EditarRequerimientoCompraHelper {
 
 
             int idGuardado =
-                    EditarRequerimientoCompraServiceUtil.guardarRequerimientoCompra(
+                    transaccion.guardarRequerimientoCompra(
                             requerimiento,
                             normalizarUsuario(usuario)
                     );
@@ -333,9 +327,17 @@ public class EditarRequerimientoCompraHelper {
                 );
             }
 
+            transaccion.commit();
             return idGuardado;
 
         } catch (Exception e) {
+            if (transaccion != null) {
+                try {
+                    transaccion.rollback();
+                } catch (Exception rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+            }
             throw manejarErrorOperacion(
                     "guardar el requerimiento de compra",
                     "No se pudo guardar el requerimiento de compra. "
@@ -345,6 +347,10 @@ public class EditarRequerimientoCompraHelper {
                             + obtenerIdRequerimientoSeguro(requerimiento)
                             + ", usuario=" + usuario
             );
+        } finally {
+            if (transaccion != null) {
+                transaccion.cerrar();
+            }
         }
     }
 
@@ -445,6 +451,9 @@ public class EditarRequerimientoCompraHelper {
             }
 
             transaccion = EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            prepararRequerimientoParaGuardar(requerimiento, transaccion);
+            validarRequerimientoParaGuardar(requerimiento);
+            requerimiento.setEstado(estadoEnTransaccion(transaccion, "PENDIENTE"));
 
             int idRequerimiento =
                     transaccion.guardarRequerimientoCompra(
@@ -457,6 +466,9 @@ public class EditarRequerimientoCompraHelper {
                         "El alta no devolvió un identificador válido."
                 );
             }
+
+            asegurarConceptoAutomatico(requerimiento, idRequerimiento, transaccion,
+                    normalizarUsuario(usuario));
 
             for (int i = 0; i < ordenesMedicas.size(); i++) {
                 OrdenMedicaValidada ordenMedica =
@@ -471,7 +483,8 @@ public class EditarRequerimientoCompraHelper {
                 documentosCreados.add(documento);
 
                 int idDocumento =
-                        transaccion.registrarOrdenMedica(
+                        DocumentoLibraryComprasHelper.registrarOrdenMedicaEnTransaccion(
+                                transaccion,
                                 idRequerimiento,
                                 ordenMedica,
                                 documento,
@@ -490,6 +503,12 @@ public class EditarRequerimientoCompraHelper {
                 for (int i = 0; i < detalles.size(); i++) {
                     RequerimientoCompraDetalle detalle = detalles.get(i);
                     detalle.setIdRequerimientoCompra(idRequerimiento);
+                    RequerimientoCompra vigente = transaccion.bloquearYObtenerRequerimiento(idRequerimiento);
+                    prepararDetalleParaGuardar(vigente, null, detalle, transaccion);
+                    normalizarDetalleNuevo(detalle);
+                    validarTipoPrestacionParaGuardar(vigente, null, detalle, transaccion);
+                    validarDetalleParaGuardar(vigente, null, detalle, true, transaccion);
+                    validarPrestacionNoRepetida(vigente, null, detalle, transaccion);
                     if (transaccion.guardarDetalle(detalle, normalizarUsuario(usuario)) <= 0) {
                         throw new IllegalStateException("No se obtuvo el identificador del detalle.");
                     }
@@ -736,12 +755,13 @@ public class EditarRequerimientoCompraHelper {
             );
         }
 
+        int maxOrdenes = ConfiguracionComprasHelper.getMaxOrdenesMedicasPorCarga();
         if (ordenesMedicas.size()
-                > MAX_ORDENES_MEDICAS_POR_CARGA) {
+                > maxOrdenes) {
 
             throw errorUsuario(
                     "Se pueden registrar hasta "
-                            + MAX_ORDENES_MEDICAS_POR_CARGA
+                            + maxOrdenes
                             + " adjuntos por operación."
             );
         }
@@ -899,6 +919,72 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
+
+    private void asegurarConceptoAutomatico(RequerimientoCompra requerimiento,
+            int idRequerimiento, EditarRequerimientoCompraServiceUtil.Transaccion transaccion,
+            String usuario) throws Exception {
+        int sector = requerimiento.getIdSector().intValue();
+        Integer idConcepto = ConfiguracionComprasHelper.resolverConceptoAutomatico(sector,
+                transaccion.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_CONCEPTOS_AUTOMATICOS));
+        List<RequerimientoCompraDetalle> existentes = transaccion.getDetalles(idRequerimiento);
+        if (idConcepto == null) {
+            if (existentes != null && !existentes.isEmpty()) {
+                throw errorUsuario("La configuracion del concepto automatico no coincide con el SQL instalado.");
+            }
+            return;
+        }
+        Integer rubro = ConfiguracionComprasHelper.resolverRubroConceptoAutomatico(sector,
+                transaccion.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_RUBROS_CONCEPTO_AUTOMATICO));
+        int cantidad = ConfiguracionComprasHelper.resolverCantidadConceptoAutomatico(
+                transaccion.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_CANTIDAD_CONCEPTO_AUTOMATICO));
+        Nomenclador canonico = transaccion.obtenerNomencladorCanonico(idConcepto.intValue());
+        if (canonico == null || canonico.getId_prestacion() != idConcepto.intValue()
+                || canonico.getId_tipo_nomenclador() <= 0 || canonico.getBaja_fecha() != null
+                || WebKeysCompras.isEmpty(canonico.getCodigo())
+                || WebKeysCompras.isEmpty(canonico.getDescripcion())) {
+            throw errorUsuario("El concepto automatico configurado no conserva una prestacion activa valida.");
+        }
+        if (rubro != null) {
+            boolean valido = false;
+            List<TipoPrestacionCompra> tipos = transaccion.listarTiposPrestacion();
+            for (int i = 0; i < tipos.size(); i++) {
+                TipoPrestacionCompra tipo = tipos.get(i);
+                if (tipo != null && tipo.getIdInt() == rubro.intValue()
+                        && tipo.getIdSectorInt() == sector) {
+                    valido = true;
+                }
+            }
+            if (!valido) {
+                throw errorUsuario("El rubro del concepto automatico no pertenece al sector.");
+            }
+        }
+        if (existentes != null && !existentes.isEmpty()) {
+            if (existentes.size() == 1) {
+                RequerimientoCompraDetalle existente = existentes.get(0);
+                if (existente != null && existente.getIdPrestacionInt() == idConcepto.intValue()
+                        && existente.getIdTipoNomencladorInt() == canonico.getId_tipo_nomenclador()
+                        && mismoInteger(existente.getIdTipoPrestacion(), rubro)
+                        && existente.getCantidad() != null
+                        && existente.getCantidad().intValue() == cantidad) {
+                    return;
+                }
+            }
+            throw errorUsuario("El SQL instalado genero un concepto automatico diferente al configurado.");
+        }
+        RequerimientoCompraDetalle automatico = new RequerimientoCompraDetalle();
+        automatico.setIdRequerimientoCompra(idRequerimiento);
+        automatico.setTipoItem(RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR);
+        automatico.setIdTipoPrestacion(rubro);
+        automatico.setIdPrestacion(idConcepto);
+        automatico.setIdTipoNomenclador(Integer.valueOf(canonico.getId_tipo_nomenclador()));
+        automatico.setCodigoNomenclador(canonico.getCodigo().trim());
+        automatico.setDescripcionNomenclador(canonico.getDescripcion().trim());
+        automatico.setCantidad(Integer.valueOf(cantidad));
+        if (transaccion.guardarConceptoAutomatico(automatico, usuario) <= 0) {
+            throw new IllegalStateException("El concepto automatico no devolvio un identificador valido.");
+        }
+    }
+
     private boolean compensarOrdenesMedicasCreadas(
             List<DocumentoComprasCreado> documentosCreados,
             GestorOrdenMedicaDocumento gestorDocumento) {
@@ -930,20 +1016,25 @@ public class EditarRequerimientoCompraHelper {
             RequerimientoCompraDetalle detalle,
             String usuario) throws Exception {
         Integer idRequerimiento = null;
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion = null;
         try {
             if (detalle == null || detalle.getIdInt() <= 0) {
                 throw errorUsuario("Debe seleccionar un detalle existente del requerimiento.");
             }
             idRequerimiento = getIdRequerimientoDetalle(detalle);
-            RequerimientoCompra requerimiento = obtenerRequerimientoDetalle(
-                    idRequerimiento != null ? idRequerimiento.intValue() : 0);
+            if (idRequerimiento == null || idRequerimiento.intValue() <= 0) {
+                throw errorUsuario("Debe informar el requerimiento de compra.");
+            }
+            transaccion = EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            RequerimientoCompra requerimiento = transaccion.bloquearYObtenerRequerimiento(
+                    idRequerimiento.intValue());
             if (requerimiento == null || !requerimiento.isActivo()
-                    || !WebKeysCompras.puedeCorregirItem(requerimiento.getEstado())) {
+                    || !ConfiguracionComprasHelper.resolverEstadoPermitido("CORREGIR_ITEM", requerimiento.getEstado(),
+                    transaccion.getConfiguracionCompra("COMPRAS_ESTADOS_CORREGIR_ITEM"))) {
                 throw errorUsuario("El medicamento o prestación solo puede corregirse antes de generar el RP.");
             }
-            if (new RequerimientoCompraReclamoPrestacionalHelper()
-                    .obtenerPorRequerimiento(requerimiento.getIdRequerimientoCompra()) != null) {
-                throw errorUsuario("El requerimiento ya tiene un RP o una creación de RP en curso.");
+            if (transaccion.tieneCreacionReclamoPrestacional(requerimiento.getIdRequerimientoCompra())) {
+                throw errorUsuario("El requerimiento ya tiene un RP o una creacion de RP en curso.");
             }
             RequerimientoCompraDetalle persistido = obtenerDetallePersistido(
                     requerimiento, detalle.getIdInt());
@@ -952,7 +1043,7 @@ public class EditarRequerimientoCompraHelper {
                             detalle.getTipoItemNormalizado())) {
                 throw errorUsuario("Seleccione el medicamento o prestación desde el nomenclador.");
             }
-            validarTipoPrestacionParaGuardar(requerimiento, persistido, detalle);
+            validarTipoPrestacionParaGuardar(requerimiento, persistido, detalle, transaccion);
             if (detalle.getCantidad() == null || detalle.getCantidad().intValue() <= 0) {
                 throw errorUsuario("La cantidad debe ser mayor que cero.");
             }
@@ -964,130 +1055,160 @@ public class EditarRequerimientoCompraHelper {
             detalle.setIdMedicamento(null);
             detalle.setTroquel(null);
             detalle.setNombreMedicamento(null);
-            validarDetalleNomencladorParaGuardar(requerimiento, persistido, detalle);
-            validarPrestacionNoRepetida(requerimiento, persistido, detalle);
-            int idGuardado = EditarRequerimientoCompraServiceUtil.corregirItem(
+            validarDetalleNomencladorParaGuardar(requerimiento, persistido, detalle, transaccion);
+            boolean cambio = !persistido.esNomenclador()
+                    || !mismoInteger(persistido.getIdPrestacion(), detalle.getIdPrestacion())
+                    || !mismoInteger(persistido.getIdTipoPrestacion(), detalle.getIdTipoPrestacion())
+                    || !mismoInteger(persistido.getCantidad(), detalle.getCantidad())
+                    || !mismoInteger(persistido.getIdTipoNomenclador(), detalle.getIdTipoNomenclador())
+                    || !WebKeysCompras.normalizarTexto(persistido.getCodigoNomenclador()).equals(
+                            WebKeysCompras.normalizarTexto(detalle.getCodigoNomenclador()))
+                    || !WebKeysCompras.normalizarTexto(persistido.getDescripcionNomenclador()).equals(
+                            WebKeysCompras.normalizarTexto(detalle.getDescripcionNomenclador()));
+            if (!cambio) {
+                transaccion.commit();
+                return persistido.getIdInt();
+            }
+            validarPrestacionNoRepetida(requerimiento, persistido, detalle, transaccion);
+            List<Integer> comparativa = transaccion.bloquearPrestacionesComparativaCorreccion(
+                    requerimiento.getIdRequerimientoCompra());
+            if (!mismoInteger(persistido.getIdPrestacion(), detalle.getIdPrestacion())) {
+                if (comparativa.contains(detalle.getIdPrestacion())) {
+                    throw errorUsuario("La comparativa ya contiene la prestacion de destino. No se modificaron importes.");
+                }
+                boolean compartida = false;
+                for (int i = 0; i < requerimiento.getDetalles().size(); i++) {
+                    RequerimientoCompraDetalle otro = requerimiento.getDetalles().get(i);
+                    if (otro != null && otro.getIdInt() != persistido.getIdInt()
+                            && persistido.getIdPrestacion() != null
+                            && mismoInteger(otro.getIdPrestacion(), persistido.getIdPrestacion())) {
+                        compartida = true;
+                    }
+                }
+                if (compartida && comparativa.contains(persistido.getIdPrestacion())) {
+                    throw errorUsuario("La prestacion anterior esta compartida. No se pueden reasignar sus importes.");
+                }
+            }
+            detalle.setPrecioTotalEstimado(WebKeysCompras.calcularPrecioTotal(
+                    detalle.getCantidad(), persistido.getPrecioUnitarioEstimado()));
+            transaccion.actualizarReferenciaComparativaCorreccion(
+                    requerimiento.getIdRequerimientoCompra(), persistido.getIdPrestacion(),
+                    detalle.getIdPrestacionInt(), normalizarUsuario(usuario));
+            int idGuardado = transaccion.corregirItem(
                     detalle, normalizarUsuario(usuario));
             if (idGuardado != persistido.getIdInt()) {
-                throw new IllegalStateException("La corrección no devolvió el mismo detalle del requerimiento.");
+                throw new IllegalStateException("La correccion no devolvio el mismo detalle del requerimiento.");
             }
+            if (persistido.getIdPrestador() != null) {
+                validarPrestadorCorreccion(transaccion.bloquearYObtenerRequerimiento(
+                        requerimiento.getIdRequerimientoCompra()), persistido.getIdPrestador().intValue(), transaccion);
+            }
+            transaccion.commit();
             return idGuardado;
         } catch (Exception e) {
+            if (transaccion != null) {
+                try {
+                    transaccion.rollback();
+                } catch (Exception rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+            }
             throw manejarErrorOperacion("corregir el medicamento o prestación",
                     "No se pudo corregir el medicamento o prestación. Actualice la pantalla e intente nuevamente.",
                     e, construirContextoDetalle(detalle, idRequerimiento, usuario));
+        } finally {
+            if (transaccion != null) {
+                transaccion.cerrar();
+            }
         }
     }
 
-    public int guardarDetalle(
-            RequerimientoCompraDetalle detalle,
-            String usuario) throws Exception {
 
+    private static final String CONFIG_EXCEPCIONES_PRESTADOR_REQUERIMIENTO =
+            "COMPRAS_EXCEPCIONES_PRESTADOR_REQUERIMIENTO";
+
+    private void validarPrestadorCorreccion(RequerimientoCompra requerimiento, int idPrestador,
+            EditarRequerimientoCompraServiceUtil.Transaccion transaccion) throws Exception {
+        java.util.Map<String,Object> prestador=transaccion.consultarPrestadorCorreccion(idPrestador);
+        List<Map<String,Object>> rubrosReq=new ArrayList<Map<String,Object>>();
+        List<TipoPrestacionCompra> tipos=transaccion.listarTiposPrestacion();
+        for(int i=0;i<requerimiento.getDetalles().size();i++){
+            RequerimientoCompraDetalle d=requerimiento.getDetalles().get(i);
+            for(int j=0;j<tipos.size();j++)if(mismoInteger(d.getIdTipoPrestacion(),tipos.get(j).getId())){
+                Map<String,Object> fila=new HashMap<String,Object>();fila.put("descripcion",tipos.get(j).getDescripcion());
+                // getDetalles retorna exclusivamente detalles activos.
+                fila.put("baja_fecha",null);rubrosReq.add(fila);
+            }
+        }
+        List<Map<String,Object>> rubrosPrestador=new ArrayList<Map<String,Object>>();
+        List<String> rubros=transaccion.listarRubrosPrestadorCorreccion(idPrestador);
+        for(int i=0;i<rubros.size();i++){Map<String,Object> f=new HashMap<String,Object>();f.put("rubro",rubros.get(i));rubrosPrestador.add(f);}
+        if(!NotificarCotizacionPrestadorHelper.esCompatiblePrestadorCotizacion(requerimiento,prestador,rubrosReq,rubrosPrestador,
+                transaccion.getConfiguracionCompra(CONFIG_EXCEPCIONES_PRESTADOR_REQUERIMIENTO)))
+            throw errorUsuario("El prestador adjudicado no es compatible con las prestaciones activas. No se modificaron importes.");
+    }
+
+    public int guardarDetalle(RequerimientoCompraDetalle detalle, String usuario) throws Exception {
         Integer idRequerimiento = null;
-
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion = null;
         try {
             if (detalle == null) {
-                throw errorUsuario(
-                        "Debe informar el detalle del requerimiento."
-                );
+                throw errorUsuario("Debe informar el detalle del requerimiento.");
             }
-
-            idRequerimiento =
-                    getIdRequerimientoDetalle(
-                            detalle
-                    );
-
-            RequerimientoCompra requerimiento =
-                    validarRequerimientoDetalle(
-                            idRequerimiento
-                    );
-
-            RequerimientoCompraDetalle detallePersistido =
-                    obtenerDetallePersistido(
-                            requerimiento,
-                            detalle.getIdInt()
-                    );
-
-            prepararDetalleParaGuardar(
-                    requerimiento,
-                    detallePersistido,
-                    detalle
-            );
-
-            validarTipoPrestacionParaGuardar(
-                    requerimiento,
-                    detallePersistido,
-                    detalle
-            );
-
-            normalizarDetalleNuevo(
-                    detalle
-            );
-
-            validarDetalleParaGuardar(
-                    requerimiento,
-                    detallePersistido,
-                    detalle,
-                    true
-            );
-
-            validarPrestacionNoRepetida(requerimiento, detallePersistido, detalle);
-
-            /*
-             * Un detalle NUEVO puede completar posteriormente
-             * una combinación:
-             *
-             * afiliado + prestación + fecha de Orden médica
-             *
-             * que ya exista en otro requerimiento.
-             *
-             * No se ejecuta para una actualización de un detalle
-             * persistido porque el requerimiento ya existe y esta
-             * regla apunta a impedir generar una nueva combinación
-             * duplicada mediante el agregado posterior de prestaciones.
-             */
-            if (detallePersistido == null) {
-                validarDetalleNuevoNoGeneraDuplicado(
-                        requerimiento,
-                        detalle
-                );
+            idRequerimiento = getIdRequerimientoDetalle(detalle);
+            if (idRequerimiento == null || idRequerimiento.intValue() <= 0) {
+                throw errorUsuario("Primero debe guardar los datos generales del requerimiento.");
             }
-
-            int idDetalleGuardado =
-                    EditarRequerimientoCompraServiceUtil.guardarDetalle(
-                            detalle,
-                            normalizarUsuario(
-                                    usuario
-                            )
-                    );
-
-            if (idDetalleGuardado <= 0) {
-                throw new IllegalStateException(
-                        "El guardado del detalle no devolvió un ID válido."
-                );
+            transaccion = EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            RequerimientoCompra requerimiento = transaccion.bloquearYObtenerRequerimiento(
+                    idRequerimiento.intValue());
+            if (requerimiento == null || !requerimiento.isActivo()
+                    || requerimiento.getEstado() != estadoEnTransaccion(transaccion, "PENDIENTE")) {
+                throw errorUsuario("Los detalles solo pueden modificarse en estado PENDIENTE.");
             }
-
-            return idDetalleGuardado;
-
+            RequerimientoCompraDetalle persistido = obtenerDetallePersistido(requerimiento, detalle.getIdInt());
+            prepararDetalleParaGuardar(requerimiento, persistido, detalle, transaccion);
+            validarTipoPrestacionParaGuardar(requerimiento, persistido, detalle, transaccion);
+            normalizarDetalleNuevo(detalle);
+            validarDetalleParaGuardar(requerimiento, persistido, detalle, true, transaccion);
+            validarPrestacionNoRepetida(requerimiento, persistido, detalle, transaccion);
+            if (persistido == null) {
+                validarDetalleNuevoNoGeneraDuplicado(requerimiento, detalle, transaccion);
+            }
+            detalle.setObservaciones(emptyToNull(detalle.getObservaciones()));
+            int idGuardado = transaccion.guardarDetalle(detalle, normalizarUsuario(usuario));
+            if (idGuardado <= 0) {
+                throw new IllegalStateException("El guardado del detalle no devolvio un ID valido.");
+            }
+            transaccion.commit();
+            return idGuardado;
         } catch (Exception e) {
-            throw manejarErrorOperacion(
-                    "guardar el detalle del requerimiento",
-                    "No se pudo guardar el detalle del requerimiento. "
-                            + "Revise la información e intente nuevamente.",
-                    e,
-                    construirContextoDetalle(
-                            detalle,
-                            idRequerimiento,
-                            usuario
-                    )
-            );
+            if (transaccion != null) {
+                try {
+                    transaccion.rollback();
+                } catch (Exception rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+            }
+            throw manejarErrorOperacion("guardar el detalle del requerimiento",
+                    "No se pudo guardar el detalle. Revise la informacion e intente nuevamente.",
+                    e, construirContextoDetalle(detalle, idRequerimiento, usuario));
+        } finally {
+            if (transaccion != null) {
+                transaccion.cerrar();
+            }
         }
+    }
+
+    private void validarDetalleNuevoNoGeneraDuplicado(RequerimientoCompra requerimiento,
+            RequerimientoCompraDetalle detalle) throws Exception {
+        validarDetalleNuevoNoGeneraDuplicado(requerimiento, detalle, null);
     }
 
     private void validarDetalleNuevoNoGeneraDuplicado(
             RequerimientoCompra requerimiento,
-            RequerimientoCompraDetalle detalle)
-            throws Exception {
+            RequerimientoCompraDetalle detalle,
+            EditarRequerimientoCompraServiceUtil.Transaccion transaccion) throws Exception {
 
         if (requerimiento == null
                 || detalle == null) {
@@ -1138,11 +1259,9 @@ public class EditarRequerimientoCompraHelper {
             return;
         }
 
-        List<RequerimientoCompraPresupuesto> ordenesMedicas =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarOrdenesMedicas(
-                                idRequerimientoCompra
-                        );
+        List<RequerimientoCompraPresupuesto> ordenesMedicas = transaccion != null
+                ? transaccion.listarOrdenesMedicas(idRequerimientoCompra)
+                : BusquedaRequerimientoCompraServiceUtil.listarOrdenesMedicas(idRequerimientoCompra);
 
         if (ordenesMedicas == null
                 || ordenesMedicas.isEmpty()) {
@@ -1182,15 +1301,12 @@ public class EditarRequerimientoCompraHelper {
         for (java.util.Date fechaOrdenMedica
                 : fechasUnicas) {
 
-            boolean existeDuplicado =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .existeRequerimientoDuplicado(
-                                    cuilTitular,
-                                    integrante.intValue(),
-                                    idPrestacion.intValue(),
-                                    fechaOrdenMedica,
-                                    idRequerimientoCompra
-                            );
+            boolean existeDuplicado = transaccion != null
+                    ? transaccion.existeRequerimientoDuplicado(cuilTitular, integrante.intValue(),
+                            idPrestacion.intValue(), fechaOrdenMedica, idRequerimientoCompra)
+                    : BusquedaRequerimientoCompraServiceUtil.existeRequerimientoDuplicado(
+                            cuilTitular, integrante.intValue(), idPrestacion.intValue(),
+                            fechaOrdenMedica, idRequerimientoCompra);
 
             if (existeDuplicado) {
                 throw errorUsuario(
@@ -1207,284 +1323,167 @@ public class EditarRequerimientoCompraHelper {
      * Contrato canónico utilizado por los Actions: valida estado y pertenencia
      * antes de ejecutar el borrado persistente.
      */
-    public void borrarDetalle(
-            int idRequerimientoCompra,
-            int idDetalle,
-            String usuario) throws Exception {
-
-        try {
-            RequerimientoCompra requerimiento =
-                    validarRequerimientoParaBorrarDetalle(
-                            Integer.valueOf(
-                                    idRequerimientoCompra
-                            )
-                    );
-
-            obtenerDetallePersistido(
-                    requerimiento,
-                    idDetalle
-            );
-
-            /*
-             * Validación anticipada para mensaje amigable.
-             *
-             * NO sustituye la validación atómica PostgreSQL.
-             * getDetalles() contiene exclusivamente detalles activos.
-             */
-            if (requerimiento.isACotizar()
-                    && requerimiento.getDetalles().size() <= 1) {
-
-                throw errorUsuario(
-                        "El requerimiento ENVIADO A COTIZAR "
-                                + "debe conservar al menos una prestación."
-                );
-            }
-
-            EditarRequerimientoCompraServiceUtil.borrarDetalle(
-                    idDetalle,
-                    normalizarUsuario(usuario)
-            );
-
-        } catch (Exception e) {
-            throw manejarErrorOperacion(
-                    "quitar el detalle del requerimiento",
-                    "No se pudo quitar el detalle del requerimiento. "
-                            + "Actualice la pantalla e intente nuevamente.",
-                    e,
-                    "idRequerimiento=" + idRequerimientoCompra
-                            + ", idDetalle=" + idDetalle
-                            + ", usuario=" + usuario
-            );
-        }
+    public void borrarDetalle(int id,int detalle,String usuario)throws Exception {
+        EditarRequerimientoCompraServiceUtil.Transaccion tx=null;
+        try{
+            if(id<=0||detalle<=0)throw errorUsuario("Debe informar el detalle del requerimiento.");
+            tx=EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            RequerimientoCompra r=tx.bloquearYObtenerRequerimiento(id);
+            if(r==null||!r.isActivo()||!ConfiguracionComprasHelper.resolverEstadoPermitido("ELIMINAR_DETALLE",r.getEstado(),
+                    tx.getConfiguracionCompra("COMPRAS_ESTADOS_ELIMINAR_DETALLE")))
+                throw errorUsuario("Los detalles solo pueden quitarse en estado PENDIENTE o ENVIADO A COTIZAR.");
+            obtenerDetallePersistido(r,detalle);
+            if(r.getEstado()==estadoEnTransaccion(tx,"A_COTIZAR")&&r.getDetalles().size()<=1)
+                throw errorUsuario("El requerimiento ENVIADO A COTIZAR debe conservar al menos una prestacion.");
+            if(tx.persistirBajaDetalle(id,detalle,normalizarUsuario(usuario))!=1)
+                throw errorUsuario("El detalle cambio mientras se quitaba. Actualice la pantalla.");
+            tx.commit();
+        }catch(Exception e){
+            if(tx!=null)try{tx.rollback();}catch(Exception fallo){e.addSuppressed(fallo);}
+            throw manejarErrorOperacion("quitar el detalle del requerimiento","No se pudo quitar el detalle. Actualice la pantalla e intente nuevamente.",e,"idRequerimiento="+id+", idDetalle="+detalle);
+        }finally{if(tx!=null)tx.cerrar();}
     }
 
-    public void cambiarEstado(
-            int idRequerimientoCompra,
-            int idEstadoNuevo,
-            String usuario) throws Exception {
-
-        if (WebKeysCompras.esAnulado(idEstadoNuevo)) {
-            anularRequerimiento(idRequerimientoCompra, "", usuario);
+    public void cambiarEstado(int id, int nuevo, String usuario) throws Exception {
+        if (nuevo == ConfiguracionComprasHelper.getEstadoOrdenCompra()) {
+            pasarAOrdenCompra(id, usuario);
             return;
         }
-
+        EditarRequerimientoCompraServiceUtil.Transaccion tx = null;
         try {
-            if (idRequerimientoCompra <= 0) {
-                throw errorUsuario(
-                        "Debe informar el requerimiento de compra."
-                );
+            tx = EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            cambiarEstadoEnTransaccion(tx, id, nuevo, normalizarUsuario(usuario));
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) try { tx.rollback(); } catch (Exception fallo) { e.addSuppressed(fallo); }
+            throw manejarErrorOperacion("actualizar el estado del requerimiento",
+                    "No se pudo actualizar el estado del requerimiento. Actualice la pantalla e intente nuevamente.",
+                    e, "idRequerimiento=" + id + ", idEstadoNuevo=" + nuevo);
+        } finally { if (tx != null) tx.cerrar(); }
+    }
+
+    public void cambiarEstadoEnTransaccion(EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            int id, int nuevo, String usuario) throws Exception {
+        if (id <= 0 || tx == null) throw errorUsuario("Debe informar el requerimiento de compra.");
+        RequerimientoCompra r = tx.bloquearYObtenerRequerimiento(id);
+        if (r == null || !r.isActivo()) throw errorUsuario("El requerimiento ya no esta disponible.");
+        String estados = tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS);
+        if (nuevo == ConfiguracionComprasHelper.resolverEstado("ANULADO", estados)) {
+            anularEnTransaccion(tx, r, "", usuario, estados);
+            return;
+        }
+        boolean transicionPermitida = ConfiguracionComprasHelper.resolverTransicionEstado(r.getEstado(), nuevo,
+                tx.getConfiguracionCompra("COMPRAS_TRANSICIONES_ESTADO"), estados);
+        boolean autorizacionEmpresaPendiente = false;
+        if (nuevo == ConfiguracionComprasHelper.resolverEstado("ORDEN_COMPRA", estados)
+                || nuevo == ConfiguracionComprasHelper.resolverEstado("RECLAMO_RP", estados)
+                || nuevo == ConfiguracionComprasHelper.resolverEstado("A_COTIZAR", estados)
+                || nuevo == ConfiguracionComprasHelper.resolverEstado("COTIZADO", estados)) {
+            throw errorUsuario("El estado solicitado requiere completar su operacion especifica.");
+        }
+        boolean autorizacion = nuevo == ConfiguracionComprasHelper.resolverEstado("PARA_AUTORIZAR", estados)
+                || nuevo == ConfiguracionComprasHelper.resolverEstado("AUTORIZADO", estados);
+        if (autorizacion) {
+            java.util.Map<String,Object> sector = tx.obtenerSectorCatalogo(r.getIdSector().intValue());
+            if (sector == null || !Boolean.TRUE.equals(sector.get("activo")) || sector.get("baja") != null) {
+                throw errorUsuario("El sector del requerimiento ya no esta disponible.");
             }
-
-            if (!WebKeysCompras.esEstadoValido(idEstadoNuevo)) {
-                throw errorUsuario(
-                        "El estado seleccionado no es válido."
-                );
-            }
-
-            RequerimientoCompra requerimientoActual =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .getRequerimientoCompra(
-                                    idRequerimientoCompra
-                            );
-
-            if (requerimientoActual == null) {
-                throw errorUsuario(
-                        "El requerimiento ya no está disponible."
-                );
-            }
-
-            if (!WebKeysCompras.validarTransicionEstado(
-                    requerimientoActual.getEstado(),
-                    idEstadoNuevo,
-                    requerimientoActual.getSectorDescripcion()
-            )) {
-                throw errorUsuario(
-                        "El requerimiento no puede pasar al estado seleccionado "
-                                + "desde su estado actual."
-                );
-            }
-
-            if (WebKeysCompras.esParaAutorizar(idEstadoNuevo)
-                    || WebKeysCompras.esAutorizado(idEstadoNuevo)) {
-                if (!requerimientoActual.isActivo()) {
-                    throw errorUsuario(
-                            "El requerimiento ya no está disponible."
-                    );
+            boolean empresa = ConfiguracionComprasHelper.resolverSectorSinCotizacionPrestador(
+                    (String) sector.get("descripcion"), tx.getConfiguracionCompra("COMPRAS_SECTORES_SIN_COTIZACION_PRESTADOR"));
+            int esperado = nuevo == ConfiguracionComprasHelper.resolverEstado("AUTORIZADO", estados)
+                    ? ConfiguracionComprasHelper.resolverEstado("PARA_AUTORIZAR", estados)
+                    : ConfiguracionComprasHelper.resolverEstado(empresa ? "PENDIENTE" : "RECLAMO_RP", estados);
+            if (r.getEstado() != esperado) throw errorUsuario("El requerimiento cambio de estado. Actualice la pantalla.");
+            if (empresa) {
+                validarEmpresaAdjudicadaParaConfirmacion(r, tx);
+                autorizacionEmpresaPendiente = nuevo == ConfiguracionComprasHelper.resolverEstado("PARA_AUTORIZAR", estados)
+                        && r.getEstado() == ConfiguracionComprasHelper.resolverEstado("PENDIENTE", estados);
+            } else {
+                java.util.List<java.util.Map<String,Object>> relaciones = tx.obtenerRelacionesRp(id);
+                if (relaciones.size() != 1) throw errorUsuario("Debe existir un Reclamo Prestacional vinculado y activo.");
+                java.util.Map<String,Object> f = relaciones.get(0);
+                if (!WebKeysCompras.VINCULO_RECLAMO_VINCULADO.equals(f.get("estado"))
+                        || ((Integer) f.get("id")).intValue() <= 0 || !f.get("id").equals(f.get("rp_id"))
+                        || f.get("baja") != null || f.get("vinculo_baja") != null) {
+                    throw errorUsuario("Debe existir un Reclamo Prestacional vinculado y activo.");
                 }
-                if (requerimientoActual.esSectorSinCotizacionPrestador()) {
-                    validarEmpresaAdjudicadaParaConfirmacion(requerimientoActual);
-                } else {
-                    RequerimientoCompraReclamoPrestacional relacion =
-                            new RequerimientoCompraReclamoPrestacionalHelper()
-                                    .obtenerPorRequerimiento(idRequerimientoCompra);
-                    if (relacion == null || !relacion.isVinculado()) {
-                        throw errorUsuario(
-                                "El requerimiento debe tener un Reclamo Prestacional vinculado."
-                        );
-                    }
-                }
             }
-
-            EditarRequerimientoCompraServiceUtil.cambiarEstado(
-                    idRequerimientoCompra,
-                    idEstadoNuevo,
-                    normalizarUsuario(usuario)
-            );
-
-        } catch (Exception e) {
-            throw manejarErrorOperacion(
-                    "actualizar el estado del requerimiento",
-                    "No se pudo actualizar el estado del requerimiento. "
-                            + "Actualice la pantalla e intente nuevamente.",
-                    e,
-                    "idRequerimiento=" + idRequerimientoCompra
-                            + ", idEstadoNuevo=" + idEstadoNuevo
-                            + ", usuario=" + usuario
-            );
+        }
+        if (!transicionPermitida && !autorizacionEmpresaPendiente) {
+            throw errorUsuario("El requerimiento no puede pasar al estado seleccionado desde su estado actual.");
+        }
+        if (tx.persistirEstado(id, r.getEstado(), nuevo, usuario, null, false) != 1) {
+            throw errorUsuario("El estado cambio mientras se guardaba. Actualice la pantalla.");
         }
     }
 
-    public void anularRequerimiento(
-            int idRequerimientoCompra,
-            String motivoBaja,
-            String usuario) throws Exception {
-
+    public void anularRequerimiento(int id, String motivo, String usuario) throws Exception {
+        EditarRequerimientoCompraServiceUtil.Transaccion tx = null;
         try {
-            if (idRequerimientoCompra <= 0) {
-                throw errorUsuario(
-                        "Debe informar el requerimiento de compra."
-                );
-            }
-
-            RequerimientoCompra requerimientoActual =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .getRequerimientoCompra(
-                                    idRequerimientoCompra
-                            );
-
-            if (requerimientoActual == null) {
-                throw errorUsuario(
-                        "El requerimiento ya no esta disponible."
-                );
-            }
-
-            RequerimientoCompraReclamoPrestacional relacion = null;
-            if (requerimientoActual.isReclamoRP()) {
-                relacion = new RequerimientoCompraReclamoPrestacionalHelper()
-                        .obtenerPorRequerimiento(idRequerimientoCompra);
-            }
-
-            if (!requerimientoActual.puedeAnular(relacion)) {
-                throw errorUsuario(
-                        "El requerimiento no puede anularse "
-                                + "desde su estado actual."
-                );
-            }
-
-            EditarRequerimientoCompraServiceUtil.anularRequerimiento(
-                    idRequerimientoCompra,
-                    motivoBaja != null ? motivoBaja : "",
-                    normalizarUsuario(usuario)
-            );
-
+            if (id <= 0) throw errorUsuario("Debe informar el requerimiento de compra.");
+            tx = EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            RequerimientoCompra r = tx.bloquearYObtenerRequerimiento(id);
+            if (r == null || !r.isActivo()) throw errorUsuario("El requerimiento ya no esta disponible.");
+            anularEnTransaccion(tx, r, motivo, normalizarUsuario(usuario),
+                    tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS));
+            tx.commit();
         } catch (Exception e) {
-            throw manejarErrorOperacion(
-                    "anular el requerimiento",
-                    "No se pudo anular el requerimiento. "
-                            + "Actualice la pantalla e intente nuevamente.",
-                    e,
-                    "idRequerimiento=" + idRequerimientoCompra
-                            + ", usuario=" + usuario
-            );
+            if (tx != null) try { tx.rollback(); } catch (Exception fallo) { e.addSuppressed(fallo); }
+            throw manejarErrorOperacion("anular el requerimiento",
+                    "No se pudo anular el requerimiento. Actualice la pantalla e intente nuevamente.", e, "idRequerimiento=" + id);
+        } finally { if (tx != null) tx.cerrar(); }
+    }
+
+    private void anularEnTransaccion(EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            RequerimientoCompra r, String motivo, String usuario, String estados) throws Exception {
+        int anulado = ConfiguracionComprasHelper.resolverEstado("ANULADO", estados);
+        boolean transicionPermitida = ConfiguracionComprasHelper.resolverTransicionEstado(r.getEstado(), anulado,
+                tx.getConfiguracionCompra("COMPRAS_TRANSICIONES_ESTADO"), estados);
+        boolean estadoPermitido = ConfiguracionComprasHelper.resolverEstadoPermitido("ANULAR", r.getEstado(),
+                tx.getConfiguracionCompra("COMPRAS_ESTADOS_ANULAR"));
+        boolean requiereBajaRp = r.getEstado() == ConfiguracionComprasHelper.resolverEstado("RECLAMO_RP", estados);
+        java.util.List<java.util.Map<String,Object>> relaciones = tx.obtenerRelacionesRp(r.getIdRequerimientoCompra());
+        if (requiereBajaRp && relaciones.isEmpty()) throw errorUsuario("Debe dar de baja el Reclamo Prestacional antes de anular.");
+        for (int i = 0; i < relaciones.size(); i++) {
+            java.util.Map<String,Object> f = relaciones.get(i);
+            if (!WebKeysCompras.VINCULO_RECLAMO_BAJA.equals(f.get("estado")) || f.get("vinculo_baja") == null
+                    || ((Integer) f.get("id")).intValue() <= 0 || !f.get("id").equals(f.get("rp_id")) || f.get("baja") == null) {
+                throw errorUsuario("Debe dar de baja el Reclamo Prestacional antes de anular.");
+            }
+        }
+        if (!requiereBajaRp && (!transicionPermitida || !estadoPermitido)) {
+            throw errorUsuario("El requerimiento no puede anularse desde su estado actual.");
+        }
+        if (tx.persistirEstado(r.getIdRequerimientoCompra(), r.getEstado(), anulado, usuario,
+                motivo != null ? motivo : "", true) != 1) {
+            throw errorUsuario("El requerimiento cambio mientras se anulaba. Actualice la pantalla.");
         }
     }
 
-    public int pasarAOrdenCompra(
-            int idRequerimientoCompra,
-            String usuario) throws Exception {
-
-        try {
-            if (idRequerimientoCompra <= 0) {
-                throw errorUsuario(
-                        "Debe informar el requerimiento de compra."
-                );
-            }
-
-            RequerimientoCompra requerimientoActual =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .getRequerimientoCompra(
-                                    idRequerimientoCompra
-                            );
-
-            if (requerimientoActual == null
-                    || !requerimientoActual.isActivo()) {
-
-                throw errorUsuario(
-                        "El requerimiento ya no está disponible."
-                );
-            }
-
-            if (requerimientoActual.isOrdenCompra()) {
-                return WebKeysCompras.ESTADO_ORDEN_COMPRA;
-            }
-
-            if (!requerimientoActual
-                    .esSectorSinCotizacionPrestador()) {
-
-                throw errorUsuario(
-                        "Sólo los requerimientos de RRHH o Sistemas "
-                                + "pueden pasar a Orden de Compra."
-                );
-            }
-
-            if (!WebKeysCompras.esAutorizado(requerimientoActual.getEstado())) {
-                throw errorUsuario(
-                        "El requerimiento debe estar AUTORIZADO "
-                                + "antes de Crear Orden de Compra."
-                );
-            }
-
-            validarEmpresaAdjudicadaParaConfirmacion(requerimientoActual);
-
-            int estadoFinal =
-                    EditarRequerimientoCompraServiceUtil.confirmarOrdenCompra(
-                            idRequerimientoCompra,
-                            normalizarUsuario(usuario)
-                    );
-
-            if (estadoFinal
-                    != WebKeysCompras.ESTADO_ORDEN_COMPRA) {
-
-                throw new IllegalStateException(
-                        "La operación no confirmó el estado "
-                                + "ORDEN DE COMPRA."
-                );
-            }
-
-            return estadoFinal;
-
-        } catch (Exception e) {
-            throw manejarErrorOperacion(
-                    "pasar el requerimiento a Orden de Compra",
-                    "No se pudo pasar el requerimiento a Orden de Compra. "
-                            + "Actualice la pantalla e intente nuevamente.",
-                    e,
-                    "idRequerimiento=" + idRequerimientoCompra
-                            + ", usuario=" + usuario
-            );
-        }
+    private int estadoEnTransaccion(EditarRequerimientoCompraServiceUtil.Transaccion tx, String codigo) throws Exception {
+        return ConfiguracionComprasHelper.resolverEstado(codigo,
+                tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS));
     }
 
-    private void validarEmpresaAdjudicadaParaConfirmacion(
-            RequerimientoCompra requerimiento) throws Exception {
+    public int pasarAOrdenCompra(int id, String usuario) throws Exception {
+        new RequerimientoCompraOrdenHelper().crearDirecta(id, usuario, normalizarUsuario(usuario));
+        return ConfiguracionComprasHelper.getEstadoOrdenCompra();
+    }
+
+    private void validarEmpresaAdjudicadaParaConfirmacion(RequerimientoCompra requerimiento) throws Exception {
+        validarEmpresaAdjudicadaParaConfirmacion(requerimiento, null);
+    }
+
+    private void validarEmpresaAdjudicadaParaConfirmacion(RequerimientoCompra requerimiento,
+            EditarRequerimientoCompraServiceUtil.Transaccion tx) throws Exception {
 
         if (!requerimiento.tieneDetalles()) {
             throw errorUsuario("Debe agregar al menos un detalle antes de enviar "
                     + "a autorizar o Crear Orden de Compra.");
         }
         List<RequerimientoCompraPresupuesto> cotizaciones =
-                BusquedaRequerimientoCompraServiceUtil.listarCotizacionesEmpresa(
-                        requerimiento.getIdRequerimientoCompra());
+                tx != null ? tx.listarDocumentos(requerimiento.getIdRequerimientoCompra(), 3)
+                        : BusquedaRequerimientoCompraServiceUtil.listarCotizacionesEmpresa(requerimiento.getIdRequerimientoCompra());
         RequerimientoCompraPresupuesto adjudicada = null;
         for (int i = 0; cotizaciones != null && i < cotizaciones.size(); i++) {
             RequerimientoCompraPresupuesto cotizacion = cotizaciones.get(i);
@@ -1505,7 +1504,7 @@ public class EditarRequerimientoCompraHelper {
                 != requerimiento.getIdRequerimientoCompra()) {
             throw errorUsuario("La cotizacion adjudicada no pertenece al requerimiento.");
         }
-        new PresupuestoCompraHelper().validarDatosEmpresaCotizacion(
+        new PresupuestoCompraHelper().validarDatosEmpresaCotizacion(tx,
                 adjudicada.getEmpresaCuit(), adjudicada.getEmpresaSucursal(),
                 adjudicada.getDescripcionEmpresa(), 1);
     }
@@ -1547,9 +1546,9 @@ public class EditarRequerimientoCompraHelper {
                     );
 
             if (estadoFinal
-                    != WebKeysCompras.ESTADO_PENDIENTE
+                    != ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoPendiente()
                     && estadoFinal
-                    != WebKeysCompras.ESTADO_A_COTIZAR) {
+                    != ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoACotizar()) {
 
                 throw new IllegalStateException(
                         "Estado inesperado al confirmar "
@@ -1653,7 +1652,7 @@ public class EditarRequerimientoCompraHelper {
                 idRequerimientoCompra,
                 detalles,
                 new ArrayList<Integer>(),
-                obtenerSurgeActual(idRequerimientoCompra),
+                null,
                 usuario
         );
     }
@@ -1683,7 +1682,7 @@ public class EditarRequerimientoCompraHelper {
                 idRequerimientoCompra,
                 detalles,
                 new ArrayList<Integer>(),
-                obtenerSurgeActual(idRequerimientoCompra),
+                null,
                 usuario
         );
     }
@@ -1867,8 +1866,12 @@ public class EditarRequerimientoCompraHelper {
         }
     }
 
-    public void prepararRequerimientoParaGuardar(
-            RequerimientoCompra requerimiento) throws Exception {
+    public void prepararRequerimientoParaGuardar(RequerimientoCompra requerimiento) throws Exception {
+        prepararRequerimientoParaGuardar(requerimiento, null);
+    }
+
+    private void prepararRequerimientoParaGuardar(RequerimientoCompra requerimiento,
+            EditarRequerimientoCompraServiceUtil.Transaccion tx) throws Exception {
 
         if (requerimiento == null) {
             return;
@@ -1877,22 +1880,26 @@ public class EditarRequerimientoCompraHelper {
         Integer idSector = requerimiento.getIdSector();
 
         if (idSector != null && idSector.intValue() > 0) {
-            RequerimientoCompraSector sector =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .getSector(idSector.intValue());
-
-            if (sector == null || sector.getIdSector() <= 0) {
-                throw errorUsuario(
-                        "El sector seleccionado ya no existe o no está disponible."
-                );
-            }
-
-            requerimiento.setSectorDescripcion(
-                    sector.getDescripcion()
-            );
-            requerimiento.setRequiereAfiliado(
-                    sector.isRequiereAfiliado()
-            );
+            RequerimientoCompraSector sector;
+            if (tx != null) {
+                java.util.Map<String,Object> fila=null;
+                if(requerimiento.getIdRequerimientoCompra()<=0){
+                    List<java.util.Map<String,Object>> catalogo=tx.listarCatalogoSectores();
+                    List<RequerimientoCompraSector> seleccionables=NomencladorCompraBusquedaHelper.filtrarSectoresSeleccionables(catalogo,
+                            tx.getConfiguracionCompra("COMPRAS_SECTORES_NO_SELECCIONABLES"));
+                    boolean habilitado=false;
+                    for(int i=0;i<seleccionables.size();i++)if(seleccionables.get(i).getIdSector()==idSector.intValue())habilitado=true;
+                    if(!habilitado)throw errorUsuario("El sector informado no esta habilitado para nuevas compras.");
+                    for(int i=0;i<catalogo.size();i++)if(idSector.equals(catalogo.get(i).get("id")))fila=catalogo.get(i);
+                }else fila=tx.obtenerSectorCatalogo(idSector.intValue());
+                if (fila == null || !Boolean.TRUE.equals(fila.get("activo")) || fila.get("baja") != null) {
+                    throw errorUsuario("El sector seleccionado ya no existe o no esta disponible.");
+                }
+                sector = new RequerimientoCompraSector(idSector, (String) fila.get("descripcion"), (Boolean) fila.get("requiere_afiliado"));
+            } else sector = BusquedaRequerimientoCompraServiceUtil.getSector(idSector.intValue());
+            if (sector == null || sector.getIdSector() <= 0) throw errorUsuario("El sector seleccionado ya no esta disponible.");
+            requerimiento.setSectorDescripcion(sector.getDescripcion());
+            requerimiento.setRequiereAfiliado(sector.isRequiereAfiliado());
 
             if (!sector.isRequiereAfiliado()) {
                 aplicarReglaSectorSinAfiliado(requerimiento);
@@ -1906,7 +1913,7 @@ public class EditarRequerimientoCompraHelper {
          * En requerimientos existentes la identidad y los datos asociados
          * al afiliado son inmutables.
          */
-        if (requerimiento.getIdRequerimientoCompra() <= 0
+        if (tx == null && requerimiento.getIdRequerimientoCompra() <= 0
                 && requerimiento.tieneAfiliadoInformado()) {
 
             cargarSnapshotAfiliado(
@@ -1944,6 +1951,9 @@ public class EditarRequerimientoCompraHelper {
         if (!requerimiento.isRequiereAfiliado()) {
             aplicarReglaSectorSinAfiliado(requerimiento);
         }
+
+        if(requerimiento.getCargoOspim()==null)requerimiento.setCargoOspim(Integer.valueOf(0));
+        if(requerimiento.getCargoTercerizadora()==null)requerimiento.setCargoTercerizadora(Integer.valueOf(0));
 
         validarPorcentaje(
                 requerimiento.getCargoOspim(),
@@ -2162,22 +2172,42 @@ private void aplicarReglaSectorSinAfiliado(
 }
 
 private void validarPrestacionNoRepetida(
+        RequerimientoCompra requerimiento, RequerimientoCompraDetalle persistido,
+        RequerimientoCompraDetalle detalle) throws Exception {
+    validarPrestacionNoRepetida(requerimiento, persistido, detalle, null);
+}
+
+private void validarPrestacionNoRepetida(
         RequerimientoCompra requerimiento,
         RequerimientoCompraDetalle persistido,
-        RequerimientoCompraDetalle detalle) throws Exception {
+        RequerimientoCompraDetalle detalle,
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion) throws Exception {
 
     if (!detalle.esNomenclador() || requerimiento.getDetalles() == null) {
         return;
     }
     String codigo = WebKeysCompras.trimToNull(detalle.getCodigoNomenclador());
+    if (transaccion != null && detalle.getIdPrestacionInt() > 0) {
+        Nomenclador canonico = transaccion.obtenerNomencladorCanonico(detalle.getIdPrestacionInt());
+        if (canonico != null && !WebKeysCompras.isEmpty(canonico.getCodigo())) {
+            codigo = canonico.getCodigo().trim();
+        }
+    }
     for (RequerimientoCompraDetalle otro : requerimiento.getDetalles()) {
         if (otro == null || (persistido != null
                 && otro.getIdInt() == persistido.getIdInt())) {
             continue;
         }
+        String codigoOtro = otro.getCodigoNomenclador();
+        if (transaccion != null && otro.getIdPrestacionInt() > 0) {
+            Nomenclador canonicoOtro = transaccion.obtenerNomencladorCanonico(otro.getIdPrestacionInt());
+            if (canonicoOtro != null && !WebKeysCompras.isEmpty(canonicoOtro.getCodigo())) {
+                codigoOtro = canonicoOtro.getCodigo();
+            }
+        }
         if ((detalle.getIdPrestacion() != null
                 && mismoInteger(otro.getIdPrestacion(), detalle.getIdPrestacion()))
-                || (codigo != null && mismoTexto(codigo, otro.getCodigoNomenclador()))) {
+                || (codigo != null && mismoTexto(codigo, codigoOtro))) {
             throw errorUsuario("El código de prestación ya está incluido en el requerimiento.");
         }
     }
@@ -2200,10 +2230,17 @@ private boolean mismoInteger(Integer a, Integer b) {
 }
 
 private void validarDetalleParaGuardar(
+        RequerimientoCompra requerimiento, RequerimientoCompraDetalle persistido,
+        RequerimientoCompraDetalle detalle, boolean requiereIdPersistido) throws Exception {
+    validarDetalleParaGuardar(requerimiento, persistido, detalle, requiereIdPersistido, null);
+}
+
+private void validarDetalleParaGuardar(
         RequerimientoCompra requerimiento,
         RequerimientoCompraDetalle detallePersistido,
         RequerimientoCompraDetalle detalle,
-        boolean requiereIdPersistido) throws Exception {
+        boolean requiereIdPersistido,
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion) throws Exception {
 
     if (detalle == null) {
         throw errorUsuario(
@@ -2222,7 +2259,7 @@ private void validarDetalleParaGuardar(
     }
 
     if (detalle.getCantidad() == null) {
-        detalle.setCantidad(Integer.valueOf(1));
+        detalle.setCantidad(Integer.valueOf(ConfiguracionComprasHelper.getCantidadDetalleInicial()));
     }
 
     if (detalle.getCantidad().intValue() <= 0) {
@@ -2246,7 +2283,7 @@ private void validarDetalleParaGuardar(
         validarDetalleNomencladorParaGuardar(
                 requerimiento,
                 detallePersistido,
-                detalle
+                detalle, transaccion
         );
     } else if (RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipoItem)) {
         validarDetalleMedicamentoParaGuardar(detalle);
@@ -2274,9 +2311,16 @@ private void validarDetalleParaGuardar(
 }
 
 private void validarTipoPrestacionParaGuardar(
+        RequerimientoCompra requerimiento, RequerimientoCompraDetalle persistido,
+        RequerimientoCompraDetalle detalle) throws Exception {
+    validarTipoPrestacionParaGuardar(requerimiento, persistido, detalle, null);
+}
+
+private void validarTipoPrestacionParaGuardar(
         RequerimientoCompra requerimiento,
         RequerimientoCompraDetalle detallePersistido,
-        RequerimientoCompraDetalle detalle) throws Exception {
+        RequerimientoCompraDetalle detalle,
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion) throws Exception {
 
     if (requerimiento == null
             || requerimiento.getIdSector() == null
@@ -2288,9 +2332,9 @@ private void validarTipoPrestacionParaGuardar(
         );
     }
 
-    List<TipoPrestacionCompra> tipos =
-            BusquedaRequerimientoCompraServiceUtil
-                    .listarTiposPrestacion();
+    List<TipoPrestacionCompra> tipos = transaccion != null
+            ? transaccion.listarTiposPrestacion()
+            : BusquedaRequerimientoCompraServiceUtil.listarTiposPrestacion();
 
     boolean sectorConCatalogo = false;
     boolean tipoValido = false;
@@ -2345,9 +2389,16 @@ private void validarTipoPrestacionParaGuardar(
 }
 
 private void validarDetalleNomencladorParaGuardar(
+        RequerimientoCompra requerimiento, RequerimientoCompraDetalle persistido,
+        RequerimientoCompraDetalle detalle) throws Exception {
+    validarDetalleNomencladorParaGuardar(requerimiento, persistido, detalle, null);
+}
+
+private void validarDetalleNomencladorParaGuardar(
         RequerimientoCompra requerimiento,
         RequerimientoCompraDetalle detallePersistido,
-        RequerimientoCompraDetalle detalle) throws Exception {
+        RequerimientoCompraDetalle detalle,
+        EditarRequerimientoCompraServiceUtil.Transaccion transaccion) throws Exception {
 
     if (detalle.getIdPrestacion() == null
             || detalle.getIdPrestacion().intValue() <= 0) {
@@ -2377,10 +2428,9 @@ private void validarDetalleNomencladorParaGuardar(
         );
     }
 
-    Nomenclador nomenclador =
-            obtenerNomencladorCanonico(
-                    detalle.getIdPrestacion().intValue()
-            );
+    Nomenclador nomenclador = transaccion != null
+            ? transaccion.obtenerNomencladorCanonico(detalle.getIdPrestacion().intValue())
+            : obtenerNomencladorCanonico(detalle.getIdPrestacion().intValue());
 
     if (nomenclador == null
             || nomenclador.getId_prestacion()
@@ -2419,12 +2469,21 @@ private void validarDetalleNomencladorParaGuardar(
      * La configuracion vigente valida selecciones nuevas y cambios de rubro.
      * Retirar una asociacion no invalida la misma seleccion ya persistida.
      */
+    if (!nuevaSeleccion) {
+        ReclamoPrestacionalCompraPrecargaHelper.validarReferenciaPersistida(detallePersistido, nomenclador);
+        detalle.setIdTipoNomenclador(detallePersistido.getIdTipoNomenclador());
+        detalle.setCodigoNomenclador(detallePersistido.getCodigoNomenclador());
+        detalle.setDescripcionNomenclador(detallePersistido.getDescripcionNomenclador());
+        detalle.setCodigoItem(detallePersistido.getCodigoNomenclador());
+        detalle.setDescripcionItem(detallePersistido.getDescripcionNomenclador());
+        return;
+    }
     if (nuevaSeleccion) {
-        List<SectorNomencladorCompra> configuracion =
-                BusquedaRequerimientoCompraServiceUtil
-                        .getConfiguracionNomenclador(
-                                requerimiento.getIdSector().intValue(),
-                                detalle.getIdTipoPrestacion());
+        List<SectorNomencladorCompra> configuracion = transaccion != null
+                ? NomencladorCompraBusquedaHelper.resolverConfiguracion(
+                        requerimiento.getIdSector().intValue(), detalle.getIdTipoPrestacion(), transaccion)
+                : BusquedaRequerimientoCompraServiceUtil.getConfiguracionNomenclador(
+                        requerimiento.getIdSector().intValue(), detalle.getIdTipoPrestacion());
 
         if (configuracion == null || configuracion.isEmpty()) {
             throw errorUsuario(
@@ -2568,6 +2627,14 @@ private void prepararDetalleParaGuardar(
         RequerimientoCompra requerimiento,
         RequerimientoCompraDetalle detallePersistido,
         RequerimientoCompraDetalle detalle) throws Exception {
+        prepararDetalleParaGuardar(requerimiento, detallePersistido, detalle, null);
+    }
+
+private void prepararDetalleParaGuardar(
+        RequerimientoCompra requerimiento,
+        RequerimientoCompraDetalle detallePersistido,
+        RequerimientoCompraDetalle detalle,
+            EditarRequerimientoCompraServiceUtil.Transaccion transaccion) throws Exception {
 
     if (detalle == null) {
         throw errorUsuario(
@@ -2606,12 +2673,10 @@ private void prepararDetalleParaGuardar(
         return;
     }
 
-    boolean sectorObservacion =
-            WebKeysCompras.esSectorDetalleObservacionCompras(
-                    requerimiento != null
-                            ? requerimiento.getSectorDescripcion()
-                            : null
-            );
+    boolean sectorObservacion = transaccion != null
+            ? ConfiguracionComprasHelper.resolverSectorDetalleObservacion(requerimiento.getSectorDescripcion(),
+                    transaccion.getConfiguracionCompra("COMPRAS_SECTORES_DETALLE_OBSERVACION"))
+            : WebKeysCompras.esSectorDetalleObservacionCompras(requerimiento != null ? requerimiento.getSectorDescripcion() : null);
 
     if (sectorObservacion) {
         if (detallePersistido != null
@@ -2865,99 +2930,105 @@ private void prepararDetalleParaGuardar(
         return requerimiento;
     }
 
-    private GuardadoCotizacionResultado guardarCotizacion(
-            int idRequerimientoCompra,
-            List<RequerimientoCompraDetalle> detalles,
-            List<Integer> idsDetallesEliminados,
-            boolean surge,
-            String usuario) throws Exception {
+    private GuardadoCotizacionResultado guardarCotizacion(int id,
+            List<RequerimientoCompraDetalle> detalles,List<Integer> eliminados,Boolean surge,String usuario)throws Exception {
+        EditarRequerimientoCompraServiceUtil.Transaccion tx=null;
+        try{
+            tx=EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            GuardadoCotizacionResultado r=guardarCotizacionEnTransaccion(tx,id,detalles,eliminados,surge,normalizarUsuario(usuario));
+            tx.commit();return r;
+        }catch(Exception e){
+            if(tx!=null)try{tx.rollback();}catch(Exception fallo){e.addSuppressed(fallo);}
+            throw manejarErrorOperacion("guardar la cotizacion","No se pudo guardar la cotizacion. Revise los datos e intente nuevamente.",e,"idRequerimiento="+id);
+        }finally{if(tx!=null)tx.cerrar();}
+    }
 
-        Integer idPrestadorAdjudicado = null;
-
-        try {
-            if (idRequerimientoCompra <= 0) {
-                throw errorUsuario(
-                        "Debe informar el requerimiento de compra."
-                );
-            }
-
-            validarDetallesCotizacionRecibidos(detalles);
-            validarIdsDetallesEliminados(
-                    detalles,
-                    idsDetallesEliminados
-            );
-
-            idPrestadorAdjudicado =
-                    obtenerPrestadorAdjudicadoUnico(detalles);
-
-            Integer[] idsDetalle = new Integer[detalles.size()];
-            BigDecimal[] preciosUnitarios = new BigDecimal[detalles.size()];
-            Integer[] idsEliminados =
-                    idsDetallesEliminados.toArray(
-                            new Integer[idsDetallesEliminados.size()]
-                    );
-
-            for (int i = 0; i < detalles.size(); i++) {
-                RequerimientoCompraDetalle detalle = detalles.get(i);
-
-                idsDetalle[i] = Integer.valueOf(detalle.getIdInt());
-                preciosUnitarios[i] =
-                        detalle.getPrecioUnitarioEstimado() != null
-                                ? WebKeysCompras.normalizarImporte(
-                                detalle.getPrecioUnitarioEstimado()
-                        )
-                                : null;
-            }
-
-            if (debeValidarPresupuestoParaCotizado(
-                    idPrestadorAdjudicado,
-                    preciosUnitarios
-            )) {
-                validarTienePresupuestoActivoDelPrestador(
-                        idRequerimientoCompra,
-                        idPrestadorAdjudicado.intValue()
-                );
-            }
-
-            int estadoFinal =
-                    EditarRequerimientoCompraServiceUtil.guardarCotizacion(
-                            idRequerimientoCompra,
-                            idsDetalle,
-                            preciosUnitarios,
-                            idsEliminados,
-                            idPrestadorAdjudicado,
-                            surge,
-                            normalizarUsuario(usuario)
-                    );
-
-            if (estadoFinal != WebKeysCompras.ESTADO_A_COTIZAR
-                    && estadoFinal != WebKeysCompras.ESTADO_COTIZADO) {
-
-                throw new IllegalStateException(
-                        "La cotización devolvió un estado inválido: "
-                                + estadoFinal
-                );
-            }
-
-            return new GuardadoCotizacionResultado(
-                    estadoFinal == WebKeysCompras.ESTADO_COTIZADO,
-                    estadoFinal
-            );
-
-        } catch (Exception e) {
-            throw manejarErrorOperacion(
-                    "guardar la cotización",
-                    "No se pudo guardar la cotización. "
-                            + "Revise los datos e intente nuevamente.",
-                    e,
-                    "idRequerimiento=" + idRequerimientoCompra
-                            + ", idPrestadorAdjudicado="
-                            + idPrestadorAdjudicado
-                            + ", cantidadDetalles="
-                            + (detalles != null ? detalles.size() : 0)
-                            + ", usuario=" + usuario
-            );
+    private GuardadoCotizacionResultado guardarCotizacionEnTransaccion(EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            int id,List<RequerimientoCompraDetalle> detalles,List<Integer> eliminados,Boolean surge,String usuario)throws Exception {
+        if(id<=0)throw errorUsuario("Debe informar el requerimiento de compra.");
+        RequerimientoCompra vigente=tx.bloquearYObtenerRequerimiento(id);
+        String estados=tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS);
+        int aCotizar=ConfiguracionComprasHelper.resolverEstado("A_COTIZAR",estados),cotizado=ConfiguracionComprasHelper.resolverEstado("COTIZADO",estados);
+        if(vigente==null||!vigente.isActivo())throw errorUsuario("El requerimiento ya no esta disponible.");
+        if(vigente.getEstado()==cotizado)return new GuardadoCotizacionResultado(true,cotizado);
+        if(vigente.getEstado()!=aCotizar)throw errorUsuario("La cotizacion solo puede guardarse en estado A COTIZAR.");
+        validarDetallesCotizacionRecibidos(detalles);validarIdsDetallesEliminados(detalles,eliminados);
+        Set<Integer> incluidos=new HashSet<Integer>();
+        for(int i=0;i<detalles.size();i++)incluidos.add(Integer.valueOf(detalles.get(i).getIdInt()));
+        incluidos.addAll(eliminados);
+        if(incluidos.size()!=vigente.getDetalles().size())throw errorUsuario("Los detalles cambiaron mientras se guardaba la cotizacion.");
+        for(int i=0;i<vigente.getDetalles().size();i++)if(!incluidos.contains(Integer.valueOf(vigente.getDetalles().get(i).getIdInt())))
+            throw errorUsuario("La cotizacion no coincide con los detalles activos del requerimiento.");
+        Integer prestador=obtenerPrestadorAdjudicadoUnico(detalles);String estadoPrestador=null,cotizadoPrestador=null;
+        if(prestador!=null){
+            if(prestador.intValue()<=0)throw errorUsuario("Debe seleccionar un prestador valido.");
+            String envios=tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_ENVIO);
+            String enviado=ConfiguracionComprasHelper.resolverEstadoEnvio("ENVIADO",envios);
+            cotizadoPrestador=ConfiguracionComprasHelper.resolverEstadoEnvio("COTIZADO",envios);
+            estadoPrestador=tx.bloquearEstadoPrestadorCotizacion(id,prestador.intValue());
+            if(!enviado.equals(estadoPrestador)&&!cotizadoPrestador.equals(estadoPrestador))
+                throw errorUsuario("El prestador adjudicado no fue notificado correctamente para este requerimiento.");
         }
+        for(int i=0;i<eliminados.size();i++)if(tx.persistirBajaDetalle(id,eliminados.get(i).intValue(),usuario)!=1)
+            throw errorUsuario("Un detalle cambio mientras se guardaba la cotizacion.");
+        if(tx.persistirSurge(id,aCotizar,surge!=null?surge.booleanValue():vigente.isSurge(),usuario)!=1)
+            throw errorUsuario("El requerimiento cambio mientras se guardaba la cotizacion.");
+        boolean completa=prestador!=null;
+        for(int i=0;i<detalles.size();i++){
+            RequerimientoCompraDetalle recibido=detalles.get(i),persistido=obtenerDetallePersistido(vigente,recibido.getIdInt());
+            BigDecimal precio=recibido.getPrecioUnitarioEstimado()!=null?WebKeysCompras.normalizarImporte(recibido.getPrecioUnitarioEstimado()):null;
+            persistido.setPrecioUnitarioEstimado(precio);persistido.setIdPrestador(prestador);
+            persistido.setPrecioTotalEstimado(WebKeysCompras.calcularPrecioTotal(persistido.getCantidad(),precio));
+            if(tx.persistirImportesDetalle(persistido,usuario)!=1)throw errorUsuario("Un detalle cambio mientras se guardaba la cotizacion.");
+            completa=completa&&precio!=null&&persistido.getPrecioTotalEstimadoInformado()!=null;
+        }
+        if(prestador!=null)validarPrestadorCorreccion(tx.bloquearYObtenerRequerimiento(id),prestador.intValue(),tx);
+        if(completa){
+            validarTienePresupuestoActivoDelPrestador(id,prestador.intValue(),tx);
+            if(!cotizadoPrestador.equals(estadoPrestador))throw errorUsuario("El prestador debe encontrarse COTIZADO antes de cerrar la cotizacion.");
+            if(!ConfiguracionComprasHelper.resolverTransicionEstado(aCotizar,cotizado,tx.getConfiguracionCompra("COMPRAS_TRANSICIONES_ESTADO"),estados))
+                throw errorUsuario("La transicion de cotizacion no esta habilitada.");
+            if(tx.persistirEstado(id,aCotizar,cotizado,usuario,null,false)!=1)throw errorUsuario("El requerimiento cambio mientras se cerraba la cotizacion.");
+        }
+        return new GuardadoCotizacionResultado(completa,completa?cotizado:aCotizar);
+    }
+
+    public int guardarCotizacionEnTransaccion(EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            int id,Integer[] ids,BigDecimal[] precios,Integer[] eliminados,Integer prestador,Boolean surge,String usuario)throws Exception {
+        List<RequerimientoCompraDetalle> detalles=null;
+        if(ids!=null&&precios!=null&&ids.length==precios.length){
+            detalles=new ArrayList<RequerimientoCompraDetalle>();
+            for(int i=0;i<ids.length;i++){
+                RequerimientoCompraDetalle d=new RequerimientoCompraDetalle();d.setId(ids[i]);d.setIdRequerimientoCompra(id);
+                d.setPrecioUnitarioEstimado(precios[i]);d.setIdPrestador(prestador);detalles.add(d);
+            }
+        }
+        List<Integer> bajas=new ArrayList<Integer>();if(eliminados!=null)for(int i=0;i<eliminados.length;i++)bajas.add(eliminados[i]);
+        return guardarCotizacionEnTransaccion(tx,id,detalles,bajas,surge,normalizarUsuario(usuario)).getEstadoFinal();
+    }
+
+    public int guardarCotizacionPersistida(int id,String ids,String precios,String eliminados,
+            Integer prestador,Boolean surge,String usuario)throws Exception {
+        String[] vi=leerArrayPersistido(ids),vp=leerArrayPersistido(precios),vb=leerArrayPersistido(eliminados);
+        Integer[] idsDetalle=vi!=null?new Integer[vi.length]:null,bajas=vb!=null?new Integer[vb.length]:null;
+        BigDecimal[] importes=vp!=null?new BigDecimal[vp.length]:null;
+        try{
+            for(int i=0;idsDetalle!=null&&i<idsDetalle.length;i++)idsDetalle[i]="NULL".equalsIgnoreCase(vi[i])?null:Integer.valueOf(vi[i]);
+            for(int i=0;importes!=null&&i<importes.length;i++)importes[i]="NULL".equalsIgnoreCase(vp[i])?null:new BigDecimal(vp[i]);
+            for(int i=0;bajas!=null&&i<bajas.length;i++)bajas[i]="NULL".equalsIgnoreCase(vb[i])?null:Integer.valueOf(vb[i]);
+        }catch(NumberFormatException e){throw errorUsuario("La cotizacion contiene valores invalidos.");}
+        EditarRequerimientoCompraServiceUtil.Transaccion tx=null;
+        try{tx=EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+            int estado=guardarCotizacionEnTransaccion(tx,id,idsDetalle,importes,bajas,prestador,surge,usuario);tx.commit();return estado;
+        }catch(Exception e){if(tx!=null)try{tx.rollback();}catch(Exception fallo){e.addSuppressed(fallo);}throw e;
+        }finally{if(tx!=null)tx.cerrar();}
+    }
+
+    private String[] leerArrayPersistido(String valor)throws Exception {
+        if(valor==null)return null;String limpio=valor.trim();
+        if(!limpio.startsWith("{")||!limpio.endsWith("}"))throw errorUsuario("La cotizacion contiene arreglos invalidos.");
+        limpio=limpio.substring(1,limpio.length()-1).trim();if(limpio.length()==0)return new String[0];
+        String[] elementos=limpio.split(",",-1);for(int i=0;i<elementos.length;i++)elementos[i]=elementos[i].trim();return elementos;
     }
 
     private boolean obtenerSurgeActual(
@@ -3089,9 +3160,15 @@ private void prepararDetalleParaGuardar(
         return idPrestadorAdjudicado;
     }
 
+    private void validarTienePresupuestoActivoDelPrestador(int idRequerimiento,
+            int idPrestador) throws Exception {
+        validarTienePresupuestoActivoDelPrestador(idRequerimiento, idPrestador, null);
+    }
+
     private void validarTienePresupuestoActivoDelPrestador(
             int idRequerimientoCompra,
-            int idPrestadorAdjudicado) throws Exception {
+            int idPrestadorAdjudicado,
+            EditarRequerimientoCompraServiceUtil.Transaccion transaccion) throws Exception {
 
         if (idPrestadorAdjudicado <= 0) {
             throw errorUsuario(
@@ -3100,8 +3177,8 @@ private void prepararDetalleParaGuardar(
         }
 
         List<RequerimientoCompraPresupuesto> presupuestos =
-                BusquedaRequerimientoCompraServiceUtil
-                        .listarPresupuestos(idRequerimientoCompra);
+                transaccion != null ? transaccion.listarPresupuestos(idRequerimientoCompra)
+                        : BusquedaRequerimientoCompraServiceUtil.listarPresupuestos(idRequerimientoCompra);
 
         for (int i = 0;
              presupuestos != null && i < presupuestos.size();
@@ -3290,11 +3367,15 @@ private void prepararDetalleParaGuardar(
         return WebKeysCompras.trimToNull(value);
     }
 
+    public static String normalizarUsuarioAuditoria(String usuario) {
+        if(usuario==null)return null;int inicio=0,fin=usuario.length();
+        while(inicio<fin&&usuario.charAt(inicio)==' ')inicio++;
+        while(fin>inicio&&usuario.charAt(fin-1)==' ')fin--;
+        return inicio==fin?null:usuario.substring(inicio,fin);
+    }
+
     private String normalizarUsuario(String usuario) {
-        String value = WebKeysCompras.trimToNull(usuario);
-        return value != null
-                ? value
-                : "sistema";
+        return normalizarUsuarioAuditoria(usuario);
     }
 
     private MensajeUsuarioException errorUsuario(String mensaje) {
@@ -3339,10 +3420,16 @@ private void prepararDetalleParaGuardar(
                 error
         );
 
-        return errorUsuario(
-                mensajePredeterminado,
-                error
-        );
+        Throwable causa = error;
+        Set<Throwable> revisadas = new HashSet<Throwable>();
+        while (causa != null && revisadas.add(causa)) {
+            if (causa instanceof ConfiguracionComprasHelper.ConfiguracionInvalidaException) {
+                return errorUsuario("La configuracion de Compras no esta disponible o es invalida. "
+                        + "Solicite su revision antes de reintentar.", error);
+            }
+            causa = causa.getCause();
+        }
+        return errorUsuario(mensajePredeterminado, error);
     }
 
     private MensajeUsuarioException buscarMensajeUsuarioException(
@@ -3489,7 +3576,8 @@ private void prepararDetalleParaGuardar(
                 );
 
                 int idDocumento =
-                        transaccion.registrarOrdenMedica(
+                        DocumentoLibraryComprasHelper.registrarOrdenMedicaEnTransaccion(
+                                transaccion,
                                 idRequerimientoCompra,
                                 ordenMedica,
                                 documento,

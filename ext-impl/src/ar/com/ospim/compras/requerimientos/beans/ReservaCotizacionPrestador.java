@@ -2,11 +2,15 @@ package ar.com.ospim.compras.requerimientos.beans;
 
 public class ReservaCotizacionPrestador {
 
+    private Integer intentos;
     private boolean reservado;
     private String estadoEnvio;
     private String emailDestino;
     private String motivoCodigo;
     private String motivoDescripcion;
+
+    public Integer getIntentos() { return intentos; }
+    public void setIntentos(Integer valor) { intentos = valor; }
 
     public boolean isReservado() {
         return reservado;

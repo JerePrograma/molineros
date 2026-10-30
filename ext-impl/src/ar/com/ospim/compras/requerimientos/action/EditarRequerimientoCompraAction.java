@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
@@ -243,7 +245,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 );
 
                 if (resultado.getEstadoFinal()
-                        == WebKeysCompras.ESTADO_COTIZADO) {
+                        == ConfiguracionComprasHelper.getEstadoCotizado()) {
 
                     SessionMessages.add(
                             actionRequest,
@@ -297,7 +299,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 if (requerimiento.getIdRequerimientoCompra() <= 0) {
                     requerimiento.setIdEstado(
-                            WebKeysCompras.ESTADO_PENDIENTE
+                            ConfiguracionComprasHelper.getEstadoPendiente()
                     );
                 } else {
                     RequerimientoCompra actual =
@@ -371,7 +373,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 if (requerimiento.getIdRequerimientoCompra() <= 0) {
                     requerimiento.setIdEstado(
-                            WebKeysCompras.ESTADO_PENDIENTE
+                            ConfiguracionComprasHelper.getEstadoPendiente()
                     );
                 }
 
@@ -426,7 +428,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
                 requerimientoHelper.cambiarEstado(
                         idRequerimientoCompra,
-                        WebKeysCompras.ESTADO_ANULADO,
+                        ConfiguracionComprasHelper.getEstadoAnulado(),
                         usuario
                 );
 
@@ -591,11 +593,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         }
         int cantidadCotizaciones = parseEnteroConDefault(
                 actionRequest, "presupuesto_count", "Cantidad de cotizaciones de Empresa", 0);
+        int maxPresupuestosPorCarga = ConfiguracionComprasHelper.getMaxPresupuestosPorCarga();
         if (cantidadCotizaciones < 0
-                || cantidadCotizaciones > WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA) {
+                || cantidadCotizaciones > maxPresupuestosPorCarga) {
             errorCampo("presupuesto_count", "La cantidad de cotizaciones de Empresa no es valida.");
         }
-        for (int i = cantidadCotizaciones; i <= WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA; i++) {
+        for (int i = cantidadCotizaciones; i <= maxPresupuestosPorCarga; i++) {
             String prefijo = "presupuesto_" + i;
             if (!WebKeysCompras.isEmpty(getParametroTrim(actionRequest, prefijo + "_empresa_cuit"))
                     || !WebKeysCompras.isEmpty(getParametroTrim(actionRequest, prefijo + "_empresa_sucursal"))
@@ -807,7 +810,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
     private void copiarParametrosEmpresas(ActionRequest request, ActionResponse response) {
         int count = ParamUtil.getInteger(request, "presupuesto_count", 0);
-        count = Math.max(0, Math.min(count, WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA));
+        count = Math.max(0, Math.min(count, ConfiguracionComprasHelper.getMaxPresupuestosPorCarga()));
         response.setRenderParameter("presupuesto_count", String.valueOf(count));
         String[] seleccion = {"empresa_adjudicada_cuit", "empresa_adjudicada_sucursal",
                 "empresa_adjudicacion_informada", "empresa_adjudicada_id", "empresa_adjudicada_indice"};
@@ -969,15 +972,13 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             return new ArrayList<OrdenMedicaValidada>();
         }
 
-        if (cantidadOrdenesMedicas
-                > EditarRequerimientoCompraHelper
-                .MAX_ORDENES_MEDICAS_POR_CARGA) {
+        int maximoOrdenesMedicas = ConfiguracionComprasHelper.getMaxOrdenesMedicasPorCarga();
+        if (cantidadOrdenesMedicas > maximoOrdenesMedicas) {
 
             errorCampo(
                     PARAM_ORDEN_MEDICA_COUNT,
                     "Se pueden cargar hasta "
-                            + EditarRequerimientoCompraHelper
-                            .MAX_ORDENES_MEDICAS_POR_CARGA
+                            + maximoOrdenesMedicas
                             + " adjuntos por operación."
             );
 
@@ -1091,11 +1092,12 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         }
 
-        if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_CARGA) {
+        int maximoOrdenesMedicas = ConfiguracionComprasHelper.getMaxOrdenesMedicasPorCarga();
+        if (cantidad > maximoOrdenesMedicas) {
             errorCampo(
                     PARAM_ORDEN_MEDICA_COUNT,
                     "Se pueden cargar hasta "
-                            + EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_CARGA
+                            + maximoOrdenesMedicas
                             + " adjuntos por operación."
             );
             return 0;
@@ -1157,8 +1159,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             cantidad = 1;
         }
 
-        if (cantidad > EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA) {
-            cantidad = EditarRequerimientoCompraHelper.MAX_ORDENES_MEDICAS_POR_ALTA;
+        int maximoOrdenesMedicas = ConfiguracionComprasHelper.getMaxOrdenesMedicasPorCarga();
+        if (cantidad > maximoOrdenesMedicas) {
+            cantidad = maximoOrdenesMedicas;
         }
 
         actionResponse.setRenderParameter(
@@ -1306,13 +1309,14 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                     List<RequerimientoCompraDetalle> detallesAlta =
                             new ArrayList<RequerimientoCompraDetalle>();
                     int count = Math.max(0, Math.min(ParamUtil.getInteger(renderRequest, "detalle_count", 0), 1000));
+                    int cantidadInicial = ConfiguracionComprasHelper.getCantidadDetalleInicial();
                     for (int i = 0; i < count; i++) {
                         String prefix = "detalle_" + i + "_";
                         RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
                         detalle.setTipoItem(ParamUtil.getString(renderRequest, prefix + "tipo_item", "OBSERVACION"));
                         int tipo = ParamUtil.getInteger(renderRequest, prefix + "id_tipo_prestacion", 0);
                         detalle.setIdTipoPrestacion(tipo > 0 ? Integer.valueOf(tipo) : null);
-                        detalle.setCantidad(Integer.valueOf(ParamUtil.getInteger(renderRequest, prefix + "cantidad", 1)));
+                        detalle.setCantidad(Integer.valueOf(ParamUtil.getInteger(renderRequest, prefix + "cantidad", cantidadInicial)));
                         detalle.setObservaciones(ParamUtil.getString(renderRequest, prefix + "observaciones", ""));
                         detallesAlta.add(detalle);
                     }
@@ -1381,7 +1385,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
             if (!soloLectura
                     || (requerimiento.puedeEditarObservacionInterna()
                         && user != null
-                        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS))) {
+                        && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()))) {
                 generarTokenGuardadoCompra(renderRequest);
             }
         } catch (Exception e) {
@@ -1634,7 +1638,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ConfiguracionComprasHelper.getRolAbmCompras()
         ) && (
                 requerimiento.puedeEditarEstructura()
                         || requerimiento.puedeEliminarDetalle()
@@ -1645,7 +1649,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         return PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                ConfiguracionComprasHelper.getRolCotizarCompras()
         ) && (
                 requerimiento.puedeEditarCotizacion()
                         || (
@@ -1666,23 +1670,23 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         boolean puedeVer = PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_VIEW_COMPRAS
+                ConfiguracionComprasHelper.getRolViewCompras()
         );
         boolean puedeAdministrar = PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ConfiguracionComprasHelper.getRolAbmCompras()
         );
         boolean puedeCotizar = PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                ConfiguracionComprasHelper.getRolCotizarCompras()
         );
         boolean puedeAnular = PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ConfiguracionComprasHelper.getRolAbmCompras()
         );
         boolean puedeAutorizar = PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+                ConfiguracionComprasHelper.getRolAutorizarCompras()
         );
 
         if (!puedeVer && !puedeAdministrar && !puedeCotizar
@@ -1701,7 +1705,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ConfiguracionComprasHelper.getRolAbmCompras()
         )) {
             errorCampo(
                     "permisos",
@@ -1714,7 +1718,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (user == null) {
             errorCampo("usuario", "No se pudo determinar el usuario actual.");
         }
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)) {
+        if (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras())) {
             errorCampo("permisos", "No posee permisos para editar la observación interna.");
         }
     }
@@ -1726,7 +1730,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                ConfiguracionComprasHelper.getRolCotizarCompras()
         )) {
             errorCampo(
                     "permisos",
@@ -1742,7 +1746,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
 
         if (!PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ConfiguracionComprasHelper.getRolAbmCompras()
         )) {
             errorCampo(
                     "permisos",

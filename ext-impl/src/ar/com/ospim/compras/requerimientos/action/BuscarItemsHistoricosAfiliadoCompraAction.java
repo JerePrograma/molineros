@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans
         .RequerimientoCompraDetalle;
@@ -83,7 +85,7 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
             boolean puedeAdministrar =
                     PermissionUtil.userContainsRole(
                             user,
-                            WebKeysCompras.ROL_ABM_COMPRAS
+                            ConfiguracionComprasHelper.getRolAbmCompras()
                     );
 
             if (!puedeAdministrar) {
@@ -319,7 +321,7 @@ public class BuscarItemsHistoricosAfiliadoCompraAction
                 );
 
                 Integer troquel = idTipoNomenclador
-                        == WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA
+                        == ConfiguracionComprasHelper.getTipoNomencladorFarmacia()
                                 ? parseEntero(codigo)
                                 : null;
                 json.append(",\"droga\":");

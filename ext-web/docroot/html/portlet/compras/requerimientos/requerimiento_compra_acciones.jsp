@@ -53,14 +53,14 @@ boolean showABMButtons =
         user != null 
         && PermissionUtil.userContainsRole( 
                 user, 
-                WebKeysCompras.ROL_ABM_COMPRAS 
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras()
         ); 
  
 boolean showCotizarButtons = 
         user != null 
         && PermissionUtil.userContainsRole( 
                 user, 
-                WebKeysCompras.ROL_COTIZAR_COMPRAS 
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras()
         ); 
  
 boolean showAutorizarButton =
@@ -69,14 +69,14 @@ boolean showAutorizarButton =
         && user != null
         && PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAutorizarCompras()
         );
 
 boolean showAnularButtons = 
         user != null 
         && PermissionUtil.userContainsRole( 
                 user, 
-                WebKeysCompras.ROL_ABM_COMPRAS 
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras()
         ); 
  
 boolean showEditarButton =
@@ -156,7 +156,7 @@ String anularURL =
  
         <input type="hidden" 
                name="<portlet:namespace />estado_nuevo" 
-               value="<%= WebKeysCompras.ESTADO_ANULADO %>" />
+               value="<%= ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoAnulado() %>" />
 
         <input type="hidden"
                id="<%= motivoBajaInputId %>"

@@ -16,19 +16,19 @@ public class ReclamoPrestacionalCompraContexto
 
     private static final long serialVersionUID = 1L;
 
-    private static final long VIGENCIA_MAXIMA_MILLIS =
-            2L * 60L * 60L * 1000L;
-
     /*
      * Valores utilizados por el selector recuperable_sur del RP.
      */
+    @Deprecated
     public static final int RECUPERABLE_SUR = 1;
+    @Deprecated
     public static final int NO_RECUPERABLE = 2;
 
     /*
      * Se conserva por compatibilidad binaria con consumidores anteriores.
      * El handoff desde Compras no retorna este valor.
      */
+    @Deprecated
     public static final int RECUPERABLE_INTEGRACION = 3;
 
     private final int idRequerimientoCompra;
@@ -38,6 +38,9 @@ public class ReclamoPrestacionalCompraContexto
     private final long fechaInicio;
     private final String nonce;
     private ReclamoPrestacional reclamoEnEdicion;
+    /* Identidad server-side; no son valores de configuracion ni datos HTTP. */
+    private java.util.Map<Integer, Integer> detallesOrigen;
+
     // En un stream anterior el campo ausente toma false, conservando UID 1L.
     private boolean formatoConIdentidadEditor = true;
 
@@ -148,6 +151,23 @@ public class ReclamoPrestacionalCompraContexto
                 && reclamoEnEdicion.getId_reclamo() <= 0;
     }
 
+
+    public void definirDetallesOrigen(java.util.Map<Integer, Integer> detalles) {
+        if (detalles == null || detalles.isEmpty()) {
+            throw new IllegalArgumentException("La precarga debe identificar sus detalles de origen.");
+        }
+        detallesOrigen = new java.util.HashMap<Integer, Integer>(detalles);
+    }
+
+    public Integer getIdDetalleOrigen(int idRegistro) {
+        return detallesOrigen != null
+                ? detallesOrigen.get(Integer.valueOf(idRegistro)) : null;
+    }
+
+    public int getCantidadDetallesOrigen() {
+        return detallesOrigen != null ? detallesOrigen.size() : 0;
+    }
+
     public int getIdRequerimientoCompra() {
         return idRequerimientoCompra;
     }
@@ -218,10 +238,10 @@ public class ReclamoPrestacionalCompraContexto
      */
     public int getRecuperableInicial() {
         if (surge) {
-            return RECUPERABLE_SUR;
+            return ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRecuperableSur();
         }
 
-        return NO_RECUPERABLE;
+        return ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getNoRecuperable();
     }
 
     public boolean coincideNonce(
@@ -248,7 +268,7 @@ public class ReclamoPrestacionalCompraContexto
         return fechaInicio > 0L
                 && ahoraMillis >= fechaInicio
                 && ahoraMillis - fechaInicio
-                <= VIGENCIA_MAXIMA_MILLIS;
+                <= ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getVigenciaContextoMillis();
     }
 
     private static int obtenerPorcentaje(

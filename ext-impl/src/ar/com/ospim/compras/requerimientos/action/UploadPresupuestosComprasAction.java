@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
@@ -729,19 +731,19 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         boolean permitido =
                 PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_VIEW_COMPRAS
+                        ConfiguracionComprasHelper.getRolViewCompras()
                 )
                         || PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
+                        ConfiguracionComprasHelper.getRolAbmCompras()
                 )
                         || PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        ConfiguracionComprasHelper.getRolCotizarCompras()
                 )
                         || PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+                        ConfiguracionComprasHelper.getRolAutorizarCompras()
                 );
 
         if (!permitido) {
@@ -758,7 +760,7 @@ public class UploadPresupuestosComprasAction extends PortletAction {
         if (user == null
                 || !PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                ConfiguracionComprasHelper.getRolCotizarCompras()
         )) {
 
             throw new Exception(

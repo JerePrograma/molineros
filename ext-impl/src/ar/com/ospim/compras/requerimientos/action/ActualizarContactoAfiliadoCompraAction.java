@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.afiliados.services.EditarAfiliadoServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
@@ -47,7 +49,7 @@ public class ActualizarContactoAfiliadoCompraAction
             if (user == null
                     || !PermissionUtil.userContainsRole(
                     user,
-                    WebKeysCompras.ROL_ABM_COMPRAS
+                    ConfiguracionComprasHelper.getRolAbmCompras()
             )) {
 
                 throw new Exception(

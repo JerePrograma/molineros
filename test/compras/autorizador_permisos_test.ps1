@@ -13,6 +13,7 @@ foreach ($folder in @('lib\global', 'lib\portal', 'lib\development', 'ext-lib\gl
 }
 $classpath = $classpathEntries -join ';'
 $sources = @(
+    'test\compras\fixtures\configuracion\ConfiguracionComprasDatosFixture.java',
     'ext-impl\src\ar\com\ospim\compras\WebKeysCompras.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\beans\RequerimientoCompra.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\beans\RequerimientoCompraEstado.java',
@@ -22,16 +23,20 @@ $sourcepath = Join-Path $repoPath 'ext-impl\src'
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'context.txt'), @(
     ('Inicio local: ' + (Get-Date -Format o)),
     ('HEAD inicial: ' + $initialHead),
-    'Estado inicial: observacion interna rechazada en ANULADO; transicion a AUTORIZADO desde PARA AUTORIZAR.',
-    'Log inicial: no hay directorio de logs Tomcat local. Sin base ni UI autenticada.',
+    'Estado inicial: frontera de datos simulada; se verifican permisos, estados y transiciones de las clases productivas.',
+    'Log inicial: prueba aislada sin ejecutar Tomcat, DB, SMTP ni Document Library; no genera log de backend.',
     'Prueba: clases Java productivas con Java 8 y reglas de estado.'
 ), $latinEncoding)
+$ErrorActionPreference = 'Continue' # Registrar stderr nativo y comprobar exit code.
 $compileOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encoding' 'ISO-8859-1' '-source' '1.5' '-target' '1.5' '-classpath' $classpath '-sourcepath' $sourcepath '-d' $classOutput @sources 2>&1 | ForEach-Object { $_.ToString() })
 $compileExit = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'javac.log'), ($compileOutput + ('javac_exit=' + $compileExit)), $latinEncoding)
 if ($compileExit -ne 0) { $compileOutput | Write-Output; throw ('javac fallo: ' + $compileExit) }
+$ErrorActionPreference = 'Continue' # Registrar stderr nativo y comprobar exit code.
 $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-cp' $classpath 'ComprasAutorizadorPermisosTest' 2>&1 | ForEach-Object { $_.ToString() })
 $runExit = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'report.txt'), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
 $runOutput | Write-Output
 Write-Output ('javac_exit=' + $compileExit + ' java_exit=' + $runExit)

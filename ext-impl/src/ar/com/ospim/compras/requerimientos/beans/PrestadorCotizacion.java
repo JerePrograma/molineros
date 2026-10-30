@@ -6,6 +6,8 @@ import java.util.Locale;
 
 public class PrestadorCotizacion {
 
+    private java.util.Date bajaFecha;
+    private Boolean solicitarCotizacion;
     private int idPrestador;
     private String descripcion;
     private String cuit;
@@ -14,6 +16,11 @@ public class PrestadorCotizacion {
     private String tipoPrestador;
     private String estadoEnvio;
     private String emailDestino;
+
+    public java.util.Date getBajaFecha() { return bajaFecha; }
+    public void setBajaFecha(java.util.Date fecha) { bajaFecha = fecha; }
+    public Boolean getSolicitarCotizacion() { return solicitarCotizacion; }
+    public void setSolicitarCotizacion(Boolean valor) { solicitarCotizacion = valor; }
 
     public int getIdPrestador() {
         return idPrestador;

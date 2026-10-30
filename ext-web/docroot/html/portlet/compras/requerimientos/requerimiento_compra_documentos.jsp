@@ -116,7 +116,7 @@ boolean puedeCotizarPresupuestos =
                 : user != null
                         && PermissionUtil.userContainsRole(
                                 user,
-                                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras()
                         );
 
 boolean altaEmpresaPresupuestos =
@@ -136,7 +136,7 @@ boolean cotizacionEmpresaPresupuestos =
         altaEmpresaPresupuestos || reqPresupuestos.esSectorSinCotizacionPrestador();
 
 int filasEmpresaRecuperadas = altaEmpresaPresupuestos ? Math.min(
-        WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA,
+        ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getMaxPresupuestosPorCarga(),
         Math.max(0, ParamUtil.getInteger(renderRequest, "presupuesto_count", 0))) : 0;
 
 boolean puedeVerPrestadoresEnviadosPresupuestos =
@@ -191,7 +191,7 @@ String maximoTamanoPresupuestoTexto =
 
 int maxPresupuestosCargaActual =
         cotizacionEmpresaPresupuestos
-                ? WebKeysCompras.MAX_PRESUPUESTOS_POR_CARGA
+                ? ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getMaxPresupuestosPorCarga()
                 : 1;
 
 PortletURL uploadPresupuestosURL =
@@ -447,6 +447,8 @@ boolean msgPresupuestoBorrado =
 
                         <tbody>
                             <%
+                            String estadoEnviadoPresupuestos =
+                                    ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoEnvio("ENVIADO");
                             for (int i = 0;
                                     i < prestadoresEnviadosPresupuestos.size();
                                     i++) {
@@ -562,7 +564,7 @@ boolean msgPresupuestoBorrado =
                                 boolean pdfPendiente =
                                         reqPresupuestos
                                                 .puedeAdministrarPresupuestos()
-                                        && WebKeysCompras.ENVIO_ENVIADO.equals(
+                                        && estadoEnviadoPresupuestos.equals(
                                                 prestadorEnviado
                                                         .getEstadoEnvio()
                                         );

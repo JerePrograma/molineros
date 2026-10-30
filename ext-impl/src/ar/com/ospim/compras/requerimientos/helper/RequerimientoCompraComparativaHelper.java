@@ -1,6 +1,5 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
-import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
@@ -134,12 +133,15 @@ public class RequerimientoCompraComparativaHelper {
 
     public RequerimientoCompraComparativa cargarPrestador(RequerimientoCompra r,
             int idPrestador) throws Exception {
+        String estadosEnvio = ConfiguracionComprasHelper.leerObligatoria(ConfiguracionComprasHelper.CONFIG_ESTADOS_ENVIO);
+        String estadoEnviado = ConfiguracionComprasHelper.resolverEstadoEnvio("ENVIADO", estadosEnvio);
+        String estadoCotizado = ConfiguracionComprasHelper.resolverEstadoEnvio("COTIZADO", estadosEnvio);
         boolean enviado = false;
         for (PrestadorCotizacion p : BusquedaRequerimientoCompraServiceUtil
                 .listarPrestadoresEnviados(r.getIdRequerimientoCompra())) {
             if (p.getIdPrestador() == idPrestador
-                    && (WebKeysCompras.ENVIO_ENVIADO.equals(p.getEstadoEnvio())
-                        || WebKeysCompras.ENVIO_COTIZADO.equals(p.getEstadoEnvio()))) {
+                    && (estadoEnviado.equals(p.getEstadoEnvio())
+                        || estadoCotizado.equals(p.getEstadoEnvio()))) {
                 enviado = true;
                 break;
             }
@@ -154,6 +156,9 @@ public class RequerimientoCompraComparativaHelper {
             throw new IllegalArgumentException("No se pudo cargar el prestador seleccionado.");
         }
         RequerimientoCompraComparativa c = lista.get(0);
+        if (c.getIdComparativa() == 0) {
+            aplicarDefaultsConfigurados(c);
+        }
         completarDetalles(r, c);
         return c;
     }
@@ -193,10 +198,52 @@ public class RequerimientoCompraComparativaHelper {
 
     public void guardar(List<RequerimientoCompraComparativa> lista,
             Map<String, String> entrada, String usuario) throws Exception {
+        ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx =
+                ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+        boolean commitIniciado = false;
+        try {
+            guardar(tx, lista, entrada, usuario);
+            commitIniciado = true;
+            tx.commit();
+        } catch (Exception error) {
+            try {
+                tx.rollback();
+            } catch (Exception rollbackError) {
+                com.liferay.portal.kernel.log.LogFactoryUtil.getLog(RequerimientoCompraComparativaHelper.class)
+                        .error("No se pudo confirmar el rollback de la comparativa.", rollbackError);
+                throw new Exception("No se pudo confirmar el resultado de la comparativa. Actualice la pantalla antes de reintentar.", error);
+            }
+            if (commitIniciado) {
+                throw new Exception("No se pudo confirmar el resultado de la comparativa. Verifique sus datos antes de reintentar.", error);
+            }
+            if (error instanceof java.sql.SQLException) {
+                com.liferay.portal.kernel.log.LogFactoryUtil.getLog(RequerimientoCompraComparativaHelper.class)
+                        .error("No se pudo persistir la comparativa.", error);
+                throw new Exception("No se pudo guardar la comparativa por un error de persistencia.", error);
+            }
+            throw error;
+        } finally {
+            tx.cerrar();
+        }
+    }
+
+    public void guardar(ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            List<RequerimientoCompraComparativa> lista,
+            Map<String, String> entrada, String usuario) throws Exception {
         if (usuario == null || usuario.trim().length() == 0 || usuario.length() > 100) {
             throw new IllegalArgumentException("No se pudo determinar el usuario de auditoría.");
         }
-        aplicarEntrada(lista, entrada);
+        if (tx == null || lista == null) {
+            throw new IllegalArgumentException("No se obtuvo la transaccion de la comparativa.");
+        }
+        if (lista.isEmpty()) {
+            return;
+        }
+        String estados = tx.getConfiguracionCompra("COMPRAS_ESTADOS_IDS");
+        for (RequerimientoCompraComparativa comparativa : lista) {
+            validarGuardadoEnTransaccion(tx, comparativa, estados);
+        }
+        aplicarEntrada(tx, lista, entrada);
         List<Integer> vaciados = new ArrayList<Integer>();
         for (RequerimientoCompraComparativa c : lista) {
             Iterator<RequerimientoCompraComparativaDetalle> it = c.getDetalles().iterator();
@@ -210,11 +257,88 @@ public class RequerimientoCompraComparativaHelper {
                 }
             }
         }
-        RequerimientoCompraComparativaServiceUtil.guardar(lista, vaciados, usuario);
+        tx.guardarDatosComparativas(lista, vaciados, usuario);
+    }
+
+    public void guardarDatosValidados(List<RequerimientoCompraComparativa> lista,
+            List<Integer> vaciados, String usuario) throws Exception {
+        ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx =
+                ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+        boolean commitIniciado = false;
+        try {
+            String estados = tx.getConfiguracionCompra("COMPRAS_ESTADOS_IDS");
+            for (RequerimientoCompraComparativa comparativa : lista) {
+                validarGuardadoEnTransaccion(tx, comparativa, estados);
+            }
+            tx.guardarDatosComparativas(lista, vaciados, usuario);
+            commitIniciado = true;
+            tx.commit();
+        } catch (Exception error) {
+            try { tx.rollback(); }
+            catch (Exception rollbackError) {
+                com.liferay.portal.kernel.log.LogFactoryUtil.getLog(RequerimientoCompraComparativaHelper.class)
+                        .error("No se pudo confirmar el rollback de la comparativa.", rollbackError);
+                throw new Exception("No se pudo confirmar el resultado de la comparativa. Verifique antes de reintentar.", error);
+            }
+            if (commitIniciado) {
+                throw new Exception("No se pudo confirmar el resultado de la comparativa. Verifique antes de reintentar.", error);
+            }
+            if (error instanceof java.sql.SQLException) {
+                com.liferay.portal.kernel.log.LogFactoryUtil.getLog(RequerimientoCompraComparativaHelper.class)
+                        .error("No se pudo persistir la comparativa.", error);
+                throw new Exception("No se pudo guardar la comparativa por un error de persistencia.", error);
+            }
+            throw error;
+        } finally { tx.cerrar(); }
+    }
+
+    private void validarGuardadoEnTransaccion(
+            ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            RequerimientoCompraComparativa comparativa, String estados) throws Exception {
+        if (comparativa == null || comparativa.getIdRequerimiento() <= 0
+                || comparativa.getPrestacionesEsperadas() == null
+                || !comparativa.getPrestacionesEsperadas().matches("[1-9][0-9]*(,[1-9][0-9]*)*")) {
+            throw new IllegalArgumentException("No se pudo validar la lista de prestaciones. Actualice la pantalla.");
+        }
+        java.util.Set<Integer> esperadas = new java.util.HashSet<Integer>();
+        String[] tokens = comparativa.getPrestacionesEsperadas().split(",");
+        for (int i = 0; i < tokens.length; i++) {
+            try {
+                if (!esperadas.add(Integer.valueOf(tokens[i]))) {
+                    throw new IllegalArgumentException("La lista de prestaciones tiene duplicados.");
+                }
+            } catch (NumberFormatException error) {
+                throw new IllegalArgumentException("La lista de prestaciones no es valida.");
+            }
+        }
+        RequerimientoCompra actual = tx.bloquearYObtenerRequerimiento(comparativa.getIdRequerimiento());
+        if (actual == null || !actual.isActivo() || actual.getEstado()
+                != ConfiguracionComprasHelper.resolverEstado("A_COTIZAR", estados)) {
+            throw new IllegalArgumentException("La comparativa ya no puede modificarse en el estado actual.");
+        }
+        if (tx.tieneCreacionReclamoPrestacional(comparativa.getIdRequerimiento())) {
+            throw new IllegalArgumentException("El requerimiento ya tiene una creacion de RP iniciada.");
+        }
+        if (actual.getDetalles() == null || actual.getDetalles().size() != esperadas.size()) {
+            throw new IllegalArgumentException("Las prestaciones cambiaron durante la carga. Actualice la pantalla.");
+        }
+        java.util.Set<Integer> vigentes = new java.util.HashSet<Integer>();
+        for (RequerimientoCompraDetalle detalle : actual.getDetalles()) {
+            if (detalle == null || !esperadas.contains(detalle.getIdPrestacion())
+                    || !vigentes.add(detalle.getIdPrestacion())) {
+                throw new IllegalArgumentException("Las prestaciones cambiaron durante la carga. Actualice la pantalla.");
+            }
+        }
     }
 
     public void aplicarEntrada(List<RequerimientoCompraComparativa> lista,
             Map<String, String> entrada) {
+        aplicarEntrada(null, lista, entrada);
+    }
+
+    public void aplicarEntrada(ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            List<RequerimientoCompraComparativa> lista, Map<String, String> entrada) {
+        Map<String, List<String>> opciones = cargarOpciones(tx);
         for (RequerimientoCompraComparativa c : lista) {
             String sufijo = "_" + c.getIdPrestador();
             String contexto = "Prestador " + c.getIdPrestador() + ": ";
@@ -225,14 +349,14 @@ public class RequerimientoCompraComparativaHelper {
             try {
                 c.setFechaPresupuesto(fecha(entrada.get("fecha" + sufijo)));
                 c.setFormaPago(Integer.valueOf(opcion(entrada.get("pago" + sufijo),
-                        new String[] {"30", "45", "60"}, false, "Forma de pago")));
+                        opciones.get("PAGO"), false, "Forma de pago")));
                 c.setPlazoEntrega(opcion(entrada.get("plazo" + sufijo),
-                        new String[] {"24/48", "48/72"}, true, "Plazo de entrega"));
+                        opciones.get("PLAZO"), true, "Plazo de entrega"));
                 String validez = opcion(entrada.get("validez" + sufijo),
-                        new String[] {"24", "48"}, true, "Validez");
+                        opciones.get("VALIDEZ"), true, "Validez");
                 c.setValidezPresupuesto(validez == null ? null : Integer.valueOf(validez));
                 c.setEnvio(opcion(entrada.get("envio" + sufijo),
-                        new String[] {"Obra Social", "Beneficiario", "Delegación"}, true, "Envío"));
+                        opciones.get("ENVIO"), true, "Envío"));
                 c.setIva(importe(entrada.get("iva" + sufijo), "IVA"));
                 c.setIibb(importe(entrada.get("iibb" + sufijo), "IIBB"));
                 for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
@@ -245,6 +369,62 @@ public class RequerimientoCompraComparativaHelper {
                 throw new IllegalArgumentException(contexto + e.getMessage());
             }
             calcular(c);
+        }
+    }
+
+    public static Map<String, List<String>> cargarOpciones() {
+        return cargarOpciones(null);
+    }
+
+    private static Map<String, List<String>> cargarOpciones(
+            ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx) {
+        Map<String, List<String>> resultado = new java.util.LinkedHashMap<String, List<String>>();
+        for (String campo : new String[] {"PAGO", "PLAZO", "VALIDEZ", "ENVIO"}) {
+            String clave = "COMPRAS_COMPARATIVA_" + campo;
+            List<String> opciones = ConfiguracionComprasHelper.resolverListaOpciones(clave, leerConfiguracion(tx, clave));
+            if ("PAGO".equals(campo) || "VALIDEZ".equals(campo)) {
+                for (String opcion : opciones) {
+                    try {
+                        if (!opcion.matches("[1-9][0-9]*") || Integer.parseInt(opcion) <= 0) {
+                            throw new NumberFormatException();
+                        }
+                    } catch (NumberFormatException error) {
+                        throw new ConfiguracionComprasHelper.ConfiguracionInvalidaException(clave, error);
+                    }
+                }
+            }
+            resultado.put(campo, opciones);
+        }
+        return resultado;
+    }
+
+    public static void aplicarDefaultsConfigurados(RequerimientoCompraComparativa comparativa) {
+        Map<String, List<String>> opciones = cargarOpciones();
+        String clave = "COMPRAS_COMPARATIVA_DEFAULTS";
+        Map<String, String> defaults = ConfiguracionComprasHelper.parsearPares(clave, leerConfiguracion(null, clave));
+        if (defaults.size() != opciones.size()) {
+            throw new ConfiguracionComprasHelper.ConfiguracionInvalidaException(clave);
+        }
+        for (String campo : opciones.keySet()) {
+            if (!opciones.get(campo).contains(defaults.get(campo))) {
+                throw new ConfiguracionComprasHelper.ConfiguracionInvalidaException(clave);
+            }
+        }
+        comparativa.setFormaPago(Integer.valueOf(defaults.get("PAGO")));
+        comparativa.setPlazoEntrega(defaults.get("PLAZO"));
+        comparativa.setValidezPresupuesto(Integer.valueOf(defaults.get("VALIDEZ")));
+        comparativa.setEnvio(defaults.get("ENVIO"));
+    }
+
+    private static String leerConfiguracion(
+            ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx, String clave) {
+        if (tx == null) {
+            return ConfiguracionComprasHelper.leerObligatoria(clave);
+        }
+        try {
+            return tx.getConfiguracionCompra(clave);
+        } catch (Exception error) {
+            throw new ConfiguracionComprasHelper.ConfiguracionInvalidaException(clave, error);
         }
     }
 
@@ -332,7 +512,7 @@ public class RequerimientoCompraComparativaHelper {
         return fecha;
     }
 
-    private String opcion(String valor, String[] opciones, boolean vacio, String campo) {
+    private String opcion(String valor, List<String> opciones, boolean vacio, String campo) {
         String s = texto(valor).trim();
         if (vacio && s.length() == 0) {
             return null;

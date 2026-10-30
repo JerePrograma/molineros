@@ -1,5 +1,7 @@
 package ar.com.ospim.autorizaciones.services;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -109,6 +111,10 @@ public class ReclamosPrestacionesServiceUtil {
 	}
 	 
 	
+	public static int borrar(Connection con, int id, String usuario) throws SQLException {
+		return getInstance().borrar(con, id, usuario);
+	}
+
 	public static void borrar(int id, User user)
 			throws ImposibleBorrarReclamoPrestacionalException, SystemException{
 		    getInstance().borrar(id, user.getScreenName());

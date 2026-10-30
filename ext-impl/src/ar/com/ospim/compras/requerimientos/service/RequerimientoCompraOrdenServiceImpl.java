@@ -20,9 +20,12 @@ import ar.com.ospim.liquidaciones.beans.TelefonoPrestador;
 import ar.com.ospim.liquidaciones.beans.ContactoElectronicoPrestador;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraOrdenHelper;
+import java.util.Date;
+import java.util.Map;
+import java.util.HashMap;
 import ar.com.ospim.util.ConnectionHelper;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,9 +38,6 @@ import java.util.List;
 import java.util.Set;
 
 public class RequerimientoCompraOrdenServiceImpl {
-
-    private static final Log _log = LogFactoryUtil.getLog(
-            RequerimientoCompraOrdenServiceImpl.class);
 
     /** Enriquece la consulta con los padrones existentes, sin copiar sus datos a la OC. */
     public void completarDatosConsulta(RequerimientoCompraOrden orden,
@@ -399,7 +399,7 @@ public class RequerimientoCompraOrdenServiceImpl {
             }
             stmt = con.prepareStatement(sql);
             stmt.setInt(1, orden.getIdOrdenCompra() > 0 ? orden.getIdOrdenCompra()
-                    : obtenerPresupuestoAdjudicado(con, orden.getIdRequerimientoCompra()));
+                    : new RequerimientoCompraOrdenHelper().obtenerPresupuestoOrigenConsulta(orden.getIdRequerimientoCompra()));
             stmt.setInt(2, orden.getIdRequerimientoCompra());
             ResultSet rs = stmt.executeQuery();
             try {
@@ -679,204 +679,133 @@ public class RequerimientoCompraOrdenServiceImpl {
         return orden;
     }
 
+    /** @deprecated Las reglas se coordinan en Java bajo una unica transaccion. */
+    @Deprecated
     public RequerimientoCompraOrden crear(RequerimientoCompraOrden orden,
             String usuario) throws Exception {
-        Connection con = ConnectionHelper.getConnectionForTransaction();
-        if (con == null) {
-            throw new SQLException("No se pudo obtener la conexion de Compras.");
-        }
-        try {
-            bloquearCreacion(con, orden.getIdRequerimientoCompra(), usuario);
-            RequerimientoCompraOrden existente = obtenerPorRequerimiento(
-                    con, orden.getIdRequerimientoCompra());
-            if (existente != null) {
-                confirmar(con, orden.getIdRequerimientoCompra(), usuario);
-                con.commit();
-                return existente;
-            }
-            guardarCabecera(con, orden, usuario);
-            int posicion = 0;
-            for (RequerimientoCompraDetalle detalle : orden.getDetalles()) {
-                guardarDetalle(con, orden.getIdOrdenCompra(), ++posicion, detalle);
-            }
-            confirmar(con, orden.getIdRequerimientoCompra(), usuario);
-            RequerimientoCompraOrden persistida = obtenerPorRequerimiento(
-                    con, orden.getIdRequerimientoCompra());
-            con.commit();
-            return persistida;
-        } catch (Exception e) {
-            try {
-                con.rollback();
-            } catch (SQLException rollbackError) {
-                _log.error("No se pudo revertir la creacion de la Orden de Compra.", rollbackError);
-            }
-            throw e;
-        } finally {
-            ConnectionHelper.cerrar(con);
-        }
+        return new RequerimientoCompraOrdenHelper().crear(orden, usuario);
     }
 
+    /** @deprecated Las reglas se coordinan en Java bajo una unica transaccion. */
+    @Deprecated
     public RequerimientoCompraOrden actualizar(RequerimientoCompraOrden orden,
             String usuario) throws Exception {
+        return new RequerimientoCompraOrdenHelper().actualizar(orden, usuario);
+    }
+
+    public Transaccion abrirTransaccion() throws Exception {
         Connection con = ConnectionHelper.getConnectionForTransaction();
-        if (con == null) {
-            throw new SQLException("No se pudo obtener la conexion de Compras.");
-        }
-        try {
-            int idExistente = bloquearCreacion(con, orden.getIdRequerimientoCompra(), usuario);
-            if (idExistente <= 0 || idExistente != orden.getIdOrdenCompra()
-                    || orden.getVersionEdicion() < 0
-                    || orden.getVersionEdicion() == Integer.MAX_VALUE) {
-                throw new IllegalArgumentException("La Orden de Compra emitida ya no esta disponible.");
-            }
-            PreparedStatement stmt = con.prepareStatement(
-                    "UPDATE compras.requerimiento_orden_compra "
-                    + "SET condicion = ?, forma_pago = ?, plazo_pago = ?, entrega = ?, "
-                    + "observaciones = ?, modi_fecha = now(), modi_usr = ?, "
-                    + "version_edicion = version_edicion + 1 "
-                    + "WHERE id_orden_compra = ? AND id_requerimiento = ? AND version_edicion = ?");
-            try {
-                stmt.setString(1, orden.getCondicion());
-                stmt.setString(2, orden.getFormaPago());
-                stmt.setString(3, orden.getPlazoPago());
-                stmt.setString(4, orden.getEntrega());
-                stmt.setString(5, orden.getObservaciones());
-                stmt.setString(6, usuario);
-                stmt.setInt(7, orden.getIdOrdenCompra());
-                stmt.setInt(8, orden.getIdRequerimientoCompra());
-                stmt.setInt(9, orden.getVersionEdicion());
-                if (stmt.executeUpdate() != 1) {
-                    throw new IllegalArgumentException(
-                            "La Orden de Compra fue modificada por otro usuario. Actualice la pantalla.");
-                }
-            } finally {
-                stmt.close();
-            }
-            completarPreciosPendientes(con, orden);
-            RequerimientoCompraOrden persistida = obtenerPorRequerimiento(
-                    con, orden.getIdRequerimientoCompra());
-            con.commit();
-            return persistida;
-        } catch (Exception e) {
-            try {
-                con.rollback();
-            } catch (SQLException rollbackError) {
-                _log.error("No se pudo revertir la modificacion de la Orden de Compra.", rollbackError);
-            }
-            throw e;
-        } finally {
-            ConnectionHelper.cerrar(con);
-        }
+        if (con == null) throw new SQLException("No se pudo obtener la conexion de Compras.");
+        return new Transaccion(this, con);
     }
 
-    private void completarPreciosPendientes(Connection con, RequerimientoCompraOrden orden)
-            throws Exception {
-        if (orden.getDetalles() == null || orden.getDetalles().isEmpty()) {
-            return;
+    public static class Transaccion {
+        private final RequerimientoCompraOrdenServiceImpl service;
+        private final Connection con;
+        private Transaccion(RequerimientoCompraOrdenServiceImpl service, Connection con) {
+            this.service = service; this.con = con;
         }
-        PreparedStatement stmt = con.prepareStatement(
-                "UPDATE compras.requerimiento_orden_compra_detalle d SET precio_unitario = ? "
-                + "WHERE d.id_orden_compra = ? AND d.id_requerimiento_detalle = ? "
-                + "AND d.precio_unitario IS NULL AND EXISTS ("
-                + "SELECT 1 FROM compras.requerimiento_orden_compra o "
-                + "JOIN compras.requerimiento r ON r.id_requerimiento = o.id_requerimiento "
-                + "JOIN compras.sector_requerimiento sr ON sr.id_sector = r.id_sector "
-                + "WHERE o.id_orden_compra = d.id_orden_compra AND r.id_requerimiento = ? "
-                + "AND compras.normalizar_sector(sr.descripcion) IN ('SISTEMAS', 'RRHH'))");
-        try {
-            for (RequerimientoCompraDetalle detalle : orden.getDetalles()) {
-                if (detalle == null || detalle.getIdInt() <= 0
-                        || detalle.getPrecioUnitarioEstimado() == null) {
-                    throw new IllegalArgumentException("El precio pendiente de la Orden de Compra no es valido.");
-                }
-                stmt.setBigDecimal(1, detalle.getPrecioUnitarioEstimado());
-                stmt.setInt(2, orden.getIdOrdenCompra());
-                stmt.setInt(3, detalle.getIdInt());
-                stmt.setInt(4, orden.getIdRequerimientoCompra());
-                if (stmt.executeUpdate() != 1) {
-                    throw new IllegalArgumentException(
-                            "El precio pendiente fue modificado o ya no esta disponible. Actualice la pantalla.");
-                }
-            }
-        } finally {
-            stmt.close();
+        private void bloquear(String sql, int id) throws Exception {
+            PreparedStatement stmt = con.prepareStatement(sql);
+            try { stmt.setInt(1, id); ResultSet rs = stmt.executeQuery();
+                try { while (rs.next()) rs.getObject(1); } finally { rs.close(); }
+            } finally { stmt.close(); }
         }
-    }
-
-    private int bloquearCreacion(Connection con, int idRequerimiento,
-            String usuario) throws Exception {
-        CallableStatement stmt = con.prepareCall(
-                "{ ? = call compras.bloquear_creacion_orden_compra(?,?) }");
-        try {
-            stmt.registerOutParameter(1, Types.INTEGER);
-            stmt.setInt(2, idRequerimiento);
-            stmt.setString(3, usuario);
-            stmt.execute();
-            return stmt.getInt(1);
-        } finally {
-            stmt.close();
+        public RequerimientoCompra bloquearYObtenerRequerimiento(int id) throws Exception {
+            CallableStatement stmt = con.prepareCall("{call compras.bloquear_requerimiento_reclamo_prestacional(?)}");
+            try { stmt.setInt(1, id); stmt.execute(); } finally { stmt.close(); }
+            bloquear("SELECT rp.id FROM autorizaciones.reclamos_prestacionales rp "
+                    + "JOIN compras.requerimiento_reclamo_prestacional rr ON rr.id_reclamo_prestacional = rp.id "
+                    + "WHERE rr.id_requerimiento = ? ORDER BY rp.id FOR UPDATE OF rp", id);
+            bloquear("SELECT id_requerimiento FROM compras.requerimiento_reclamo_prestacional "
+                    + "WHERE id_requerimiento = ? FOR UPDATE", id);
+            bloquear("SELECT id_requerimiento FROM compras.requerimiento WHERE id_requerimiento = ? FOR UPDATE", id);
+            bloquear("SELECT id_detalle FROM compras.requerimiento_detalle WHERE id_requerimiento = ? "
+                    + "AND baja_fecha IS NULL ORDER BY id_detalle FOR UPDATE", id);
+            bloquear("SELECT id_requerimiento_presupuesto FROM compras.requerimiento_presupuesto "
+                    + "WHERE id_requerimiento = ? ORDER BY id_requerimiento_presupuesto FOR UPDATE", id);
+            bloquear("SELECT id_comparativa FROM compras.requerimiento_comparativa "
+                    + "WHERE id_requerimiento = ? ORDER BY id_comparativa FOR UPDATE", id);
+            bloquear("SELECT cd.id_detalle FROM compras.requerimiento_comparativa_detalle cd "
+                    + "JOIN compras.requerimiento_comparativa c ON c.id_comparativa = cd.id_comparativa "
+                    + "WHERE c.id_requerimiento = ? ORDER BY cd.id_detalle FOR UPDATE OF cd", id);
+            bloquear("SELECT id_orden_compra FROM compras.requerimiento_orden_compra "
+                    + "WHERE id_requerimiento = ? FOR UPDATE", id);
+            bloquear("SELECT od.id_orden_compra FROM compras.requerimiento_orden_compra_detalle od "
+                    + "JOIN compras.requerimiento_orden_compra o ON o.id_orden_compra = od.id_orden_compra "
+                    + "WHERE o.id_requerimiento = ? ORDER BY od.orden FOR UPDATE OF od", id);
+            return BusquedaRequerimientoCompraServiceUtil.getRequerimientoCompra(con, id);
         }
-    }
-
-    private void confirmar(Connection con, int idRequerimiento,
-            String usuario) throws Exception {
-        CallableStatement stmt = con.prepareCall(
-                "{ ? = call compras.confirmar_orden_compra_requerimiento(?,?) }");
-        try {
-            stmt.registerOutParameter(1, Types.INTEGER);
-            stmt.setInt(2, idRequerimiento);
-            stmt.setString(3, usuario);
-            stmt.execute();
-            if (stmt.getInt(1) != WebKeysCompras.ESTADO_ORDEN_COMPRA) {
-                throw new SQLException("No se confirmo la Orden de Compra.");
-            }
-        } finally {
-            stmt.close();
+        public String getConfiguracionCompra(String clave) throws Exception {
+            return BusquedaRequerimientoCompraServiceUtil.getConfiguracionCompra(clave, con);
         }
-    }
-
-    private int obtenerPresupuestoAdjudicado(Connection con, int idRequerimiento)
-            throws Exception {
-        PreparedStatement stmt = con.prepareStatement(
-                "SELECT rp.id_requerimiento_presupuesto "
-                + "FROM compras.requerimiento_presupuesto rp "
-                + "JOIN compras.requerimiento r ON r.id_requerimiento = rp.id_requerimiento "
-                + "JOIN compras.sector_requerimiento sr ON sr.id_sector = r.id_sector "
-                + "WHERE rp.id_requerimiento = ? AND rp.baja_fecha IS NULL "
-                + "AND ((compras.normalizar_sector(sr.descripcion) IN ('RRHH', 'SISTEMAS') "
-                + "AND rp.tipo_documento = 3 AND rp.empresa_adjudicada) "
-                + "OR (compras.normalizar_sector(sr.descripcion) NOT IN ('RRHH', 'SISTEMAS') "
-                + "AND rp.tipo_documento = 1 AND rp.id_prestador = ("
-                + "SELECT min(d.id_prestador) FROM compras.requerimiento_detalle d "
-                + "WHERE d.id_requerimiento = r.id_requerimiento AND d.baja_fecha IS NULL "
-                + "HAVING count(DISTINCT d.id_prestador) = 1 "
-                + "AND count(*) = count(d.id_prestador))))");
-        try {
-            stmt.setInt(1, idRequerimiento);
-            ResultSet rs = stmt.executeQuery();
-            try {
-                if (!rs.next()) {
-                    throw new IllegalArgumentException(
-                            "Debe existir una cotizacion adjudicada unica del requerimiento para emitir la Orden de Compra.");
-                }
-                int idPresupuesto = rs.getInt("id_requerimiento_presupuesto");
-                if (idPresupuesto <= 0 || rs.next()) {
-                    throw new IllegalArgumentException(
-                            "Debe existir una cotizacion adjudicada unica del requerimiento para emitir la Orden de Compra.");
-                }
-                return idPresupuesto;
-            } finally {
-                rs.close();
-            }
-        } finally {
-            stmt.close();
+        public Map<String, Object> obtenerSector(int id) throws Exception {
+            PreparedStatement stmt = con.prepareStatement("SELECT activo,baja_fecha FROM compras.sector_requerimiento WHERE id_sector = ? FOR SHARE");
+            try { stmt.setInt(1,id); ResultSet rs=stmt.executeQuery(); try {
+                if (!rs.next()) return null;
+                Map<String,Object> f=new HashMap<String,Object>();f.put("activo",Boolean.valueOf(rs.getBoolean("activo")));f.put("baja",rs.getTimestamp("baja_fecha"));return f;
+            } finally {rs.close();} } finally {stmt.close();}
         }
+        public Map<String, Object> obtenerRelacionRp(int id) throws Exception {
+            PreparedStatement stmt=con.prepareStatement("SELECT rr.estado,rr.id_reclamo_prestacional,rp.id AS rp_id,rp.baja_fecha "
+                    + "FROM compras.requerimiento_reclamo_prestacional rr LEFT JOIN autorizaciones.reclamos_prestacionales rp "
+                    + "ON rp.id=rr.id_reclamo_prestacional WHERE rr.id_requerimiento=?");
+            try {stmt.setInt(1,id);ResultSet rs=stmt.executeQuery();try {if(!rs.next())return null;
+                Map<String,Object> f=new HashMap<String,Object>();f.put("estado",rs.getString("estado"));f.put("rp_id",Integer.valueOf(rs.getInt("rp_id")));f.put("id",Integer.valueOf(rs.getInt("id_reclamo_prestacional")));f.put("baja",rs.getTimestamp("baja_fecha"));return f;
+            }finally{rs.close();}}finally{stmt.close();}
+        }
+        public RequerimientoCompraOrden obtenerOrden(int id) throws Exception {return service.obtenerPorRequerimiento(con,id);}
+        public List<RequerimientoCompraPresupuesto> listarDocumentos(int id,int tipo) throws Exception {
+            return BusquedaRequerimientoCompraServiceUtil.listarDocumentos(con,id,tipo);
+        }
+        public List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(int id) throws Exception {
+            return BusquedaRequerimientoCompraServiceUtil.listarOrdenesMedicas(con,id);
+        }
+        public List<RequerimientoCompraComparativa> listarComparativas(int id,int prestador) throws Exception {
+            return RequerimientoCompraComparativaServiceUtil.listar(con,id,prestador);
+        }
+        public List<Empresa> buscarEmpresa(String cuit,String sucursal) throws Exception {
+            return BusquedaRequerimientoCompraServiceUtil.buscarEmpresasCotizacion(con,cuit,null,sucursal,2);
+        }
+        public int obtenerRequerimientoOrigenOrden(int id) throws Exception {
+            PreparedStatement stmt=con.prepareStatement("SELECT p.id_requerimiento FROM compras.requerimiento_orden_compra o "
+                    + "JOIN compras.requerimiento_presupuesto p ON p.id_requerimiento_presupuesto=o.id_presupuesto "
+                    + "WHERE o.id_orden_compra=?");
+            try{stmt.setInt(1,id);ResultSet rs=stmt.executeQuery();try{return rs.next()?rs.getInt(1):0;}finally{rs.close();}}finally{stmt.close();}
+        }
+        public int obtenerPresupuestoOrigenOrden(int id) throws Exception {
+            PreparedStatement stmt=con.prepareStatement("SELECT id_presupuesto FROM compras.requerimiento_orden_compra WHERE id_orden_compra=?");
+            try{stmt.setInt(1,id);ResultSet rs=stmt.executeQuery();try{return rs.next()?rs.getInt(1):0;}finally{rs.close();}}finally{stmt.close();}
+        }
+        public Date getFechaActual() throws Exception {
+            PreparedStatement stmt=con.prepareStatement("SELECT CURRENT_DATE");try{ResultSet rs=stmt.executeQuery();try{return rs.next()?rs.getDate(1):null;}finally{rs.close();}}finally{stmt.close();}
+        }
+        public void insertar(RequerimientoCompraOrden orden,int presupuesto,String usuario) throws Exception {
+            service.guardarCabecera(con,orden,presupuesto,usuario);int posicion=0;
+            for(RequerimientoCompraDetalle detalle:orden.getDetalles())service.guardarDetalle(con,orden.getIdOrdenCompra(),++posicion,detalle);
+        }
+        public int actualizar(RequerimientoCompraOrden orden,String usuario) throws Exception {
+            PreparedStatement stmt=con.prepareStatement("UPDATE compras.requerimiento_orden_compra SET condicion=?,forma_pago=?,plazo_pago=?,entrega=?,"
+                    + "observaciones=?,modi_fecha=now(),modi_usr=?,version_edicion=version_edicion+1 "
+                    + "WHERE id_orden_compra=? AND id_requerimiento=? AND version_edicion=?");
+            int filas;try{stmt.setString(1,orden.getCondicion());stmt.setString(2,orden.getFormaPago());stmt.setString(3,orden.getPlazoPago());stmt.setString(4,orden.getEntrega());stmt.setString(5,orden.getObservaciones());stmt.setString(6,usuario);stmt.setInt(7,orden.getIdOrdenCompra());stmt.setInt(8,orden.getIdRequerimientoCompra());stmt.setInt(9,orden.getVersionEdicion());filas=stmt.executeUpdate();}finally{stmt.close();}
+            return filas;
+        }
+        public int completarPrecio(int orden,int detalle,java.math.BigDecimal precio) throws Exception {
+            PreparedStatement stmt=con.prepareStatement("UPDATE compras.requerimiento_orden_compra_detalle SET precio_unitario=? WHERE id_orden_compra=? AND id_requerimiento_detalle=? AND precio_unitario IS NULL");
+            try{stmt.setBigDecimal(1,precio);stmt.setInt(2,orden);stmt.setInt(3,detalle);return stmt.executeUpdate();}finally{stmt.close();}
+        }
+        public int confirmarEstado(int id,int esperado,int nuevo,String usuario) throws Exception {
+            PreparedStatement stmt=con.prepareStatement("UPDATE compras.requerimiento SET estado=?,modi_fecha=now(),modi_usr=? WHERE id_requerimiento=? AND estado=? AND baja_fecha IS NULL");
+            try{stmt.setInt(1,nuevo);stmt.setString(2,usuario);stmt.setInt(3,id);stmt.setInt(4,esperado);return stmt.executeUpdate();}finally{stmt.close();}
+        }
+        public void commit() throws Exception {con.commit();}
+        public void rollback() throws Exception {con.rollback();}
+        public void cerrar() {ConnectionHelper.cerrar(con);}
     }
 
     private void guardarCabecera(Connection con, RequerimientoCompraOrden orden,
-            String usuario) throws Exception {
-        int idPresupuesto = obtenerPresupuestoAdjudicado(con,
-                orden.getIdRequerimientoCompra());
+            int idPresupuesto, String usuario) throws Exception {
         PreparedStatement stmt = con.prepareStatement(
                 "INSERT INTO compras.requerimiento_orden_compra "
                 + "(id_requerimiento, id_presupuesto, alta_usr, fecha_emision, "

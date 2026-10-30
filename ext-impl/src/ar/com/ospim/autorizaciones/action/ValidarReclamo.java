@@ -98,6 +98,33 @@ public class ValidarReclamo extends JSONAction  {
 	}
 	
 	
+    public static String validarFechaEmisionCompras(
+            List<PrestacionesReclamo> prestaciones, PrestacionesReclamo origen,
+            Date fechaPrestacionOrigen, Date fechaEmision) {
+        if (fechaEmision == null) {
+            return "No se puede copiar la Fecha de Emision: la fecha no esta informada.";
+        }
+        if (DateUtils.esMayor(fechaEmision, new Date())) {
+            return "No se puede copiar la Fecha de Emision: la fecha es posterior a hoy.";
+        }
+        for (PrestacionesReclamo prestacion : prestaciones) {
+            if (!PrestacionesReclamo.ESTADOS.BAJA.equals(prestacion.getEstado())) {
+                Date fechaPrestacion = prestacion == origen
+                        ? fechaPrestacionOrigen : prestacion.getFechaPrestacion();
+                if (fechaPrestacion == null) {
+                    return "No se puede copiar la Fecha de Emision: falta la fecha de prestacion de la fila "
+                            + prestacion.getIdRegistro() + ".";
+                }
+                if (DateUtils.esMayor(DateUtils.getMismoDia_00_00hs(fechaPrestacion),
+                        DateUtils.getMismoDia_00_00hs(fechaEmision))) {
+                    return "No se puede copiar la Fecha de Emision: es anterior a la fecha de prestacion de la fila "
+                            + prestacion.getIdRegistro() + ".";
+                }
+            }
+        }
+        return null;
+    }
+
 	public PrestacionesReclamo getPrestacionesReclamosFromRequest(HttpServletRequest req) {
 
 

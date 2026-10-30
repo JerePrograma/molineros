@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
@@ -842,11 +844,11 @@ public class IniciarReclamoPrestacionalCompraAction
         boolean permisoCompras =
                 PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
+                        ConfiguracionComprasHelper.getRolAbmCompras()
                 )
                         || PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        ConfiguracionComprasHelper.getRolCotizarCompras()
                 );
 
         boolean permisoReclamo =
@@ -876,19 +878,19 @@ public class IniciarReclamoPrestacionalCompraAction
         boolean permisoCompras =
                 PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_VIEW_COMPRAS
+                        ConfiguracionComprasHelper.getRolViewCompras()
                 )
                         || PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_ABM_COMPRAS
+                        ConfiguracionComprasHelper.getRolAbmCompras()
                 )
                         || PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        ConfiguracionComprasHelper.getRolCotizarCompras()
                 )
                         || PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+                        ConfiguracionComprasHelper.getRolAutorizarCompras()
                 );
 
         boolean permisoReclamo =

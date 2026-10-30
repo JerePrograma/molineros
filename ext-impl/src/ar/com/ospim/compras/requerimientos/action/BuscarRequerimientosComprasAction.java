@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro;
@@ -104,7 +106,7 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
                     cotizadosIncluyeReclamoRp
                             && filtro.getIdEstado() != null
                             && filtro.getIdEstado().intValue()
-                            == WebKeysCompras.ESTADO_COTIZADO;
+                            == ConfiguracionComprasHelper.getEstadoCotizado();
 
             int pagina = Math.max(1, ParamUtil.getInteger(renderRequest, "pagina", 1));
 

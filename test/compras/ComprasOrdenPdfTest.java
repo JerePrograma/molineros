@@ -12,6 +12,7 @@ import com.lowagie.text.pdf.PdfReader;
 
 public class ComprasOrdenPdfTest {
     public static void main(String[] args) throws Exception {
+        ComprasOrdenHelperTest.instalarConfiguracionPrueba();
         String[] nombres = new String[] {"sistemas", "medica", "multipagina", "campos-largos",
                 "sistemas-opcionales-vacios", "detalle-sin-importe", "ceros-informados", "medica-pesos",
                 "medica-opcionales-vacios"};

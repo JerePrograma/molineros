@@ -1,3 +1,4 @@
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -29,6 +30,8 @@ public class ComprasPrimeraCargaTest {
     private static State jdbc;
 
     public static void main(String[] args) throws Exception {
+        ConfiguracionComprasDatosFixture.instalar();
+        testConfiguracionBusqueda();
         testInitialRoute();
         testFilterRouting();
         testInitialFailures();
@@ -38,6 +41,29 @@ public class ComprasPrimeraCargaTest {
         testUnlimitedExport();
         System.out.println("COMPRAS_PRIMERA_CARGA_OFFLINE_OK checks=" + checks);
         System.out.println("Actual Java production paths; JDBC boundary mocked; no DB, Tomcat or authenticated UI.");
+    }
+
+    private static void testConfiguracionBusqueda() throws Exception {
+        ConfiguracionComprasDatosFixture datos = new ConfiguracionComprasDatosFixture();
+        String limites = datos.getConfiguracionCompra("COMPRAS_LIMITES");
+        String estados = datos.getConfiguracionCompra("COMPRAS_ESTADOS_IDS");
+        try {
+            ConfiguracionComprasDatosFixture.configurar("COMPRAS_LIMITES",
+                    limites.replace("REQUERIMIENTOS_POR_PAGINA=50", "REQUERIMIENTOS_POR_PAGINA=7"));
+            ConfiguracionComprasDatosFixture.configurar("COMPRAS_ESTADOS_IDS",
+                    estados.replace("ANULADO=99", "ANULADO=98"));
+            reset(rows(100, 1, 1));
+            paginated(null, false, 3);
+            Query consulta = jdbc.queries.get(0);
+            verifyBound(consulta, 1, "setInt", Integer.valueOf(98));
+            verifyBound(consulta, 2, "setInt", Integer.valueOf(7));
+            verifyBound(consulta, 3, "setLong", Long.valueOf(14));
+            check(normalized(consulta.sql).indexOf("estado = 99") < 0,
+                    "el estado de anulacion no queda fijo en SQL");
+        } finally {
+            ConfiguracionComprasDatosFixture.configurar("COMPRAS_LIMITES", limites);
+            ConfiguracionComprasDatosFixture.configurar("COMPRAS_ESTADOS_IDS", estados);
+        }
     }
 
     private static void testInitialRoute() throws Exception {
@@ -102,10 +128,11 @@ public class ComprasPrimeraCargaTest {
         check(sql.substring(0, limit).indexOf("order by id_requerimiento desc") >= 0, "initial limits descending IDs");
         check(sql.indexOf("count(*) as total_registros from candidatos") >= 0, "initial counts candidate IDs without full enrichment");
         check(sql.indexOf("order by r.id_requerimiento desc") > limit, "initial retains final descending order");
-        eq("initial SQL placeholders", Integer.valueOf(2), Integer.valueOf(occurrences(sql, "?")));
-        eq("initial only limit and offset", Integer.valueOf(2), Integer.valueOf(query.binds.size()));
-        verifyBound(query, 1, "setInt", Integer.valueOf(50));
-        verifyBound(query, 2, "setLong", Long.valueOf(((long) Math.max(1, page) - 1L) * 50L));
+        eq("initial SQL placeholders", Integer.valueOf(3), Integer.valueOf(occurrences(sql, "?")));
+        eq("initial state, limit and offset", Integer.valueOf(3), Integer.valueOf(query.binds.size()));
+        verifyBound(query, 1, "setInt", Integer.valueOf(99));
+        verifyBound(query, 2, "setInt", Integer.valueOf(50));
+        verifyBound(query, 3, "setLong", Long.valueOf(((long) Math.max(1, page) - 1L) * 50L));
     }
 
     private static void testFilterRouting() throws Exception {
@@ -156,7 +183,7 @@ public class ComprasPrimeraCargaTest {
         verifyQuery(false, 2); verifyClosed(1, 1, 1);
 
         List<Map<String, Object>> mixed = rows(999, 6, 83);
-        for (int i = 0; i < mixed.size(); i++) mixed.get(i).put("id_estado", Integer.valueOf(i % 2 == 0 ? 3 : WebKeysCompras.ESTADO_RECLAMO_RP));
+        for (int i = 0; i < mixed.size(); i++) mixed.get(i).put("id_estado", Integer.valueOf(i % 2 == 0 ? 3 : ConfiguracionComprasHelper.getEstadoReclamoRP()));
         reset(mixed);
         actual = paginated(filtro, true, 2);
         eq("RP merged result size", Integer.valueOf(6), Integer.valueOf(actual.size()));
@@ -167,7 +194,7 @@ public class ComprasPrimeraCargaTest {
             eq("RP state mapped " + i, mixed.get(i).get("id_estado"), actual.get(i).getIdEstado());
         }
         verifyFilter(jdbc.queries.get(0), filtro, 0, Integer.valueOf(3));
-        verifyFilter(jdbc.queries.get(0), filtro, 11, Integer.valueOf(WebKeysCompras.ESTADO_RECLAMO_RP));
+        verifyFilter(jdbc.queries.get(0), filtro, 12, Integer.valueOf(ConfiguracionComprasHelper.getEstadoReclamoRP()));
         verifyQuery(true, 2); verifyClosed(1, 1, 1);
 
         reset(rows(500, 1, 1));
@@ -229,7 +256,7 @@ public class ComprasPrimeraCargaTest {
         eq("export caller state restored", Integer.valueOf(3), filtro.getIdEstado());
         eq("export two calls", Integer.valueOf(2), Integer.valueOf(jdbc.queries.size()));
         verifyUnlimited(jdbc.queries.get(0)); verifyUnlimited(jdbc.queries.get(1));
-        verifyFilter(jdbc.queries.get(1), filtro, 0, Integer.valueOf(WebKeysCompras.ESTADO_RECLAMO_RP));
+        verifyFilter(jdbc.queries.get(1), filtro, 0, Integer.valueOf(ConfiguracionComprasHelper.getEstadoReclamoRP()));
         verifyClosed(2, 2, 2);
     }
 
@@ -255,6 +282,7 @@ public class ComprasPrimeraCargaTest {
         verifyBoolean(query, 7 + shift, value.getSurge()); verifyBound(query, 8 + shift, "setString", value.getTexto());
         verifyDate(query, 9 + shift, value.getFechaAltaDesde()); verifyDate(query, 10 + shift, value.getFechaAltaHasta());
         verifyInteger(query, 11 + shift, value.getIdRequerimientoCompra());
+        verifyBound(query, 12 + shift, "setInt", Integer.valueOf(99));
     }
     private static void verifyInteger(Query query, int index, Integer value) {
         if (value == null || value.intValue() < 0) verifyBound(query, index, "setNull", Integer.valueOf(Types.INTEGER));
@@ -280,8 +308,8 @@ public class ComprasPrimeraCargaTest {
         check(sql.indexOf("count(") >= 0 && sql.indexOf("total_registros") >= 0, "SQL counts matching total");
         check(sql.matches("(?s).*order by (?:[a-z_]+\\.)?id desc limit \\? offset \\?.*"), "global descending bounded ordering");
         eq("union only for RP", Boolean.valueOf(rp), Boolean.valueOf(sql.indexOf("union all") >= 0));
-        eq("function calls", Integer.valueOf(rp ? 2 : 1), Integer.valueOf(occurrences(sql, "compras.buscar_requerimientos(")));
-        int filterParams = rp ? 22 : 11;
+        eq("raw data selections", Integer.valueOf(rp ? 2 : 1), Integer.valueOf(occurrences(sql, "from compras.requerimiento_base()")));
+        int filterParams = rp ? 24 : 12;
         eq("SQL placeholder count", Integer.valueOf(filterParams + 2), Integer.valueOf(occurrences(sql, "?")));
         eq("bound parameter count", Integer.valueOf(filterParams + 2), Integer.valueOf(query.binds.size()));
         verifyBound(query, filterParams + 1, "setInt", Integer.valueOf(50));
@@ -292,8 +320,8 @@ public class ComprasPrimeraCargaTest {
         String sql = normalized(query.sql);
         eq("export retains prepared query", "prepareStatement", query.preparation);
         check(sql.indexOf("limit") < 0 && sql.indexOf("offset") < 0, "export SQL remains unlimited");
-        eq("export function args", Integer.valueOf(11), Integer.valueOf(occurrences(sql, "?")));
-        eq("export binds", Integer.valueOf(11), Integer.valueOf(query.binds.size()));
+        eq("export function args", Integer.valueOf(12), Integer.valueOf(occurrences(sql, "?")));
+        eq("export binds", Integer.valueOf(12), Integer.valueOf(query.binds.size()));
     }
     private static void verifyClosed(int connections, int statements, int results) {
         eq("connections closed", Integer.valueOf(connections), Integer.valueOf(jdbc.closedConnections));

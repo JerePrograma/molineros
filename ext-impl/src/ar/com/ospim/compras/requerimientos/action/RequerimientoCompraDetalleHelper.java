@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.helper.EditarRequerimientoCompraHelper;
@@ -647,8 +649,8 @@ public class RequerimientoCompraDetalleHelper {
     }
 
     public void validarPermisoCorregirItem(User user) throws Exception {
-        if (user == null || (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS))) {
+        if (user == null || (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
+                && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras()))) {
             errorCampo("permisos", "No posee permisos para corregir medicamentos o prestaciones de compras.");
         }
     }
@@ -665,7 +667,7 @@ public class RequerimientoCompraDetalleHelper {
 
         if (!PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ConfiguracionComprasHelper.getRolAbmCompras()
         )) {
             errorCampo(
                     "permisos",

@@ -22,4 +22,15 @@ public class RequerimientoCompraComparativaServiceUtil {
             List<Integer> detallesVaciados, String usuario) throws Exception {
         service.guardar(comparativas, detallesVaciados, usuario);
     }
+
+    public static List<RequerimientoCompraComparativa> listar(java.sql.Connection con,
+            int idRequerimiento, int idPrestador) throws Exception {
+        return service.listar(con, idRequerimiento, idPrestador);
+    }
+
+    public static void guardarDatos(java.sql.Connection con,
+            List<RequerimientoCompraComparativa> comparativas,
+            List<Integer> vaciados, String usuario) throws Exception {
+        service.guardarDatos(con, comparativas, vaciados, usuario);
+    }
 }

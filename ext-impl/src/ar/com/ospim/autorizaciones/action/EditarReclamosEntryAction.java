@@ -383,7 +383,8 @@ import ar.com.ospim.util.StringUtils;
 			if(cmd.equals(Constants.DELETE)){
 				
 				try {
-				  ReclamosPrestacionesServiceUtil.borrar(idReclamoDeBuscador , user);
+				  new ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper()
+                            .borrarReclamoPrestacional(idReclamoDeBuscador, user);
 				  
 				  	//buscar el reclamo para obtener idExterno
 			        ReclamoPrestacional rp = ReclamosPrestacionesServiceUtil.getReclamoPrestacional(idReclamoDeBuscador);
@@ -839,7 +840,8 @@ import ar.com.ospim.util.StringUtils;
                                                     user,
                                                     ServiceContextFactory.getInstance(
                                                             DLFileEntry.class.getName(),
-                                                            renderRequest)
+                                                            renderRequest),
+                                                    contextoCompra
                                             );
 
                             reclamoPrestacional =
@@ -1248,10 +1250,10 @@ import ar.com.ospim.util.StringUtils;
 
 		boolean permisoCompras = PermissionUtil.userContainsRole(
 				user,
-				WebKeysCompras.ROL_ABM_COMPRAS
+				ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras()
 		) || PermissionUtil.userContainsRole(
 				user,
-				WebKeysCompras.ROL_COTIZAR_COMPRAS
+				ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras()
 		);
 		boolean permisoReclamo = PermissionUtil.userContainsRole(
 				user,

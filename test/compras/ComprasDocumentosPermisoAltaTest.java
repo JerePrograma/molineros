@@ -53,7 +53,7 @@ import java.util.List;
 public class ComprasDocumentosPermisoAltaTest {
     private static final String RESOURCE = DLFileEntry.class.getName();
     private static final long COMPANY = 900L;
-    private static final long GROUP = WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS;
+    private static final long GROUP = 10136L;
     private static final long USER = 400L;
     private static final long FOLDER = 200L;
     private static final long FILE = 300L;
@@ -67,6 +67,7 @@ public class ComprasDocumentosPermisoAltaTest {
     private static byte[] pdf;
 
     public static void main(String[] args) throws Exception {
+        ConfiguracionComprasDatosFixture.instalar();
         int original = PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM;
         ClassLoader previousLoader = PortalClassLoaderUtil.getClassLoader();
         PortalClassLoaderUtil.setClassLoader(ComprasDocumentosPermisoAltaTest.class.getClassLoader());
@@ -91,6 +92,19 @@ public class ComprasDocumentosPermisoAltaTest {
                 fallo(type, "add");
                 fallo(type, "delete");
             }
+            System.out.println("COMPRAS_DOCUMENTOS_PERMISO_ALTA_BASE scenarios=" + scenarios + " checks=" + checks);
+            String rolesOriginales = ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil.getConfiguracionCompra("COMPRAS_ROLES");
+            try {
+                for (int algorithm = 5; algorithm <= 6; algorithm++) {
+                    PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM = algorithm;
+                    for (String rolConfigurado : new String[] {"abm_compras", "ABM_ComPrAs"}) {
+                        rolConfiguradoConDistintaCaja(rolConfigurado, 0);
+                        rolConfiguradoConDistintaCaja(rolConfigurado, 4);
+                    }
+                }
+            } finally {
+                ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", rolesOriginales);
+            }
         } finally {
             PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM = original;
             PortalClassLoaderUtil.setClassLoader(previousLoader);
@@ -101,6 +115,23 @@ public class ComprasDocumentosPermisoAltaTest {
         System.out.println("COMPRAS_DOCUMENTOS_PERMISO_ALTA_OFFLINE_OK scenarios="
                 + scenarios + " checks=" + checks);
         System.out.println("Creadores y check DL productivos; servicios simulados; sin DB, red ni UI.");
+    }
+
+    private static void rolConfiguradoConDistintaCaja(String configurado, int type) throws Exception {
+        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES",
+                "VIEW=VIEW_COMPRAS;ABM=" + configurado + ";ANULAR=ANULAR_COMPRAS;COTIZAR=COTIZAR_COMPRAS;AUTORIZAR=AUTORIZAR_COMPRAS");
+        Fixture f = new Fixture();
+        f.roleName = "ABM_Compras";
+        f.expectUpdate = type == 4;
+        f.install();
+        try {
+            crear(type, f);
+            verificar(f.allowed.contains("VIEW"), "El fallback no agrego VIEW al rol configurado con otra caja.");
+            verificar(f.roleFallbacks > 0, "No se ejercito el fallback getRoles de RoleService.");
+            verificar(type != 4 || f.allowed.contains("UPDATE"), "Comparativa sin UPDATE en rol configurado.");
+            f.preservados();
+            scenarios++;
+        } finally { f.restore(); }
     }
 
     private static void alta(int type, int algorithm) throws Exception {
@@ -314,6 +345,8 @@ public class ComprasDocumentosPermisoAltaTest {
         private final List<Field> serviceFields = new ArrayList<Field>();
         private final List<Object> previousServices = new ArrayList<Object>();
         private final ServiceContext context = new ServiceContext();
+        private String roleName = "ABM_COMPRAS";
+        private int roleFallbacks;
         private boolean expectUpdate;
         private boolean failAdd;
         private boolean failGrant;
@@ -426,8 +459,17 @@ public class ComprasDocumentosPermisoAltaTest {
             }
             if ("getRole".equals(method)) {
                 igual("empresa rol", Long.valueOf(COMPANY), a[0]);
-                igual("rol unico", "ABM_COMPRAS", a[1]);
-                return model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE)}, {"getName", "ABM_COMPRAS"}});
+                igual("rol unico configurado", ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras(), a[1]);
+                if (!roleName.equals(a[1])) throw new com.liferay.portal.NoSuchRoleException("ROL_CON_OTRA_CAJA");
+                return model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE)}, {"getName", roleName}});
+            }
+            if ("getRoles".equals(method)) {
+                igual("empresa catalogo de roles", Long.valueOf(COMPANY), a[0]);
+                roleFallbacks++;
+                List<Role> roles = new ArrayList<Role>();
+                roles.add((Role) model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE + 1)}, {"getName", "ROL_AJENO"}}));
+                roles.add((Role) model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE)}, {"getName", roleName}}));
+                return roles;
             }
             if ("getResource".equals(method)) {
                 individual(a);

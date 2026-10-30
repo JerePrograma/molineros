@@ -38,19 +38,19 @@ boolean botoneraRequerimientoPersistido =
 
 boolean botoneraTieneRolAnular =
         user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS);
+        && PermissionUtil.userContainsRole(user, ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras());
 
 boolean botoneraTieneRolView =
         user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS);
+        && PermissionUtil.userContainsRole(user, ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolViewCompras());
 
 boolean botoneraTieneRolCotizar =
         user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS);
+        && PermissionUtil.userContainsRole(user, ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras());
 
 boolean botoneraTieneRolAutorizar =
         user != null
-        && PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS);
+        && PermissionUtil.userContainsRole(user, ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAutorizarCompras());
 
 boolean botoneraTieneRolCrearReclamo =
         user != null
@@ -303,7 +303,7 @@ String botoneraReclamoPrestacionalFormId =
                value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
-               value="<%= String.valueOf(WebKeysCompras.ESTADO_A_COTIZAR) %>" />
+               value="<%= String.valueOf(ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoACotizar()) %>" />
     </form>
 <% } %>
 
@@ -328,8 +328,8 @@ String botoneraReclamoPrestacionalFormId =
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
                value="<%= botoneraPuedeAutorizar
-                       ? WebKeysCompras.ESTADO_AUTORIZADO
-                       : WebKeysCompras.ESTADO_PARA_AUTORIZAR %>" />
+                       ? ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoAutorizado()
+                       : ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoParaAutorizar() %>" />
     </form>
 <% } %>
 

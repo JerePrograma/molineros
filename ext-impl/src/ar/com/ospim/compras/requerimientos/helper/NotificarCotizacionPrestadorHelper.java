@@ -1,5 +1,12 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
+import java.util.Locale;
+import ar.com.ospim.compras.requerimientos.service.NotificarCotizacionPrestadorServiceUtil.Transaccion;
+import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
+import java.util.Collections;
+import java.sql.Timestamp;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoComprasCreado;
@@ -57,6 +64,499 @@ public class NotificarCotizacionPrestadorHelper {
 
     private final CotizacionPrestadorMailHelper mailHelper =
             new CotizacionPrestadorMailHelper();
+
+    private static String btrimEspacios(String valor) {
+        int inicio = 0;
+        int fin = valor.length();
+        while (inicio < fin && valor.charAt(inicio) == ' ') inicio++;
+        while (fin > inicio && valor.charAt(fin - 1) == ' ') fin--;
+        return valor.substring(inicio, fin);
+    }
+
+    public static String normalizarRubroCotizacion(String valor) {
+        String r = valor == null ? "" : btrimEspacios(valor.replace('_', ' ')).toUpperCase(Locale.ROOT);
+        String origen = "\u00c1\u00c0\u00c4\u00c2\u00c9\u00c8\u00cb\u00ca\u00cd\u00cc\u00cf\u00ce\u00d3\u00d2\u00d6\u00d4\u00da\u00d9\u00dc\u00db";
+        String destino = "AAAAEEEEIIIIOOOOUUUU";
+        for (int i = 0; i < origen.length(); i++) r = r.replace(origen.charAt(i), destino.charAt(i));
+        return r;
+    }
+
+    private static Set<String> rubrosActivos(List<Map<String, Object>> detalles) {
+        Set<String> rubros = new HashSet<String>();
+        for (Map<String, Object> f : detalles) {
+            if (f.get("baja_fecha") == null && f.get("descripcion") != null) rubros.add((String) f.get("descripcion"));
+        }
+        return rubros;
+    }
+
+    public static boolean esCompatibleRubros(List<Map<String, Object>> detalles,
+            List<Map<String, Object>> asociaciones) {
+        Set<String> rubros = rubrosActivos(detalles);
+        for (Map<String, Object> f : asociaciones) {
+            if (rubros.contains(normalizarRubroCotizacion((String) f.get("rubro")))) return true;
+        }
+        return false;
+    }
+
+    private List<Integer> idsPrestadoresCompatibles(Set<String> rubros,
+            List<Map<String, Object>> asociaciones) {
+        Set<Integer> ids = new LinkedHashSet<Integer>();
+        for (Map<String, Object> f : asociaciones) {
+            if (rubros.contains(normalizarRubroCotizacion((String) f.get("rubro")))) {
+                ids.add((Integer) f.get("id_prestador"));
+            }
+        }
+        return new ArrayList<Integer>(ids);
+    }
+
+    private String resolverEmailsCrudos(Transaccion tx, int prestador) throws Exception {
+        List<String> tipos = ConfiguracionComprasHelper.resolverTiposContactoEmail(
+                tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_TIPOS_CONTACTO_EMAIL));
+        Map<String, Integer> prioridades = ConfiguracionComprasHelper.resolverPrioridadesContactoEmail(
+                tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_PRIORIDADES_CONTACTO_EMAIL));
+        return resolverEmailsCrudos(tx, prestador, tipos, prioridades, tx.getAhora());
+    }
+
+    protected String resolverEmailsCrudos(Transaccion tx, int prestador,
+            List<String> tipos, Map<String, Integer> prioridades, Timestamp ahora) throws Exception {
+        for (String tipo : tipos) {
+            if (!prioridades.containsKey(tipo)) throw new IllegalStateException("Falta prioridad configurada para un tipo de contacto permitido.");
+        }
+        List<Map<String, Object>> validos = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> crudo : tx.listarContactos(prestador)) {
+            String tipo = crudo.get("tipo") == null ? "" : btrimEspacios((String) crudo.get("tipo")).toUpperCase(Locale.ROOT);
+            String email = crudo.get("contacto") == null ? null : btrimEspacios((String) crudo.get("contacto"));
+            Timestamp ce = (Timestamp) crudo.get("contacto_desde");
+            Timestamp pce = (Timestamp) crudo.get("relacion_desde");
+            if (!tipos.contains(tipo) || crudo.get("baja") != null || email == null
+                    || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
+                    || (ce != null && ce.compareTo(ahora) > 0) || (pce != null && pce.compareTo(ahora) > 0)) continue;
+            Map<String, Object> f = new HashMap<String, Object>(crudo);
+            Timestamp referencia = (Timestamp) f.get("modi");
+            if (referencia == null) referencia = (Timestamp) f.get("alta");
+            if (referencia == null) referencia = ce;
+            if (referencia == null) referencia = pce;
+            f.put("fecha", referencia); f.put("prioridad", prioridades.get(tipo));
+            f.put("email", email); validos.add(f);
+        }
+        Collections.sort(validos, new Comparator<Map<String, Object>>() {
+            public int compare(Map<String, Object> a, Map<String, Object> b) {
+                int prioridad = ((Integer) a.get("prioridad")).compareTo((Integer) b.get("prioridad"));
+                if (prioridad != 0) return prioridad;
+                Timestamp fa = (Timestamp) a.get("fecha"); Timestamp fb = (Timestamp) b.get("fecha");
+                if (fa != null || fb != null) {
+                    if (fa == null) return 1; if (fb == null) return -1;
+                    int fecha = fb.compareTo(fa); if (fecha != 0) return fecha;
+                }
+                int id = ((Integer) b.get("id")).compareTo((Integer) a.get("id"));
+                if (id != 0) return id;
+                return ((String) a.get("clave")).compareTo((String) b.get("clave"));
+            }
+        });
+        Set<String> incluidos = new HashSet<String>(); StringBuilder salida = new StringBuilder();
+        for (Map<String, Object> f : validos) {
+            String email = (String) f.get("email");
+            String clave = (String) f.get("clave");
+            if (clave == null) throw new IllegalStateException("Falta la clave normalizada del contacto.");
+            if (incluidos.add(clave)) {
+                if (salida.length() > 0) salida.append(';'); salida.append(email);
+            }
+        }
+        return salida.length() == 0 ? null : salida.toString();
+    }
+
+    private String normalizarUsuarioNotificacion(Transaccion tx,String usuario) throws Exception {
+        String valor = usuario == null ? null : btrimEspacios(usuario);
+        if (valor == null || valor.length() == 0) valor = ConfiguracionComprasHelper.exigirValor(
+                "COMPRAS_USUARIO_DEFECTO_NOTIFICACION",tx.getConfiguracionCompra("COMPRAS_USUARIO_DEFECTO_NOTIFICACION"));
+        return truncarErrorNotificacion(valor,100);
+    }
+
+    private String normalizarUsuarioPedido(Transaccion tx,String usuario) throws Exception {
+        String valor = usuario == null ? null : btrimEspacios(usuario);
+        if (valor == null || valor.length() == 0) valor = tx.getUsuarioActual();
+        if (valor == null || valor.length() == 0 || valor.codePointCount(0,valor.length()) > 100)
+            throw new IllegalArgumentException("No se pudo determinar un usuario de auditoria valido.");
+        return valor;
+    }
+
+    public List<PrestadorCotizacion> listarPrestadoresCandidatosJava(int id) throws Exception {
+        Transaccion tx=null;
+        try{tx=abrirTransaccionNotificacion();return listarCandidatosEnTransaccion(tx,id);}
+        finally{if(tx!=null)try{tx.rollback();}finally{tx.cerrar();}}
+    }
+
+    private List<PrestadorCotizacion> listarCandidatosEnTransaccion(Transaccion tx,int id) throws Exception {
+        Map<String, String> estadosEnvio = leerEstadosEnvio(tx);
+        RequerimientoCompra r = tx.getRequerimiento(id, false);
+        if (r == null || !r.isActivo() || !ConfiguracionComprasHelper.contieneEntero(CONFIG_ESTADOS_NOTIFICAR,
+                tx.getConfiguracionCompra(CONFIG_ESTADOS_NOTIFICAR),r.getEstado())) return new ArrayList<PrestadorCotizacion>();
+        List<Integer> ids = idsPrestadoresCompatibles(rubrosActivos(tx.listarRubrosRequerimiento(id)),
+                tx.listarRubrosPrestadores(null));
+        List<String> reintentos = ConfiguracionComprasHelper.resolverEstadosReintentoNotificacion(
+                tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_REINTENTO_NOTIFICACION));
+        boolean todos = ConfiguracionComprasHelper.contieneEntero(CONFIG_ESTADOS_NOTIFICAR_TODOS,
+                tx.getConfiguracionCompra(CONFIG_ESTADOS_NOTIFICAR_TODOS), r.getEstado());
+        List<String> tipos = ConfiguracionComprasHelper.resolverTiposContactoEmail(
+                tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_TIPOS_CONTACTO_EMAIL));
+        Map<String, Integer> prioridades = ConfiguracionComprasHelper.resolverPrioridadesContactoEmail(
+                tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_PRIORIDADES_CONTACTO_EMAIL));
+        Timestamp ahora = tx.getAhora();
+        List<PrestadorCotizacion> salida = new ArrayList<PrestadorCotizacion>();
+        for (PrestadorCotizacion p : tx.listarPrestadores(ids, id)) {
+            if (p.getBajaFecha() != null || !Boolean.TRUE.equals(p.getSolicitarCotizacion())) continue;
+            if (!todos && p.getEstadoEnvio() != null && !reintentos.contains(p.getEstadoEnvio())) continue;
+            p.setEmail(resolverEmailsCrudos(tx, p.getIdPrestador(), tipos, prioridades, ahora)); salida.add(p);
+        }
+        return salida;
+    }
+
+    public boolean hayPrestadoresPendientesNotificacionJava(int id) throws Exception {
+        if(id<=0)throw new IllegalArgumentException("Debe informar el requerimiento de compra.");
+        Transaccion tx=null;
+        try{tx=abrirTransaccionNotificacion();return !listarCandidatosEnTransaccion(tx,id).isEmpty();}
+        finally{if(tx!=null)try{tx.rollback();}finally{tx.cerrar();}}
+    }
+
+    /** Lectura con la conexion del caller: no inicia/finaliza ni cierra su TX. */
+    public List<PrestadorCotizacion> listarPrestadoresEnviados(java.sql.Connection con,int id,int limite) throws Exception {
+        if(id<=0)throw new IllegalArgumentException("Debe informar el requerimiento de compra.");
+        if(limite<=0)throw new IllegalArgumentException("El limite de prestadores debe ser mayor que cero.");
+        Transaccion tx=NotificarCotizacionPrestadorServiceUtil.usarTransaccion(con);
+        RequerimientoCompra r=tx.getRequerimiento(id,false);
+        List<PrestadorCotizacion> salida=new ArrayList<PrestadorCotizacion>();
+        if(r==null)return salida;
+        String ids=tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS);
+        String permitidos=tx.getConfiguracionCompra("COMPRAS_ESTADOS_PRESTADORES_ENVIADOS");
+        validarEstadosEnviados(permitidos,ids);
+        if(!ConfiguracionComprasHelper.resolverEstadoPermitido("PRESTADORES_ENVIADOS",r.getEstado(),permitidos))return salida;
+        int aCotizar=ConfiguracionComprasHelper.resolverEstado("A_COTIZAR",ids);
+        Map<String,String> envios=leerEstadosEnvio(tx);
+        List<String> tipos=ConfiguracionComprasHelper.resolverTiposContactoEmail(tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_TIPOS_CONTACTO_EMAIL));
+        Map<String,Integer> prioridades=ConfiguracionComprasHelper.resolverPrioridadesContactoEmail(tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_PRIORIDADES_CONTACTO_EMAIL));
+        Timestamp ahora=tx.getAhora();
+        List<Map<String,Object>> rubros= r.getEstado()==aCotizar?tx.listarRubrosRequerimiento(id):null;
+        String excepciones=r.getEstado()==aCotizar?tx.getConfiguracionCompra("COMPRAS_EXCEPCIONES_PRESTADOR_REQUERIMIENTO"):null;
+        for(PrestadorCotizacion p:tx.listarPrestadoresNotificados(id)){
+            if(!envios.get("ENVIADO").equals(p.getEstadoEnvio())&&!envios.get("COTIZADO").equals(p.getEstadoEnvio()))continue;
+            if(r.getEstado()==aCotizar){
+                Map<String,Object> f=new HashMap<String,Object>();f.put("baja",p.getBajaFecha());f.put("solicitar",p.getSolicitarCotizacion());f.put("cuit",p.getCuit());
+                if(!esCompatiblePrestadorCotizacion(r,f,rubros,tx.listarRubrosPrestadores(Integer.valueOf(p.getIdPrestador())),excepciones))continue;
+            }
+            p.setEmail(resolverEmailsCrudos(tx,p.getIdPrestador(),tipos,prioridades,ahora));
+            String destino=p.getEmailDestino();if(destino!=null){destino=btrimEspacios(destino);if(destino.length()==0)destino=null;}p.setEmailDestino(destino);
+            salida.add(p);if(salida.size()==limite)break;
+        }
+        return salida;
+    }
+
+    private void validarEstadosEnviados(String lista,String ids) {
+        ConfiguracionComprasHelper.resolverEstado("A_COTIZAR",ids);
+        Set<Integer> conocidos=new HashSet<Integer>();
+        for(String valor:ConfiguracionComprasHelper.parsearPares(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS,ids).values())
+            conocidos.add(Integer.valueOf(ConfiguracionComprasHelper.parsearEntero(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS,valor,false)));
+        String clave="COMPRAS_ESTADOS_PRESTADORES_ENVIADOS";
+        for(String valor:ConfiguracionComprasHelper.exigirValor(clave,lista).split(";",-1))
+            if(!conocidos.contains(Integer.valueOf(ConfiguracionComprasHelper.parsearEntero(clave,valor,false))))
+                throw new ConfiguracionComprasHelper.ConfiguracionInvalidaException(clave);
+    }
+
+    public static boolean esCompatiblePrestadorCotizacion(RequerimientoCompra r,Map<String,Object> p,
+            List<Map<String,Object>> rubrosRequerimiento,List<Map<String,Object>> rubrosPrestador,String excepcionesRaw) {
+        if(r==null||!r.isActivo()||p==null||p.get("baja")!=null)return false;
+        String clave="COMPRAS_EXCEPCIONES_PRESTADOR_REQUERIMIENTO";
+        String excepciones=ConfiguracionComprasHelper.exigirValor(clave,excepcionesRaw);
+        if(!"NINGUNA".equals(excepciones)){
+            Map<String,String> configuradas=ConfiguracionComprasHelper.parsearPares(clave,excepciones);
+            boolean excepcion=false;
+            for(Map.Entry<String,String> fila:configuradas.entrySet()){
+                int id=ConfiguracionComprasHelper.parsearEntero(clave,fila.getKey(),false);
+                if(!fila.getValue().matches("[0-9]{11}"))throw new ConfiguracionComprasHelper.ConfiguracionInvalidaException(clave);
+                String cuit=p.get("cuit")==null?"":((String)p.get("cuit")).replaceAll("[^0-9]","");
+                if(id==r.getIdRequerimientoCompra()&&fila.getValue().equals(cuit))excepcion=true;
+            }
+            if(excepcion)return true;
+        }
+        return Boolean.TRUE.equals(p.get("solicitar"))&&esCompatibleRubros(rubrosRequerimiento,rubrosPrestador);
+    }
+
+    public int confirmarEnvioACotizarJava(int id,String usuario) throws Exception {
+        if(id<=0)throw new IllegalArgumentException("Debe informar el requerimiento de compra.");
+        Transaccion tx=null;boolean commitInvocado=false;
+        try{
+            tx=abrirTransaccionNotificacion();RequerimientoCompra r=tx.getRequerimiento(id,true);
+            if(r==null||!r.isActivo())throw new IllegalArgumentException("No se encontro el requerimiento activo.");
+            String ids=tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS);
+            int pendiente=ConfiguracionComprasHelper.resolverEstado("PENDIENTE",ids),aCotizar=ConfiguracionComprasHelper.resolverEstado("A_COTIZAR",ids);
+            if(r.getEstado()==aCotizar){commitInvocado=true;tx.commit();return aCotizar;}
+            if(r.getEstado()!=pendiente)throw new IllegalArgumentException("Solo un requerimiento PENDIENTE puede pasar a A COTIZAR.");
+            String enviado=leerEstadosEnvio(tx).get("ENVIADO");
+            int resultado=pendiente;
+            if(tx.listarEstadosNotificaciones(id).contains(enviado)){
+                if(!ConfiguracionComprasHelper.resolverTransicionEstado(pendiente,aCotizar,tx.getConfiguracionCompra("COMPRAS_TRANSICIONES_ESTADO"),ids))
+                    throw new IllegalStateException("La transicion de envio a cotizar no esta habilitada.");
+                if(tx.cambiarEstadoRequerimiento(id,pendiente,aCotizar,normalizarUsuarioPedido(tx,usuario))!=1)
+                    throw new IllegalStateException("El requerimiento fue modificado por otro proceso.");
+                resultado=aCotizar;
+            }
+            commitInvocado=true;tx.commit();return resultado;
+        }catch(Exception e){boolean rollbackConfirmado=revertirNotificacion(tx);if(commitInvocado||!rollbackConfirmado)throw new OperacionNotificacionAmbiguaException(e);throw e;}
+        finally{if(tx!=null)tx.cerrar();}
+    }
+
+    public List<PrestadorCotizacion> listarPrestadoresConfiguracionCorreosPorRubroJava(int rubro) throws Exception {
+        Transaccion tx = null;
+        try {
+            tx = abrirTransaccionNotificacion();
+            Map<String, String> estadosEnvio = leerEstadosEnvio(tx);
+            Map<String, Object> r = tx.obtenerRubro(rubro);
+            List<PrestadorCotizacion> salida = new ArrayList<PrestadorCotizacion>();
+            if (r == null || !Boolean.TRUE.equals(r.get("activo")) || r.get("baja") != null) return salida;
+            Set<String> rubros = new HashSet<String>(); rubros.add((String) r.get("descripcion"));
+            List<Integer> ids = idsPrestadoresCompatibles(rubros, tx.listarRubrosPrestadores(null));
+            List<String> tipos = ConfiguracionComprasHelper.resolverTiposContactoEmail(
+                    tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_TIPOS_CONTACTO_EMAIL));
+            Map<String, Integer> prioridades = ConfiguracionComprasHelper.resolverPrioridadesContactoEmail(
+                    tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_PRIORIDADES_CONTACTO_EMAIL));
+            Timestamp ahora = tx.getAhora();
+            for (PrestadorCotizacion p : tx.listarPrestadores(ids, 0)) {
+                if (p.getBajaFecha() != null || !Boolean.TRUE.equals(p.getSolicitarCotizacion())) continue;
+                p.setEmail(resolverEmailsCrudos(tx, p.getIdPrestador(), tipos, prioridades, ahora)); salida.add(p);
+            }
+            return salida;
+        } finally { if (tx != null) { try { tx.rollback(); } finally { tx.cerrar(); } } }
+    }
+
+    public CotizacionPrestadorDiagnostico diagnosticarPrestadoresJava(int id) throws Exception {
+        Transaccion tx = null;
+        try {
+            tx = abrirTransaccionNotificacion();
+            Map<String, String> estadosEnvio = leerEstadosEnvio(tx);
+            RequerimientoCompra r = tx.getRequerimiento(id, false);
+            CotizacionPrestadorDiagnostico d = new CotizacionPrestadorDiagnostico();
+            if (r == null || r.getBajaFecha() != null) return d;
+            List<Map<String, Object>> asociaciones = tx.listarRubrosPrestadores(null);
+
+            Set<Integer> compatibles = new HashSet<Integer>(idsPrestadoresCompatibles(
+                    rubrosActivos(tx.listarRubrosRequerimiento(id)), asociaciones));
+            int habilitados = 0; int compatiblesCantidad = 0; int bloqueados = 0;
+            for (Map<String, Object> p : tx.listarHabilitacionPrestadores(id)) {
+                if (p.get("baja") != null || !Boolean.TRUE.equals(p.get("solicitar"))) continue;
+                habilitados++;
+                if (compatibles.contains((Integer) p.get("id"))) {
+                    compatiblesCantidad++;
+                    String estado = (String) p.get("estado");
+                    if (estadosEnvio.get("ENVIADO").equals(estado)
+                            || estadosEnvio.get("COTIZADO").equals(estado)
+                            || estadosEnvio.get("PROCESANDO").equals(estado)) bloqueados++;
+                }
+            }
+            d.setPrestadoresHabilitados(habilitados); d.setPrestadoresCompatiblesSector(compatiblesCantidad);
+            d.setPrestadoresBloqueadosEstadoPrevio(bloqueados); return d;
+        } finally { if (tx != null) { try { tx.rollback(); } finally { tx.cerrar(); } } }
+    }
+
+    private Map<String, String> leerEstadosEnvio(Transaccion tx) throws Exception {
+        String valor = tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_ENVIO);
+        Map<String, String> estados = new HashMap<String, String>();
+        String[] codigos = { "PENDIENTE", "PROCESANDO", "ENVIADO", "ERROR", "EMAIL_INVALIDO", "COTIZADO" };
+        for (int i = 0; i < codigos.length; i++) {
+            estados.put(codigos[i], ConfiguracionComprasHelper.resolverEstadoEnvio(codigos[i], valor));
+        }
+        return estados;
+    }
+
+    private static final String CONFIG_ESTADOS_NOTIFICAR = "COMPRAS_ESTADOS_NOTIFICAR_PRESTADORES";
+    private static final String CONFIG_ESTADOS_NOTIFICAR_TODOS = "COMPRAS_ESTADOS_NOTIFICAR_TODOS";
+
+    private static final class OperacionNotificacionAmbiguaException extends Exception {
+        private OperacionNotificacionAmbiguaException(Exception causa) {
+            super("No se pudo confirmar el resultado de la notificacion. Consulte antes de reintentar; se conservan los documentos.", causa);
+        }
+    }
+
+    protected Transaccion abrirTransaccionNotificacion() throws Exception {
+        return NotificarCotizacionPrestadorServiceUtil.abrirTransaccion();
+    }
+
+    private boolean revertirNotificacion(Transaccion tx) {
+        if (tx != null) {
+            try { tx.rollback(); }
+            catch (Exception e) {
+                _log.error("No se pudo confirmar rollback de notificacion.", e);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void validarCabeceraNotificacion(RequerimientoCompra r, Transaccion tx) throws Exception {
+        if (r == null || r.getIdRequerimientoCompra() <= 0 || r.getBajaFecha() != null) {
+            throw new Exception("No existe el requerimiento activo para notificar.");
+        }
+        if (!ConfiguracionComprasHelper.contieneEntero(CONFIG_ESTADOS_NOTIFICAR,
+                tx.getConfiguracionCompra(CONFIG_ESTADOS_NOTIFICAR), r.getEstado())) {
+            throw new Exception("El estado actual no permite notificar prestadores.");
+        }
+    }
+
+    public ReservaCotizacionPrestador reservarCotizacionPrestadorJava(
+            int id, int prestador, String usuario) throws Exception {
+        if (id <= 0 || prestador <= 0) throw new Exception("Debe informar requerimiento y prestador validos.");
+        Transaccion tx = null; boolean commitInvocado = false;
+        try {
+            tx = abrirTransaccionNotificacion();
+            Map<String, String> estadosEnvio = leerEstadosEnvio(tx);
+            RequerimientoCompra r = tx.getRequerimiento(id, true);
+            validarCabeceraNotificacion(r, tx);
+            List<Integer> ids = new ArrayList<Integer>(); ids.add(Integer.valueOf(prestador));
+            List<PrestadorCotizacion> encontrados = tx.listarPrestadores(ids, id);
+            if (encontrados.size() != 1 || encontrados.get(0).getBajaFecha() != null
+                    || !Boolean.TRUE.equals(encontrados.get(0).getSolicitarCotizacion())) {
+                throw new Exception("El prestador no existe, esta de baja o no esta habilitado para cotizar.");
+            }
+            if (!esCompatibleRubros(tx.listarRubrosRequerimiento(id),
+                    tx.listarRubrosPrestadores(Integer.valueOf(prestador)))) {
+                throw new Exception("El prestador no posee un rubro compatible con los detalles activos.");
+            }
+            List<String> reintentos = ConfiguracionComprasHelper.resolverEstadosReintentoNotificacion(
+                    tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_REINTENTO_NOTIFICACION));
+            String emails = resolverEmailsCrudos(tx, prestador);
+            String auditor = normalizarUsuarioNotificacion(tx,usuario);
+            tx.insertarNotificacion(id, prestador, estadosEnvio.get("PENDIENTE"), emails, auditor);
+            ReservaCotizacionPrestador actual = tx.obtenerNotificacion(id, prestador, true);
+            if (actual == null) throw new Exception("No se pudo localizar la fila de notificacion.");
+            ReservaCotizacionPrestador salida = new ReservaCotizacionPrestador();
+            salida.setEstadoEnvio(actual.getEstadoEnvio()); salida.setEmailDestino(actual.getEmailDestino());
+            salida.setIntentos(actual.getIntentos());
+            if (estadosEnvio.get("ENVIADO").equals(actual.getEstadoEnvio())) {
+                salida.setMotivoCodigo("YA_ENVIADO"); salida.setMotivoDescripcion("El prestador ya se encontraba ENVIADO. No se realizo un reenvio.");
+            } else if (estadosEnvio.get("COTIZADO").equals(actual.getEstadoEnvio())) {
+                salida.setMotivoCodigo("YA_COTIZADO"); salida.setMotivoDescripcion("El prestador ya se encontraba COTIZADO. No se realizo un reenvio.");
+            } else if (estadosEnvio.get("PROCESANDO").equals(actual.getEstadoEnvio())) {
+                salida.setMotivoCodigo("YA_PROCESANDO"); salida.setMotivoDescripcion("El prestador ya se encontraba PROCESANDO, posiblemente por otra ejecucion concurrente.");
+            } else if (!reintentos.contains(actual.getEstadoEnvio())) {
+                throw new Exception("El estado de notificacion no esta configurado como reintentable.");
+            } else {
+                if (actual.getIntentos() == null || actual.getIntentos().intValue() < 0
+                        || actual.getIntentos().intValue() == Integer.MAX_VALUE) {
+                    throw new Exception("La notificacion no posee un numero de intento valido.");
+                }
+                int intento = actual.getIntentos().intValue() + 1;
+                if (tx.actualizarReserva(id, prestador, estadosEnvio.get("PROCESANDO"),
+                        intento, emails, auditor, actual.getEstadoEnvio(), actual.getIntentos().intValue()) != 1) {
+                    throw new Exception("La notificacion cambio antes de reservar. Actualice la pantalla.");
+                }
+                salida.setReservado(true); salida.setEstadoEnvio(estadosEnvio.get("PROCESANDO"));
+                salida.setEmailDestino(emails); salida.setIntentos(Integer.valueOf(intento));
+                salida.setMotivoCodigo("RESERVA_OTORGADA");
+                salida.setMotivoDescripcion("La ejecucion obtuvo la reserva exclusiva y la fila quedo PROCESANDO.");
+            }
+            commitInvocado = true; tx.commit(); return salida;
+        } catch (Exception e) {
+            boolean rollbackConfirmado = revertirNotificacion(tx);
+            if (commitInvocado || !rollbackConfirmado) throw new OperacionNotificacionAmbiguaException(e);
+            throw e;
+        } finally { if (tx != null) tx.cerrar(); }
+    }
+
+    private String truncarErrorNotificacion(String valor, int maximo) {
+        if (valor == null || valor.codePointCount(0, valor.length()) <= maximo) return valor;
+        return valor.substring(0, valor.offsetByCodePoints(0, maximo));
+    }
+
+    public FinalizacionCotizacionPrestador finalizarCotizacionPrestadorJava(
+            int id, int prestador, String estado, String error, String usuario) throws Exception {
+        if (id <= 0 || prestador <= 0) throw new Exception("Debe informar requerimiento y prestador validos.");
+        Transaccion tx = null; boolean commitInvocado = false;
+        try {
+            tx = abrirTransaccionNotificacion();
+            Map<String, String> estadosEnvio = leerEstadosEnvio(tx);
+            String solicitado = estado == null ? null : btrimEspacios(estado);
+            if (solicitado != null) solicitado = solicitado.toUpperCase(java.util.Locale.ROOT);
+            List<String> permitidos = ConfiguracionComprasHelper.resolverEstadosFinalesNotificacion(
+                    tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_FINALES_NOTIFICACION));
+            if (solicitado == null || !permitidos.contains(solicitado)) throw new Exception("Estado final de notificacion no permitido.");
+            int maximo = ConfiguracionComprasHelper.resolverMaxErrorNotificacion(
+                    tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_MAX_ERROR_NOTIFICACION));
+            String detalle = truncarErrorNotificacion(error, maximo);
+            ReservaCotizacionPrestador actual = tx.obtenerNotificacion(id, prestador, true);
+            FinalizacionCotizacionPrestador salida = new FinalizacionCotizacionPrestador();
+            if (actual == null) {
+                salida.setMotivo("No existe una fila de notificacion para el requerimiento y prestador.");
+            } else {
+                salida.setEstadoAnterior(actual.getEstadoEnvio()); salida.setEstadoActual(actual.getEstadoEnvio());
+                if (!estadosEnvio.get("PROCESANDO").equals(actual.getEstadoEnvio())) {
+                    salida.setMotivo("La fila no se encontraba PROCESANDO. No se modifico el estado.");
+                } else {
+                    boolean enviado = estadosEnvio.get("ENVIADO").equals(solicitado);
+                    if (!enviado && detalle == null) detalle = "Error sin detalle informado.";
+                    Timestamp fecha = enviado ? tx.getFechaEvento() : null;
+                    int cantidad = tx.finalizar(id, prestador, solicitado, fecha, detalle,
+                            normalizarUsuarioNotificacion(tx,usuario), actual.getEstadoEnvio());
+                    if (cantidad != 1) {
+                        salida.setMotivo("La fila cambio de estado antes de completar la finalizacion.");
+                    } else {
+                        salida.setActualizado(true); salida.setEstadoActual(solicitado);
+                        salida.setMotivo("El estado final fue persistido correctamente.");
+                    }
+                }
+            }
+            commitInvocado = true; tx.commit(); return salida;
+        } catch (Exception e) {
+            boolean rollbackConfirmado = revertirNotificacion(tx);
+            if (commitInvocado || !rollbackConfirmado) throw new OperacionNotificacionAmbiguaException(e);
+            throw e;
+        } finally { if (tx != null) tx.cerrar(); }
+    }
+
+    public int registrarPedidoCotizacionDocumentoJava(
+            RequerimientoCompraPedidoCotizacion d, String usuario) throws Exception {
+        if (d == null || d.getIdRequerimiento() == null || d.getIdRequerimiento().intValue() <= 0
+                || d.getIdPrestador() == null || d.getIdPrestador().intValue() <= 0) {
+            throw new Exception("Debe informar requerimiento y prestador del pedido.");
+        }
+        if (d.getDlGroupId() == null || d.getDlGroupId().longValue() <= 0
+                || d.getDlFolderId() == null || d.getDlFolderId().longValue() <= 0
+                || d.getDlFileEntryId() == null || d.getDlFileEntryId().longValue() <= 0
+                || (d.getDlFileUuid() == null || btrimEspacios(d.getDlFileUuid()).length() == 0) || (d.getNombreOriginal() == null || btrimEspacios(d.getNombreOriginal()).length() == 0)
+                || (d.getNombrePersistido() == null || btrimEspacios(d.getNombrePersistido()).length() == 0) || (d.getTitulo() == null || btrimEspacios(d.getTitulo()).length() == 0)) {
+            throw new Exception("La identidad y los datos documentales del pedido no son validos.");
+        }
+        d.setDlFileUuid(btrimEspacios(d.getDlFileUuid())); d.setNombreOriginal(btrimEspacios(d.getNombreOriginal()));
+        d.setNombrePersistido(btrimEspacios(d.getNombrePersistido())); d.setTitulo(btrimEspacios(d.getTitulo()));
+        Transaccion tx = null; boolean commitInvocado = false;
+        try {
+            tx = abrirTransaccionNotificacion();
+            Map<String, String> estadosEnvio = leerEstadosEnvio(tx);
+            ReservaCotizacionPrestador actual = tx.obtenerNotificacion(
+                    d.getIdRequerimiento().intValue(), d.getIdPrestador().intValue(), true);
+            if (actual == null || !estadosEnvio.get("PROCESANDO").equals(actual.getEstadoEnvio())
+                    || actual.getIntentos() == null || actual.getIntentos().intValue() <= 0) {
+                throw new Exception("El pedido solo puede registrarse durante un envio PROCESANDO con intento valido.");
+            }
+            d.setIntento(actual.getIntentos());
+            RequerimientoCompraPedidoCotizacion previo = tx.obtenerPedido(
+                    d.getIdRequerimiento().intValue(), d.getIdPrestador().intValue(), d.getIntento().intValue());
+            if (previo != null) {
+                if (!mismoPedido(previo, d)) throw new Exception("El intento actual ya posee otro pedido de cotizacion registrado.");
+            } else if (tx.insertarPedido(d, normalizarUsuarioPedido(tx,usuario)) != 1) {
+                throw new Exception("No se pudo persistir el pedido de cotizacion.");
+            }
+            commitInvocado = true; tx.commit(); return d.getIntento().intValue();
+        } catch (Exception e) {
+            boolean rollbackConfirmado = revertirNotificacion(tx);
+            if (commitInvocado || !rollbackConfirmado) throw new OperacionNotificacionAmbiguaException(e);
+            throw e;
+        } finally { if (tx != null) tx.cerrar(); }
+    }
+
+    private boolean mismoPedido(RequerimientoCompraPedidoCotizacion a, RequerimientoCompraPedidoCotizacion b) {
+        return b.getDlGroupId().equals(a.getDlGroupId()) && b.getDlFolderId().equals(a.getDlFolderId())
+                && b.getDlFileEntryId().equals(a.getDlFileEntryId()) && b.getDlFileUuid().equals(a.getDlFileUuid())
+                && b.getNombreOriginal().equals(a.getNombreOriginal()) && b.getNombrePersistido().equals(a.getNombrePersistido())
+                && b.getTitulo().equals(a.getTitulo());
+    }
 
     public NotificacionCotizacionResultado notificarPrestadores(
             int idRequerimientoCompra,
@@ -410,7 +910,7 @@ public class NotificarCotizacionPrestadorHelper {
                     finalizarConControl(
                             idRequerimiento,
                             idPrestador,
-                            WebKeysCompras.ENVIO_EMAIL_INVALIDO,
+                            ConfiguracionComprasHelper.getEstadoEnvio("EMAIL_INVALIDO"),
                             errorTecnico,
                             usuario
                     );
@@ -549,7 +1049,7 @@ public class NotificarCotizacionPrestadorHelper {
                     finalizarConControl(
                             idRequerimiento,
                             idPrestador,
-                            WebKeysCompras.ENVIO_EMAIL_INVALIDO,
+                            ConfiguracionComprasHelper.getEstadoEnvio("EMAIL_INVALIDO"),
                             errorTecnico,
                             usuario
                     );
@@ -642,7 +1142,7 @@ public class NotificarCotizacionPrestadorHelper {
                     finalizarConControl(
                             idRequerimiento,
                             idPrestador,
-                            WebKeysCompras.ENVIO_ERROR,
+                            ConfiguracionComprasHelper.getEstadoEnvio("ERROR"),
                             detalleError,
                             usuario
                     );
@@ -794,7 +1294,7 @@ public class NotificarCotizacionPrestadorHelper {
                     finalizarConControl(
                             idRequerimiento,
                             idPrestador,
-                            WebKeysCompras.ENVIO_ENVIADO,
+                            ConfiguracionComprasHelper.getEstadoEnvio("ENVIADO"),
                             advertencia,
                             usuario
                     );
@@ -858,7 +1358,7 @@ public class NotificarCotizacionPrestadorHelper {
                     finalizarConControl(
                             idRequerimiento,
                             idPrestador,
-                            WebKeysCompras.ENVIO_ERROR,
+                            ConfiguracionComprasHelper.getEstadoEnvio("ERROR"),
                             detalleError,
                             usuario
                     );
@@ -917,7 +1417,7 @@ public class NotificarCotizacionPrestadorHelper {
                 finalizarConControl(
                         idRequerimiento,
                         idPrestador,
-                        WebKeysCompras.ENVIO_ENVIADO,
+                        ConfiguracionComprasHelper.getEstadoEnvio("ENVIADO"),
                         null,
                         usuario
                 );
@@ -1190,6 +1690,10 @@ public class NotificarCotizacionPrestadorHelper {
 
         } catch (Exception errorRegistro) {
 
+            if (errorRegistro instanceof OperacionNotificacionAmbiguaException) {
+                _log.error("Resultado de asociacion del pedido no confirmado; se conserva el documento.", errorRegistro);
+                throw errorRegistro;
+            }
             if (documento != null) {
 
                 try {
@@ -1278,7 +1782,7 @@ public class NotificarCotizacionPrestadorHelper {
                 troquel = detalle.getTroquelInt();
             } else if (detalle.esNomenclador()
                     && detalle.getIdTipoNomencladorInt()
-                    == WebKeysCompras.FILTRO_NOMENCLADOR_FARMACIA) {
+                    == ConfiguracionComprasHelper.getTipoNomencladorFarmacia()) {
                 String codigo = detalle.getCodigoNomencladorVisible().trim();
                 if (codigo.matches("^[0-9]+$")) {
                     troquel = GetterUtil.getInteger(codigo, 0);
@@ -1614,10 +2118,7 @@ public class NotificarCotizacionPrestadorHelper {
                         idRequerimiento,
                         idPrestador,
                         estado,
-                        truncar(
-                                error,
-                                4000
-                        ),
+                        error,
                         normalizarUsuario(
                                 usuario
                         )
@@ -1825,7 +2326,7 @@ public class NotificarCotizacionPrestadorHelper {
             return "No se obtuvo la reserva de procesamiento.";
         }
 
-        if (WebKeysCompras.ENVIO_ENVIADO.equals(
+        if (ConfiguracionComprasHelper.getEstadoEnvio("ENVIADO").equals(
                 reserva.getEstadoEnvio()
         )) {
 
@@ -1833,7 +2334,7 @@ public class NotificarCotizacionPrestadorHelper {
                     + "No se realizo un reenvio.";
         }
 
-        if (WebKeysCompras.ENVIO_PROCESANDO.equals(
+        if (ConfiguracionComprasHelper.getEstadoEnvio("PROCESANDO").equals(
                 reserva.getEstadoEnvio()
         )) {
 
@@ -2000,9 +2501,9 @@ public class NotificarCotizacionPrestadorHelper {
         }
 
         if (requerimiento.getEstado()
-                != WebKeysCompras.ESTADO_PENDIENTE
+                != ConfiguracionComprasHelper.getEstadoPendiente()
                 && requerimiento.getEstado()
-                != WebKeysCompras.ESTADO_A_COTIZAR) {
+                != ConfiguracionComprasHelper.getEstadoACotizar()) {
 
             throw new Exception(
                     "El requerimiento no se encuentra "
@@ -2121,20 +2622,10 @@ public class NotificarCotizacionPrestadorHelper {
         );
     }
 
-    private String normalizarUsuario(
-            String usuario) {
-
-        if (usuario == null
-                || usuario.trim()
-                .length() == 0) {
-
-            return "sistema";
-        }
-
-        return truncar(
-                usuario.trim(),
-                100
-        );
+    private String normalizarUsuario(String usuario) {
+        String valor=usuario==null?null:btrimEspacios(usuario);
+        if(valor==null || valor.length()==0)valor=ConfiguracionComprasHelper.leerObligatoria("COMPRAS_USUARIO_DEFECTO_NOTIFICACION");
+        return truncarErrorNotificacion(valor,100);
     }
 
     protected static final class OrdenMedicaAdjunta {

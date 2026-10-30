@@ -1,5 +1,7 @@
 package ar.com.ospim.servlets;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1183,10 +1185,10 @@ public class PdfServlet extends HttpServlet {
         try {
             user = PortalUtil.getUser(req);
             if (user == null
-                    || (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-                    && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                    && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-                    && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS))) {
+                    || (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
+                    && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
+                    && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
+                    && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()))) {
                 res.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -1403,10 +1405,10 @@ public class PdfServlet extends HttpServlet {
 			User user = PortalUtil.getUser(req);
 
 			if (user == null
-					|| (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-					&& !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS))) {
+					|| (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
+					&& !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
+					&& !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
+					&& !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()))) {
 
 				res.sendError(
 						HttpServletResponse.SC_FORBIDDEN,
@@ -1485,7 +1487,7 @@ public class PdfServlet extends HttpServlet {
             ServiceContext contexto = new ServiceContext();
             contexto.setUserId(user.getUserId());
             contexto.setCompanyId(user.getCompanyId());
-            contexto.setScopeGroupId(WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS);
+            contexto.setScopeGroupId(ConfiguracionComprasHelper.getGrupoDocumentLibraryLegacy());
             byte[] contenido = new RequerimientoCompraReclamoPrestacionalHelper()
                     .imprimirComparativa(id, user, contexto,
                             PermissionCheckerFactoryUtil.create(user, true));

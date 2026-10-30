@@ -3,9 +3,6 @@ package ar.com.ospim.compras.requerimientos.service;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativaDetalle;
 import ar.com.ospim.util.ConnectionHelper;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,9 +13,6 @@ import java.util.List;
 
 public class RequerimientoCompraComparativaServiceImpl {
 
-    private static final Log _log = LogFactoryUtil.getLog(
-            RequerimientoCompraComparativaServiceImpl.class);
-
     public List<RequerimientoCompraComparativa> listar(int idRequerimiento)
             throws Exception {
         return listar(idRequerimiento, 0);
@@ -26,12 +20,20 @@ public class RequerimientoCompraComparativaServiceImpl {
 
     public List<RequerimientoCompraComparativa> listar(int idRequerimiento,
             int idPrestador) throws Exception {
-        Connection con = null;
+        Connection con = ConnectionHelper.getConnection();
+        try {
+            return listar(con, idRequerimiento, idPrestador);
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    public List<RequerimientoCompraComparativa> listar(Connection con, int idRequerimiento,
+            int idPrestador) throws Exception {
         PreparedStatement stmt = null;
         List<RequerimientoCompraComparativa> resultado =
                 new ArrayList<RequerimientoCompraComparativa>();
         try {
-            con = ConnectionHelper.getConnection();
             stmt = con.prepareStatement(
                     idPrestador > 0
                     ? "SELECT c.*, p.id_prestador AS prestador_id, p.descripcion "
@@ -53,7 +55,7 @@ public class RequerimientoCompraComparativaServiceImpl {
             ResultSet rs = stmt.executeQuery();
             try {
                 while (rs.next()) {
-                    RequerimientoCompraComparativa c = new RequerimientoCompraComparativa();
+                    RequerimientoCompraComparativa c = RequerimientoCompraComparativa.paraMapeo();
                     c.setIdComparativa(rs.getInt("id_comparativa"));
                     c.setIdRequerimiento(idRequerimiento);
                     c.setIdPrestador(rs.getInt("prestador_id"));
@@ -101,19 +103,22 @@ public class RequerimientoCompraComparativaServiceImpl {
             }
             return resultado;
         } finally {
-            ConnectionHelper.cerrar(stmt, con);
+            ConnectionHelper.cerrar(stmt);
         }
     }
 
     public void guardar(List<RequerimientoCompraComparativa> comparativas,
             List<Integer> detallesVaciados, String usuario) throws Exception {
-        Connection con = ConnectionHelper.getConnectionForTransaction();
-        if (con == null) {
-            throw new SQLException("No se pudo obtener la conexión de Compras.");
-        }
-        try {
+        new ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper()
+                .guardarDatosValidados(comparativas, detallesVaciados, usuario);
+    }
+
+    public void guardarDatos(Connection con,
+            List<RequerimientoCompraComparativa> comparativas,
+            List<Integer> detallesVaciados, String usuario) throws Exception {
+            usuario = new ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceImpl()
+                    .resolverUsuarioAuditoria(con, usuario);
             for (RequerimientoCompraComparativa c : comparativas) {
-                bloquearGuardado(con, c);
                 guardarCabecera(con, c, usuario);
                 for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
                     guardarDetalle(con, c.getIdComparativa(), d, usuario);
@@ -129,30 +134,6 @@ public class RequerimientoCompraComparativaServiceImpl {
             } finally {
                 stmt.close();
             }
-            con.commit();
-        } catch (Exception e) {
-            try {
-                con.rollback();
-            } catch (SQLException rollbackError) {
-                _log.error("No se pudo revertir el guardado de la comparativa.", rollbackError);
-            }
-            throw e;
-        } finally {
-            ConnectionHelper.cerrar(con);
-        }
-    }
-
-    private void bloquearGuardado(Connection con,
-            RequerimientoCompraComparativa c) throws Exception {
-        CallableStatement stmt = con.prepareCall(
-                "{call compras.bloquear_guardado_comparativa(?,?)}");
-        try {
-            stmt.setInt(1, c.getIdRequerimiento());
-            stmt.setString(2, c.getPrestacionesEsperadas());
-            stmt.execute();
-        } finally {
-            stmt.close();
-        }
     }
 
     private void guardarCabecera(Connection con, RequerimientoCompraComparativa c,

@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.beans;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.util.DateUtils;
 
@@ -60,7 +62,18 @@ public class RequerimientoCompra {
     private String afiliadoEmail;
 
     public RequerimientoCompra() {
-        this.idEstado = Integer.valueOf(WebKeysCompras.ESTADO_PENDIENTE);
+        this(true);
+    }
+
+    /** El mapeo JDBC no consulta configuracion ni abre otra conexion. */
+    public static RequerimientoCompra paraMapeo() {
+        return new RequerimientoCompra(false);
+    }
+
+    private RequerimientoCompra(boolean aplicarEstadoInicial) {
+        if (aplicarEstadoInicial) {
+            this.idEstado = Integer.valueOf(ConfiguracionComprasHelper.getEstadoPendiente());
+        }
         this.requiereAfiliado = Boolean.FALSE;
         this.cargoOspim = Integer.valueOf(0);
         this.cargoTercerizadora = Integer.valueOf(0);

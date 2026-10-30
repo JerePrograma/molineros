@@ -114,7 +114,7 @@ boolean usuarioPuedeABMDetalle =
                 : user != null
                         && PermissionUtil.userContainsRole(
                                 user,
-                                WebKeysCompras.ROL_ABM_COMPRAS
+                                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras()
                         )
                         && reqDetalle.puedeEditarEstructura();
 
@@ -122,7 +122,7 @@ boolean usuarioPuedeEliminarDetalle =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras()
         )
         && reqDetalle.puedeEliminarDetalle();
 
@@ -136,7 +136,7 @@ boolean usuarioPuedeCotizarDetalle =
                 : user != null
                         && PermissionUtil.userContainsRole(
                                 user,
-                                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras()
                         )
                         && reqDetalle.puedeEditarCotizacion();
 

@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
@@ -156,7 +158,7 @@ public class CambiarEstadoRequerimientoCompraAction
                         && resultado.getPendientesSinClasificar() == 0;
 
                 if (estadoPersistido
-                        == WebKeysCompras.ESTADO_A_COTIZAR) {
+                        == ConfiguracionComprasHelper.getEstadoACotizar()) {
 
                     strutsActionDestino =
                             STRUTS_ACTION_EDITAR_REQUERIMIENTO;
@@ -167,7 +169,7 @@ public class CambiarEstadoRequerimientoCompraAction
                 }
 
             } else if (estadoNuevo
-                    == WebKeysCompras.ESTADO_A_COTIZAR) {
+                    == ConfiguracionComprasHelper.getEstadoACotizar()) {
 
                 validarRolCotizar(
                         user
@@ -205,7 +207,7 @@ public class CambiarEstadoRequerimientoCompraAction
                         && resultado.getPendientesSinClasificar() == 0;
 
                 if (estadoPersistido
-                        == WebKeysCompras.ESTADO_A_COTIZAR) {
+                        == ConfiguracionComprasHelper.getEstadoACotizar()) {
 
                     strutsActionDestino =
                             STRUTS_ACTION_EDITAR_REQUERIMIENTO;
@@ -216,7 +218,7 @@ public class CambiarEstadoRequerimientoCompraAction
                 }
 
             } else if (estadoNuevo
-                    == WebKeysCompras.ESTADO_PARA_AUTORIZAR) {
+                    == ConfiguracionComprasHelper.getEstadoParaAutorizar()) {
 
                 validarRolCotizar(
                         user
@@ -224,7 +226,7 @@ public class CambiarEstadoRequerimientoCompraAction
 
                 requerimientoHelper.cambiarEstado(
                         idRequerimientoCompra,
-                        WebKeysCompras.ESTADO_PARA_AUTORIZAR,
+                        ConfiguracionComprasHelper.getEstadoParaAutorizar(),
                         usuario
                 );
 
@@ -234,7 +236,7 @@ public class CambiarEstadoRequerimientoCompraAction
                 );
 
             } else if (estadoNuevo
-                    == WebKeysCompras.ESTADO_AUTORIZADO) {
+                    == ConfiguracionComprasHelper.getEstadoAutorizado()) {
 
                 validarRolAutorizar(
                         user
@@ -242,7 +244,7 @@ public class CambiarEstadoRequerimientoCompraAction
 
                 requerimientoHelper.cambiarEstado(
                         idRequerimientoCompra,
-                        WebKeysCompras.ESTADO_AUTORIZADO,
+                        ConfiguracionComprasHelper.getEstadoAutorizado(),
                         usuario
                 );
 
@@ -252,7 +254,7 @@ public class CambiarEstadoRequerimientoCompraAction
                 );
 
             } else if (estadoNuevo
-                    == WebKeysCompras.ESTADO_ORDEN_COMPRA) {
+                    == ConfiguracionComprasHelper.getEstadoOrdenCompra()) {
 
                 validarRolCotizar(
                         user
@@ -264,7 +266,7 @@ public class CambiarEstadoRequerimientoCompraAction
                 );
 
             } else if (estadoNuevo
-                    == WebKeysCompras.ESTADO_ANULADO) {
+                    == ConfiguracionComprasHelper.getEstadoAnulado()) {
 
                 validarRolAnular(
                         user
@@ -455,7 +457,7 @@ public class CambiarEstadoRequerimientoCompraAction
 
                 if (hayOmitidos
                         || estadoPersistido
-                        != WebKeysCompras.ESTADO_PENDIENTE) {
+                        != ConfiguracionComprasHelper.getEstadoPendiente()) {
 
                     SessionMessages.add(
                             actionRequest,
@@ -485,7 +487,7 @@ public class CambiarEstadoRequerimientoCompraAction
             boolean cambioAAcotizarConfirmado =
                     cambiaAAcotizar
                             && estadoPersistido
-                            == WebKeysCompras.ESTADO_A_COTIZAR;
+                            == ConfiguracionComprasHelper.getEstadoACotizar();
 
             SessionMessages.add(
                     actionRequest,
@@ -500,7 +502,7 @@ public class CambiarEstadoRequerimientoCompraAction
         boolean cambioAAcotizarConfirmado =
                 cambiaAAcotizar
                         && estadoPersistido
-                        == WebKeysCompras.ESTADO_A_COTIZAR;
+                        == ConfiguracionComprasHelper.getEstadoACotizar();
 
         if (cambioAAcotizarConfirmado) {
             SessionMessages.add(
@@ -572,7 +574,7 @@ public class CambiarEstadoRequerimientoCompraAction
         if (user == null
                 || !PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                ConfiguracionComprasHelper.getRolCotizarCompras()
         )) {
             throw new Exception(
                     "No posee permisos para cotizar "
@@ -588,7 +590,7 @@ public class CambiarEstadoRequerimientoCompraAction
         if (user == null
                 || !PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+                ConfiguracionComprasHelper.getRolAutorizarCompras()
         )) {
             throw new Exception(
                     "No posee permisos para autorizar "
@@ -604,7 +606,7 @@ public class CambiarEstadoRequerimientoCompraAction
         if (user == null
                 || !PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ConfiguracionComprasHelper.getRolAbmCompras()
         )) {
             throw new Exception(
                     "No posee permisos para anular "

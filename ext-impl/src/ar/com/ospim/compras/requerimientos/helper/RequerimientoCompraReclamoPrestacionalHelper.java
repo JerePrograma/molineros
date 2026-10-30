@@ -1,6 +1,12 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
+import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
+import ar.com.ospim.autorizaciones.beans.Nomenclador;
+import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.beans.SectorNomencladorCompra;
 import ar.com.ospim.autorizaciones.beans.RevisionesReclamo;
 import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
 import ar.com.ospim.compras.WebKeysCompras;
@@ -147,63 +153,74 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         return resultado;
     }
 
-    public boolean liberarReserva(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            String usuario) throws Exception {
+    public boolean liberarReserva(int id,String token,String usuario)throws Exception {
+        RequerimientoCompraReclamoPrestacionalTransaccion tx=null;
+        try{tx=RequerimientoCompraReclamoPrestacionalServiceUtil.abrirTransaccion();
+            boolean resultado=liberarReservaEnTransaccion(tx,id,token);if(!resultado)throw new Exception("No se pudo liberar la reserva del Reclamo Prestacional.");
+            tx.commit();return true;
+        }catch(Exception e){if(tx!=null)try{tx.rollback();}catch(Exception r){e.addSuppressed(r);}throw e;}
+        finally{if(tx!=null)tx.cerrar();}
+    }
 
-        validarIdRequerimiento(idRequerimientoCompra);
-        validarToken(tokenReserva);
+    public boolean marcarErrorPosteriorAlInsert(int id,String token,int reclamo,String error,String usuario)throws Exception {
+        RequerimientoCompraReclamoPrestacionalTransaccion tx=null;
+        try{tx=RequerimientoCompraReclamoPrestacionalServiceUtil.abrirTransaccion();
+            boolean resultado=marcarErrorEnTransaccion(tx,id,token,reclamo,error,usuario);
+            if(!resultado)throw new Exception("No se pudo registrar el error de vinculacion del Reclamo Prestacional.");
+            tx.commit();return true;
+        }catch(Exception e){if(tx!=null)try{tx.rollback();}catch(Exception r){e.addSuppressed(r);}throw e;}
+        finally{if(tx!=null)tx.cerrar();}
+    }
 
-        boolean resultado =
-                RequerimientoCompraReclamoPrestacionalServiceUtil.ejecutarLiberacionReserva(
-                        idRequerimientoCompra,
-                        tokenReserva,
-                        normalizarUsuario(usuario)
-                );
-
-        if (!resultado) {
-            throw new Exception(
-                    "No se pudo liberar la reserva del Reclamo Prestacional."
-            );
+    public boolean reservarCreacionEnTransaccion(RequerimientoCompraReclamoPrestacionalTransaccion tx,
+            int id,String token,String usuario)throws Exception {
+        validarIdRequerimiento(id);validarToken(token);token=EditarRequerimientoCompraHelper.normalizarUsuarioAuditoria(token);
+        bloquearRequerimiento(tx,id);Map<String,Object> r=tx.obtenerCabeceraReserva(id);
+        int cotizado=ConfiguracionComprasHelper.resolverEstado("COTIZADO",tx.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS));
+        if(r==null||r.get("baja")!=null)throw new Exception("No existe un requerimiento de compra activo con el identificador informado.");
+        if(!Integer.valueOf(cotizado).equals(r.get("estado")))throw new Exception("El requerimiento no se encuentra COTIZADO.");
+        if(EditarRequerimientoCompraHelper.normalizarUsuarioAuditoria((String)r.get("cuil"))==null||r.get("integrante")==null)
+            throw new Exception("El requerimiento no posee un afiliado valido.");
+        RequerimientoCompraReclamoPrestacional relacion=tx.obtenerPorRequerimiento(id);
+        if(relacion!=null){
+            if(relacion.isVinculado())throw new Exception("El requerimiento ya posee un Reclamo Prestacional.");
+            if(relacion.isError())throw new Exception("El requerimiento posee un Reclamo Prestacional pendiente de reconciliacion.");
+            throw new Exception("Ya existe una creacion de Reclamo Prestacional en proceso para el requerimiento.");
         }
-
+        if(tx.insertarReserva(id,WebKeysCompras.VINCULO_RECLAMO_RESERVADO,token,usuario)!=1)
+            throw new Exception("La reserva cambio mientras se guardaba. Actualice la pantalla.");
         return true;
     }
 
-    public boolean marcarErrorPosteriorAlInsert(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            int idReclamoPrestacional,
-            String error,
-            String usuario) throws Exception {
-
-        validarIdRequerimiento(idRequerimientoCompra);
-        validarToken(tokenReserva);
-
-        if (idReclamoPrestacional <= 0) {
-            throw new Exception(
-                    "Debe informar el Reclamo Prestacional creado."
-            );
-        }
-
-        boolean resultado =
-                RequerimientoCompraReclamoPrestacionalServiceUtil.registrarErrorPosteriorAlInsert(
-                        idRequerimientoCompra,
-                        tokenReserva,
-                        idReclamoPrestacional,
-                        limitarError(error),
-                        normalizarUsuario(usuario)
-                );
-
-        if (!resultado) {
-            throw new Exception(
-                    "No se pudo registrar el error de vinculación "
-                            + "del Reclamo Prestacional."
-            );
-        }
-
+    public boolean finalizarCreacionEnTransaccion(RequerimientoCompraReclamoPrestacionalTransaccion tx,
+            int id,String token,int reclamo,String usuario)throws Exception {
+        validarIdRequerimiento(id);validarToken(token);if(reclamo<=0)throw new Exception("Debe informar el Reclamo Prestacional creado.");
+        token=EditarRequerimientoCompraHelper.normalizarUsuarioAuditoria(token);bloquearRequerimiento(tx,id);
+        RequerimientoCompraReclamoPrestacional r=tx.obtenerPorRequerimiento(id);
+        if(r==null)throw new Exception("No existe una reserva para el requerimiento.");
+        if(r.isVinculado()&&r.getIdReclamoPrestacionalInt()==reclamo)return true;
+        if(!r.isReservado()||!token.equals(r.getTokenReserva()))throw new Exception("La reserva del requerimiento no es valida.");
+        if(tx.actualizarVinculo(id,r.getEstado(),r.getTokenReserva(),reclamo,WebKeysCompras.VINCULO_RECLAMO_VINCULADO,null,true,usuario)!=1)
+            throw new Exception("La reserva cambio mientras se vinculaba el Reclamo Prestacional.");
         return true;
+    }
+
+    public boolean liberarReservaEnTransaccion(RequerimientoCompraReclamoPrestacionalTransaccion tx,int id,String token)throws Exception {
+        validarIdRequerimiento(id);validarToken(token);token=EditarRequerimientoCompraHelper.normalizarUsuarioAuditoria(token);
+        bloquearRequerimiento(tx,id);RequerimientoCompraReclamoPrestacional r=tx.obtenerPorRequerimiento(id);
+        if(r==null||!r.isReservado()||r.getIdReclamoPrestacional()!=null||!token.equals(r.getTokenReserva()))return false;
+        return tx.eliminarReserva(id,r.getEstado(),r.getTokenReserva())==1;
+    }
+
+    public boolean marcarErrorEnTransaccion(RequerimientoCompraReclamoPrestacionalTransaccion tx,
+            int id,String token,int reclamo,String error,String usuario)throws Exception {
+        validarIdRequerimiento(id);validarToken(token);if(reclamo<=0)throw new Exception("Debe informar el Reclamo Prestacional creado.");
+        token=EditarRequerimientoCompraHelper.normalizarUsuarioAuditoria(token);bloquearRequerimiento(tx,id);
+        RequerimientoCompraReclamoPrestacional r=tx.obtenerPorRequerimiento(id);
+        if(r!=null&&r.isReservado()&&token.equals(r.getTokenReserva()))
+            return tx.actualizarVinculo(id,r.getEstado(),r.getTokenReserva(),reclamo,WebKeysCompras.VINCULO_RECLAMO_ERROR,
+                    limitarError(error,tx),false,usuario)==1;
+        return r!=null&&r.isError()&&r.getIdReclamoPrestacionalInt()==reclamo;
     }
 
     /** Genera una sola copia y sincroniza el adjunto del RP si cambio. */
@@ -299,7 +316,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             serviceContext.setCompanyId(user.getCompanyId());
         }
         serviceContext.setScopeGroupId(
-                WebKeysCompras.DOCUMENT_LIBRARY_GROUP_ID_COMPRAS);
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getGrupoDocumentLibraryLegacy());
         return crearYVincular(
                 idRequerimientoCompra, tokenReserva, reclamo, user,
                 serviceContext);
@@ -314,7 +331,14 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
 
         return crearYVincularInterno(
                 idRequerimientoCompra, tokenReserva, reclamo, user,
-                serviceContext);
+                serviceContext, null);
+    }
+
+    public int crearYVincular(int idRequerimientoCompra, String tokenReserva,
+            ReclamoPrestacional reclamo, User user, ServiceContext serviceContext,
+            ReclamoPrestacionalCompraContexto contexto) throws Exception {
+        return crearYVincularInterno(idRequerimientoCompra, tokenReserva, reclamo,
+                user, serviceContext, contexto);
     }
 
     private int crearYVincularInterno(
@@ -322,7 +346,8 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             String tokenReserva,
             ReclamoPrestacional reclamo,
             User user,
-            ServiceContext serviceContext) throws Exception {
+            ServiceContext serviceContext,
+            ReclamoPrestacionalCompraContexto contexto) throws Exception {
 
         validarIdRequerimiento(idRequerimientoCompra);
         validarToken(tokenReserva);
@@ -395,8 +420,13 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             validarReservaCompatible(
                     relacion,
                     tokenReserva,
-                    usuario
+                    usuario, transaccion
             );
+
+            if (contexto != null) {
+                validarReferenciasOrigen(transaccion, idRequerimientoCompra,
+                        tokenReserva, reclamo, user, contexto);
+            }
 
             boolean tieneComparativa =
                     !RequerimientoCompraComparativaServiceUtil
@@ -535,34 +565,159 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         }
     }
 
-    public void finalizarCreacion(
-            int idRequerimientoCompra,
-            String tokenReserva,
-            int idReclamoPrestacional,
-            String usuario) throws Exception {
 
-        validarIdRequerimiento(idRequerimientoCompra);
-        validarToken(tokenReserva);
-
-        if (idReclamoPrestacional <= 0) {
-            throw new Exception(
-                    "Debe informar el Reclamo Prestacional creado."
-            );
+    private void validarReferenciasOrigen(
+            RequerimientoCompraReclamoPrestacionalTransaccion transaccion,
+            int idRequerimiento, String token, ReclamoPrestacional reclamo, User user,
+            ReclamoPrestacionalCompraContexto contexto) throws Exception {
+        if (user == null || contexto.getIdRequerimientoCompra() != idRequerimiento
+                || !contexto.coincideNonce(token)
+                || !contexto.perteneceAUsuario(user.getScreenName())
+                || !contexto.estaVigente(System.currentTimeMillis())
+                || !contexto.esBorradorEnEdicion(reclamo)
+                || contexto.getCantidadDetallesOrigen() <= 0) {
+            throw new Exception("No se pudo verificar la identidad del borrador y sus detalles de Compras.");
         }
-
-        boolean resultado =
-                RequerimientoCompraReclamoPrestacionalServiceUtil.ejecutarFinalizacionCreacion(
-                        idRequerimientoCompra,
-                        tokenReserva,
-                        idReclamoPrestacional,
-                        normalizarUsuario(usuario)
-                );
-
-        if (!resultado) {
-            throw new Exception(
-                    "No se pudo finalizar la relación con el Reclamo Prestacional."
-            );
+        RequerimientoCompra requerimiento = transaccion.getRequerimientoCompra(idRequerimiento);
+        ReclamoPrestacionalCompraPrecargaHelper.validarRequerimientoOrigen(
+                requerimiento, contexto, reclamo);
+        ReclamoPrestacionalCompraPrecargaHelper.validarRecuperablesParaGuardar(
+                requerimiento, reclamo.getPrestaciones());
+        java.util.Set<Integer> detalles = new java.util.HashSet<Integer>();
+        if (reclamo.getPrestaciones() == null || reclamo.getPrestaciones().isEmpty()) {
+            throw new Exception("El borrador no conserva prestaciones para confirmar.");
         }
+        for (int i = 0; i < reclamo.getPrestaciones().size(); i++) {
+            PrestacionesReclamo prestacion = reclamo.getPrestaciones().get(i);
+            if (prestacion == null) {
+                throw new Exception("El borrador contiene una prestacion sin identidad.");
+            }
+            Integer idDetalle = contexto.getIdDetalleOrigen(prestacion.getIdRegistro());
+            if (idDetalle == null || !detalles.add(idDetalle)) {
+                throw new Exception("El borrador contiene un detalle de origen desconocido o duplicado.");
+            }
+            RequerimientoCompraDetalle origen = ReclamoPrestacionalCompraPrecargaHelper
+                    .encontrarDetalleOrigen(requerimiento, idDetalle.intValue());
+            if (PrestacionesReclamo.ESTADOS.BAJA.equals(prestacion.getEstado())) {
+                continue;
+            }
+            if (prestacion.getId_medicamento() > 0) {
+                if (!origen.tieneMedicamento()
+                        || prestacion.getId_medicamento() != origen.getIdMedicamentoInt()
+                        || prestacion.getId_prestacion() > 0) {
+                    throw new Exception("La prestacion no conserva la referencia de medicamento del detalle.");
+                }
+                continue;
+            }
+            Nomenclador canonico = transaccion.obtenerNomencladorCanonico(prestacion.getId_prestacion());
+            if (origen.tieneNomenclador()
+                    && prestacion.getId_prestacion() == origen.getIdPrestacionInt()) {
+                ReclamoPrestacionalCompraPrecargaHelper.validarReferenciaPersistida(origen, canonico);
+            } else {
+                List<SectorNomencladorCompra> configuracion = NomencladorCompraBusquedaHelper
+                        .resolverConfiguracion(requerimiento.getIdSector().intValue(),
+                                origen.getIdTipoPrestacion(), transaccion);
+                if (!NomencladorCompraBusquedaHelper.esNomencladorConfigurado(configuracion, canonico)) {
+                    throw new Exception("La nueva referencia no pertenece al nomenclador configurado del detalle.");
+                }
+            }
+            if (canonico == null || canonico.getId_prestacion() != prestacion.getId_prestacion()
+                    || canonico.getCodigo() == null || !canonico.getCodigo().trim().equals(
+                        prestacion.getCodigoPrestacion() != null ? prestacion.getCodigoPrestacion().trim() : "")) {
+                throw new Exception("La referencia tecnica del borrador ya no coincide con el nomenclador canonico.");
+            }
+        }
+    }
+
+    public void borrarReclamoPrestacional(int idReclamo, User user) throws Exception {
+        if (idReclamo <= 0 || user == null || WebKeysCompras.isEmpty(user.getScreenName())) {
+            throw new Exception("No se pudo identificar el reclamo y el usuario de la baja.");
+        }
+        RequerimientoCompraReclamoPrestacionalTransaccion transaccion =
+                RequerimientoCompraReclamoPrestacionalServiceUtil.abrirTransaccion();
+        try {
+            transaccion.bloquearReclamoPrestacional(idReclamo);
+            List<RequerimientoCompraReclamoPrestacional> anteriores =
+                    transaccion.obtenerVinculosPorRPForUpdate(idReclamo);
+            if (transaccion.borrarReclamoPrestacional(idReclamo, user.getScreenName()) != 1) {
+                throw new Exception("La baja del Reclamo Prestacional no fue confirmada.");
+            }
+            java.sql.Timestamp fechaBaja = transaccion.bloquearReclamoPrestacional(idReclamo);
+            if (fechaBaja == null) {
+                throw new Exception("El Reclamo Prestacional no confirmo su fecha de baja.");
+            }
+            List<RequerimientoCompraReclamoPrestacional> actuales =
+                    transaccion.obtenerVinculosPorRPForUpdate(idReclamo);
+            for (int i = 0; i < anteriores.size(); i++) {
+                RequerimientoCompraReclamoPrestacional anterior = anteriores.get(i);
+                if (!anterior.isVinculado() && !WebKeysCompras.VINCULO_RECLAMO_ERROR.equals(anterior.getEstado())) {
+                    continue;
+                }
+                RequerimientoCompraReclamoPrestacional actual = buscarVinculo(
+                        actuales, anterior.getIdRequerimientoCompra());
+                if (actual != null && WebKeysCompras.VINCULO_RECLAMO_BAJA.equals(actual.getEstado())
+                        && actual.getBajaFecha() != null
+                        && fechaBaja.equals(actual.getBajaFecha())
+                        && actual.getTokenReserva() == null) {
+                    continue;
+                }
+                if (actual == null || !anterior.getEstado().equals(actual.getEstado())) {
+                    throw new Exception("El vinculo con Compras cambio durante la baja del reclamo.");
+                }
+                actual.setEstado(WebKeysCompras.VINCULO_RECLAMO_BAJA);
+                actual.setTokenReserva(null);
+                if (transaccion.guardarBajaVinculo(actual, fechaBaja, user.getScreenName(),
+                        anterior.getEstado()) != 1) {
+                    throw new Exception("No se pudo sincronizar la baja con Compras.");
+                }
+            }
+            List<RequerimientoCompraReclamoPrestacional> finales =
+                    transaccion.obtenerVinculosPorRPForUpdate(idReclamo);
+            for (int i = 0; i < anteriores.size(); i++) {
+                RequerimientoCompraReclamoPrestacional anterior = anteriores.get(i);
+                if (anterior.isVinculado()
+                        || WebKeysCompras.VINCULO_RECLAMO_ERROR.equals(anterior.getEstado())) {
+                    RequerimientoCompraReclamoPrestacional finalizado = buscarVinculo(
+                            finales, anterior.getIdRequerimientoCompra());
+                    if (!WebKeysCompras.VINCULO_RECLAMO_BAJA.equals(finalizado.getEstado())
+                            || !fechaBaja.equals(finalizado.getBajaFecha())
+                            || finalizado.getTokenReserva() != null
+                            || !user.getScreenName().equals(finalizado.getBajaUsr())) {
+                        throw new Exception("La baja del vinculo no confirmo fecha, auditoria y estado.");
+                    }
+                }
+            }
+            transaccion.commit();
+        } catch (Exception e) {
+            try {
+                transaccion.rollback();
+            } catch (Exception rollbackError) {
+                e.addSuppressed(rollbackError);
+            }
+            throw e;
+        } finally {
+            transaccion.cerrar();
+        }
+    }
+
+    private RequerimientoCompraReclamoPrestacional buscarVinculo(
+            List<RequerimientoCompraReclamoPrestacional> vinculos, int idRequerimiento)
+            throws Exception {
+        for (int i = 0; i < vinculos.size(); i++) {
+            RequerimientoCompraReclamoPrestacional vinculo = vinculos.get(i);
+            if (vinculo.getIdRequerimientoCompra() == idRequerimiento) {
+                return vinculo;
+            }
+        }
+        throw new Exception("No se pudo releer el vinculo del reclamo con Compras.");
+    }
+
+    public void finalizarCreacion(int id,String token,int reclamo,String usuario)throws Exception {
+        RequerimientoCompraReclamoPrestacionalTransaccion tx=null;
+        try{tx=RequerimientoCompraReclamoPrestacionalServiceUtil.abrirTransaccion();
+            finalizarCreacionEnTransaccion(tx,id,token,reclamo,usuario);tx.commit();
+        }catch(Exception e){if(tx!=null)try{tx.rollback();}catch(Exception r){e.addSuppressed(r);}throw e;}
+        finally{if(tx!=null)tx.cerrar();}
     }
 
     public void reservarCreacion(
@@ -599,7 +754,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                 validarReservaCompatible(
                         relacion,
                         tokenReserva,
-                        usuario
+                        usuario, transaccion
                 );
 
                 transaccion.commit();
@@ -621,7 +776,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             validarReservaCompatible(
                     relacion,
                     tokenReserva,
-                    usuario
+                    usuario, transaccion
             );
 
             transaccion.commit();
@@ -699,59 +854,25 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
             int idRequerimientoCompra,
             String usuario) throws Exception {
 
-        int estadoActual =
-                transaccion.getEstadoRequerimientoForUpdate(
-                        idRequerimientoCompra
-                );
-
-        if (!WebKeysCompras.esEstadoValido(estadoActual)) {
-            throw new Exception(
-                    "El requerimiento posee un estado inválido durante "
-                            + "la vinculación del Reclamo Prestacional."
-            );
+        String estados = transaccion.getConfiguracionCompra(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS);
+        int estadoActual = transaccion.getEstadoRequerimientoForUpdate(idRequerimientoCompra);
+        int destino = ConfiguracionComprasHelper.resolverEstado("RECLAMO_RP", estados);
+        if (estadoActual == destino
+                || estadoActual == ConfiguracionComprasHelper.resolverEstado("PARA_AUTORIZAR", estados)
+                || estadoActual == ConfiguracionComprasHelper.resolverEstado("AUTORIZADO", estados)) return;
+        if (!ConfiguracionComprasHelper.resolverTransicionEstado(estadoActual, destino,
+                transaccion.getConfiguracionCompra("COMPRAS_TRANSICIONES_ESTADO"), estados)) {
+            throw new Exception("El requerimiento vinculado no puede pasar a RECLAMO (RP) desde su estado actual.");
         }
-
-        if (WebKeysCompras.esReclamoRP(estadoActual)
-                || WebKeysCompras.esParaAutorizar(estadoActual)
-                || WebKeysCompras.esAutorizado(estadoActual)) {
-            return;
-        }
-
-        if (!WebKeysCompras.validarTransicionEstado(
-                estadoActual,
-                WebKeysCompras.ESTADO_RECLAMO_RP
-        )) {
-            throw new Exception(
-                    "El requerimiento vinculado al Reclamo Prestacional "
-                            + "no puede pasar a RECLAMO (RP) desde su estado actual: "
-                            + WebKeysCompras.getEstadoDescripcion(estadoActual)
-                            + "."
-            );
-        }
-
-        transaccion.cambiarEstado(
-                idRequerimientoCompra,
-                WebKeysCompras.ESTADO_RECLAMO_RP,
-                normalizarUsuario(usuario)
-        );
-
-        int estadoFinal =
-                transaccion.getEstadoRequerimientoForUpdate(
-                        idRequerimientoCompra
-                );
-
-        if (estadoFinal != WebKeysCompras.ESTADO_RECLAMO_RP) {
-            throw new Exception(
-                    "El Reclamo Prestacional quedó vinculado, pero el "
-                            + "requerimiento no confirmo el estado RECLAMO (RP)."
-            );
+        transaccion.cambiarEstado(idRequerimientoCompra, destino, normalizarUsuario(usuario));
+        if (transaccion.getEstadoRequerimientoForUpdate(idRequerimientoCompra) != destino) {
+            throw new Exception("El requerimiento no confirmo el estado RECLAMO (RP).");
         }
     }
 
     private void validarReservaCompatible(
             RequerimientoCompraReclamoPrestacional relacion,
-            String tokenReserva,
-            String usuario) throws Exception {
+            String tokenReserva,String usuario,RequerimientoCompraReclamoPrestacionalTransaccion tx) throws Exception {
 
         if (relacion == null) {
             throw new Exception(
@@ -793,7 +914,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
                     WebKeysCompras.trimToNull(relacion.getModiUsr());
         }
 
-        String usuarioActual = normalizarUsuario(usuario);
+        String usuarioActual = tx.resolverUsuarioAuditoria(usuario);
 
         if (usuarioReserva != null
                 && !usuarioReserva.equals(usuarioActual)) {
@@ -832,30 +953,27 @@ private void validarIdRequerimiento(
         }
     }
 
-    private void validarToken(String tokenReserva) throws Exception {
-        if (WebKeysCompras.isEmpty(tokenReserva)) {
-            throw new Exception(
-                    "No se pudo validar el contexto de creación "
-                            + "del Reclamo Prestacional."
-            );
-        }
+    private void validarToken(String token)throws Exception {
+        String normalizado=EditarRequerimientoCompraHelper.normalizarUsuarioAuditoria(token);
+        if(normalizado==null||normalizado.length()>64)
+            throw new Exception("No se pudo validar el contexto de creacion del Reclamo Prestacional.");
     }
 
     private String normalizarUsuario(String usuario) {
-        return WebKeysCompras.isEmpty(usuario)
-                ? "sistema"
-                : usuario.trim();
+        return EditarRequerimientoCompraHelper.normalizarUsuarioAuditoria(usuario);
     }
 
-    private String limitarError(String error) {
-        String value = WebKeysCompras.trimToNull(error);
-
-        if (value == null) {
-            return "Error de vinculación no especificado.";
+    private String limitarError(String error,RequerimientoCompraReclamoPrestacionalTransaccion tx)throws Exception {
+        String clave="COMPRAS_RP_MAX_ERROR";
+        int max=ConfiguracionComprasHelper.parsearEntero(clave,tx.getConfiguracionCompra(clave),false);
+        String valor=EditarRequerimientoCompraHelper.normalizarUsuarioAuditoria(error);
+        if(valor==null)valor=ConfiguracionComprasHelper.exigirValor("COMPRAS_RP_ERROR_DEFECTO",tx.getConfiguracionCompra("COMPRAS_RP_ERROR_DEFECTO"));
+        int fin=0,caracteres=0;
+        while(fin<valor.length()&&caracteres<max){
+            char c=valor.charAt(fin++);
+            if(c>=0xD800&&c<=0xDBFF&&fin<valor.length()&&valor.charAt(fin)>=0xDC00&&valor.charAt(fin)<=0xDFFF)fin++;
+            caracteres++;
         }
-
-        return value.length() <= 2000
-                ? value
-                : value.substring(0, 2000);
+        return valor.substring(0,fin);
     }
 }

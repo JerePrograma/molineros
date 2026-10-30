@@ -626,7 +626,7 @@ String afiliadoInicialAntecedentesFlag =
             nombreMedicamento: '',
             droga: item.droga == null ? '' : String(item.droga),
 
-            cantidad: '1',
+            cantidad: '<%= ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getCantidadDetalleInicial() %>',
 
             precioUnitario: '',
             precioTotal: '',

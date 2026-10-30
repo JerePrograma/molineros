@@ -13,7 +13,7 @@ public class RequerimientoCompraComparativa {
     private String prestacionesEsperadas;
     private String prestador;
     private Date fechaPresupuesto;
-    private Integer formaPago = Integer.valueOf(30);
+    private Integer formaPago;
     private String plazoEntrega;
     private Integer validezPresupuesto;
     private String envio;
@@ -26,6 +26,17 @@ public class RequerimientoCompraComparativa {
     private BigDecimal neto;
     private BigDecimal total;
     private List<RequerimientoCompraComparativaDetalle> detalles = new ArrayList<RequerimientoCompraComparativaDetalle>();
+
+    public RequerimientoCompraComparativa() {
+        ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper.aplicarDefaultsConfigurados(this);
+    }
+
+    private RequerimientoCompraComparativa(boolean paraMapeo) {
+    }
+
+    public static RequerimientoCompraComparativa paraMapeo() {
+        return new RequerimientoCompraComparativa(true);
+    }
 
     public int getIdComparativa() { return idComparativa; }
     public void setIdComparativa(int idComparativa) { this.idComparativa = idComparativa; }

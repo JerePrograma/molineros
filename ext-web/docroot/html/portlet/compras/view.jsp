@@ -11,14 +11,14 @@ boolean mostrarParaAutorizar =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAutorizarCompras()
         );
 
 boolean mostrarConfiguracionCorreos =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras()
         );
 
 if (tabs1 == null) {

@@ -230,7 +230,7 @@ Efectos secundarios:
                 <input type="text"
                        id="<portlet:namespace />detalle_cantidad"
                        size="8"
-                       value="1" />
+                       value="<%= ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getCantidadDetalleInicial() %>" />
             </td>
         </tr>
 

@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.afiliados.beans.TercerizadoraServicio;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.TipoPrestacionCompra;
@@ -129,7 +131,7 @@ public class ViewComprasAction extends PortletAction {
         if (user == null
                 || !PermissionUtil.userContainsRole(
                         user,
-                        WebKeysCompras.ROL_COTIZAR_COMPRAS
+                        ConfiguracionComprasHelper.getRolCotizarCompras()
                 )) {
 
             throw new Exception(

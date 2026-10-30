@@ -8,7 +8,7 @@ Referencia legacy:
 <%
 request.setAttribute(
         "COMPRAS_ESTADO_FORZADO",
-        String.valueOf(WebKeysCompras.ESTADO_ORDEN_COMPRA)
+        String.valueOf(ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoOrdenCompra())
 );
 %>
 

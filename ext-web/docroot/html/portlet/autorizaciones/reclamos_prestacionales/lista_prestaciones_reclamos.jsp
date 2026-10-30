@@ -206,6 +206,10 @@ if (prestacionesDelReclamo != null && prestacionesDelReclamo.size()>0){
 
 <liferay-ui:error exception="<%=PrestacionesReclamosException.class %>" message="error-en-prestacion-reclamo" />
 
+<liferay-ui:error key="error-fecha-comprobante-compras" message="<%=(String)request.getAttribute(\"msgErrorFechaComprobanteCompras\") %>" />
+
+<liferay-ui:error key="error-seleccion-compras" message="<%=(String)request.getAttribute(\"msgErrorSeleccionCompras\") %>" />
+
 <liferay-ui:search-iterator searchContainer="<%= searchContainer %>" />	
 
 		

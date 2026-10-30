@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.service
         .BusquedaRequerimientoCompraServiceUtil;
@@ -90,25 +92,25 @@ public class TieneSituacionMedicaVigenteCompraAction
             boolean puedeVer =
                     PermissionUtil.userContainsRole(
                             user,
-                            WebKeysCompras.ROL_VIEW_COMPRAS
+                            ConfiguracionComprasHelper.getRolViewCompras()
                     );
 
             boolean puedeAdministrar =
                     PermissionUtil.userContainsRole(
                             user,
-                            WebKeysCompras.ROL_ABM_COMPRAS
+                            ConfiguracionComprasHelper.getRolAbmCompras()
                     );
 
             boolean puedeCotizar =
                     PermissionUtil.userContainsRole(
                             user,
-                            WebKeysCompras.ROL_COTIZAR_COMPRAS
+                            ConfiguracionComprasHelper.getRolCotizarCompras()
                     );
 
             boolean puedeAutorizar =
                     PermissionUtil.userContainsRole(
                             user,
-                            WebKeysCompras.ROL_AUTORIZAR_COMPRAS
+                            ConfiguracionComprasHelper.getRolAutorizarCompras()
                     );
 
             if (!puedeVer

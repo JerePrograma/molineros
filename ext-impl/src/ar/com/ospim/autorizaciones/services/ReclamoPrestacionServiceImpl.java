@@ -1414,28 +1414,41 @@ public class ReclamoPrestacionServiceImpl {
 	
 	public void borrar(int id, String screenName) throws SystemException, ImposibleBorrarReclamoPrestacionalException {
 		Connection con = null;
-		CallableStatement stmt = null;
 		try {
-			String sql = "{call autorizaciones.borra_reclamo_prestacional(?, ?)}";
 			con = ConnectionHelper.getConnection();
-			stmt = con.prepareCall(sql.toString());
-			stmt.setInt(1, id);
-			stmt.setString(2, screenName);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				if (rs.getInt(1) == 0) {
-					throw new ImposibleBorrarReclamoPrestacionalException ();
-				}
+			if (borrar(con, id, screenName) == 0) {
+				throw new ImposibleBorrarReclamoPrestacionalException();
 			}
-		} catch (SQLException  e) {
+		} catch (SQLException e) {
 			_log.error("Error al borrar el reclamo prestacional", e);
 			throw new SystemException();
 		} finally {
-			ConnectionHelper.cerrar(stmt, con);
+			ConnectionHelper.cerrar(con);
+		}
+	}
+
+	public int borrar(Connection con, int id, String screenName) throws SQLException {
+		CallableStatement stmt = null;
+		ResultSet rs = null;
+		try {
+			stmt = con.prepareCall("{call autorizaciones.borra_reclamo_prestacional(?, ?)}");
+			stmt.setInt(1, id);
+			stmt.setString(2, screenName);
+			rs = stmt.executeQuery();
+			return rs.next() ? rs.getInt(1) : 0;
+		} finally {
+			try {
+				if (rs != null) {
+					rs.close();
+				}
+			} finally {
+				ConnectionHelper.cerrar(stmt);
+			}
 		}
 	}
 	
 	
+
 	public Integer getLoteVigenteReclamoPrestacional() throws SystemException {
 		Connection con = null;
 		CallableStatement stmt = null;

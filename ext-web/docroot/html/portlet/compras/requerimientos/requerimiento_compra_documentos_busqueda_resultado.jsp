@@ -123,7 +123,7 @@ boolean puedeCotizarPresupuestos =
                 : user != null
                         && PermissionUtil.userContainsRole(
                                 user,
-                                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras()
                         );
 
 boolean puedeEditarEmpresaPresupuestos =

@@ -133,6 +133,14 @@ public class RequerimientoCompraReclamoPrestacionalServiceUtil {
                 serviceContext);
     }
 
+    public static int crearYVincular(int idRequerimientoCompra, String tokenReserva,
+            ReclamoPrestacional reclamo, User user, ServiceContext serviceContext,
+            ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto contexto)
+            throws Exception {
+        return helper.crearYVincular(idRequerimientoCompra, tokenReserva, reclamo,
+                user, serviceContext, contexto);
+    }
+
     public static void finalizarCreacion(
             int idRequerimientoCompra,
             String tokenReserva,

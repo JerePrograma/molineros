@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.action;
 
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
@@ -138,10 +140,10 @@ public class ImprimirRequerimientoCompraAction extends PortletAction {
             throw new Exception("No se pudo determinar el usuario actual.");
         }
 
-        if (!PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_VIEW_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_ABM_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_COTIZAR_COMPRAS)
-                && !PermissionUtil.userContainsRole(user, WebKeysCompras.ROL_AUTORIZAR_COMPRAS)) {
+        if (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
+                && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
+                && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
+                && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras())) {
             throw new Exception("No posee permisos para imprimir requerimientos de compras.");
         }
     }

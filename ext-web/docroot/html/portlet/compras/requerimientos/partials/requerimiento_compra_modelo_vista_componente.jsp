@@ -74,14 +74,14 @@ boolean puedeABM =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras()
         );
 
 boolean puedeCotizar =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_COTIZAR_COMPRAS
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolCotizarCompras()
         );
 
 Object soloLecturaAttr =

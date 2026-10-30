@@ -19,7 +19,7 @@ Efectos secundarios:
 <%
 request.setAttribute(
         "COMPRAS_ESTADO_FORZADO",
-        String.valueOf(WebKeysCompras.ESTADO_COTIZADO)
+        String.valueOf(ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoCotizado())
 );
 
 request.setAttribute(

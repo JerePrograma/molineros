@@ -1,3 +1,4 @@
+import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
@@ -8,36 +9,37 @@ public class ComprasAutorizadorPermisosTest {
     private static int checks;
 
     public static void main(String[] args) {
+        ConfiguracionComprasDatosFixture.instalar();
         int[] estados = new int[] {
-                WebKeysCompras.ESTADO_PENDIENTE,
-                WebKeysCompras.ESTADO_A_COTIZAR,
-                WebKeysCompras.ESTADO_COTIZADO,
-                WebKeysCompras.ESTADO_RECLAMO_RP,
-                WebKeysCompras.ESTADO_ORDEN_COMPRA,
-                WebKeysCompras.ESTADO_PARA_AUTORIZAR,
-                WebKeysCompras.ESTADO_AUTORIZADO,
-                WebKeysCompras.ESTADO_ANULADO
+                ConfiguracionComprasHelper.getEstadoPendiente(),
+                ConfiguracionComprasHelper.getEstadoACotizar(),
+                ConfiguracionComprasHelper.getEstadoCotizado(),
+                ConfiguracionComprasHelper.getEstadoReclamoRP(),
+                ConfiguracionComprasHelper.getEstadoOrdenCompra(),
+                ConfiguracionComprasHelper.getEstadoParaAutorizar(),
+                ConfiguracionComprasHelper.getEstadoAutorizado(),
+                ConfiguracionComprasHelper.getEstadoAnulado()
         };
         for (int i = 0; i < estados.length; i++) {
             int estado = estados[i];
             RequerimientoCompra actual = nuevo(estado);
-            if (estado == WebKeysCompras.ESTADO_ANULADO) {
+            if (estado == ConfiguracionComprasHelper.getEstadoAnulado()) {
                 actual.setBajaFecha(new Date());
             }
             verificar("observacion en estado " + estado,
                     actual.puedeEditarObservacionInterna());
             verificar("solo autorizar desde 6, estado " + estado,
                     WebKeysCompras.validarTransicionEstado(
-                            estado, WebKeysCompras.ESTADO_AUTORIZADO)
-                            == (estado == WebKeysCompras.ESTADO_PARA_AUTORIZAR));
-            if (estado != WebKeysCompras.ESTADO_ANULADO) {
+                            estado, ConfiguracionComprasHelper.getEstadoAutorizado())
+                            == (estado == ConfiguracionComprasHelper.getEstadoParaAutorizar()));
+            if (estado != ConfiguracionComprasHelper.getEstadoAnulado()) {
                 actual.setBajaFecha(new Date());
                 verificar("baja fuera de 99, estado " + estado,
                         !actual.puedeEditarObservacionInterna());
             }
         }
         RequerimientoCompra sinId = new RequerimientoCompra();
-        sinId.setEstado(WebKeysCompras.ESTADO_ANULADO);
+        sinId.setEstado(ConfiguracionComprasHelper.getEstadoAnulado());
         sinId.setBajaFecha(new Date());
         verificar("observacion exige id persistido",
                 !sinId.puedeEditarObservacionInterna());
@@ -56,19 +58,19 @@ public class ComprasAutorizadorPermisosTest {
                 int estado = estados[i];
                 String caso = sector + " estado " + estado;
                 boolean puedeEnviar = estado == (empresa
-                        ? WebKeysCompras.ESTADO_PENDIENTE
-                        : WebKeysCompras.ESTADO_RECLAMO_RP);
+                        ? ConfiguracionComprasHelper.getEstadoPendiente()
+                        : ConfiguracionComprasHelper.getEstadoReclamoRP());
                 verificar(caso + " enviar a autorizar desde estado permitido",
                         WebKeysCompras.validarTransicionEstado(
-                                estado, WebKeysCompras.ESTADO_PARA_AUTORIZAR, sector)
+                                estado, ConfiguracionComprasHelper.getEstadoParaAutorizar(), sector)
                                 == puedeEnviar);
                 verificar(caso + " autorizar solo desde PARA AUTORIZAR",
                         WebKeysCompras.validarTransicionEstado(
-                                estado, WebKeysCompras.ESTADO_AUTORIZADO, sector)
-                                == (estado == WebKeysCompras.ESTADO_PARA_AUTORIZAR));
+                                estado, ConfiguracionComprasHelper.getEstadoAutorizado(), sector)
+                                == (estado == ConfiguracionComprasHelper.getEstadoParaAutorizar()));
                 verificar(caso + " OC exige operacion especifica",
                         !WebKeysCompras.validarTransicionEstado(
-                                estado, WebKeysCompras.ESTADO_ORDEN_COMPRA, sector));
+                                estado, ConfiguracionComprasHelper.getEstadoOrdenCompra(), sector));
                 verificar(caso + " cambio repetido rechazado",
                         !WebKeysCompras.validarTransicionEstado(estado, estado, sector));
                 for (int datos = 0; datos < 4; datos++) {
@@ -83,13 +85,13 @@ public class ComprasAutorizadorPermisosTest {
                 actual.setSectorDescripcion(sector);
                 verificar(caso + " cotizacion a prestadores solo circuito medico",
                         actual.puedeEnviarACotizar()
-                                == (!empresa && estado == WebKeysCompras.ESTADO_PENDIENTE));
+                                == (!empresa && estado == ConfiguracionComprasHelper.getEstadoPendiente()));
                 verificar(caso + " OC no disponible sin detalles",
                         !actual.puedePasarAOrdenCompra(true));
                 actual.getDetalles().add(new RequerimientoCompraDetalle(Integer.valueOf(10)));
                 verificar(caso + " OC corporativa solo desde AUTORIZADO",
                         actual.puedePasarAOrdenCompra(true)
-                                == (empresa && estado == WebKeysCompras.ESTADO_AUTORIZADO));
+                                == (empresa && estado == ConfiguracionComprasHelper.getEstadoAutorizado()));
                 verificar(caso + " OC no disponible sin cotizacion",
                         !actual.puedePasarAOrdenCompra(false));
                 actual.setBajaFecha(new Date());

@@ -13,6 +13,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Constants;
@@ -24,6 +25,7 @@ import ar.com.ospim.autorizaciones.beans.Nomenclador;
 import ar.com.ospim.autorizaciones.beans.PrestacionesReclamo;
 import ar.com.ospim.autorizaciones.services.NomencladorServiceUtil;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
+import ar.com.ospim.compras.requerimientos.helper.ReclamoPrestacionalCompraPrecargaHelper;
 import ar.com.ospim.global.beans.Empresa;
 import ar.com.ospim.global.services.EmpresaServiceUtil;
 import ar.com.ospim.util.StringUtils;
@@ -171,6 +173,29 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 //		obtiene la instancia en memoria 
  	     presta= listaPrestacionesReclamo.get(pos);
 		 if  (GrabaEdicion) {    
+             if (altaCompras) {
+                 try {
+                     Nomenclador canonicoCompra = ReclamoPrestacionalCompraPrecargaHelper.resolverNomencladorEdicion(
+                             session, presta, tipoNomencladorEdit,
+                             codigoSeguimientoFiltroEdit, idPrestacionNomenclador,
+                             nomSeleccionadoEdit, idMedicamentoEdit);
+                     if (canonicoCompra != null) {
+                         idPrestacionNomenclador = canonicoCompra.getId_prestacion();
+                         codigoSeguimientoFiltroEdit = canonicoCompra.getCodigo();
+                         descripcionSeguimientoFiltroEdit = canonicoCompra.getDescripcion();
+                     } else if (presta.getId_medicamento() > 0) {
+                         idMedicamentoEdit = presta.getId_medicamento();
+                     }
+                 } catch (Exception errorSeleccionCompra) {
+                     _log.error("No se pudo validar la referencia de origen de Compras.", errorSeleccionCompra);
+                     SessionErrors.add(renderRequest, "error-seleccion-compras");
+                     renderRequest.setAttribute("msgErrorSeleccionCompras",
+                             "No se pudo validar la prestacion contra el detalle de origen vigente. Vuelva al requerimiento y reintente.");
+                     return mapping.findForward(WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdSeccional)
+                             ? "portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo_seccional"
+                             : "portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo");
+                 }
+             }
              boolean aplicarDatosCompras = altaCompras && estadoAprobaRechazado == 0
                      && !PrestacionesReclamo.ESTADOS.BAJA.equals(presta.getEstado());
              boolean aplicarNumeroCompras = aplicarDatosCompras && ParamUtil.getBoolean(renderRequest, "aplicarNumeroCompras");
@@ -180,6 +205,19 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
                      && "OTR".equals(presta.getComprobanteTipo())
                      && !PrestacionesReclamo.ESTADOS.BAJA.equals(presta.getEstado())
                      && ("FCP".equals(cpteTipo) || "RCB".equals(cpteTipo) || "AUT".equals(cpteTipo));
+             if (aplicarFechaCompras) {
+                 String errorFecha = ValidarReclamo.validarFechaEmisionCompras(
+                         listaPrestacionesReclamo, presta,
+                         fechaPrestacion != null ? fechaPrestacion.getTime() : null,
+                         cpbteFecha != null ? cpbteFecha.getTime() : null);
+                 if (errorFecha != null) {
+                     SessionErrors.add(renderRequest, "error-fecha-comprobante-compras");
+                     renderRequest.setAttribute("msgErrorFechaComprobanteCompras", errorFecha);
+                     return mapping.findForward(WebKeysAutorizaciones.RECLAMO_PRESTACIONAL_SECCIONAL.equals(cmdSeccional)
+                             ? "portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo_seccional"
+                             : "portlet.autorizaciones.reclamosprestacionales.prestacion_reclamo");
+                 }
+             }
 			 if (estadoAprobaRechazado >1 && observaciones!=""){ // observacion de rechazo o autorizacion
 				 presta.setObservacionesAutorizaRechaza(presta.getObservaciones() + " (OBSERVACION: "  +  observaciones + " )" ) ;
 				 presta.setObservaciones(presta.getObservaciones() + " (OBSERVACION: "  +  observaciones + " )" ) ;

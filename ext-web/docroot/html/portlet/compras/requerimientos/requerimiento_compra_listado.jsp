@@ -41,7 +41,7 @@ boolean showABMButtons =
         user != null
         && PermissionUtil.userContainsRole(
                 user,
-                WebKeysCompras.ROL_ABM_COMPRAS
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras()
         )
         && !estadoForzadoActivo;
 
@@ -309,8 +309,7 @@ if (tercerizadoras == null) {
                                     cotizadosIncluyeReclamoRp
                                     && idEstado.equals(
                                             String.valueOf(
-                                                    WebKeysCompras
-                                                            .ESTADO_COTIZADO
+                                                    ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoCotizado()
                                             )
                                     )
                                             ? "COTIZADO / RECLAMO (RP)"
