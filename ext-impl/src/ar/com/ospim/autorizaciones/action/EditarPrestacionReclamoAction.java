@@ -38,7 +38,7 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 		throws Exception {		
 		HttpSession session = (HttpSession) PortalUtil.getHttpServletRequest(renderRequest).getSession();
         synchronized (session) {
-            ReclamosBaseAction.validarContextoEditorCompras(renderRequest);
+            boolean altaCompras = ReclamosBaseAction.validarContextoEditorCompras(renderRequest) != null;
 
 		String cmdSeccional = ParamUtil.getString(renderRequest, Constants.ACTION, null);
 
@@ -171,6 +171,10 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
 //		obtiene la instancia en memoria 
  	     presta= listaPrestacionesReclamo.get(pos);
 		 if  (GrabaEdicion) {    
+             boolean aplicarDatosCompras = altaCompras && estadoAprobaRechazado == 0
+                     && !PrestacionesReclamo.ESTADOS.BAJA.equals(presta.getEstado());
+             boolean aplicarNumeroCompras = aplicarDatosCompras && ParamUtil.getBoolean(renderRequest, "aplicarNumeroCompras");
+             boolean aplicarFechaCompras = aplicarDatosCompras && ParamUtil.getBoolean(renderRequest, "aplicarFechaCompras");
              boolean aplicarComprobanteOTR = ParamUtil.getBoolean(renderRequest, "aplicarComprobanteOTR")
                      && estadoAprobaRechazado == 0
                      && "OTR".equals(presta.getComprobanteTipo())
@@ -229,6 +233,22 @@ public class EditarPrestacionReclamoAction  extends PortletAction {
                             otra.setComprobanteLetra(presta.getComprobanteLetra());
                             otra.setComprobanteSucursal(presta.getComprobanteSucursal());
                             otra.setComprobanteNro(presta.getComprobanteNro());
+                            if (!PrestacionesReclamo.ESTADOS.NUEVO.equals(otra.getEstado())) {
+                                otra.setEstado(PrestacionesReclamo.ESTADOS.MODIF);
+                            }
+                        }
+                    }
+                }
+
+                if (aplicarNumeroCompras || aplicarFechaCompras) {
+                    for (PrestacionesReclamo otra : listaPrestacionesReclamo) {
+                        if (otra != presta && !PrestacionesReclamo.ESTADOS.BAJA.equals(otra.getEstado())) {
+                            if (aplicarNumeroCompras) {
+                                otra.setComprobanteNro(presta.getComprobanteNro());
+                            }
+                            if (aplicarFechaCompras) {
+                                otra.setComprobanteFecha(presta.getComprobanteFecha());
+                            }
                             if (!PrestacionesReclamo.ESTADOS.NUEVO.equals(otra.getEstado())) {
                                 otra.setEstado(PrestacionesReclamo.ESTADOS.MODIF);
                             }
