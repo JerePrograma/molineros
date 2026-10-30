@@ -3339,6 +3339,7 @@ function <portlet:namespace />editarPrestacionSeleccionada(tipoAccion) {
 	    
  	
 	params.aplicarComprobanteOTR = <portlet:namespace />confirmarComprobanteOTR();
+	<portlet:namespace />confirmarDatosComprobanteCompras(params);
 
 	jQuery('#<portlet:namespace />lista_prestaciones_reclamos').load(url,params, function(){
 									jQuery('#<portlet:namespace />buscando').hide();            															

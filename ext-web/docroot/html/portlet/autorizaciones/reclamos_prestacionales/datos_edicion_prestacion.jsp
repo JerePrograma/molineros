@@ -38,17 +38,19 @@ if(prestacionEnEdicion != null  ){
 }
 
 boolean hayOtrasPrestacionesOTR = false;
+boolean hayOtrasPrestacionesCompras = false;
 if (prestacionEnEdicion != null && tipoedicion == 0
-        && "OTR".equals(prestacionEnEdicion.getComprobanteTipo())
         && !PrestacionesReclamo.ESTADOS.BAJA.equals(prestacionEnEdicion.getEstado())) {
     List<PrestacionesReclamo> prestaciones = (List<PrestacionesReclamo>) request.getSession().getAttribute(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION);
     if (prestaciones != null) {
         for (PrestacionesReclamo otra : prestaciones) {
             if (otra.getIdRegistro() != prestacionEnEdicion.getIdRegistro()
-                    && "OTR".equals(otra.getComprobanteTipo())
                     && !PrestacionesReclamo.ESTADOS.BAJA.equals(otra.getEstado())) {
-                hayOtrasPrestacionesOTR = true;
-                break;
+                hayOtrasPrestacionesCompras = restringirRecuperableCompras;
+                if ("OTR".equals(prestacionEnEdicion.getComprobanteTipo())
+                        && "OTR".equals(otra.getComprobanteTipo())) {
+                    hayOtrasPrestacionesOTR = true;
+                }
             }
         }
     }
@@ -441,6 +443,22 @@ function <portlet:namespace />confirmarComprobanteOTR() {
     var cpbteTipo = jQuery('#<portlet:namespace />comprobante_tipo_edicion').val();
     return <%=hayOtrasPrestacionesOTR%> && cpbteTipo != null && cpbteTipo != '' && cpbteTipo != 'OTR'
         && confirm('¿Desea asignar el mismo Comprobante, Letra, Sucursal y Número al resto de las prestaciones con OTR de este reclamo?');
+}
+
+var numeroComprobanteComprasOriginal = jQuery('#<portlet:namespace />comprobante_nro_edicion').val();
+var fechaComprobanteComprasOriginal = [
+    jQuery('#<portlet:namespace />fechaComprobanteDiaEdicion').val(),
+    jQuery('#<portlet:namespace />fechaComprobanteMesEdicion').val(),
+    jQuery('#<portlet:namespace />fechaComprobanteAnioEdicion').val()
+].join('/');
+
+function <portlet:namespace />confirmarDatosComprobanteCompras(params) {
+    if (<%=hayOtrasPrestacionesCompras%>) {
+        params.aplicarNumeroCompras = params.cpbte_nro != numeroComprobanteComprasOriginal
+            && confirm('¿Desea asignar el mismo Número al resto de las prestaciones de este reclamo?');
+        params.aplicarFechaCompras = [params.cpbte_dia, params.cpbte_mes, params.cpbte_anio].join('/') != fechaComprobanteComprasOriginal
+            && confirm('¿Desea asignar la misma Fecha de Emisión al resto de las prestaciones de este reclamo?');
+    }
 }
 
 function calculatotalEdicion(){

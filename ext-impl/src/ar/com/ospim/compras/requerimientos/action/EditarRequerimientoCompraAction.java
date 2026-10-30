@@ -747,6 +747,34 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          * El Helper verifica que continúe PENDIENTE y preserva
          * sector/afiliado.
          */
+        /*
+         * Validar los nuevos adjuntos antes de guardar la cabecera,
+         * igual que en el alta. En edicion su carga es opcional.
+         */
+        DocumentoLibraryComprasHelper gestorDocumento = null;
+        List<OrdenMedicaValidada> ordenesMedicas =
+                new ArrayList<OrdenMedicaValidada>();
+
+        if (uploadRequest != null) {
+            int cantidadOrdenesMedicas =
+                    obtenerCantidadOrdenesMedicas(actionRequest);
+
+            if (hayCargaOrdenMedicaInformada(
+                    actionRequest,
+                    uploadRequest,
+                    cantidadOrdenesMedicas)) {
+
+                gestorDocumento = DocumentoLibraryComprasHelper.crear(
+                        actionRequestOriginal);
+
+                ordenesMedicas = validarOrdenesMedicasDesdeRequest(
+                        actionRequest,
+                        uploadRequest,
+                        gestorDocumento,
+                        cantidadOrdenesMedicas);
+            }
+        }
+
         contextoGuardado.persistenciaInvocada = true;
 
         int idGuardado =
@@ -756,47 +784,15 @@ public class EditarRequerimientoCompraAction extends PortletAction {
                                 usuario
                         );
 
-        /*
-         * En edición las nuevas Órdenes médicas son opcionales.
-         */
-        if (uploadRequest == null) {
-            return idGuardado;
+        if (!ordenesMedicas.isEmpty()) {
+            requerimientoHelper
+                    .agregarOrdenesMedicasRequerimientoPendiente(
+                            idGuardado,
+                            ordenesMedicas,
+                            gestorDocumento,
+                            usuario
+                    );
         }
-
-        int cantidadOrdenesMedicas =
-                obtenerCantidadOrdenesMedicas(
-                        actionRequest
-                );
-
-        if (!hayCargaOrdenMedicaInformada(
-                actionRequest,
-                uploadRequest,
-                cantidadOrdenesMedicas
-        )) {
-
-            return idGuardado;
-        }
-
-        DocumentoLibraryComprasHelper gestorDocumento =
-                DocumentoLibraryComprasHelper.crear(
-                        actionRequestOriginal
-                );
-
-        List<OrdenMedicaValidada> ordenesMedicas =
-                validarOrdenesMedicasDesdeRequest(
-                        actionRequest,
-                        uploadRequest,
-                        gestorDocumento,
-                        cantidadOrdenesMedicas
-                );
-
-        requerimientoHelper
-                .agregarOrdenesMedicasRequerimientoPendiente(
-                        idGuardado,
-                        ordenesMedicas,
-                        gestorDocumento,
-                        usuario
-                );
 
         return idGuardado;
     }

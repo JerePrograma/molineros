@@ -325,6 +325,10 @@ public class RequerimientoCompraComparativaHelper {
                 || fecha == null || posicion.getIndex() != s.length()) {
             throw new IllegalArgumentException("Fecha de presupuesto inválida. Use dd/mm/aaaa.");
         }
+        if (fecha.after(new Date())) {
+            throw new IllegalArgumentException(
+                    "La fecha del presupuesto no puede ser posterior al día de hoy.");
+        }
         return fecha;
     }
 

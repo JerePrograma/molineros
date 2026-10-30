@@ -920,6 +920,17 @@ String afiliadoAntecedentes = (String) request.getAttribute("compras.requerimien
                     return;
                 }
 
+                if (fechaControl > new Date()) {
+                    alert(
+                            'Fecha del adjunto '
+                                    + numeroOrden
+                                    + ': no puede ser posterior al día de hoy.'
+                    );
+                    fechaDia.focus();
+                    valido = false;
+                    return;
+                }
+
                 /*
                  * El backend conserva su contrato AAAA-MM-DD.
                  *
