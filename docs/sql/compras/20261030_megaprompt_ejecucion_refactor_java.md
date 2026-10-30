@@ -296,24 +296,30 @@ trigger actual crea esa fila y asigna su rubro antes de elegir el reemplazo.
 1388 debe seguir utilizando 445/10415/tipo 3 y 446/11452/tipo 10, sin cambiar
 importes, prestador, observaciones, adjudicacion ni referencias relacionadas.
 
-## 9. Cambios locales previos que deben revisarse al integrar
+## 9. Cambios previos publicados que deben revisarse antes de desplegar
 
-En la PC que preparo este traspaso habia cambios previos en:
+Al comenzar el traspaso habia cambios locales previos en:
 
 - ext-impl/src/ar/com/ospim/autorizaciones/action/EditarPrestacionReclamoAction.java
 - ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/datos_edicion_prestacion.jsp
 - ext-web/docroot/html/portlet/autorizaciones/reclamos_prestacionales/view_reclamo.jsp
 
 Agregan confirmaciones para copiar numero/fecha de comprobante a otras filas
-activas durante un alta desde Compras. No forman parte del refactor terminado
-ni se incluyen automaticamente por existir en otra PC. Si esta PC los tiene,
-preservarlos, revisar su origen e integrarlos solo de forma consciente.
+activas durante un alta desde Compras. Durante la preparacion se detecto una
+publicacion concurrente del commit 0644460d318604c1fe90b9b3a2ea7c66cfd37440,
+que incluye esos tres archivos y la primera version de este documento.
+Se verifico su presencia en refs/heads/main del remoto. Conservar ese trabajo;
+no revertirlo ni descartarlo para sincronizar. No es el refactor terminado ni
+su publicacion constituye una verificacion funcional o un despliegue.
 
-Hallazgo de revision estatica a verificar antes de publicarlos: la fecha
+Hallazgo de revision estatica a resolver antes de desplegar esos cambios: la fecha
 copiada puede ser anterior a fechaPrestacion de otra fila destino. La UI
 valida la fila origen, no todos los destinos. Ejemplo: origen 01/10, destino
 20/10, emision copiada 10/10. Prevalidar destinos antes de mutar si se conserva
 esa funcionalidad, reutilizando la regla de fechas de ValidarReclamo.
+Comprobar que un rechazo deja todas las filas intactas y mostrar que fila
+impide la propagacion. Revisar el diff publicado, corregir y probar este caso
+como parte de la tarea antes de aplicar la entrega en produccion.
 
 Revisar tambien las dos confirmaciones de numero cuando una fila pasa de OTR
 a comprobante real; los consentimientos OTR y todas las filas tienen alcances
