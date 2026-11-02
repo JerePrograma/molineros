@@ -116,6 +116,16 @@ public class ComprasFuenteDatosFixture extends BusquedaRequerimientoCompraServic
         conexiones.add(con);lecturasRequerimiento++;
         return requerimientos.get(Integer.valueOf(id));
     }
+    public RequerimientoCompra getRequerimientoPersistido(Connection con,int id) throws Exception {
+        return getRequerimientoCompra(con,id);
+    }
+    public List<ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle>
+            getDetallesPersistidos(Connection con,int id) throws Exception {
+        conexiones.add(con);
+        RequerimientoCompra r=requerimientos.get(Integer.valueOf(id));
+        if(r==null||r.getDetalles()==null)throw new SQLException("No se definieron detalles persistidos para este requerimiento de prueba.");
+        return r.getDetalles();
+    }
     public RequerimientoCompra getCabeceraRequerimiento(Connection con,int id) throws Exception {
         return getRequerimientoCompra(con,id);
     }

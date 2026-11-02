@@ -153,6 +153,28 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "JOIN compras.requerimiento r ON r.id_requerimiento=pg.id_requerimiento " + SQL_CABECERA_JOINS
                     + " CROSS JOIN (SELECT count(*) AS total_registros FROM candidatos) tot ORDER BY r.id_requerimiento DESC";
 
+    /* La edicion restaura el evento almacenado, sin enriquecerlo desde padrones. */
+    private static final String SQL_GET_REQUERIMIENTO_PERSISTIDO =
+            "SELECT r.*,r.id_requerimiento AS id,r.estado AS id_estado,s.descripcion AS sector_descripcion,"
+                    + "s.requiere_afiliado,NULL::VARCHAR AS estado_descripcion,"
+                    + "NULLIF(concat_ws(', ',NULLIF(btrim(r.afiliado_apellido),''),"
+                    + "NULLIF(btrim(r.afiliado_nombre),'')),'')::VARCHAR AS afiliado_nombre_apellido,"
+                    + "NULLIF(concat_ws(' ',NULLIF(btrim(r.afiliado_documento_tipo),''),"
+                    + "NULLIF(btrim(r.afiliado_documento_nro),'')),'')::VARCHAR AS afiliado_documento "
+                    + "FROM compras.requerimiento r JOIN compras.sector_requerimiento s ON s.id_sector=r.id_sector "
+                    + "WHERE r.id_requerimiento=?";
+
+    private static final String SQL_GET_DETALLES_PERSISTIDOS =
+            "SELECT d.*,d.id_detalle AS id,tp.descripcion::VARCHAR AS tipo_prestacion,"
+                    + "CASE WHEN d.tipo_item='MEDICAMENTO' THEN COALESCE(d.troquel::VARCHAR,d.id_medicamento::VARCHAR) "
+                    + "ELSE d.codigo_nomenclador END::VARCHAR AS codigo_item,"
+                    + "CASE WHEN d.tipo_item='MEDICAMENTO' THEN d.nombre_medicamento "
+                    + "ELSE d.descripcion_nomenclador END::VARCHAR AS descripcion_item,"
+                    + "NULL::VARCHAR AS prestador_cuit,NULL::VARCHAR AS prestador_razon_social "
+                    + "FROM compras.requerimiento_detalle d LEFT JOIN compras.tipo_prestacion tp "
+                    + "ON tp.id_tipo_prestacion=d.id_tipo_prestacion "
+                    + "WHERE d.id_requerimiento=? AND d.baja_fecha IS NULL ORDER BY d.id_detalle";
+
     private static final String SQL_GET_REQUERIMIENTO = SQL_CABECERA_BASE + " WHERE r.id_requerimiento=?";
     private static final String SQL_GET_REQUERIMIENTO_DETALLE =
             SQL_DETALLE_BASE + " AND d.id_requerimiento=? ORDER BY d.id_detalle";
@@ -1626,6 +1648,51 @@ public class BusquedaRequerimientoCompraServiceImpl {
                         "La configuracion de Compras tiene una clave duplicada: " + clave);
             }
             return valor;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    /** Lectura del evento para la edicion bloqueada por el caller, en su misma conexion. */
+    public RequerimientoCompra getRequerimientoPersistido(Connection con,
+            int idRequerimientoCompra) throws Exception {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        RequerimientoCompra requerimiento = null;
+        try {
+            stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO_PERSISTIDO);
+            stmt.setInt(1, idRequerimientoCompra);
+            Map<String, String> estadosDescripciones = leerDescripcionesEstados(con);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                requerimiento = mapRequerimiento(rs, estadosDescripciones);
+                requerimiento.setObservacionInterna(rs.getString("observacion_interna"));
+                requerimiento.setMotivoBaja(rs.getString("motivo_baja"));
+            }
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt);
+        }
+        if (requerimiento != null) {
+            requerimiento.setDetalles(getDetallesPersistidos(con, idRequerimientoCompra));
+        }
+        return requerimiento;
+    }
+
+    public List<RequerimientoCompraDetalle> getDetallesPersistidos(Connection con,
+            int idRequerimientoCompra) throws Exception {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        List<RequerimientoCompraDetalle> resultado = new ArrayList<RequerimientoCompraDetalle>();
+        try {
+            stmt = con.prepareStatement(SQL_GET_DETALLES_PERSISTIDOS);
+            stmt.setInt(1, idRequerimientoCompra);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                resultado.add(mapDetalle(rs));
+            }
+            return resultado;
         } finally {
             closeQuietly(rs);
             ConnectionHelper.cerrar(stmt);

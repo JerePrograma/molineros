@@ -29,6 +29,10 @@ def affiliate_fixture(integrante=0, missing=False):
         NULL::timestamp AS modi_fecha,NULL::varchar AS modi_usr,NULL::timestamp AS baja_fecha,NULL::varchar AS baja_usr,
         '20000000001'::varchar AS afiliado_cuil_titular,""" + str(int(integrante)) + """ AS afiliado_int,
         'Nombre anterior'::varchar AS afiliado_nombre,'Apellido anterior'::varchar AS afiliado_apellido,
+        77 AS afiliado_id_ospim,'DNI'::varchar AS afiliado_documento_tipo,'777'::varchar AS afiliado_documento_nro,
+        'Calle del evento'::varchar AS afiliado_direccion,NULL::varchar AS afiliado_localidad,
+        NULL::varchar AS afiliado_provincia,NULL::varchar AS afiliado_celular,
+        NULL::varchar AS afiliado_telefono,NULL::varchar AS afiliado_email,
         10 AS id_sector,100 AS cargo_ospim,0 AS cargo_tercerizadora,NULL::varchar AS id_tercerizadora,
         FALSE AS recupero,FALSE AS surge,FALSE AS legales,'Evento conservado'::text AS observaciones,
         NULL::text AS observacion_interna,NULL::varchar AS motivo_baja,1 AS estado),
@@ -62,7 +66,9 @@ def detail_fixture(prestacion=101, medicamento=1, tipo='NOMENCLADOR', missing=Fa
         '""" + tipo + """'::varchar AS tipo_item,1 AS id_tipo_prestacion,""" + str(int(prestacion)) + """ AS id_prestacion,
         """ + str(int(medicamento)) + """ AS id_medicamento,3 AS cantidad,12::numeric AS precio_unitario_estimado,
         36::numeric AS precio_total_estimado,1 AS id_prestador,'Evento'::text AS observaciones,
-        'Descripcion copiada'::varchar AS descripcion_nomenclador,NULL::timestamp AS baja_fecha),
+        8 AS id_tipo_nomenclador,'CODIGO-COPIADO'::varchar AS codigo_nomenclador,
+        'Descripcion copiada'::varchar AS descripcion_nomenclador,
+        222 AS troquel,'MEDICAMENTO COPIADO'::varchar AS nombre_medicamento,NULL::timestamp AS baja_fecha),
         fixture_tipo AS (SELECT 1 AS id_tipo_prestacion,'Tipo'::varchar AS descripcion),
         fixture_nomenclador AS (SELECT 101 AS id_prestacion,8 AS id_tipo_nomenclador,'ACTUAL'::varchar AS codigo,
         ?::varchar AS descripcion WHERE """ + ('FALSE' if missing else 'TRUE') + """
@@ -93,6 +99,7 @@ def validate_qa_readers(cursor):
         'SQL_BUSCAR_REQUERIMIENTOS': [None] * 11 + [99],
         'SQL_BUSCAR_REQUERIMIENTOS_INICIALES': [99, 5, 0],
         'SQL_GET_REQUERIMIENTO': [req], 'SQL_GET_REQUERIMIENTO_DETALLE': [det_req],
+        'SQL_GET_REQUERIMIENTO_PERSISTIDO': [req], 'SQL_GET_DETALLES_PERSISTIDOS': [det_req],
         'SQL_LISTAR_TIPOS_PRESTACION': [], 'SQL_GET_SECTOR': [1],
         'SQL_BUSCAR_EMPRESAS_COTIZACION': ['00000000000', None, None, 5],
         'SQL_BUSCAR_EMPRESAS_COTIZACION_RAPIDA': ['00000000000', None, None, 5],
@@ -171,8 +178,25 @@ def main():
         row = execute(cursor, detail_fixture(tipo='MEDICAMENTO', medicamento=2) + query, ['Prestacion vigente', 'Caja', 41])[0]
         equal('only medication ID change updates all dependent display', 'Otro Envase', row['nombre_medicamento'])
         equal('only medication ID change updates troquel', 20, row['troquel'])
+        # Transaction readers preserve event copies while display queries above remain current.
+        query = replace_affiliate(SQL['SQL_GET_REQUERIMIENTO_PERSISTIDO'])
+        row = execute(cursor, affiliate_fixture() + query, ['Nombre corregido', 41])[0]
+        equal('raw affiliate name retains event', 'Nombre anterior', row['afiliado_nombre'])
+        equal('raw affiliate number retains event', 77, row['afiliado_id_ospim'])
+        equal('raw affiliate document retains event', '777', row['afiliado_documento_nro'])
+        equal('raw affiliate address retains event', 'Calle del evento', row['afiliado_direccion'])
+        query = replace_detail(SQL['SQL_GET_DETALLES_PERSISTIDOS'])
+        row = execute(cursor, detail_fixture() + query, ['Prestacion corregida', 'Caja nueva', 41])[0]
+        equal('raw service code retains event', 'CODIGO-COPIADO', row['codigo_nomenclador'])
+        equal('raw service description retains event', 'Descripcion copiada', row['descripcion_nomenclador'])
+        equal('raw service type retains event', 8, row['id_tipo_nomenclador'])
+        row = execute(cursor, detail_fixture(tipo='MEDICAMENTO') + query, ['Prestacion corregida', 'Caja nueva', 41])[0]
+        equal('raw medication troquel retains event', 222, row['troquel'])
+        equal('raw medication name retains event', 'MEDICAMENTO COPIADO', row['nombre_medicamento'])
+        equal('raw medication quantity retains event', 3, row['cantidad'])
+        equal('raw medication price retains event', 36, row['precio_total_estimado'])
         validate_qa_readers(cursor)
-        print('COMPRAS_LECTURAS_VIGENTES_SQL_OK assertions=22; actual PostgreSQL SELECT with VALUES fixtures; no writes')
+        print('COMPRAS_LECTURAS_VIGENTES_SQL_OK assertions=33; actual PostgreSQL SELECT with VALUES fixtures; no writes')
     finally:
         connection.rollback()
         connection.close()

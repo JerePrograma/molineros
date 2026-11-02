@@ -557,6 +557,16 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return getInstance().getConfiguracionCompra(clave, con);
     }
 
+    public static RequerimientoCompra getRequerimientoPersistido(java.sql.Connection con,
+            int idRequerimiento) throws Exception {
+        return getInstance().getRequerimientoPersistido(con, idRequerimiento);
+    }
+
+    public static List<RequerimientoCompraDetalle> getDetallesPersistidos(java.sql.Connection con,
+            int idRequerimiento) throws Exception {
+        return getInstance().getDetallesPersistidos(con, idRequerimiento);
+    }
+
     public static RequerimientoCompra getRequerimientoCompra(java.sql.Connection con,
             int idRequerimiento) throws Exception {
         return getInstance().getRequerimientoCompra(con, idRequerimiento);

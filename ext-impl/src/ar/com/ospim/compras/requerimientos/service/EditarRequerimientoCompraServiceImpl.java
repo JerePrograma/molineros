@@ -1018,12 +1018,12 @@ public class EditarRequerimientoCompraServiceImpl {
                 int idRequerimiento) throws Exception {
             service.bloquearRequerimientoYDetalles(con, idRequerimiento);
             return BusquedaRequerimientoCompraServiceUtil
-                    .getRequerimientoCompra(con, idRequerimiento);
+                    .getRequerimientoPersistido(con, idRequerimiento);
         }
 
         public List<RequerimientoCompraDetalle> getDetalles(
                 int idRequerimiento) throws Exception {
-            return BusquedaRequerimientoCompraServiceUtil.getDetalles(con, idRequerimiento);
+            return BusquedaRequerimientoCompraServiceUtil.getDetallesPersistidos(con, idRequerimiento);
         }
 
         public List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(int idRequerimiento) throws Exception {

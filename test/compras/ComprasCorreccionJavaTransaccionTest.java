@@ -357,11 +357,14 @@ public class ComprasCorreccionJavaTransaccionTest {
         private final Estado e;Lecturas(Estado estado){e=estado;}
         private void con(Connection con)throws Exception{if(con!=e.con)throw new Exception("Otra conexion");}
         public RequerimientoCompra getRequerimientoCompra(Connection con,int id)throws Exception{con(con);return e.requerimiento;}
+        public RequerimientoCompra getRequerimientoPersistido(Connection con,int id)throws Exception{return getRequerimientoCompra(con,id);}
         public Nomenclador obtenerNomencladorCanonico(Connection con,int id)throws Exception{con(con);return e.canonicos.get(Integer.valueOf(id));}
         public List<RequerimientoCompraDetalle> getDetalles(Connection con,int id)throws Exception{
             con(con);if(id!=e.requerimiento.getIdRequerimientoCompra())throw new Exception("Otro requerimiento");
             e.lecturasDetallesAutomaticos++;return e.requerimiento.getDetalles();
         }
+
+        public List<RequerimientoCompraDetalle> getDetallesPersistidos(Connection con,int id)throws Exception{return getDetalles(con,id);}
 
         public List<TipoPrestacionCompra> listarTiposPrestacion(Connection con)throws Exception{
             con(con);TipoPrestacionCompra t=new TipoPrestacionCompra();t.setId(Integer.valueOf(8));

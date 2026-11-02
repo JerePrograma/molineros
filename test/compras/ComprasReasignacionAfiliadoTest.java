@@ -153,6 +153,7 @@ public class ComprasReasignacionAfiliadoTest {
         Estado e;Lecturas(Estado estado){e=estado;}
         private void verificar(Connection con)throws Exception{if(con!=e.con)throw new Exception("Otra conexion");}
         public RequerimientoCompra getRequerimientoCompra(Connection con,int id)throws Exception{verificar(con);return e.actual;}
+        public RequerimientoCompra getRequerimientoPersistido(Connection con,int id)throws Exception{return getRequerimientoCompra(con,id);}
         public RequerimientoCompra getAfiliadoVigente(Connection con,String cuil,int inte)throws Exception{
             verificar(con);e.maestroLeido++;e.eventos.add("MAESTRO");
             if(e.duplicado)throw new SQLException("Maestro ambiguo");return e.maestro;
