@@ -164,7 +164,7 @@ BEGIN
  IF (SELECT count(*) FROM pg_index WHERE indrelid=v_rel)<>8 THEN RAISE EXCEPTION 'DESC_PRESTADOR_INDEX_DRIFT'; END IF;
  SELECT oid,relowner,relacl,reloptions INTO v_oc_oid,v_oc_owner,v_oc_acl,v_oc_options FROM pg_class
  WHERE oid=to_regclass('compras.requerimiento_orden_compra_consulta') AND relkind='v';
- IF v_oc_oid IS NULL OR md5(replace(pg_get_viewdef(v_oc_oid,true),E'\r\n',E'\n')) IS DISTINCT FROM CASE WHEN v_state='normal' THEN '2d4abcf36abcd2f30cc4d5276b352123' ELSE '0c2fc772da54e0be2b5763cdef6700d2' END THEN
+ IF v_oc_oid IS NULL OR md5(replace(pg_get_viewdef(v_oc_oid,true),E'\r\n',E'\n')) IS DISTINCT FROM (CASE WHEN v_state='normal' THEN '2d4abcf36abcd2f30cc4d5276b352123' ELSE '0c2fc772da54e0be2b5763cdef6700d2' END) THEN
   RAISE EXCEPTION 'DESC_PRESTADOR_OC_VIEW_DRIFT'; END IF;
  IF v_state<>'legacy' THEN
   IF to_regclass('compras.requerimiento_presupuesto_consulta') IS NULL
