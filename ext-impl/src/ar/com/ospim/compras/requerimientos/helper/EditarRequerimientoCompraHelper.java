@@ -181,7 +181,7 @@ public class EditarRequerimientoCompraHelper {
 
 
             /* La referencia puede corregirse solamente en el borrador bloqueado.
-             * Sin cambio de identidad no se reescribe el evento historico del afiliado.
+             * Se persisten CUIL e integrante; los datos visibles se derivan del padron.
              */
             String afiliadoCuilRecibido = emptyToNull(requerimiento.getAfiliadoCuilTitular());
             Integer afiliadoIntRecibido = requerimiento.getAfiliadoInt();
@@ -1881,7 +1881,7 @@ public class EditarRequerimientoCompraHelper {
         }
 
         /*
-         * La captura inicial del afiliado se realiza durante el alta.
+         * El DTO del alta se completa desde el padron; no se guardan copias del afiliado.
          *
          * En requerimientos existentes, guardarRequerimientoCompra valida la
          * reasignacion bajo bloqueo y obtiene el maestro en la misma transaccion.

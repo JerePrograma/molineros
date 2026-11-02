@@ -153,16 +153,9 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "JOIN compras.requerimiento r ON r.id_requerimiento=pg.id_requerimiento " + SQL_CABECERA_JOINS
                     + " CROSS JOIN (SELECT count(*) AS total_registros FROM candidatos) tot ORDER BY r.id_requerimiento DESC";
 
-    /* La edicion restaura el evento almacenado, sin enriquecerlo desde padrones. */
+    /* La cabecera resuelve el afiliado por referencia; los detalles conservan su evento. */
     private static final String SQL_GET_REQUERIMIENTO_PERSISTIDO =
-            "SELECT r.*,r.id_requerimiento AS id,r.estado AS id_estado,s.descripcion AS sector_descripcion,"
-                    + "s.requiere_afiliado,NULL::VARCHAR AS estado_descripcion,"
-                    + "NULLIF(concat_ws(', ',NULLIF(btrim(r.afiliado_apellido),''),"
-                    + "NULLIF(btrim(r.afiliado_nombre),'')),'')::VARCHAR AS afiliado_nombre_apellido,"
-                    + "NULLIF(concat_ws(' ',NULLIF(btrim(r.afiliado_documento_tipo),''),"
-                    + "NULLIF(btrim(r.afiliado_documento_nro),'')),'')::VARCHAR AS afiliado_documento "
-                    + "FROM compras.requerimiento r JOIN compras.sector_requerimiento s ON s.id_sector=r.id_sector "
-                    + "WHERE r.id_requerimiento=?";
+            SQL_CABECERA_BASE + " WHERE r.id_requerimiento=?";
 
     private static final String SQL_GET_DETALLES_PERSISTIDOS =
             "SELECT d.*,d.id_detalle AS id,tp.descripcion::VARCHAR AS tipo_prestacion,"
@@ -1654,7 +1647,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
-    /** Lectura del evento para la edicion bloqueada por el caller, en su misma conexion. */
+    /** Cabecera por referencias y detalle del evento para la edicion bloqueada, en la misma conexion. */
     public RequerimientoCompra getRequerimientoPersistido(Connection con,
             int idRequerimientoCompra) throws Exception {
         PreparedStatement stmt = null;

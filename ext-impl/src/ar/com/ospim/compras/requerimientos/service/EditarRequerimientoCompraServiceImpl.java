@@ -57,24 +57,17 @@ public class EditarRequerimientoCompraServiceImpl {
         try {
             if (r.getIdRequerimientoCompra() <= 0) {
                 stmt=con.prepareStatement("INSERT INTO compras.requerimiento (estado,id_sector,afiliado_cuil_titular,"
-                    + "afiliado_int,afiliado_id_ospim,afiliado_nombre,afiliado_apellido,afiliado_documento_tipo,afiliado_documento_nro,"
-                    + "afiliado_direccion,afiliado_localidad,afiliado_provincia,afiliado_celular,afiliado_telefono,afiliado_email,"
-                    + "cargo_ospim,cargo_tercerizadora,id_tercerizadora,recupero,surge,legales,observaciones,alta_usr,observacion_interna) "
-                    + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id_requerimiento");
+                    + "afiliado_int,cargo_ospim,cargo_tercerizadora,id_tercerizadora,recupero,surge,legales,observaciones,"
+                    + "alta_usr,observacion_interna) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id_requerimiento");
                 stmt.setInt(1,r.getEstado()); setNullableInteger(stmt,2,r.getIdSector());
                 stmt.setString(3,r.getAfiliadoCuilTitular());setNullableInteger(stmt,4,r.getAfiliadoInt());
-                setNullableInteger(stmt,5,r.getAfiliadoIdOspim());stmt.setString(6,r.getAfiliadoNombre());stmt.setString(7,r.getAfiliadoApellido());
-                stmt.setString(8,r.getAfiliadoDocumentoTipo());stmt.setString(9,r.getAfiliadoDocumentoNro());stmt.setString(10,r.getAfiliadoDireccion());
-                stmt.setString(11,r.getAfiliadoLocalidad());stmt.setString(12,r.getAfiliadoProvincia());stmt.setString(13,r.getAfiliadoCelular());
-                stmt.setString(14,r.getAfiliadoTelefono());stmt.setString(15,r.getAfiliadoEmail());setNullableInteger(stmt,16,r.getCargoOspim());
-                setNullableInteger(stmt,17,r.getCargoTercerizadora());stmt.setString(18,r.getIdTercerizadora());stmt.setBoolean(19,r.isRecupero());
-                stmt.setBoolean(20,r.isSurge());stmt.setBoolean(21,r.isLegales());stmt.setString(22,r.getObservaciones());
-                stmt.setString(23,usuario);stmt.setString(24,r.getObservacionInterna());
+                setNullableInteger(stmt,5,r.getCargoOspim());setNullableInteger(stmt,6,r.getCargoTercerizadora());
+                stmt.setString(7,r.getIdTercerizadora());stmt.setBoolean(8,r.isRecupero());stmt.setBoolean(9,r.isSurge());
+                stmt.setBoolean(10,r.isLegales());stmt.setString(11,r.getObservaciones());stmt.setString(12,usuario);
+                stmt.setString(13,r.getObservacionInterna());
             } else {
                 String columnasAfiliado = actualizarAfiliado
-                    ? ",afiliado_cuil_titular=?,afiliado_int=?,afiliado_id_ospim=?,afiliado_nombre=?,afiliado_apellido=?,"
-                        + "afiliado_documento_tipo=?,afiliado_documento_nro=?,afiliado_direccion=?,afiliado_localidad=?,"
-                        + "afiliado_provincia=?,afiliado_celular=?,afiliado_telefono=?,afiliado_email=?"
+                    ? ",afiliado_cuil_titular=?,afiliado_int=?"
                     : "";
                 stmt=con.prepareStatement("UPDATE compras.requerimiento SET cargo_ospim=?,cargo_tercerizadora=?,id_tercerizadora=?,"
                     + "recupero=?,surge=?,observaciones=?,observacion_interna=?,modi_fecha=now(),modi_usr=?"
@@ -85,12 +78,6 @@ public class EditarRequerimientoCompraServiceImpl {
                 int indice=9;
                 if(actualizarAfiliado){
                     stmt.setString(indice++,r.getAfiliadoCuilTitular());setNullableInteger(stmt,indice++,r.getAfiliadoInt());
-                    setNullableInteger(stmt,indice++,r.getAfiliadoIdOspim());stmt.setString(indice++,r.getAfiliadoNombre());
-                    stmt.setString(indice++,r.getAfiliadoApellido());stmt.setString(indice++,r.getAfiliadoDocumentoTipo());
-                    stmt.setString(indice++,r.getAfiliadoDocumentoNro());stmt.setString(indice++,r.getAfiliadoDireccion());
-                    stmt.setString(indice++,r.getAfiliadoLocalidad());stmt.setString(indice++,r.getAfiliadoProvincia());
-                    stmt.setString(indice++,r.getAfiliadoCelular());stmt.setString(indice++,r.getAfiliadoTelefono());
-                    stmt.setString(indice++,r.getAfiliadoEmail());
                 }
                 stmt.setInt(indice++,r.getIdRequerimientoCompra());stmt.setInt(indice,r.getEstado());
             }

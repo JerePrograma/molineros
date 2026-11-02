@@ -23,16 +23,11 @@ def equal(label, expected, actual):
 
 
 def affiliate_fixture(integrante=0, missing=False):
-    # Old copied values remain deliberately different from both authoritative rows.
+    # The requirement fixture has only affiliate references, with no copied master columns.
     return """WITH fixture_requerimiento AS (
         SELECT 41 AS id_requerimiento,now()::timestamp AS alta_fecha,'fixture'::varchar AS alta_usr,
         NULL::timestamp AS modi_fecha,NULL::varchar AS modi_usr,NULL::timestamp AS baja_fecha,NULL::varchar AS baja_usr,
         '20000000001'::varchar AS afiliado_cuil_titular,""" + str(int(integrante)) + """ AS afiliado_int,
-        'Nombre anterior'::varchar AS afiliado_nombre,'Apellido anterior'::varchar AS afiliado_apellido,
-        77 AS afiliado_id_ospim,'DNI'::varchar AS afiliado_documento_tipo,'777'::varchar AS afiliado_documento_nro,
-        'Calle del evento'::varchar AS afiliado_direccion,NULL::varchar AS afiliado_localidad,
-        NULL::varchar AS afiliado_provincia,NULL::varchar AS afiliado_celular,
-        NULL::varchar AS afiliado_telefono,NULL::varchar AS afiliado_email,
         10 AS id_sector,100 AS cargo_ospim,0 AS cargo_tercerizadora,NULL::varchar AS id_tercerizadora,
         FALSE AS recupero,FALSE AS surge,FALSE AS legales,'Evento conservado'::text AS observaciones,
         NULL::text AS observacion_interna,NULL::varchar AS motivo_baja,1 AS estado),
@@ -178,13 +173,13 @@ def main():
         row = execute(cursor, detail_fixture(tipo='MEDICAMENTO', medicamento=2) + query, ['Prestacion vigente', 'Caja', 41])[0]
         equal('only medication ID change updates all dependent display', 'Otro Envase', row['nombre_medicamento'])
         equal('only medication ID change updates troquel', 20, row['troquel'])
-        # Transaction readers preserve event copies while display queries above remain current.
+        # Affiliate headers resolve the current master; detail event copies remain independent.
         query = replace_affiliate(SQL['SQL_GET_REQUERIMIENTO_PERSISTIDO'])
         row = execute(cursor, affiliate_fixture() + query, ['Nombre corregido', 41])[0]
-        equal('raw affiliate name retains event', 'Nombre anterior', row['afiliado_nombre'])
-        equal('raw affiliate number retains event', 77, row['afiliado_id_ospim'])
-        equal('raw affiliate document retains event', '777', row['afiliado_documento_nro'])
-        equal('raw affiliate address retains event', 'Calle del evento', row['afiliado_direccion'])
+        equal('transaction header name comes from current master', 'Nombre corregido', row['afiliado_nombre'])
+        equal('transaction header affiliate number comes from current master', 100, row['afiliado_id_ospim'])
+        equal('transaction header document comes from current master', '123', row['afiliado_documento_nro'])
+        equal('transaction header address comes from current domicile', 'Calle vigente 10', row['afiliado_direccion'])
         query = replace_detail(SQL['SQL_GET_DETALLES_PERSISTIDOS'])
         row = execute(cursor, detail_fixture() + query, ['Prestacion corregida', 'Caja nueva', 41])[0]
         equal('raw service code retains event', 'CODIGO-COPIADO', row['codigo_nomenclador'])

@@ -20,7 +20,7 @@
 -- Contratos incorporados:
 --   - guardar_requerimiento con 23 argumentos de entrada y variante de 24
 --     para persistir observacion_interna.
---   - persistencia de afiliado_id_ospim como snapshot.
+--   - referencia de afiliado por CUIL e integrante con datos actuales.
 --   - persistencia de surge como cabecera del requerimiento.
 --   - PDF con afiliado_id_ospim, integrante y documento.
 --   - destinatario de cotización persistido por prestador.
@@ -262,19 +262,9 @@ CREATE TABLE compras.requerimiento (
 
                                        afiliado_cuil_titular VARCHAR(20),
                                        afiliado_int INTEGER,
-                                       afiliado_id_ospim INTEGER,
+                                       CONSTRAINT requerimiento_afiliado_fkey FOREIGN KEY (afiliado_cuil_titular,afiliado_int)
+                                           REFERENCES public.afiliado(cuil_titular,inte) MATCH FULL ON UPDATE NO ACTION ON DELETE NO ACTION,
 
-    -- Snapshot para consulta e impresion.
-                                       afiliado_nombre VARCHAR(120),
-                                       afiliado_apellido VARCHAR(120),
-                                       afiliado_documento_tipo VARCHAR(10),
-                                       afiliado_documento_nro VARCHAR(30),
-                                       afiliado_direccion VARCHAR(250),
-                                       afiliado_localidad VARCHAR(120),
-                                       afiliado_provincia VARCHAR(120),
-                                       afiliado_celular VARCHAR(80),
-                                       afiliado_telefono VARCHAR(80),
-                                       afiliado_email VARCHAR(160),
 
                                        cargo_ospim INTEGER NOT NULL DEFAULT 100,
                                        cargo_tercerizadora INTEGER NOT NULL DEFAULT 0,
@@ -333,10 +323,6 @@ CREATE INDEX ix_compras_requerimiento_afiliado
         )
     WHERE baja_fecha IS NULL;
 
-CREATE INDEX ix_compras_requerimiento_afiliado_id_ospim
-    ON compras.requerimiento (afiliado_id_ospim)
-    WHERE baja_fecha IS NULL
-      AND afiliado_id_ospim IS NOT NULL;
 
 CREATE INDEX ix_compras_requerimiento_tercerizadora
     ON compras.requerimiento (id_tercerizadora)
@@ -1311,28 +1297,6 @@ END IF;
                 IS DISTINCT FROM OLD.afiliado_cuil_titular
             OR NEW.afiliado_int
                 IS DISTINCT FROM OLD.afiliado_int
-            OR NEW.afiliado_id_ospim
-                IS DISTINCT FROM OLD.afiliado_id_ospim
-            OR NEW.afiliado_nombre
-                IS DISTINCT FROM OLD.afiliado_nombre
-            OR NEW.afiliado_apellido
-                IS DISTINCT FROM OLD.afiliado_apellido
-            OR NEW.afiliado_documento_tipo
-                IS DISTINCT FROM OLD.afiliado_documento_tipo
-            OR NEW.afiliado_documento_nro
-                IS DISTINCT FROM OLD.afiliado_documento_nro
-            OR NEW.afiliado_direccion
-                IS DISTINCT FROM OLD.afiliado_direccion
-            OR NEW.afiliado_localidad
-                IS DISTINCT FROM OLD.afiliado_localidad
-            OR NEW.afiliado_provincia
-                IS DISTINCT FROM OLD.afiliado_provincia
-            OR NEW.afiliado_celular
-                IS DISTINCT FROM OLD.afiliado_celular
-            OR NEW.afiliado_telefono
-                IS DISTINCT FROM OLD.afiliado_telefono
-            OR NEW.afiliado_email
-                IS DISTINCT FROM OLD.afiliado_email
             OR NEW.cargo_ospim
                 IS DISTINCT FROM OLD.cargo_ospim
             OR NEW.cargo_tercerizadora
@@ -1626,18 +1590,7 @@ ELSE
 
         NEW.afiliado_cuil_titular := NULL;
         NEW.afiliado_int := NULL;
-        NEW.afiliado_id_ospim := NULL;
 
-        NEW.afiliado_nombre := NULL;
-        NEW.afiliado_apellido := NULL;
-        NEW.afiliado_documento_tipo := NULL;
-        NEW.afiliado_documento_nro := NULL;
-        NEW.afiliado_direccion := NULL;
-        NEW.afiliado_localidad := NULL;
-        NEW.afiliado_provincia := NULL;
-        NEW.afiliado_celular := NULL;
-        NEW.afiliado_telefono := NULL;
-        NEW.afiliado_email := NULL;
 
         IF compras.normalizar_sector(v_sector_descripcion)
                 NOT IN ('RRHH', 'SISTEMAS') THEN
@@ -2144,78 +2097,51 @@ AS $func$
 BEGIN
 RETURN QUERY
 SELECT
-    r.id_requerimiento,
-
-    r.alta_fecha,
-    r.alta_usr,
-
-    r.modi_fecha,
-    r.modi_usr,
-
-    r.baja_fecha,
-    r.baja_usr,
-
-    r.afiliado_cuil_titular,
-    r.afiliado_int,
-    r.afiliado_id_ospim,
-
-    r.afiliado_nombre,
-    r.afiliado_apellido,
-
-    NULLIF(
-            concat_ws(
-                    ', ',
-                    NULLIF(btrim(r.afiliado_apellido), ''),
-                    NULLIF(btrim(r.afiliado_nombre), '')
-            ),
-            ''
-    )::VARCHAR AS afiliado_nombre_apellido,
-
-    r.afiliado_documento_tipo,
-    r.afiliado_documento_nro,
-
-    NULLIF(
-            concat_ws(
-                    ' ',
-                    NULLIF(
-                            btrim(r.afiliado_documento_tipo),
-                            ''
-                    ),
-                    NULLIF(
-                            btrim(r.afiliado_documento_nro),
-                            ''
-                    )
-            ),
-            ''
-    )::VARCHAR AS afiliado_documento,
-
-    r.afiliado_direccion,
-    r.afiliado_localidad,
-    r.afiliado_provincia,
-    r.afiliado_celular,
-    r.afiliado_telefono,
-    r.afiliado_email,
-
-    r.id_sector,
-    s.descripcion,
-    s.requiere_afiliado,
-
-    r.cargo_ospim,
-    r.cargo_tercerizadora,
-    r.id_tercerizadora,
-
-    r.recupero,
-    r.surge,
-    r.observaciones,
-
-    r.estado,
-    compras.estado_requerimiento_descripcion(
-            r.estado
-    ),
-    r.legales
+    r.id_requerimiento AS id,
+    r.alta_fecha AS alta_fecha,
+    r.alta_usr AS alta_usr,
+    r.modi_fecha AS modi_fecha,
+    r.modi_usr AS modi_usr,
+    r.baja_fecha AS baja_fecha,
+    r.baja_usr AS baja_usr,
+    r.afiliado_cuil_titular AS afiliado_cuil_titular,
+    r.afiliado_int AS afiliado_int,
+    a.id_ospim AS afiliado_id_ospim,
+    a.nombre::VARCHAR AS afiliado_nombre,
+    a.apellido::VARCHAR AS afiliado_apellido,
+    CASE WHEN a.cuil_titular IS NULL AND r.afiliado_cuil_titular IS NOT NULL THEN '[AFILIADO NO RESUELTO]' ELSE NULLIF(concat_ws(', ',NULLIF(btrim(a.apellido),''),NULLIF(btrim(a.nombre),'')),'') END::VARCHAR AS afiliado_nombre_apellido,
+    a.documento_tipo::VARCHAR AS afiliado_documento_tipo,
+    a.docu_numero::VARCHAR AS afiliado_documento_nro,
+    NULLIF(concat_ws(' ',NULLIF(btrim(a.documento_tipo),''),NULLIF(btrim(a.docu_numero),'')),'')::VARCHAR AS afiliado_documento,
+    NULLIF(concat_ws(' ',NULLIF(btrim(dom.calle),''),dom.numero::VARCHAR,CASE WHEN NULLIF(btrim(dom.piso),'') IS NOT NULL THEN 'Piso '||btrim(dom.piso) END,CASE WHEN NULLIF(btrim(dom.depto),'') IS NOT NULL THEN 'Dto '||btrim(dom.depto) END),'')::VARCHAR AS afiliado_direccion,
+    loc.detalle::VARCHAR AS afiliado_localidad,
+    prov.detalle::VARCHAR AS afiliado_provincia,
+    NULLIF(concat_ws(' ',NULLIF(btrim(dom.cod_area_celular),''),NULLIF(btrim(dom.celular),'')),'')::VARCHAR AS afiliado_celular,
+    NULLIF(concat_ws(' ',NULLIF(btrim(dom.cod_area_telefono),''),NULLIF(btrim(dom.telefono),'')),'')::VARCHAR AS afiliado_telefono,
+    a.email::VARCHAR AS afiliado_email,
+    r.id_sector AS id_sector,
+    s.descripcion::VARCHAR AS sector_descripcion,
+    s.requiere_afiliado AS requiere_afiliado,
+    r.cargo_ospim AS cargo_ospim,
+    r.cargo_tercerizadora AS cargo_tercerizadora,
+    r.id_tercerizadora AS id_tercerizadora,
+    r.recupero AS recupero,
+    r.surge AS surge,
+    r.observaciones AS observaciones,
+    r.estado AS id_estado,
+    compras.estado_requerimiento_descripcion(r.estado) AS estado_descripcion,
+    r.legales AS legales
 FROM compras.requerimiento r
-         JOIN compras.sector_requerimiento s
-              ON s.id_sector = r.id_sector;
+JOIN compras.sector_requerimiento s ON s.id_sector=r.id_sector
+LEFT JOIN public.afiliado a ON a.cuil_titular=r.afiliado_cuil_titular AND a.inte=r.afiliado_int
+LEFT JOIN LATERAL (
+    SELECT ad.* FROM public.afi_domicilio ad
+    WHERE ad.cuil_titular=a.cuil_titular AND (ad.inte=a.inte OR ad.inte=0)
+      AND ad.domi_tipo='P' AND ad.alta_usr<>'datosveraz' AND ad.baja_fecha IS NULL
+    ORDER BY CASE WHEN ad.inte=a.inte THEN 0 ELSE 1 END,ad.id_domicilio DESC LIMIT 1
+) dom ON TRUE
+LEFT JOIN public.localidad loc ON loc.id_localidad=dom.localidad
+LEFT JOIN public.provincia prov ON prov.id_provincia=dom.provincia;
 END;
 $func$
 LANGUAGE plpgsql
@@ -2763,28 +2689,13 @@ BEGIN
         END IF;
 
         INSERT INTO compras.requerimiento (
-            estado, id_sector,
-            afiliado_cuil_titular, afiliado_int, afiliado_id_ospim,
-            afiliado_nombre, afiliado_apellido,
-            afiliado_documento_tipo, afiliado_documento_nro,
-            afiliado_direccion, afiliado_localidad, afiliado_provincia,
-            afiliado_celular, afiliado_telefono, afiliado_email,
-            cargo_ospim, cargo_tercerizadora, id_tercerizadora,
-            recupero, surge, legales, observaciones, alta_usr
+            estado, id_sector, afiliado_cuil_titular, afiliado_int, cargo_ospim, cargo_tercerizadora, id_tercerizadora, recupero, surge, legales, observaciones, alta_usr
         )
         VALUES (
-            1, p_id_sector,
-            v_afiliado_cuil, p_afiliado_int, p_afiliado_id_ospim,
-            NULLIF(btrim(p_afiliado_nombre), ''),
-            NULLIF(btrim(p_afiliado_apellido), ''),
-            NULLIF(btrim(p_afiliado_documento_tipo), ''),
-            NULLIF(btrim(p_afiliado_documento_nro), ''),
-            NULLIF(btrim(p_afiliado_direccion), ''),
-            NULLIF(btrim(p_afiliado_localidad), ''),
-            NULLIF(btrim(p_afiliado_provincia), ''),
-            NULLIF(btrim(p_afiliado_celular), ''),
-            NULLIF(btrim(p_afiliado_telefono), ''),
-            NULLIF(btrim(p_afiliado_email), ''),
+            1,
+            p_id_sector,
+            v_afiliado_cuil,
+            p_afiliado_int,
             COALESCE(p_cargo_ospim, 0),
             COALESCE(p_cargo_tercerizadora, 0),
             NULLIF(btrim(p_id_tercerizadora), ''),

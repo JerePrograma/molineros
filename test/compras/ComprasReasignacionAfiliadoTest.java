@@ -10,6 +10,9 @@ public class ComprasReasignacionAfiliadoTest {
     private static int pruebas;
     private static Field lectura, escritura;
     private static Estado enCurso;
+    private static final String[] COPIAS_RETIRADAS={"afiliado_id_ospim","afiliado_nombre","afiliado_apellido",
+        "afiliado_documento_tipo","afiliado_documento_nro","afiliado_direccion","afiliado_localidad",
+        "afiliado_provincia","afiliado_celular","afiliado_telefono","afiliado_email"};
     public static void main(String[] args) throws Exception {
         lectura=BusquedaRequerimientoCompraServiceUtil.class.getDeclaredField("instance");
         escritura=EditarRequerimientoCompraServiceUtil.class.getDeclaredField("instance");
@@ -33,7 +36,7 @@ public class ComprasReasignacionAfiliadoTest {
                 && e.guardado.getAfiliadoInt().intValue()==1
                 && "MAESTRO".equals(e.guardado.getAfiliadoNombre())
                 && "DOMICILIO ACTUAL".equals(e.guardado.getAfiliadoDireccion()),
-                "Referencia y snapshot nuevo provienen del maestro, nunca de HTTP");
+                "Referencia y datos del DTO provienen del maestro, nunca de HTTP");
             comprobar(e.eventos.indexOf("LOCK_CABECERA")<e.eventos.indexOf("MAESTRO")
                 && e.eventos.indexOf("MAESTRO")<e.eventos.indexOf("UPDATE")
                 && e.maestroLeido==1 && ar.com.ospim.util.ConnectionHelper.aperturas==0,
@@ -44,12 +47,11 @@ public class ComprasReasignacionAfiliadoTest {
                 "UPDATE parametrizado conserva CAS estado/baja y devuelve identidad original");
             comprobar("20222222223".equals(e.parametros.get(Integer.valueOf(9)))
                 && Integer.valueOf(1).equals(e.parametros.get(Integer.valueOf(10)))
-                && Integer.valueOf(99).equals(e.parametros.get(Integer.valueOf(11)))
-                && "MAESTRO".equals(e.parametros.get(Integer.valueOf(12)))
-                && "DOMICILIO ACTUAL".equals(e.parametros.get(Integer.valueOf(16)))
-                && Integer.valueOf(1388).equals(e.parametros.get(Integer.valueOf(22)))
-                && Integer.valueOf(1).equals(e.parametros.get(Integer.valueOf(23))),
-                "Parametros JDBC enlazan referencia, snapshot maestro e identidad/estado sin desplazar indices");
+                && Integer.valueOf(1388).equals(e.parametros.get(Integer.valueOf(11)))
+                && Integer.valueOf(1).equals(e.parametros.get(Integer.valueOf(12)))
+                && e.parametros.size()==12 && "20222222223".equals(e.cuilPersistido)
+                && Integer.valueOf(1).equals(e.integrantePersistido),
+                "Doce parametros JDBC guardan las dos referencias y CAS sin columnas AFI retiradas");
             comprobar(e.auditInserts==1 && e.auditsPersistidos==1
                 && e.eventos.indexOf("UPDATE")<e.eventos.indexOf("AUDIT")
                 && Integer.valueOf(1388).equals(e.auditParametros.get(Integer.valueOf(1)))
@@ -94,8 +96,8 @@ public class ComprasReasignacionAfiliadoTest {
             rechazar(entrada("20222222223",Integer.valueOf(1)),e,"Fallo al verificar asociaciones bloquea cambio de afiliado");
             e=nuevo();e.maestro=null;e.asociacion="requerimiento_presupuesto";e.actual.setAfiliadoNombre("MAESTRO ACTUAL");instalar(e);
             r=entrada("20111111112",Integer.valueOf(0));r.setAfiliadoNombre("HTTP FALSO");
-            comprobar(guardar(r)==1388 && e.maestroLeido==0 && "HISTORICO".equals(e.snapshotPersistido) && e.sqlUpdate.indexOf("afiliado_")<0 && e.auditInserts==0,
-                "Misma referencia conserva historial y no aplica reglas nuevas ni recarga snapshot");
+            comprobar(guardar(r)==1388 && e.maestroLeido==0 && "20111111112".equals(e.cuilPersistido) && Integer.valueOf(0).equals(e.integrantePersistido) && e.sqlUpdate.indexOf("afiliado_")<0 && e.auditInserts==0,
+                "Misma referencia conserva identidad y documentos sin columnas copiadas ni auditoria duplicada");
             e=nuevo();instalar(e);
             comprobar(guardar(entrada(null,null))==1388 && e.maestroLeido==0
                 && "20111111112".equals(e.guardado.getAfiliadoCuilTitular()),
@@ -103,10 +105,10 @@ public class ComprasReasignacionAfiliadoTest {
             e=nuevo();e.casCero=true;instalar(e);rechazar(entrada("20222222223",Integer.valueOf(1)),e,
                 "CAS sin fila no devuelve exito y revierte TX",true);
             e=nuevo();e.falloUpdate=true;instalar(e);rechazar(entrada("20222222223",Integer.valueOf(1)),e,
-                "Error de persistencia revierte referencia y snapshot",true);
+                "Error de persistencia revierte la referencia sin escribir copias retiradas",true);
             e=nuevo();e.falloAuditoria=true;instalar(e);rechazar(entrada("20222222223",Integer.valueOf(1)),e,
                 "Error auditoria revierte UPDATE y conserva adjuntos en la misma transaccion",true);
-            comprobar(e.updates==1 && e.auditsPersistidos==0 && "HISTORICO".equals(e.snapshotPersistido)
+            comprobar(e.updates==1 && e.auditsPersistidos==0 && "20111111112".equals(e.cuilPersistido) && Integer.valueOf(0).equals(e.integrantePersistido)
                 && e.escriturasDocumentos==0,"Fallo de auditoria no deja reasignacion sin evento ni cambia documentos");
             e=nuevo();e.auditCero=true;instalar(e);rechazar(entrada("20222222223",Integer.valueOf(1)),e,
                 "Auditoria sin fila insertada revierte toda la reasignacion",true);
@@ -132,7 +134,7 @@ public class ComprasReasignacionAfiliadoTest {
     }
     private static Estado nuevo(){
         Estado e=new Estado();e.actual=entrada("20111111112",Integer.valueOf(0));
-        e.actual.setAfiliadoNombre("HISTORICO");e.actual.setAfiliadoDireccion("DOMICILIO HISTORICO");
+        e.actual.setAfiliadoNombre("MAESTRO ACTUAL");e.actual.setAfiliadoDireccion("DOMICILIO ACTUAL");
         e.actual.setRequiereAfiliado(true);e.actual.setDetalles(new ArrayList<ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle>());
         e.maestro=entrada("20222222223",Integer.valueOf(1));e.maestro.setAfiliadoNombre("MAESTRO");
         e.maestro.setAfiliadoDireccion("DOMICILIO ACTUAL");e.maestro.setAfiliadoIdOspim(Integer.valueOf(99));
@@ -167,12 +169,16 @@ public class ComprasReasignacionAfiliadoTest {
         Connection con;RequerimientoCompra actual,maestro,guardado;String asociacion,sqlUpdate;
         boolean duplicado,casCero,falloUpdate,cerrada,falloAsociaciones,falloAuditoria,auditCero;int updates,commits,rollbacks,maestroLeido;
         List<String> eventos=new ArrayList<String>();
-        Map<Integer,Object> parametros,auditParametros;int auditInserts,auditPendientes,auditsPersistidos;String snapshotPersistido="HISTORICO",snapshotPendiente;
+        Map<Integer,Object> parametros,auditParametros;int auditInserts,auditPendientes,auditsPersistidos;String cuilPersistido="20111111112",cuilPendiente;Integer integrantePersistido=Integer.valueOf(0),integrantePendiente;
         Map<String,String> documentos=new LinkedHashMap<String,String>();int escriturasDocumentos;
         public Object invoke(Object proxy,Method m,Object[] args)throws Throwable{
             String n=m.getName();
             if("prepareCall".equals(n)||"prepareStatement".equals(n)){
                 String sql=(String)args[0];
+                if(sql.startsWith("UPDATE compras.requerimiento SET")||sql.startsWith("INSERT INTO compras.requerimiento ")){
+                    for(int i=0;i<COPIAS_RETIRADAS.length;i++)if(sql.indexOf(COPIAS_RETIRADAS[i])>=0)
+                        throw new SQLException("column "+COPIAS_RETIRADAS[i]+" does not exist","42703");
+                }
                 if((sql.startsWith("UPDATE ")||sql.startsWith("INSERT ")||sql.startsWith("DELETE "))
                     && (sql.indexOf("requerimiento_presupuesto")>=0||sql.indexOf("DLFileEntry")>=0)){
                     escriturasDocumentos++;throw new SQLException("Escritura documental no autorizada");
@@ -180,8 +186,8 @@ public class ComprasReasignacionAfiliadoTest {
                 if(sql.indexOf("FROM compras.requerimiento ")>=0&&sql.indexOf("FOR UPDATE")>=0)eventos.add("LOCK_CABECERA");
                 return Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{"prepareCall".equals(n)?CallableStatement.class:PreparedStatement.class},new Sentencia(this,sql));
             }
-            if("commit".equals(n)){commits++;auditsPersistidos+=auditPendientes;auditPendientes=0;if(snapshotPendiente!=null)snapshotPersistido=snapshotPendiente;return null;}
-            if("rollback".equals(n)){rollbacks++;auditPendientes=0;snapshotPendiente=null;return null;}
+            if("commit".equals(n)){commits++;auditsPersistidos+=auditPendientes;auditPendientes=0;if(cuilPendiente!=null){cuilPersistido=cuilPendiente;integrantePersistido=integrantePendiente;}cuilPendiente=null;integrantePendiente=null;return null;}
+            if("rollback".equals(n)){rollbacks++;auditPendientes=0;cuilPendiente=null;integrantePendiente=null;return null;}
             if("close".equals(n)){cerrada=true;return null;}
             if("isClosed".equals(n))return Boolean.valueOf(cerrada);
             return defecto(m.getReturnType());
@@ -203,7 +209,7 @@ public class ComprasReasignacionAfiliadoTest {
                 if(sql.startsWith("UPDATE compras.requerimiento SET")){
                     e.sqlUpdate=sql;e.parametros=p;e.updates++;e.eventos.add("UPDATE");
                     if(e.falloUpdate)throw new SQLException("Fallo controlado");
-                    if(!e.casCero&&sql.indexOf("afiliado_nombre=?")>=0)e.snapshotPendiente=(String)p.get(Integer.valueOf(12));
+                    if(!e.casCero&&sql.indexOf("afiliado_cuil_titular=?")>=0){e.cuilPendiente=(String)p.get(Integer.valueOf(9));e.integrantePendiente=(Integer)p.get(Integer.valueOf(10));}
                     if(!e.casCero){Map<String,Object> f=new HashMap<String,Object>();f.put("1",Integer.valueOf(1388));filas.add(f);}
                 }else if(sql.indexOf("FROM compras.sector_requerimiento")>=0){
                     Map<String,Object> f=new HashMap<String,Object>();f.put("descripcion","DIABETES");f.put("requiere_afiliado",Boolean.TRUE);f.put("activo",Boolean.TRUE);filas.add(f);
