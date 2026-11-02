@@ -625,8 +625,8 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt = con.prepareStatement("INSERT INTO compras.requerimiento_presupuesto "
                     + "(id_requerimiento,tipo_documento,fecha_documento,numero_receta,id_prestador,"
                     + "empresa_cuit,empresa_sucursal,descripcion_empresa,dl_group_id,dl_folder_id,"
-                    + "dl_file_entry_id,dl_file_uuid,nombre_original,nombre_persistido,titulo,descripcion_prestador,alta_usr) "
-                    + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id_requerimiento_presupuesto");
+                    + "dl_file_entry_id,dl_file_uuid,nombre_original,nombre_persistido,titulo,alta_usr) "
+                    + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id_requerimiento_presupuesto");
             stmt.setInt(1, documento.getIdRequerimiento().intValue());
             stmt.setInt(2, documento.getTipoDocumento().intValue());
             if (documento.getFechaDocumento() == null) {
@@ -646,8 +646,7 @@ public class EditarRequerimientoCompraServiceImpl {
             stmt.setString(13, documento.getNombreOriginal());
             stmt.setString(14, documento.getNombrePersistido());
             stmt.setString(15, documento.getTitulo());
-            stmt.setString(16, documento.getDescripcionPrestador());
-            stmt.setString(17, usuario);
+            stmt.setString(16, usuario);
             rs = stmt.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
         } finally {

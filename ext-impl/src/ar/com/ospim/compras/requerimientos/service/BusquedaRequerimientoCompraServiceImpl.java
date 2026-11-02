@@ -217,7 +217,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "IS NULL THEN rp.descripcion_empresa WHEN e.cuit IS NULL THEN '[EMPRESA NO RESUELTA]' ELSE e.razon_soc "
                     + "END::VARCHAR AS descripcion_empresa, "
                     + "rp.dl_group_id,rp.dl_folder_id,rp.dl_file_entry_id,rp.dl_file_uuid,rp.nombre_original,rp.nombre_persistido,"
-                    + "rp.titulo, CASE WHEN rp.id_prestador IS NULL THEN rp.descripcion_prestador WHEN p.id_prestador IS NULL THEN "
+                    + "rp.titulo, CASE WHEN rp.id_prestador IS NULL THEN NULL WHEN p.id_prestador IS NULL THEN "
                     + "'[PRESTADOR NO RESUELTO]' ELSE p.descripcion END::VARCHAR AS descripcion_prestador, "
                     + "rp.alta_fecha,rp.alta_usr,rp.baja_fecha,rp.baja_usr,rp.empresa_adjudicada";
 
@@ -225,6 +225,17 @@ public class BusquedaRequerimientoCompraServiceImpl {
             "SELECT " + SQL_DOCUMENTO_COLUMNAS + " FROM compras.requerimiento_presupuesto rp "
                     + "LEFT JOIN public.prestador p ON p.id_prestador=rp.id_prestador "
                     + "LEFT JOIN informacion_afip.empresa e ON e.cuit=rp.empresa_cuit AND e.sucursal=rp.empresa_sucursal ";
+
+    private static final String SQL_BLOQUEAR_DOCUMENTO =
+            "SELECT rp.id_requerimiento_presupuesto,rp.id_requerimiento,rp.tipo_documento,rp.fecha_documento,rp.numero_receta,"
+                    + "rp.id_prestador,rp.empresa_cuit,rp.empresa_sucursal,rp.descripcion_empresa,"
+                    + "rp.dl_group_id,rp.dl_folder_id,rp.dl_file_entry_id,rp.dl_file_uuid,rp.nombre_original,rp.nombre_persistido,"
+                    + "rp.titulo, CASE WHEN rp.id_prestador IS NULL THEN NULL WHEN p.id_prestador IS NULL THEN "
+                    + "'[PRESTADOR NO RESUELTO]' ELSE p.descripcion END::VARCHAR AS descripcion_prestador,"
+                    + "rp.alta_fecha,rp.alta_usr,rp.baja_fecha,rp.baja_usr,rp.empresa_adjudicada "
+                    + "FROM compras.requerimiento_presupuesto rp "
+                    + "LEFT JOIN public.prestador p ON p.id_prestador=rp.id_prestador "
+                    + "WHERE rp.id_requerimiento=? AND rp.id_requerimiento_presupuesto=? FOR UPDATE OF rp";
 
     private static final String SQL_LISTAR_PRESUPUESTOS =
             SQL_DOCUMENTO_BASE
@@ -1957,8 +1968,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = con.prepareStatement("SELECT rp.* FROM compras.requerimiento_presupuesto rp "
-                    + "WHERE rp.id_requerimiento = ? AND rp.id_requerimiento_presupuesto = ? FOR UPDATE");
+            stmt = con.prepareStatement(SQL_BLOQUEAR_DOCUMENTO);
             stmt.setInt(1, idRequerimiento);
             stmt.setInt(2, idDocumento);
             rs = stmt.executeQuery();

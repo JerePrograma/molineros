@@ -442,8 +442,8 @@ public class ComprasDocumentosTransaccionTest {
         }});
         test("raw documental normaliza auditoria por mismaCon y conserva tabs",new Scenario(){public void run()throws Exception{
             Fixture f=new Fixture();EditarRequerimientoCompraServiceImpl real=new EditarRequerimientoCompraServiceImpl();real.insertarDocumento(f.con,presupuesto(0,101),null);
-            check(f.statements.get(0).toLowerCase(java.util.Locale.ROOT).indexOf("current_user")>=0,"fallback no se leyo en conexioncaller");check("999".equals(f.bindings.get(f.bindings.size()-1).get(Integer.valueOf(17))),"no uso current_user en INSERT");
-            real.insertarDocumento(f.con,presupuesto(0,101)," \tfixture\t ");check("\tfixture\t".equals(f.bindings.get(f.bindings.size()-1).get(Integer.valueOf(17))),"trim removio tabs noASCII de contrato");check(f.commits==0&&f.closes==0,"auditoria cierra conexion");
+            check(f.statements.get(0).toLowerCase(java.util.Locale.ROOT).indexOf("current_user")>=0,"fallback no se leyo en conexioncaller");check("999".equals(f.bindings.get(f.bindings.size()-1).get(Integer.valueOf(16))),"no uso current_user en INSERT");
+            real.insertarDocumento(f.con,presupuesto(0,101)," \tfixture\t ");check("\tfixture\t".equals(f.bindings.get(f.bindings.size()-1).get(Integer.valueOf(16))),"trim removio tabs noASCII de contrato");check(f.commits==0&&f.closes==0,"auditoria cierra conexion");
         }});
         test("Action real respeta maximo adjuntos DB superior a20 y retorno UI1",new Scenario(){public void run()throws Exception{
             Fixture f=new Fixture();f.data.configuracion.put("COMPRAS_LIMITES","ORDENES_MEDICAS_POR_CARGA=30");

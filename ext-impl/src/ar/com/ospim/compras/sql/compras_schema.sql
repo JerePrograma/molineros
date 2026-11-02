@@ -489,7 +489,6 @@ CREATE TABLE compras.requerimiento_presupuesto (
                                                    nombre_original VARCHAR(255) NOT NULL,
                                                    nombre_persistido VARCHAR(255) NOT NULL,
                                                    titulo VARCHAR(240) NOT NULL,
-                                                   descripcion_prestador VARCHAR(500),
 
                                                    alta_fecha TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
                                                    alta_usr VARCHAR(100) NOT NULL DEFAULT 'sistema',
@@ -570,12 +569,6 @@ CREATE TABLE compras.requerimiento_presupuesto (
 
                                                    CONSTRAINT ck_compras_presupuesto_titulo
                                                        CHECK (NULLIF(btrim(titulo), '') IS NOT NULL),
-
-                                                   CONSTRAINT ck_compras_orden_medica_datos
-                                                       CHECK (
-                                                           tipo_documento = 1
-                                                           OR descripcion_prestador IS NULL
-                                                       ),
 
                                                    CONSTRAINT ck_compras_presupuesto_empresa_datos
                                                        CHECK (
@@ -3136,7 +3129,7 @@ SELECT o.id_orden_compra, o.id_requerimiento, o.id_presupuesto,
        NULL::DATE AS fecha_recepcion,
        'ARS'::VARCHAR(10) AS moneda,
        CASE WHEN rp.tipo_documento = 3 THEN rp.descripcion_empresa
-            ELSE COALESCE(NULLIF(btrim(rp.descripcion_prestador), ''), p.descripcion)
+            ELSE p.descripcion
        END::VARCHAR AS proveedor,
        CASE WHEN rp.tipo_documento = 3 THEN COALESCE(rp.empresa_cuit, '')
             ELSE COALESCE(p.cuit::VARCHAR, '') END::VARCHAR AS proveedor_cuit,
@@ -5743,21 +5736,37 @@ ALTER FUNCTION compras.get_requerimiento_compra_pdf(integer)
 -- =====================================================================
 
 
-CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto(
-    p_id_requerimiento INTEGER,
-    p_id_prestador INTEGER,
-    p_dl_group_id BIGINT,
-    p_dl_folder_id BIGINT,
-    p_dl_file_entry_id BIGINT,
-    p_dl_file_uuid VARCHAR,
-    p_nombre_original VARCHAR,
-    p_nombre_persistido VARCHAR,
-    p_titulo VARCHAR,
-    p_descripcion_prestador VARCHAR,
-    p_usuario VARCHAR
-)
-RETURNS INTEGER
-AS $func$
+-- Consulta22 estable: valor vigente sin copia; NULL/huérfano igual al lector Java.
+CREATE OR REPLACE VIEW compras.requerimiento_presupuesto_consulta AS
+SELECT rp.id_requerimiento_presupuesto,
+    rp.id_requerimiento,
+    rp.tipo_documento,
+    rp.fecha_documento,
+    rp.numero_receta,
+    rp.id_prestador,
+    rp.empresa_cuit,
+    rp.empresa_sucursal,
+    rp.descripcion_empresa,
+    rp.dl_group_id,
+    rp.dl_folder_id,
+    rp.dl_file_entry_id,
+    rp.dl_file_uuid,
+    rp.nombre_original,
+    rp.nombre_persistido,
+    rp.titulo,
+    CASE WHEN rp.id_prestador IS NULL THEN NULL::character varying WHEN p.id_prestador IS NULL THEN '[PRESTADOR NO RESUELTO]'::character varying ELSE p.descripcion END::character varying(500) AS descripcion_prestador,
+    rp.alta_fecha,
+    rp.alta_usr,
+    rp.baja_fecha,
+    rp.baja_usr,
+    rp.empresa_adjudicada
+FROM compras.requerimiento_presupuesto rp
+LEFT JOIN public.prestador p ON p.id_prestador = rp.id_prestador;
+
+CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto(p_id_requerimiento integer, p_id_prestador integer, p_dl_group_id bigint, p_dl_folder_id bigint, p_dl_file_entry_id bigint, p_dl_file_uuid character varying, p_nombre_original character varying, p_nombre_persistido character varying, p_titulo character varying, p_descripcion_prestador character varying, p_usuario character varying)
+ RETURNS integer
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
     v_id INTEGER;
     v_estado_requerimiento INTEGER;
@@ -5831,7 +5840,6 @@ BEGIN
         nombre_original,
         nombre_persistido,
         titulo,
-        descripcion_prestador,
         alta_usr
     )
     VALUES (
@@ -5846,7 +5854,6 @@ BEGIN
         btrim(p_nombre_original),
         btrim(p_nombre_persistido),
         btrim(p_titulo),
-        NULLIF(btrim(p_descripcion_prestador), ''),
         v_usuario
     )
     RETURNING id_requerimiento_presupuesto
@@ -5867,167 +5874,115 @@ BEGIN
 
     RETURN v_id;
 END;
-$func$
-LANGUAGE plpgsql;
+$function$;
 
-CREATE FUNCTION compras.registrar_requerimiento_presupuesto(
-    p_id_requerimiento INTEGER,
-    p_tipo_documento SMALLINT,
-    p_id_prestador INTEGER,
-    p_empresa_cuit VARCHAR,
-    p_empresa_sucursal VARCHAR,
-    p_descripcion_empresa VARCHAR,
-    p_dl_group_id BIGINT,
-    p_dl_folder_id BIGINT,
-    p_dl_file_entry_id BIGINT,
-    p_dl_file_uuid VARCHAR,
-    p_nombre_original VARCHAR,
-    p_nombre_persistido VARCHAR,
-    p_titulo VARCHAR,
-    p_descripcion_prestador VARCHAR,
-    p_usuario VARCHAR
-)
-RETURNS INTEGER
-AS $func$
+CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_presupuesto(p_id_requerimiento integer, p_tipo_documento smallint, p_id_prestador integer, p_empresa_cuit character varying, p_empresa_sucursal character varying, p_descripcion_empresa character varying, p_dl_group_id bigint, p_dl_folder_id bigint, p_dl_file_entry_id bigint, p_dl_file_uuid character varying, p_nombre_original character varying, p_nombre_persistido character varying, p_titulo character varying, p_descripcion_prestador character varying, p_usuario character varying)
+ RETURNS integer
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
     v_id INTEGER;
     v_estado_requerimiento INTEGER;
     v_sector_descripcion VARCHAR(200);
     v_usuario VARCHAR(100);
+    v_cuit VARCHAR;
+    v_sucursal VARCHAR;
 BEGIN
     IF p_id_requerimiento IS NULL OR p_id_requerimiento <= 0 THEN
-        RAISE EXCEPTION
-            'El requerimiento informado no es válido.';
+        RAISE EXCEPTION 'El requerimiento informado no es valido.';
     END IF;
 
     IF p_tipo_documento IS NULL OR p_tipo_documento <> 3 THEN
         RAISE EXCEPTION
-            'El tipo documental no corresponde a una cotización de Empresa.';
+            'El tipo documental no corresponde a una cotizacion de Empresa.';
     END IF;
 
     IF p_id_prestador IS NOT NULL
        OR NULLIF(btrim(p_descripcion_prestador), '') IS NOT NULL THEN
-
         RAISE EXCEPTION
-            'Una cotización de Empresa no puede asociarse a un prestador.';
+            'Una cotizacion de Empresa no puede asociarse a un prestador.';
     END IF;
 
-    IF NULLIF(btrim(p_empresa_cuit), '') IS NULL
-       OR length(btrim(p_empresa_cuit)) > 11
-       OR NULLIF(btrim(p_empresa_sucursal), '') IS NULL
-       OR length(btrim(p_empresa_sucursal)) > 6
-       OR NULLIF(btrim(p_descripcion_empresa), '') IS NULL
+    IF NULLIF(btrim(p_descripcion_empresa), '') IS NULL
        OR length(btrim(p_descripcion_empresa)) > 200 THEN
+        RAISE EXCEPTION 'Debe informar el nombre de la Empresa de la cotizacion.';
+    END IF;
 
-        RAISE EXCEPTION
-            'La identidad de la Empresa de la cotización no es válida.';
+    v_cuit := NULLIF(btrim(p_empresa_cuit), '');
+    v_sucursal := NULLIF(btrim(p_empresa_sucursal), '');
+    IF v_cuit IS NOT NULL AND v_cuit !~ '^[0-9]{11}$' THEN
+        RAISE EXCEPTION 'El CUIT de la Empresa de la cotizacion no es valido.';
+    END IF;
+    IF v_sucursal IS NOT NULL
+       AND (v_cuit IS NULL OR length(v_sucursal) > 6) THEN
+        RAISE EXCEPTION 'La sucursal requiere un CUIT valido de Empresa.';
     END IF;
 
     IF p_dl_group_id IS NULL OR p_dl_group_id <= 0
        OR p_dl_folder_id IS NULL OR p_dl_folder_id < 0
        OR p_dl_file_entry_id IS NULL OR p_dl_file_entry_id <= 0 THEN
-
-        RAISE EXCEPTION
-            'La identidad del documento de cotización no es válida.';
+        RAISE EXCEPTION 'La identidad del documento de cotizacion no es valida.';
     END IF;
 
     v_usuario := COALESCE(NULLIF(btrim(p_usuario), ''), 'sistema');
 
-    SELECT
-        r.estado,
-        sr.descripcion
-      INTO
-        v_estado_requerimiento,
-        v_sector_descripcion
+    SELECT r.estado, sr.descripcion
+      INTO v_estado_requerimiento, v_sector_descripcion
       FROM compras.requerimiento r
-      JOIN compras.sector_requerimiento sr
-        ON sr.id_sector = r.id_sector
+      JOIN compras.sector_requerimiento sr ON sr.id_sector = r.id_sector
      WHERE r.id_requerimiento = p_id_requerimiento
        AND r.baja_fecha IS NULL
      FOR UPDATE OF r;
 
-    IF NOT FOUND
-       OR v_estado_requerimiento <> 1
+    IF NOT FOUND OR v_estado_requerimiento <> 1
        OR compras.normalizar_sector(v_sector_descripcion)
             NOT IN ('RRHH', 'SISTEMAS') THEN
-
         RAISE EXCEPTION
-            'La cotización de Empresa requiere un requerimiento activo '
-            'de RRHH o SISTEMAS en estado PENDIENTE.';
+            'La cotizacion de Empresa requiere un requerimiento activo de RRHH o SISTEMAS en estado PENDIENTE.';
     END IF;
 
-    IF EXISTS (
-        SELECT 1
-          FROM compras.requerimiento_presupuesto rp
+    -- La sucursal identifica una vinculacion al padron; el CUIT solo puede
+    -- informarse sin dar de alta ni seleccionar una Empresa maestra.
+    IF v_sucursal IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM compras.buscar_empresas_cotizacion(
+                v_cuit, NULL, v_sucursal, 1)
+    ) THEN
+        RAISE EXCEPTION 'La Empresa no existe o no esta activa en el padron.';
+    END IF;
+
+    IF v_cuit IS NOT NULL AND EXISTS (
+        SELECT 1 FROM compras.requerimiento_presupuesto rp
          WHERE rp.id_requerimiento = p_id_requerimiento
-           AND rp.tipo_documento = 3
-           AND rp.empresa_cuit = btrim(p_empresa_cuit)
-           AND rp.empresa_sucursal = btrim(p_empresa_sucursal)
-           AND rp.baja_fecha IS NULL
+           AND rp.tipo_documento = 3 AND rp.baja_fecha IS NULL
+           AND rp.empresa_cuit = v_cuit
+           AND COALESCE(rp.empresa_sucursal, '') = COALESCE(v_sucursal, '')
     ) THEN
         RAISE EXCEPTION
-            'La Empresa ya tiene una cotización activa para este requerimiento.';
+            'La Empresa ya tiene una cotizacion activa para este requerimiento.';
     END IF;
 
     INSERT INTO compras.requerimiento_presupuesto (
-        id_requerimiento,
-        tipo_documento,
-        fecha_documento,
-        id_prestador,
-        empresa_cuit,
-        empresa_sucursal,
-        descripcion_empresa,
-        dl_group_id,
-        dl_folder_id,
-        dl_file_entry_id,
-        dl_file_uuid,
-        nombre_original,
-        nombre_persistido,
-        titulo,
-        descripcion_prestador,
-        alta_usr
+        id_requerimiento, tipo_documento, fecha_documento, id_prestador,
+        empresa_cuit, empresa_sucursal, descripcion_empresa,
+        dl_group_id, dl_folder_id, dl_file_entry_id, dl_file_uuid,
+        nombre_original, nombre_persistido, titulo, alta_usr
+    ) VALUES (
+        p_id_requerimiento, 3, NULL, NULL,
+        v_cuit, v_sucursal, btrim(p_descripcion_empresa),
+        p_dl_group_id, p_dl_folder_id, p_dl_file_entry_id,
+        NULLIF(btrim(p_dl_file_uuid), ''), btrim(p_nombre_original),
+        btrim(p_nombre_persistido), btrim(p_titulo), v_usuario
     )
-    VALUES (
-        p_id_requerimiento,
-        3,
-        NULL,
-        NULL,
-        btrim(p_empresa_cuit),
-        btrim(p_empresa_sucursal),
-        btrim(p_descripcion_empresa),
-        p_dl_group_id,
-        p_dl_folder_id,
-        p_dl_file_entry_id,
-        NULLIF(btrim(p_dl_file_uuid), ''),
-        btrim(p_nombre_original),
-        btrim(p_nombre_persistido),
-        btrim(p_titulo),
-        NULL,
-        v_usuario
-    )
-    RETURNING id_requerimiento_presupuesto
-    INTO v_id;
+    RETURNING id_requerimiento_presupuesto INTO v_id;
 
     RETURN v_id;
 END;
-$func$
-LANGUAGE plpgsql;
+$function$;
 
-CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_orden_medica(
-    p_id_requerimiento INTEGER,
-    p_dl_group_id BIGINT,
-    p_dl_folder_id BIGINT,
-    p_dl_file_entry_id BIGINT,
-    p_dl_file_uuid VARCHAR,
-    p_nombre_original VARCHAR,
-    p_nombre_persistido VARCHAR,
-    p_titulo VARCHAR,
-    p_fecha_documento DATE,
-    p_numero_receta VARCHAR,
-    p_usuario VARCHAR
-)
-RETURNS INTEGER
-AS $func$
+CREATE OR REPLACE FUNCTION compras.registrar_requerimiento_orden_medica(p_id_requerimiento integer, p_dl_group_id bigint, p_dl_folder_id bigint, p_dl_file_entry_id bigint, p_dl_file_uuid character varying, p_nombre_original character varying, p_nombre_persistido character varying, p_titulo character varying, p_fecha_documento date, p_numero_receta character varying, p_usuario character varying)
+ RETURNS integer
+ LANGUAGE plpgsql
+AS $function$
 DECLARE
     v_id INTEGER;
     v_estado_requerimiento INTEGER;
@@ -6190,7 +6145,6 @@ BEGIN
         nombre_original,
         nombre_persistido,
         titulo,
-        descripcion_prestador,
         alta_usr
     )
     VALUES (
@@ -6209,7 +6163,6 @@ BEGIN
             NULLIF(btrim(p_titulo), ''),
             btrim(p_nombre_original)
         ),
-        NULL,
         v_usuario
     )
     RETURNING id_requerimiento_presupuesto
@@ -6217,8 +6170,7 @@ BEGIN
 
     RETURN v_id;
 END;
-$func$
-LANGUAGE plpgsql;
+$function$;
 
 CREATE OR REPLACE FUNCTION compras.baja_requerimiento_presupuesto(
     p_id_requerimiento_presupuesto INTEGER,
@@ -8396,56 +8348,47 @@ LANGUAGE sql
 STABLE;
 
 
-CREATE FUNCTION compras.listar_documentos_requerimiento(
-    p_id_requerimiento INTEGER,
-    p_tipo_documento INTEGER
-)
-RETURNS SETOF compras.requerimiento_presupuesto
-AS $func$
+CREATE OR REPLACE FUNCTION compras.listar_documentos_requerimiento(p_id_requerimiento integer, p_tipo_documento integer)
+ RETURNS SETOF compras.requerimiento_presupuesto_consulta
+ LANGUAGE sql
+ STABLE
+AS $function$
     SELECT rp.*
-    FROM compras.requerimiento_presupuesto rp
+    FROM compras.requerimiento_presupuesto_consulta rp
     WHERE rp.id_requerimiento = $1
       AND rp.tipo_documento = $2
       AND rp.baja_fecha IS NULL
     ORDER BY
         rp.alta_fecha DESC,
         rp.id_requerimiento_presupuesto DESC;
-$func$
-LANGUAGE sql
-STABLE;
+$function$;
 
 
-CREATE FUNCTION compras.get_documento_requerimiento(
-    p_id_requerimiento_presupuesto INTEGER,
-    p_id_requerimiento INTEGER,
-    p_tipo_documento INTEGER
-)
-RETURNS SETOF compras.requerimiento_presupuesto
-AS $func$
+CREATE OR REPLACE FUNCTION compras.get_documento_requerimiento(p_id_requerimiento_presupuesto integer, p_id_requerimiento integer, p_tipo_documento integer)
+ RETURNS SETOF compras.requerimiento_presupuesto_consulta
+ LANGUAGE sql
+ STABLE
+AS $function$
     SELECT rp.*
-    FROM compras.requerimiento_presupuesto rp
+    FROM compras.requerimiento_presupuesto_consulta rp
     WHERE rp.id_requerimiento_presupuesto = $1
       AND rp.id_requerimiento = $2
       AND rp.tipo_documento = $3
       AND rp.baja_fecha IS NULL;
-$func$
-LANGUAGE sql
-STABLE;
+$function$;
 
 
-CREATE FUNCTION compras.listar_ordenes_medicas_requerimiento(
-    p_id_requerimiento INTEGER
-)
-RETURNS SETOF compras.requerimiento_presupuesto
-AS $func$
+CREATE OR REPLACE FUNCTION compras.listar_ordenes_medicas_requerimiento(p_id_requerimiento integer)
+ RETURNS SETOF compras.requerimiento_presupuesto_consulta
+ LANGUAGE sql
+ STABLE
+AS $function$
     SELECT rp.*
-    FROM compras.requerimiento_presupuesto rp
+    FROM compras.requerimiento_presupuesto_consulta rp
     WHERE rp.id_requerimiento = $1
       AND rp.tipo_documento = 2
       AND rp.baja_fecha IS NULL;
-$func$
-LANGUAGE sql
-STABLE;
+$function$;
 
 
 CREATE FUNCTION compras.tiene_situacion_medica_vigente(
@@ -8515,22 +8458,19 @@ LANGUAGE sql
 STABLE;
 
 
-CREATE FUNCTION compras.listar_presupuestos_prestador(
-    p_id_requerimiento INTEGER,
-    p_id_prestador INTEGER
-)
-RETURNS SETOF compras.requerimiento_presupuesto
-AS $func$
+CREATE OR REPLACE FUNCTION compras.listar_presupuestos_prestador(p_id_requerimiento integer, p_id_prestador integer)
+ RETURNS SETOF compras.requerimiento_presupuesto_consulta
+ LANGUAGE sql
+ STABLE
+AS $function$
     SELECT rp.*
-    FROM compras.requerimiento_presupuesto rp
+    FROM compras.requerimiento_presupuesto_consulta rp
     WHERE rp.id_requerimiento = $1
       AND rp.id_prestador = $2
       AND rp.tipo_documento = 1
       AND rp.baja_fecha IS NULL
     ORDER BY rp.id_requerimiento_presupuesto;
-$func$
-LANGUAGE sql
-STABLE;
+$function$;
 
 
 CREATE FUNCTION compras.get_pedido_cotizacion_prestador(
