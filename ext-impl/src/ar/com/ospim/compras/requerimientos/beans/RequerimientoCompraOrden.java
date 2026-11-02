@@ -1,5 +1,6 @@
 package ar.com.ospim.compras.requerimientos.beans;
 
+import ar.com.ospim.util.DateUtils;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -13,6 +14,7 @@ public class RequerimientoCompraOrden {
     private int idRequerimientoCompra;
     private int idReclamoPrestacional;
     private Date fechaEmision;
+    private Date altaFecha;
     private Date fechaOrdenMedica;
     private Date fechaRecepcion;
     private String altaUsr;
@@ -48,6 +50,12 @@ public class RequerimientoCompraOrden {
 
     public int getIdReclamoPrestacional() { return idReclamoPrestacional; }
     public void setIdReclamoPrestacional(int idReclamoPrestacional) { this.idReclamoPrestacional = idReclamoPrestacional; }
+
+    public Date getAltaFecha() { return altaFecha; }
+    public void setAltaFecha(Date altaFecha) { this.altaFecha = altaFecha; }
+    public String getAltaFechaAsString() {
+        return altaFecha != null ? DateUtils.format(altaFecha, DateUtils.SHORT) : "";
+    }
 
     public Date getFechaEmision() { return fechaEmision; }
     public void setFechaEmision(Date fechaEmision) { this.fechaEmision = fechaEmision; }

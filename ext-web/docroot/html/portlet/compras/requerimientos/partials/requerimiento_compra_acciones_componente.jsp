@@ -155,8 +155,7 @@ boolean botoneraPuedeVerOrdenCompra =
         && req.isOrdenCompra()
         && Boolean.TRUE.equals(renderRequest.getAttribute(
                 RequerimientoCompraRenderActionUtil.ATTR_ORDEN_COMPRA_EMITIDA))
-        && (botoneraTieneRolView || puedeABM || botoneraTieneRolCotizar
-                || botoneraTieneRolAutorizar);
+        && ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction.puedeConsultar(user);
 
 PortletURL botoneraOrdenCompraURL = renderResponse.createRenderURL();
 botoneraOrdenCompraURL.setWindowState(WindowState.MAXIMIZED);

@@ -20,6 +20,7 @@ $sources = @(
     (Join-Path $fixturePath 'ar\com\ospim\util\ConnectionHelper.java'),
     (Join-Path $fixturePath 'ar\com\ospim\compras\requerimientos\service\BusquedaRequerimientoCompraServiceUtil.java'),
     (Join-Path $fixturePath 'ar\com\ospim\compras\requerimientos\service\RequerimientoCompraComparativaServiceUtil.java'),
+    (Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\beans\RequerimientoCompraOrden.java'),
     (Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraOrdenServiceImpl.java'),
     (Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraOrdenServiceUtil.java'),
     (Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\helper\ConfiguracionComprasHelper.java'),

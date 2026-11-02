@@ -27,13 +27,27 @@ PortletURL ordenVolverURL = renderResponse.createRenderURL();
 ordenVolverURL.setWindowState(WindowState.MAXIMIZED);
 ordenVolverURL.setParameter("struts_action", "/compras/ver_requerimiento");
 ordenVolverURL.setParameter("id_requerimiento_compra", ParamUtil.getString(renderRequest, "id_requerimiento_compra"));
+if (!ordenNueva) {
+    ordenVolverURL.setParameter("struts_action", "/compras/view");
+    ordenVolverURL.setParameter("tabs1", "orden-de-compra");
+}
 %>
 <% if (ordenError != null && ordenError.length() > 0) { %>
 <div class="portlet-msg-error"><%= HtmlUtil.escape(ordenError) %></div>
 <% } %>
 <% if (ordenCompra != null) {
     RequerimientoCompra ordenRequerimiento = ordenCompra.getRequerimiento();
+    if (Boolean.TRUE.equals(renderRequest.getAttribute("ordenCompraSoloConstancia"))) {
+        PortletURL ordenConstanciaVolverURL = renderResponse.createRenderURL();
+        ordenConstanciaVolverURL.setWindowState(WindowState.MAXIMIZED);
+        ordenConstanciaVolverURL.setParameter("struts_action", "/compras/view");
+        ordenConstanciaVolverURL.setParameter("tabs1", "requerimientos");
 %>
+<div class="portlet-msg-success">La Orden de Compra N&deg; <%= ordenCompra.getIdOrdenCompra() %> fue emitida.</div>
+<input type="button" value="Volver a Requerimientos" onclick="window.location.href='<%= ordenConstanciaVolverURL.toString() %>';" />
+<% } else if (!ordenNueva) { %>
+<%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_orden_consulta.jsp" %>
+<% } else { %>
 <% if (Boolean.TRUE.equals(renderRequest.getAttribute("ordenCompraCreada"))) { %>
 <div class="portlet-msg-success">La Orden de Compra N° <%= ordenCompra.getIdOrdenCompra() %> fue creada. Se inició la descarga del PDF.</div>
 <% } %>
@@ -57,8 +71,8 @@ ordenVolverURL.setParameter("id_requerimiento_compra", ParamUtil.getString(rende
 <legend><%= ordenNueva ? "Crear Orden de Compra" : "Orden de Compra" %></legend>
 <table class="lfr-table" width="100%">
 <tr>
-    <td><label>N&uacute;mero:</label></td>
-    <td><input type="text" size="20" readonly="readonly" value="<%= ordenNueva ? "Se asigna al guardar" : String.valueOf(ordenCompra.getIdOrdenCompra()) %>" /></td>
+    <td><label>N&uacute;mero OC:</label></td>
+    <td><input type="text" size="15" readonly="readonly" value="<%= ordenNueva ? "Se asigna al guardar" : String.valueOf(ordenCompra.getIdOrdenCompra()) %>" /></td>
     <td><label>Fecha de emisi&oacute;n:</label></td>
     <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getFechaEmision() == null ? "" : new SimpleDateFormat("dd/MM/yyyy").format(ordenCompra.getFechaEmision()) %>" /></td>
     <td><label>Requerimiento:</label></td>
@@ -158,6 +172,12 @@ window.location.href = '/pdfservlet/?accion=ordenCompra&id_requerimiento=<%= ord
 </script>
 <% } %>
 <% } %>
+<% } %>
+<% if (Boolean.TRUE.equals(renderRequest.getAttribute("ordenCompraCreada")) && !ordenIncompleta) { %>
+<script type="text/javascript">
+window.location.href = '/pdfservlet/?accion=ordenCompra&id_requerimiento=<%= ordenCompra.getIdRequerimientoCompra() %>';
+</script>
+<% } %>
 <% } else { %>
-<input type="button" value="Volver al requerimiento" onclick="window.location.href='<%= ordenVolverURL.toString() %>';" />
+<input type="button" value="Volver" onclick="window.location.href='<%= ordenVolverURL.toString() %>';" />
 <% } %>

@@ -7,6 +7,11 @@ response.setDateHeader("Expires", 0);
 
 String tabs1 = ParamUtil.getString(request, "tabs1", null);
 
+boolean mostrarRequerimientos =
+        ar.com.ospim.compras.requerimientos.helper.ExportarRequerimientosCompraHelper.puedeConsultar(user);
+boolean mostrarOrdenesCompra =
+        ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction.puedeConsultar(user);
+
 boolean mostrarParaAutorizar =
         user != null
         && PermissionUtil.userContainsRole(
@@ -29,25 +34,27 @@ if (tabs1 == null) {
     tabs1 = (String) request.getSession().getAttribute("compras_tabs1");
 }
 
-String tabs1Values =
-        "requerimientos,orden-de-compra";
+String tabs1Values = mostrarRequerimientos ? "requerimientos" : "";
+String tabs1Names = mostrarRequerimientos ? "Requerimientos" : "";
 
-String tabs1Names =
-        "Requerimientos,Orden de Compra";
+if (mostrarOrdenesCompra) {
+    tabs1Values += (tabs1Values.length() > 0 ? "," : "") + "orden-de-compra";
+    tabs1Names += (tabs1Names.length() > 0 ? "," : "") + "Orden de Compra";
+}
 
 if (mostrarParaAutorizar) {
-    tabs1Values += ",para-autorizar";
-    tabs1Names += ",Para Autorizar";
+    tabs1Values += (tabs1Values.length() > 0 ? "," : "") + "para-autorizar";
+    tabs1Names += (tabs1Names.length() > 0 ? "," : "") + "Para Autorizar";
 }
 
 if (mostrarConfiguracionCorreos) {
-    tabs1Values += ",configuracion-de-correos";
-    tabs1Names += ",Configuraci\u00f3n de Correos";
+    tabs1Values += (tabs1Values.length() > 0 ? "," : "") + "configuracion-de-correos";
+    tabs1Names += (tabs1Names.length() > 0 ? "," : "") + "Configuraci\u00f3n de Correos";
 }
 
 boolean tabValida =
-        "requerimientos".equals(tabs1)
-        || "orden-de-compra".equals(tabs1)
+        (mostrarRequerimientos && "requerimientos".equals(tabs1))
+        || (mostrarOrdenesCompra && "orden-de-compra".equals(tabs1))
         || (mostrarParaAutorizar && "para-autorizar".equals(tabs1))
         || (
                 mostrarConfiguracionCorreos
@@ -55,7 +62,8 @@ boolean tabValida =
         );
 
 if (tabs1 == null || !tabValida) {
-    tabs1 = "requerimientos";
+    tabs1 = mostrarRequerimientos ? "requerimientos"
+            : (mostrarOrdenesCompra ? "orden-de-compra" : "");
 }
 
 request.getSession().setAttribute("compras_tabs1", tabs1);
@@ -83,12 +91,12 @@ currentURL = PortalUtil.getCurrentURL(request);
 </form>
 
 <c:choose>
-    <c:when test='<%= "requerimientos".equals(tabs1) %>'>
+    <c:when test='<%= mostrarRequerimientos && "requerimientos".equals(tabs1) %>'>
         <liferay-util:include
                 page="/html/portlet/compras/requerimientos/requerimiento_compra_listado.jsp" />
     </c:when>
 
-    <c:when test='<%= "orden-de-compra".equals(tabs1) %>'>
+    <c:when test='<%= mostrarOrdenesCompra && "orden-de-compra".equals(tabs1) %>'>
         <liferay-util:include
                 page="/html/portlet/compras/requerimientos/requerimiento_compra_ordenes.jsp" />
     </c:when>
@@ -104,8 +112,7 @@ currentURL = PortalUtil.getCurrentURL(request);
     </c:when>
 
     <c:otherwise>
-        <liferay-util:include
-                page="/html/portlet/compras/requerimientos/requerimiento_compra_listado.jsp" />
+        <div class="portlet-msg-error">No posee permisos para consultar Compras.</div>
     </c:otherwise>
 </c:choose>
 

@@ -18,6 +18,7 @@ $classpath = $classpathEntries -join ';'
 $fixturePath = Join-Path $PSScriptRoot 'fixtures\lecturas-orden-rp'
 $sources = @(
     (Join-Path $fixturePath 'ar\com\ospim\util\ConnectionHelper.java'),
+    (Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\beans\RequerimientoCompraOrden.java'),
     (Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraOrdenServiceImpl.java'),
     (Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraReclamoPrestacionalServiceImpl.java'),
     (Join-Path $PSScriptRoot 'ComprasLecturasOrdenRpTest.java')

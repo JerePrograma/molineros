@@ -435,6 +435,11 @@ public final class ConfiguracionComprasHelper {
         return valorMapa("COMPRAS_ROLES", "VIEW");
     }
 
+    public static String getRolGestionCompras() {
+        String rol = parsearPares("COMPRAS_ROLES", leerObligatoria("COMPRAS_ROLES")).get("GESTION");
+        return rol != null ? rol : "GESTION_COMPRAS";
+    }
+
     public static String getRolAbmCompras() {
         return valorMapa("COMPRAS_ROLES", "ABM");
     }

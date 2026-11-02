@@ -1,6 +1,10 @@
 package ar.com.ospim.compras.action;
 
 import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+import ar.com.ospim.compras.requerimientos.helper.ExportarRequerimientosCompraHelper;
+import ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraOrdenServiceUtil;
 
 import ar.com.ospim.afiliados.beans.TercerizadoraServicio;
 import ar.com.ospim.compras.WebKeysCompras;
@@ -21,6 +25,8 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +71,8 @@ public class ViewComprasAction extends PortletAction {
             cargarCatalogos(
                     renderRequest
             );
+
+            cargarOrdenesCompra(renderRequest);
 
             cargarConfiguracionCorreos(
                     renderRequest
@@ -223,6 +231,130 @@ public class ViewComprasAction extends PortletAction {
         }
 
         return tab;
+    }
+
+    /* Referencia: BuscarRequerimientosComprasAction.getFechaFromRequest y
+     * Liquidaciones/ordenes_pago/orden_pago_ospim_search_result.jsp.
+     * La consulta propia de OC no modifica la busqueda de requerimientos. */
+    private void cargarOrdenesCompra(RenderRequest request) throws Exception {
+        User user = PortalUtil.getUser(request);
+        String tab = obtenerTabActiva(request);
+        boolean puedeRequerimientos = ExportarRequerimientosCompraHelper.puedeConsultar(user);
+        boolean puedeOrdenes = RequerimientoCompraOrdenAction.puedeConsultar(user);
+        boolean tabValida = (puedeRequerimientos && "requerimientos".equals(tab))
+                || (puedeOrdenes && "orden-de-compra".equals(tab))
+                || (user != null && "para-autorizar".equals(tab)
+                    && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()))
+                || (user != null && TAB_CONFIGURACION_CORREOS.equals(tab)
+                    && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras()));
+        if (!tabValida) {
+            tab = puedeRequerimientos ? "requerimientos" : (puedeOrdenes ? "orden-de-compra" : "");
+        }
+        request.setAttribute("tabs1", tab);
+        if (!"orden-de-compra".equals(tab)) {
+            return;
+        }
+        if (!puedeOrdenes) {
+            throw new Exception("No posee permisos para consultar ordenes de compra.");
+        }
+        request.setAttribute("comprasOrdenesEmitidas", new ArrayList<RequerimientoCompraOrden>());
+        request.setAttribute("comprasOrdenesPagina", Integer.valueOf(1));
+        request.setAttribute("comprasOrdenesHaySiguiente", Boolean.FALSE);
+        try {
+            Integer idOrden = getEnteroOrdenes(request, "id_orden_compra", "Numero OC", false);
+            Integer idSector = getEnteroOrdenes(request, "id_sector_oc", "Sector", true);
+            Date desde = getFechaOrdenes(request, "fechaAltaOCDesde", "fecha de alta OC desde");
+            Date hasta = getFechaOrdenes(request, "fechaAltaOCHasta", "fecha de alta OC hasta");
+            if (desde != null && hasta != null && desde.after(hasta)) {
+                throw new IllegalArgumentException("La fecha de alta OC desde no puede ser posterior a la fecha de alta OC hasta.");
+            }
+            Integer paginaRecibida = getEnteroOrdenes(request, "pagina_ordenes", "Pagina", false);
+            int pagina = paginaRecibida == null ? 1 : paginaRecibida.intValue();
+            int porPagina = ConfiguracionComprasHelper.getRequerimientosPorPagina();
+            long inicio = ((long) pagina - 1L) * porPagina;
+            if (inicio > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("La pagina solicitada no es valida.");
+            }
+            List<RequerimientoCompraOrden> ordenes = RequerimientoCompraOrdenServiceUtil.buscarEmitidas(
+                    idOrden, desde, hasta, idSector, ConfiguracionComprasHelper.getEstadoOrdenCompra(),
+                    (int) inicio, porPagina + 1);
+            if (pagina > 1 && ordenes.isEmpty()) {
+                pagina = 1;
+                ordenes = RequerimientoCompraOrdenServiceUtil.buscarEmitidas(
+                        idOrden, desde, hasta, idSector, ConfiguracionComprasHelper.getEstadoOrdenCompra(),
+                        0, porPagina + 1);
+            }
+            boolean haySiguiente = ordenes.size() > porPagina;
+            if (haySiguiente) {
+                ordenes.remove(ordenes.size() - 1);
+            }
+            request.setAttribute("comprasOrdenesEmitidas", ordenes);
+            request.setAttribute("comprasOrdenesPagina", Integer.valueOf(pagina));
+            request.setAttribute("comprasOrdenesHaySiguiente", Boolean.valueOf(haySiguiente));
+        } catch (IllegalArgumentException e) {
+            request.setAttribute("comprasOrdenesError", e.getMessage());
+        } catch (Exception e) {
+            _log.error("No se pudo consultar el listado de ordenes de compra emitidas.", e);
+            request.setAttribute("comprasOrdenesError", "No se pudo consultar las ordenes de compra. Verifique la disponibilidad de Compras.");
+        }
+    }
+
+    private Integer getEnteroOrdenes(RenderRequest request, String nombre,
+            String descripcion, boolean admiteTodos) {
+        String value = getParametroOrdenes(request, nombre);
+        if (WebKeysCompras.isEmpty(value) || (admiteTodos && "0".equals(value))) {
+            return null;
+        }
+        try {
+            if (!value.matches("[0-9]+")) {
+                throw new NumberFormatException();
+            }
+            int numero = Integer.parseInt(value);
+            if (numero <= 0) {
+                throw new NumberFormatException();
+            }
+            return Integer.valueOf(numero);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("El filtro " + descripcion + " no es valido.");
+        }
+    }
+
+    private Date getFechaOrdenes(RenderRequest request, String prefijo, String descripcion) {
+        String dia = getParametroOrdenes(request, prefijo + "Dia");
+        String mes = getParametroOrdenes(request, prefijo + "Mes");
+        String anio = getParametroOrdenes(request, prefijo + "Anio");
+        boolean tieneDia = !WebKeysCompras.isEmpty(dia) && !"-1".equals(dia);
+        boolean tieneMes = !WebKeysCompras.isEmpty(mes) && !"-1".equals(mes);
+        boolean tieneAnio = !WebKeysCompras.isEmpty(anio) && !"-1".equals(anio);
+        if (!tieneDia && !tieneMes && !tieneAnio) {
+            return null;
+        }
+        if (!tieneDia || !tieneMes || !tieneAnio) {
+            throw new IllegalArgumentException("Debe completar dia, mes y anio de la " + descripcion + ".");
+        }
+        try {
+            int numeroDia = Integer.parseInt(dia);
+            int numeroMes = Integer.parseInt(mes);
+            int numeroAnio = Integer.parseInt(anio);
+            if (numeroDia < 1 || numeroDia > 31 || numeroMes < 0 || numeroMes > 11
+                    || numeroAnio < 1900 || numeroAnio > 9999) {
+                throw new IllegalArgumentException();
+            }
+            SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+            formato.setLenient(false);
+            return formato.parse(numeroDia + "/" + (numeroMes + 1) + "/" + numeroAnio);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("La " + descripcion + " no es valida.");
+        }
+    }
+
+    private String getParametroOrdenes(RenderRequest request, String nombre) {
+        String value = ParamUtil.getString(request, nombre, null);
+        if (WebKeysCompras.isEmpty(value)) {
+            String namespace = PortalUtil.getPortletNamespace(PortalUtil.getPortletId(request));
+            value = ParamUtil.getString(request, namespace + nombre, null);
+        }
+        return value == null ? null : value.trim();
     }
 
     private boolean contieneRubro(

@@ -591,6 +591,88 @@ public class RequerimientoCompraOrdenServiceImpl {
         return normalizar(texto.toString());
     }
 
+    /** Referencia: Liquidaciones BuscarOrdenesPagoOspimAction y OrdenPagoServiceImpl. */
+    public List<RequerimientoCompraOrden> buscarEmitidas(Integer idOrdenCompra,
+            Date fechaAltaDesde, Date fechaAltaHasta, Integer idSector,
+            int estadoOrdenCompra, int inicio, int cantidad) throws Exception {
+        StringBuilder sql = new StringBuilder(
+                "SELECT o.id_orden_compra,o.id_requerimiento,o.alta_fecha,"
+                + "r.id_sector,s.descripcion AS sector_descripcion,"
+                + "r.afiliado_cuil_titular,r.afiliado_int,"
+                + "a.nombre AS afiliado_nombre,a.apellido AS afiliado_apellido,"
+                + "CASE WHEN a.cuil_titular IS NULL AND r.afiliado_cuil_titular IS NOT NULL "
+                + "THEN '[AFILIADO NO RESUELTO]' ELSE NULL END AS afiliado_no_resuelto "
+                + "FROM compras.requerimiento_orden_compra o "
+                + "JOIN compras.requerimiento r ON r.id_requerimiento=o.id_requerimiento "
+                + "JOIN compras.sector_requerimiento s ON s.id_sector=r.id_sector "
+                + "LEFT JOIN public.afiliado a ON a.cuil_titular=r.afiliado_cuil_titular "
+                + "AND a.inte=r.afiliado_int "
+                + "WHERE r.baja_fecha IS NULL AND r.estado=?");
+        if (idOrdenCompra != null) {
+            sql.append(" AND o.id_orden_compra=?");
+        }
+        if (fechaAltaDesde != null) {
+            sql.append(" AND o.alta_fecha>=?");
+        }
+        if (fechaAltaHasta != null) {
+            sql.append(" AND o.alta_fecha<(CAST(? AS DATE) + INTERVAL '1 day')");
+        }
+        if (idSector != null) {
+            sql.append(" AND r.id_sector=?");
+        }
+        sql.append(" ORDER BY o.alta_fecha DESC,o.id_orden_compra DESC LIMIT ? OFFSET ?");
+        List<RequerimientoCompraOrden> ordenes = new ArrayList<RequerimientoCompraOrden>();
+        Connection con = null;
+        PreparedStatement stmt = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(sql.toString());
+            int parametro = 1;
+            stmt.setInt(parametro++, estadoOrdenCompra);
+            if (idOrdenCompra != null) {
+                stmt.setInt(parametro++, idOrdenCompra.intValue());
+            }
+            if (fechaAltaDesde != null) {
+                stmt.setDate(parametro++, new java.sql.Date(fechaAltaDesde.getTime()));
+            }
+            if (fechaAltaHasta != null) {
+                stmt.setDate(parametro++, new java.sql.Date(fechaAltaHasta.getTime()));
+            }
+            if (idSector != null) {
+                stmt.setInt(parametro++, idSector.intValue());
+            }
+            stmt.setInt(parametro++, cantidad);
+            stmt.setInt(parametro, inicio);
+            ResultSet rs = stmt.executeQuery();
+            try {
+                while (rs.next()) {
+                    RequerimientoCompraOrden orden = new RequerimientoCompraOrden();
+                    orden.setIdOrdenCompra(rs.getInt("id_orden_compra"));
+                    orden.setIdRequerimientoCompra(rs.getInt("id_requerimiento"));
+                    orden.setAltaFecha(rs.getTimestamp("alta_fecha"));
+                    RequerimientoCompra requerimiento = RequerimientoCompra.paraMapeo();
+                    requerimiento.setIdRequerimientoCompra(orden.getIdRequerimientoCompra());
+                    requerimiento.setEstado(estadoOrdenCompra);
+                    requerimiento.setSectorId(Integer.valueOf(rs.getInt("id_sector")));
+                    requerimiento.setSectorDescripcion(rs.getString("sector_descripcion"));
+                    requerimiento.setAfiliadoCuilTitular(rs.getString("afiliado_cuil_titular"));
+                    int integrante = rs.getInt("afiliado_int");
+                    requerimiento.setAfiliadoInt(rs.wasNull() ? null : Integer.valueOf(integrante));
+                    requerimiento.setAfiliadoNombre(rs.getString("afiliado_nombre"));
+                    requerimiento.setAfiliadoApellido(rs.getString("afiliado_apellido"));
+                    requerimiento.setAfiliadoNombreApellido(rs.getString("afiliado_no_resuelto"));
+                    orden.setRequerimiento(requerimiento);
+                    ordenes.add(orden);
+                }
+            } finally {
+                rs.close();
+            }
+        } finally {
+            ConnectionHelper.cerrar(stmt, con);
+        }
+        return ordenes;
+    }
+
     public RequerimientoCompraOrden obtenerPorRequerimiento(int idRequerimiento)
             throws Exception {
         Connection con = null;
@@ -605,7 +687,7 @@ public class RequerimientoCompraOrdenServiceImpl {
     private RequerimientoCompraOrden obtenerPorRequerimiento(Connection con,
             int idRequerimiento) throws Exception {
         PreparedStatement stmt = con.prepareStatement(
-                "SELECT o.id_orden_compra,o.id_requerimiento,o.alta_usr,o.modi_fecha,o.modi_usr,"
+                "SELECT o.id_orden_compra,o.id_requerimiento,o.alta_fecha,o.alta_usr,o.modi_fecha,o.modi_usr,"
                 + "o.version_edicion,o.fecha_emision,o.condicion,o.forma_pago,o.plazo_pago,"
                 + "o.entrega,o.observaciones,o.iva,o.iibb,r.alta_usr AS solicitante,"
                 + "rr.id_reclamo_prestacional,rp.tipo_documento,rp.id_prestador,"
@@ -629,6 +711,7 @@ public class RequerimientoCompraOrdenServiceImpl {
                     orden = new RequerimientoCompraOrden();
                     orden.setIdOrdenCompra(rs.getInt("id_orden_compra"));
                     orden.setIdRequerimientoCompra(rs.getInt("id_requerimiento"));
+                    orden.setAltaFecha(rs.getTimestamp("alta_fecha"));
                     orden.setAltaUsr(rs.getString("alta_usr"));
                     orden.setModiFecha(rs.getTimestamp("modi_fecha"));
                     orden.setModiUsr(rs.getString("modi_usr"));

@@ -1181,14 +1181,14 @@ public class PdfServlet extends HttpServlet {
 	
     private void generaOrdenCompra(HttpServletRequest req,
             HttpServletResponse res) throws IOException {
+        int idRequerimiento = ParamUtil.getInteger(req, "id_requerimiento", 0);
         User user;
         try {
             user = PortalUtil.getUser(req);
             if (user == null
-                    || (!PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
-                    && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
-                    && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
-                    && !PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()))) {
+                    || (!ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction.puedeConsultar(user)
+                    && !ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction
+                            .consumirDescargaEmision(req, user, idRequerimiento))) {
                 res.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -1197,7 +1197,6 @@ public class PdfServlet extends HttpServlet {
             res.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
-        int idRequerimiento = ParamUtil.getInteger(req, "id_requerimiento", 0);
         if (idRequerimiento <= 0) {
             res.sendError(HttpServletResponse.SC_BAD_REQUEST,
                     "Debe informar el requerimiento de compra.");

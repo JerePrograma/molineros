@@ -21,6 +21,8 @@ import javax.portlet.PortletConfig;
 import javax.portlet.PortletRequest;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -31,13 +33,13 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
     private static final Log _log = LogFactoryUtil.getLog(RequerimientoCompraOrdenAction.class);
     private static final String RUTA = "/compras/orden_compra";
     private static final String FORWARD = "portlet.compras.orden_compra";
+    private static final String DESCARGA_EMISION = "COMPRAS_ORDEN_COMPRA_DESCARGA_EMISION";
+    private static final long VIGENCIA_DESCARGA_EMISION = 5L * 60L * 1000L;
     private final RequerimientoCompraOrdenHelper helper = new RequerimientoCompraOrdenHelper();
 
     public static boolean puedeConsultar(User user) throws Exception {
-        return user != null && (PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
-                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
-                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
-                || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()));
+        return user != null && PermissionUtil.userContainsRole(user,
+                ConfiguracionComprasHelper.getRolGestionCompras());
     }
 
     public static boolean puedeEditar(User user) throws Exception {
@@ -53,25 +55,27 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
                 throw new IllegalArgumentException("No posee permisos para crear o editar órdenes de compra.");
             }
             String cmd = ParamUtil.getString(request, "cmd");
-            if ("update".equals(cmd) || "create".equals(cmd)) {
+            if ("update".equals(cmd)) {
+                throw new IllegalArgumentException("La Orden de Compra emitida se encuentra en modo consulta.");
+            }
+            if ("create".equals(cmd)) {
                 RequerimientoCompraOrden orden = obtenerHelper().prepararParaGuardar(id, user.getFullName());
+                if (orden.getIdOrdenCompra() > 0) {
+                    throw new IllegalArgumentException("La Orden de Compra ya fue emitida. Su consulta requiere Gestion de Compras.");
+                }
                 Map<String, String> entrada = obtenerEntrada(request, orden);
                 request.setAttribute("ordenCompraEntrada", entrada);
                 consumirToken(request);
-                if ("update".equals(cmd)) {
-                    obtenerHelper().actualizar(id, ParamUtil.getInteger(request, "id_orden_compra", 0),
-                            ParamUtil.getInteger(request, "version_edicion", -1), entrada, user.getScreenName());
-                    request.setAttribute("ordenCompraActualizada", Boolean.TRUE);
-                } else {
-                    obtenerHelper().crear(id, entrada, user.getScreenName());
-                    request.setAttribute("ordenCompraCreada", Boolean.TRUE);
-                }
+                obtenerHelper().crear(id, entrada, user.getScreenName());
+                publicarDescargaEmision(request, user, id);
+                request.setAttribute("ordenCompraCreada", Boolean.TRUE);
             } else if (cmd.length() == 0) {
                 RequerimientoCompraOrden orden = obtenerHelper().prepararParaGuardar(id, user.getFullName());
                 if (orden.getIdOrdenCompra() == 0
                         && !obtenerHelper().requiereCompletarDatos(orden)) {
                     consumirToken(request);
                     obtenerHelper().crearDirecta(id, user.getFullName(), user.getScreenName());
+                    publicarDescargaEmision(request, user, id);
                     request.setAttribute("ordenCompraCreada", Boolean.TRUE);
                 }
             } else {
@@ -88,19 +92,27 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
         }
         response.setRenderParameter("struts_action", RUTA);
         response.setRenderParameter("id_requerimiento_compra", String.valueOf(id));
+        response.setRenderParameter("origen_ordenes", ParamUtil.getString(request, "origen_ordenes", "0"));
     }
 
     public ActionForward render(ActionMapping mapping, ActionForm form, PortletConfig config,
             RenderRequest request, RenderResponse response) throws Exception {
         try {
             User user = obtenerUsuario(request);
-            if (!puedeConsultar(user)) {
+            boolean consulta = puedeConsultar(user);
+            boolean emisor = puedeEditar(user);
+            if (!consulta && !emisor) {
                 throw new IllegalArgumentException("No posee permisos para consultar órdenes de compra.");
             }
             RequerimientoCompraOrden orden = obtenerHelper().preparar(
                     ParamUtil.getInteger(request, "id_requerimiento_compra", 0), user.getFullName());
-            boolean editable = puedeEditar(user);
             boolean nueva = orden.getIdOrdenCompra() <= 0;
+            boolean constancia = !nueva && emisor && !consulta
+                    && Boolean.TRUE.equals(request.getAttribute("ordenCompraCreada"));
+            if (!nueva && !consulta && !constancia) {
+                throw new IllegalArgumentException("No posee permisos para consultar ordenes de compra emitidas.");
+            }
+            boolean editable = nueva && emisor;
             if ((nueva && (!editable
                     || !orden.getRequerimiento().esSectorSinCotizacionPrestador()))
                     || (!nueva && !orden.getRequerimiento().isOrdenCompra())) {
@@ -108,6 +120,7 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
                         "Todavia no se emitio una Orden de Compra para este requerimiento.");
             }
             request.setAttribute("ordenCompra", orden);
+            request.setAttribute("ordenCompraSoloConstancia", Boolean.valueOf(constancia));
             request.setAttribute("ordenCompraEditable", Boolean.valueOf(editable));
             request.setAttribute("ordenCompraPuedeCrear", Boolean.valueOf(nueva));
             request.setAttribute("ordenCompraRequiereDatos",
@@ -127,6 +140,47 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             }
         }
         return mapping.findForward(FORWARD);
+    }
+
+    /** Permiso de una sola descarga, limitado al resultado de la emision. */
+    protected void publicarDescargaEmision(ActionRequest request, User user, int id) {
+        HttpServletRequest http = PortalUtil.getHttpServletRequest(request);
+        if (http == null) {
+            throw new IllegalStateException("No se pudo preparar la descarga de la Orden de Compra emitida.");
+        }
+        HttpSession session = http.getSession();
+        synchronized (session) {
+            session.setAttribute(DESCARGA_EMISION + "_" + id,
+                    new long[] { user.getUserId(), id, System.currentTimeMillis() });
+        }
+    }
+
+    public static boolean consumirDescargaEmision(HttpServletRequest request, User user, int id)
+            throws Exception {
+        if (request == null || id <= 0 || !puedeEditar(user)) {
+            return false;
+        }
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return false;
+        }
+        synchronized (session) {
+            Object valor = session.getAttribute(DESCARGA_EMISION + "_" + id);
+            if (!(valor instanceof long[]) || ((long[]) valor).length != 3) {
+                return false;
+            }
+            long[] permiso = (long[]) valor;
+            long antiguedad = System.currentTimeMillis() - permiso[2];
+            if (antiguedad < 0 || antiguedad > VIGENCIA_DESCARGA_EMISION) {
+                session.removeAttribute(DESCARGA_EMISION + "_" + id);
+                return false;
+            }
+            if (permiso[0] != user.getUserId() || permiso[1] != id) {
+                return false;
+            }
+            session.removeAttribute(DESCARGA_EMISION + "_" + id);
+            return true;
+        }
     }
 
     private Map<String, String> obtenerEntrada(ActionRequest request,

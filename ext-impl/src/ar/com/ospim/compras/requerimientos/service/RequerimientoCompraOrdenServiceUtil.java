@@ -20,6 +20,13 @@ public class RequerimientoCompraOrdenServiceUtil {
         service.completarDatosConsulta(orden, requerimiento);
     }
 
+    public static List<RequerimientoCompraOrden> buscarEmitidas(Integer idOrdenCompra,
+            Date fechaAltaDesde, Date fechaAltaHasta, Integer idSector,
+            int estadoOrdenCompra, int inicio, int cantidad) throws Exception {
+        return service.buscarEmitidas(idOrdenCompra, fechaAltaDesde, fechaAltaHasta,
+                idSector, estadoOrdenCompra, inicio, cantidad);
+    }
+
     public static RequerimientoCompraOrden obtenerPorRequerimiento(int idRequerimiento)
             throws Exception {
         return service.obtenerPorRequerimiento(idRequerimiento);

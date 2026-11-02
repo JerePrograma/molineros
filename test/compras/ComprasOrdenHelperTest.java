@@ -43,7 +43,9 @@ public class ComprasOrdenHelperTest {
         estadoYAdjudicacion();
         medicina();
         edicionCondiciones();
+        configuracionGestion();
         permisosEdicion();
+        descargaEmision();
         flujoAction();
         System.out.println("COMPRAS_ORDEN_HELPER_OFFLINE_OK checks=" + checks);
         System.out.println("Helper productivo; generacion directa con fuentes canonicas; sin DB ni UI.");
@@ -251,10 +253,35 @@ public class ComprasOrdenHelperTest {
         throw new AssertionError("No rechazo edicion: " + caso);
     }
 
+    private static void configuracionGestion() throws Exception {
+        /* Las transacciones previas instalan una copia de la fuente de datos. */
+        datosPrueba.instalar();
+        String roles = datosPrueba.configuracion.get("COMPRAS_ROLES");
+        igual("rol gestion compatible sin migracion", "GESTION_COMPRAS",
+                ConfiguracionComprasHelper.getRolGestionCompras());
+        try {
+            datosPrueba.configuracion.put("COMPRAS_ROLES", roles + ";GESTION=rol_gestion_prueba");
+            igual("rol gestion configurable", "rol_gestion_prueba",
+                    ConfiguracionComprasHelper.getRolGestionCompras());
+            datosPrueba.configuracion.put("COMPRAS_ROLES", roles + ";GESTION=");
+            boolean rechazo = false;
+            try {
+                ConfiguracionComprasHelper.getRolGestionCompras();
+            } catch (ConfiguracionComprasHelper.ConfiguracionInvalidaException e) {
+                rechazo = true;
+            }
+            igual("mapa gestion invalido no usa fallback", Boolean.TRUE, Boolean.valueOf(rechazo));
+        } finally {
+            datosPrueba.configuracion.put("COMPRAS_ROLES", roles);
+        }
+    }
+
     private static void permisosEdicion() throws Exception {
         String[] roles = { ConfiguracionComprasHelper.getRolAbmCompras(), ConfiguracionComprasHelper.getRolCotizarCompras(),
-                ConfiguracionComprasHelper.getRolViewCompras(), ConfiguracionComprasHelper.getRolAutorizarCompras(), "OTRO" };
+                ConfiguracionComprasHelper.getRolViewCompras(), ConfiguracionComprasHelper.getRolAutorizarCompras(),
+                ConfiguracionComprasHelper.getRolGestionCompras(), "OTRO" };
         igual("anonimo no edita", Boolean.FALSE, Boolean.valueOf(RequerimientoCompraOrdenAction.puedeEditar(null)));
+        igual("anonimo no consulta", Boolean.FALSE, Boolean.valueOf(RequerimientoCompraOrdenAction.puedeConsultar(null)));
         for (int i = 0; i < roles.length; i++) {
             final List<Role> asignados = new ArrayList<Role>();
             Role rol = new RoleImpl(); rol.setName(roles[i]); asignados.add(rol);
@@ -263,8 +290,118 @@ public class ComprasOrdenHelperTest {
             };
             igual(roles[i] + " permiso mutacion", Boolean.valueOf(i == 0),
                     Boolean.valueOf(RequerimientoCompraOrdenAction.puedeEditar(usuario)));
-            igual(roles[i] + " consulta", Boolean.valueOf(i < 4),
+            igual(roles[i] + " consulta", Boolean.valueOf(i == 4),
                     Boolean.valueOf(RequerimientoCompraOrdenAction.puedeConsultar(usuario)));
+        }
+        AccionPrueba mixta = new AccionPrueba(empresaFixture(), new String[] {
+                ConfiguracionComprasHelper.getRolAbmCompras(), ConfiguracionComprasHelper.getRolGestionCompras() });
+        igual("ABM y GESTION conserva creacion", Boolean.TRUE,
+                Boolean.valueOf(RequerimientoCompraOrdenAction.puedeEditar(mixta.usuario)));
+        igual("ABM y GESTION consulta por gestion", Boolean.TRUE,
+                Boolean.valueOf(RequerimientoCompraOrdenAction.puedeConsultar(mixta.usuario)));
+    }
+
+    private static void descargaEmision() throws Exception {
+        Field claveCampo = RequerimientoCompraOrdenAction.class.getDeclaredField("DESCARGA_EMISION");
+        claveCampo.setAccessible(true);
+        String claveBase = (String)claveCampo.get(null);
+        String clave = claveBase + "_40";
+        Field vigenciaCampo = RequerimientoCompraOrdenAction.class.getDeclaredField("VIGENCIA_DESCARGA_EMISION");
+        vigenciaCampo.setAccessible(true);
+        long vigencia = vigenciaCampo.getLong(null);
+        User abm = usuarioDescarga(101L, ConfiguracionComprasHelper.getRolAbmCompras());
+        User otroAbm = usuarioDescarga(102L, ConfiguracionComprasHelper.getRolAbmCompras());
+        User gestion = usuarioDescarga(101L, ConfiguracionComprasHelper.getRolGestionCompras());
+        DescargaPrueba peticion = new DescargaPrueba();
+        peticion.atributos.put(clave, new long[] { 101L, 40L, System.currentTimeMillis() });
+        igual("PDF inicial ABM autorizado", Boolean.TRUE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+        igual("PDF inicial consume permiso", null, peticion.atributos.get(clave));
+        igual("PDF segunda descarga rechazada", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+
+        peticion.atributos.put(clave, new long[] { 101L, 40L, System.currentTimeMillis() });
+        igual("PDF no autoriza otro usuario ABM", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, otroAbm, 40)));
+        igual("PDF no autoriza otro requerimiento", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 41)));
+        igual("PDF permiso sigue ligado a emisor y requerimiento originales", Boolean.TRUE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+
+        String claveOtra = claveBase + "_41";
+        peticion.atributos.put(clave, new long[] { 101L, 40L, System.currentTimeMillis() });
+        peticion.atributos.put(claveOtra, new long[] { 101L, 41L, System.currentTimeMillis() });
+        igual("PDF primera OC de dos emisiones autorizada", Boolean.TRUE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+        igual("PDF consumir primera OC conserva permiso de segunda", Boolean.TRUE,
+                Boolean.valueOf(peticion.atributos.get(claveOtra) != null));
+        igual("PDF segunda OC conserva descarga independiente", Boolean.TRUE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 41)));
+        igual("PDF ambas emisiones consumidas una vez", Boolean.TRUE,
+                Boolean.valueOf(peticion.atributos.get(clave) == null && peticion.atributos.get(claveOtra) == null));
+
+        peticion.atributos.put(clave, new long[] { 101L, 40L, System.currentTimeMillis() - vigencia - 1000L });
+        igual("PDF permiso vencido rechazado", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+        igual("PDF permiso vencido eliminado", null, peticion.atributos.get(clave));
+        peticion.atributos.put(clave, new long[] { 101L, 40L, System.currentTimeMillis() + 60000L });
+        igual("PDF permiso futuro rechazado", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+        igual("PDF permiso futuro eliminado", null, peticion.atributos.get(clave));
+
+        peticion.atributos.put(clave, new long[] { 101L, 40L, System.currentTimeMillis() });
+        igual("PDF anonimo rechazado", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, null, 40)));
+        igual("PDF grant de emision exige ABM aunque usuario coincida", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, gestion, 40)));
+        igual("PDF requerimiento invalido rechazado", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 0)));
+        igual("PDF request ausente rechazado", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(null, abm, 40)));
+        peticion.sinSesion = true;
+        igual("PDF sesion ausente rechazada", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+        peticion.sinSesion = false;
+        peticion.atributos.put(clave, "permiso invalido");
+        igual("PDF grant de tipo invalido rechazado", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+        peticion.atributos.put(clave, new long[] { 101L, 40L });
+        igual("PDF grant incompleto rechazado", Boolean.FALSE, Boolean.valueOf(
+                RequerimientoCompraOrdenAction.consumirDescargaEmision(peticion.request, abm, 40)));
+    }
+
+    private static User usuarioDescarga(final long id, String nombreRol) {
+        final List<Role> roles = new ArrayList<Role>();
+        Role rol = new RoleImpl(); rol.setName(nombreRol); roles.add(rol);
+        return new UserImpl() {
+            public long getUserId() { return id; }
+            public List<Role> getRoles() { return roles; }
+        };
+    }
+
+    private static class DescargaPrueba implements InvocationHandler {
+        final Map<String, Object> atributos = new HashMap<String, Object>();
+        final javax.servlet.http.HttpSession sesion;
+        final javax.servlet.http.HttpServletRequest request;
+        boolean sinSesion;
+        DescargaPrueba() {
+            sesion = (javax.servlet.http.HttpSession)Proxy.newProxyInstance(getClass().getClassLoader(),
+                    new Class[] { javax.servlet.http.HttpSession.class }, this);
+            request = (javax.servlet.http.HttpServletRequest)Proxy.newProxyInstance(getClass().getClassLoader(),
+                    new Class[] { javax.servlet.http.HttpServletRequest.class }, this);
+        }
+        public Object invoke(Object proxy, Method metodo, Object[] args) {
+            String nombre = metodo.getName();
+            if ("getSession".equals(nombre)) return sinSesion ? null : sesion;
+            if ("getAttribute".equals(nombre)) return atributos.get(args[0]);
+            if ("setAttribute".equals(nombre)) { atributos.put((String)args[0], args[1]); return null; }
+            if ("removeAttribute".equals(nombre)) { atributos.remove(args[0]); return null; }
+            if ("getAttributeNames".equals(nombre)) return java.util.Collections.enumeration(atributos.keySet());
+            if ("toString".equals(nombre)) return "DescargaPrueba";
+            if (metodo.getReturnType().equals(Boolean.TYPE)) return Boolean.FALSE;
+            if (metodo.getReturnType().equals(Integer.TYPE)) return Integer.valueOf(0);
+            if (metodo.getReturnType().equals(Long.TYPE)) return Long.valueOf(0L);
+            return null;
         }
     }
 
@@ -293,6 +430,16 @@ public class ComprasOrdenHelperTest {
         peticion = new PeticionPrueba(); accion.ejecutar(peticion);
         igual("Action completa emision directa", Integer.valueOf(1), Integer.valueOf(accion.modelo.guardados));
         igual("Action completa consume token", Integer.valueOf(1), Integer.valueOf(accion.consumidos));
+        igual("Action emision publica descarga inicial", Integer.valueOf(1), Integer.valueOf(accion.descargas));
+        accion.mostrar(peticion);
+        igual("Action emision ABM conserva recibo transitorio", Boolean.TRUE,
+                peticion.atributos.get("ordenCompraCreada"));
+        igual("Action recibo ABM solo constancia", Boolean.TRUE, peticion.atributos.get("ordenCompraSoloConstancia"));
+        igual("Action recibo ABM no publica token de edicion", Integer.valueOf(0), Integer.valueOf(accion.publicados));
+        PeticionPrueba posterior = new PeticionPrueba(); accion.mostrar(posterior);
+        igual("Action ABM no reabre OC emitida", null, posterior.atributos.get("ordenCompra"));
+        igual("Action ABM consulta posterior rechazada", Boolean.TRUE,
+                Boolean.valueOf(posterior.atributos.get("ordenCompraError") != null));
         accion.ejecutar(peticion);
         igual("Action repetida idempotente", Integer.valueOf(1), Integer.valueOf(accion.modelo.guardados));
         igual("Action repetida no consume token", Integer.valueOf(1), Integer.valueOf(accion.consumidos));
@@ -301,18 +448,41 @@ public class ComprasOrdenHelperTest {
         historica.r.setEstado(ConfiguracionComprasHelper.getEstadoOrdenCompra());
         accion = new AccionPrueba(historica, ConfiguracionComprasHelper.getRolAbmCompras()); peticion = new PeticionPrueba();
         accion.mostrar(peticion);
-        igual("Action historica muestra reparacion", Boolean.TRUE, peticion.atributos.get("ordenCompraRequiereDatos"));
-        igual("Action historica conserva OC", Boolean.FALSE, peticion.atributos.get("ordenCompraPuedeCrear"));
+        igual("Action ABM no consulta historica", null, peticion.atributos.get("ordenCompra"));
+        igual("Action historica ABM rechazada", Boolean.TRUE,
+                Boolean.valueOf(peticion.atributos.get("ordenCompraError") != null));
+        peticion.atributos.clear();
+        peticion.parametros.put("cmd", "create"); peticion.parametros.put("precio_70", "20");
+        accion.ejecutar(peticion);
+        igual("Action POST create historica no crea otra OC", Integer.valueOf(0), Integer.valueOf(historica.guardados));
+        igual("Action POST create historica no consume token", Integer.valueOf(0), Integer.valueOf(accion.consumidos));
+        igual("Action POST create historica no publica descarga", Integer.valueOf(0), Integer.valueOf(accion.descargas));
+        igual("Action POST create historica no informa emision", null, peticion.atributos.get("ordenCompraCreada"));
+        igual("Action POST create historica informa rechazo", Boolean.TRUE,
+                Boolean.valueOf(peticion.atributos.get("ordenCompraError") != null));
+        peticion.atributos.clear();
         peticion.parametros.put("cmd", "update"); peticion.parametros.put("id_orden_compra", "900");
         peticion.parametros.put("version_edicion", "0"); peticion.parametros.put("precio_70", "20");
         accion.ejecutar(peticion);
-        igual("Action repara sin nueva OC", Integer.valueOf(0), Integer.valueOf(historica.guardados));
-        igual("Action repara una actualizacion", Integer.valueOf(1), Integer.valueOf(historica.actualizaciones));
-        decimal("Action repara precio", "20", historica.guardada.getTotal());
-        igual("Action reparacion confirmada", Boolean.TRUE, peticion.atributos.get("ordenCompraActualizada"));
+        igual("Action update emitida sin nueva OC", Integer.valueOf(0), Integer.valueOf(historica.guardados));
+        igual("Action ABM no modifica emitida", Integer.valueOf(0), Integer.valueOf(historica.actualizaciones));
+        igual("Action update rechazada sin token", Integer.valueOf(0), Integer.valueOf(accion.consumidos));
+        igual("Action no informa reparacion falsa", null, peticion.atributos.get("ordenCompraActualizada"));
+        accion = new AccionPrueba(historica, ConfiguracionComprasHelper.getRolGestionCompras()); peticion = new PeticionPrueba();
+        accion.mostrar(peticion);
+        igual("Action GESTION consulta emitida", historica.guardada, peticion.atributos.get("ordenCompra"));
+        igual("Action GESTION solo lectura", Boolean.FALSE, peticion.atributos.get("ordenCompraEditable"));
+        igual("Action GESTION no publica token", Integer.valueOf(0), Integer.valueOf(accion.publicados));
+        peticion.parametros.put("cmd", "update"); peticion.parametros.put("id_orden_compra", "900");
         accion.ejecutar(peticion);
-        igual("Action version obsoleta rechaza doble reparacion", Integer.valueOf(1), Integer.valueOf(historica.actualizaciones));
-        accion = new AccionPrueba(observacionEmpresaFixture("RRHH"), ConfiguracionComprasHelper.getRolViewCompras());
+        igual("Action GESTION no modifica emitida", Integer.valueOf(0), Integer.valueOf(historica.actualizaciones));
+        igual("Action GESTION sin consumir token", Integer.valueOf(0), Integer.valueOf(accion.consumidos));
+        accion = new AccionPrueba(historica, new String[] { ConfiguracionComprasHelper.getRolAbmCompras(),
+                ConfiguracionComprasHelper.getRolGestionCompras() }); peticion = new PeticionPrueba();
+        accion.mostrar(peticion);
+        igual("Action multirrol consulta emitida", historica.guardada, peticion.atributos.get("ordenCompra"));
+        igual("Action multirrol no edita emitida", Boolean.FALSE, peticion.atributos.get("ordenCompraEditable"));
+        accion = new AccionPrueba(observacionEmpresaFixture("RRHH"), ConfiguracionComprasHelper.getRolGestionCompras());
         peticion = new PeticionPrueba(); accion.ejecutar(peticion);
         igual("Action consulta no crea", Integer.valueOf(0), Integer.valueOf(accion.modelo.guardados));
         igual("Action consulta sin consumir token", Integer.valueOf(0), Integer.valueOf(accion.consumidos));
@@ -326,10 +496,16 @@ public class ComprasOrdenHelperTest {
         User usuario;
         int consumidos;
         int publicados;
+        int descargas;
         AccionPrueba(Mock modelo, String nombreRol) {
+            this(modelo, new String[] { nombreRol });
+        }
+        AccionPrueba(Mock modelo, String[] nombresRoles) {
             this.modelo = modelo;
             final List<Role> roles = new ArrayList<Role>();
-            Role rol = new RoleImpl(); rol.setName(nombreRol); roles.add(rol);
+            for (int i = 0; i < nombresRoles.length; i++) {
+                Role rol = new RoleImpl(); rol.setName(nombresRoles[i]); roles.add(rol);
+            }
             usuario = new UserImpl() {
                 public List<Role> getRoles() { return roles; }
                 public String getScreenName() { return "auditoria"; }
@@ -340,6 +516,8 @@ public class ComprasOrdenHelperTest {
         protected User obtenerUsuario(javax.portlet.PortletRequest request) { return usuario; }
         protected void consumirToken(javax.portlet.ActionRequest request) { consumidos++; }
         protected void publicarToken(javax.portlet.RenderRequest request) { publicados++; }
+        /* La autorizacion PDF en sesion se verifica aparte; este fixture cuenta la coordinacion del Action. */
+        protected void publicarDescargaEmision(javax.portlet.ActionRequest request, User user, int id) { descargas++; }
         void ejecutar(PeticionPrueba p) throws Exception {
             processAction(null, null, null, (javax.portlet.ActionRequest)p.proxy(),
                     (javax.portlet.ActionResponse)java.lang.reflect.Proxy.newProxyInstance(
