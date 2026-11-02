@@ -12,6 +12,10 @@ SET LOCAL statement_timeout = '15s';
 
 DO $precondicion$
 BEGIN
+    IF host(inet_server_addr()) IS DISTINCT FROM '12.1.1.12'
+       OR current_database() IS DISTINCT FROM 'devmolineros' THEN
+        RAISE EXCEPTION 'Destino incorrecto: este historial solo se instala en QA 12.1.1.12/devmolineros.';
+    END IF;
     IF to_regclass('compras.requerimiento') IS NULL THEN
         RAISE EXCEPTION 'Falta compras.requerimiento. No se puede instalar el historial de afiliados.';
     END IF;
