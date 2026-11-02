@@ -123,7 +123,7 @@ public class ComprasPrimeraCargaTest {
         check(sql.indexOf("join compras.sector_requerimiento") >= 0, "initial retains sector membership");
         int limit = sql.indexOf("limit ? offset ?");
         int format = sql.indexOf("concat_ws(");
-        int state = sql.indexOf("compras.estado_requerimiento_descripcion(");
+        int state = sql.indexOf("null::varchar as estado_descripcion");
         check(limit >= 0 && format > limit && state > limit, "initial limits IDs before name/document/state enrichment");
         check(sql.substring(0, limit).indexOf("order by id_requerimiento desc") >= 0, "initial limits descending IDs");
         check(sql.indexOf("count(*) as total_registros from candidatos") >= 0, "initial counts candidate IDs without full enrichment");
@@ -308,7 +308,7 @@ public class ComprasPrimeraCargaTest {
         check(sql.indexOf("count(") >= 0 && sql.indexOf("total_registros") >= 0, "SQL counts matching total");
         check(sql.matches("(?s).*order by (?:[a-z_]+\\.)?id desc limit \\? offset \\?.*"), "global descending bounded ordering");
         eq("union only for RP", Boolean.valueOf(rp), Boolean.valueOf(sql.indexOf("union all") >= 0));
-        eq("raw data selections", Integer.valueOf(rp ? 2 : 1), Integer.valueOf(occurrences(sql, "from compras.requerimiento_base()")));
+        eq("raw data selections", Integer.valueOf(rp ? 2 : 1), Integer.valueOf(occurrences(sql, "from compras.requerimiento r ")));
         int filterParams = rp ? 24 : 12;
         eq("SQL placeholder count", Integer.valueOf(filterParams + 2), Integer.valueOf(occurrences(sql, "?")));
         eq("bound parameter count", Integer.valueOf(filterParams + 2), Integer.valueOf(query.binds.size()));
@@ -319,7 +319,7 @@ public class ComprasPrimeraCargaTest {
     private static void verifyUnlimited(Query query) {
         String sql = normalized(query.sql);
         eq("export retains prepared query", "prepareStatement", query.preparation);
-        check(sql.indexOf("limit") < 0 && sql.indexOf("offset") < 0, "export SQL remains unlimited");
+        check(sql.endsWith("order by rb.id desc") && sql.indexOf("offset") < 0, "export SQL remains unlimited; domicile lookup limits only its own row");
         eq("export function args", Integer.valueOf(12), Integer.valueOf(occurrences(sql, "?")));
         eq("export binds", Integer.valueOf(12), Integer.valueOf(query.binds.size()));
     }

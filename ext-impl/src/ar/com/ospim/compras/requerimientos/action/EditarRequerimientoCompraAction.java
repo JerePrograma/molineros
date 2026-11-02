@@ -748,7 +748,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
          * ==========================================================
          *
          * El Helper verifica que continúe PENDIENTE y preserva
-         * sector/afiliado.
+         * el sector y valida cualquier cambio de afiliado en la misma transaccion.
          */
         /*
          * Validar los nuevos adjuntos antes de guardar la cabecera,

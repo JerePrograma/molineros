@@ -252,6 +252,24 @@ public class EditarRequerimientoCompraServiceUtil {
             this.delegate = delegate;
         }
 
+        public int guardarRequerimientoCompra(RequerimientoCompra requerimiento,
+                String usuario,boolean actualizarAfiliado)throws Exception {
+            return delegate.guardarRequerimientoCompra(requerimiento,usuario,actualizarAfiliado);
+        }
+
+        public void registrarReasignacionAfiliado(RequerimientoCompra anterior,
+                RequerimientoCompra nuevo,String usuario)throws Exception {
+            delegate.registrarReasignacionAfiliado(anterior,nuevo,usuario);
+        }
+
+        public boolean tieneAsociacionesAfiliado(int id)throws Exception {
+            return delegate.tieneAsociacionesAfiliado(id);
+        }
+
+        public RequerimientoCompra getAfiliadoVigente(String cuil,int integrante)throws Exception {
+            return delegate.getAfiliadoVigente(cuil,integrante);
+        }
+
         public int guardarRequerimientoCompra(
                 RequerimientoCompra requerimiento,
                 String usuario) throws Exception {

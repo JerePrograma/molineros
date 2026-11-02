@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
+import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.util.ConnectionHelper;
 
 
@@ -22,13 +23,25 @@ import java.util.List;
 public class RequerimientoCompraReclamoPrestacionalServiceImpl {
 
     private static final String SQL_GET_RELACION =
-            "{call compras.get_requerimiento_reclamo_prestacional(?)}";
+            "SELECT relacion.* FROM compras.requerimiento_reclamo_prestacional relacion "
+                    + "WHERE relacion.id_requerimiento=?";
 
     private static final String SQL_GET_RELACIONES_BATCH =
-            "{call compras.listar_relaciones_reclamo_prestacional_batch(?,?)}";
+            "WITH filtro AS (SELECT CAST(? AS VARCHAR) AS estado,CAST(? AS INTEGER[]) AS ids,CAST(? AS VARCHAR) AS vinculado,CAST(? AS VARCHAR) AS baja) "
+                    + "SELECT relacion.* FROM compras.requerimiento_reclamo_prestacional relacion CROSS JOIN filtro "
+                    + "WHERE relacion.id_reclamo_prestacional IS NOT NULL AND relacion.id_requerimiento=ANY(filtro.ids) "
+                    + "AND ((filtro.estado IS NOT NULL AND relacion.estado=filtro.estado) "
+                    + "OR (filtro.estado IS NULL AND (relacion.estado=filtro.vinculado "
+                    + "OR (relacion.estado=filtro.baja AND relacion.baja_fecha IS NOT NULL "
+                    + "AND EXISTS (SELECT 1 FROM autorizaciones.reclamos_prestacionales rp "
+                    + "WHERE rp.id=relacion.id_reclamo_prestacional AND rp.baja_fecha IS NOT NULL))))) "
+                    + "ORDER BY relacion.id_requerimiento";
 
     private static final String SQL_GET_RELACION_POR_RECLAMO =
-            "{call compras.listar_relaciones_reclamo_prestacional_por_reclamo(?,?)}";
+            "SELECT relacion.* FROM compras.requerimiento_reclamo_prestacional relacion "
+                    + "JOIN compras.requerimiento requerimiento ON requerimiento.id_requerimiento=relacion.id_requerimiento "
+                    + "WHERE relacion.id_reclamo_prestacional=? AND relacion.estado=? "
+                    + "AND requerimiento.baja_fecha IS NULL ORDER BY relacion.id_requerimiento";
 
     private static final String SQL_BLOQUEAR_REQUERIMIENTO =
             "{call compras.bloquear_requerimiento_reclamo_prestacional(?)}";
@@ -130,11 +143,11 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             Connection con,
             int idRequerimientoCompra) throws Exception {
 
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
-            stmt = con.prepareCall(SQL_GET_RELACION);
+            stmt = con.prepareStatement(SQL_GET_RELACION);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -153,14 +166,14 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             String estado) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraReclamoPrestacional> resultado =
                 new ArrayList<RequerimientoCompraReclamoPrestacional>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_RELACION_POR_RECLAMO);
+            stmt = con.prepareStatement(SQL_GET_RELACION_POR_RECLAMO);
             stmt.setInt(1, idReclamoPrestacional);
             stmt.setString(2, estado);
             rs = stmt.executeQuery();
@@ -193,16 +206,18 @@ public class RequerimientoCompraReclamoPrestacionalServiceImpl {
             String idsRequerimientosArray) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraReclamoPrestacional> resultado =
                 new ArrayList<RequerimientoCompraReclamoPrestacional>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_RELACIONES_BATCH);
+            stmt = con.prepareStatement(SQL_GET_RELACIONES_BATCH);
             stmt.setString(1, estado);
             stmt.setString(2, idsRequerimientosArray);
+            stmt.setString(3, WebKeysCompras.VINCULO_RECLAMO_VINCULADO);
+            stmt.setString(4, WebKeysCompras.VINCULO_RECLAMO_BAJA);
             rs = stmt.executeQuery();
 
             while (rs.next()) {

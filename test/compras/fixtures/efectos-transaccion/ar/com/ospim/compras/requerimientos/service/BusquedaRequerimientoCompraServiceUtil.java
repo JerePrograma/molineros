@@ -23,6 +23,11 @@ public class BusquedaRequerimientoCompraServiceUtil {
     public static List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(Connection con, int id) { verificar(con); return new ArrayList<RequerimientoCompraPresupuesto>(); }
     public static List<RequerimientoCompraPresupuesto> listarPresupuestos(Connection con, int id) { verificar(con); return new ArrayList<RequerimientoCompraPresupuesto>(); }
     public static RequerimientoCompra getRequerimientoCompra(Connection con, int id) { verificar(con); return null; }
+    public static RequerimientoCompra getAfiliadoVigente(Connection con, String cuil, int integrante)
+            throws java.sql.SQLException {
+        verificar(con);
+        throw new java.sql.SQLException("Este fixture no admite la reasignacion de afiliado.");
+    }
     public static List<RequerimientoCompraDetalle> getDetalles(Connection con, int id) { verificar(con); return new ArrayList<RequerimientoCompraDetalle>(); }
     public static List<java.util.Map<String,Object>> listarCatalogoSectores(Connection con) { verificar(con); return new ArrayList<java.util.Map<String,Object>>(); }
     public static List<ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion> listarPrestadoresEnviados(Connection con, int id, int limite) { verificar(con); return new ArrayList<ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion>(); }

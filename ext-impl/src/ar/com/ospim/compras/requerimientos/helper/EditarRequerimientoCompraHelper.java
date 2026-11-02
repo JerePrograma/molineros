@@ -180,117 +180,84 @@ public class EditarRequerimientoCompraHelper {
             );
 
 
-            /*
-             * ==========================================================
-             * AFILIADO INMUTABLE POST-ALTA
-             * ==========================================================
-             *
-             * CUIL e integrante conforman la identidad del afiliado
-             * asociado al requerimiento.
-             *
-             * Los campos pueden no llegar desde HTTP porque la pantalla
-             * los renderiza en solo lectura. Por eso solamente se compara
-             * cada dato cuando fue efectivamente informado.
-             *
-             * Independientemente de lo recibido, antes de guardar se
-             * restauran siempre los valores persistidos.
+            /* La referencia puede corregirse solamente en el borrador bloqueado.
+             * Sin cambio de identidad no se reescribe el evento historico del afiliado.
              */
-
-            String afiliadoCuilActual =
-                    actual.getAfiliadoCuilTitular();
-
-            Integer afiliadoIntActual =
-                    actual.getAfiliadoInt();
-
-            String afiliadoCuilRecibido =
-                    requerimiento.getAfiliadoCuilTitular();
-
-            Integer afiliadoIntRecibido =
-                    requerimiento.getAfiliadoInt();
-
-
-            if (!WebKeysCompras.isEmpty(
-                    afiliadoCuilRecibido
-            )
-                    && !mismoTexto(
-                    afiliadoCuilActual,
-                    afiliadoCuilRecibido
-            )) {
-
-                throw errorUsuario(
-                        "El afiliado del requerimiento no puede modificarse una vez creado."
-                );
+            String afiliadoCuilRecibido = emptyToNull(requerimiento.getAfiliadoCuilTitular());
+            Integer afiliadoIntRecibido = requerimiento.getAfiliadoInt();
+            boolean cuilInformado = afiliadoCuilRecibido != null;
+            boolean integranteInformado = afiliadoIntRecibido != null;
+            if (cuilInformado != integranteInformado) {
+                throw errorUsuario("Debe informar juntos el CUIL del titular y el integrante del afiliado.");
             }
-
-
-            if (afiliadoIntRecibido != null
-                    && !mismoInteger(
-                    afiliadoIntActual,
-                    afiliadoIntRecibido
-            )) {
-
-                throw errorUsuario(
-                        "El afiliado del requerimiento no puede modificarse una vez creado."
-                );
+            boolean cambiarAfiliado = cuilInformado
+                    && (!mismoTexto(actual.getAfiliadoCuilTitular(), afiliadoCuilRecibido)
+                    || !mismoInteger(actual.getAfiliadoInt(), afiliadoIntRecibido));
+            RequerimientoCompra fuenteAfiliado = actual;
+            if (cambiarAfiliado) {
+                if (!afiliadoCuilRecibido.matches("[0-9]{11}")
+                        || afiliadoIntRecibido.intValue() < 0) {
+                    throw errorUsuario("El CUIL y el integrante del afiliado informado no son validos.");
+                }
+                if (!actual.isRequiereAfiliado()) {
+                    throw errorUsuario("El sector del requerimiento no admite un afiliado asociado.");
+                }
+                if (transaccion.tieneAsociacionesAfiliado(requerimiento.getIdRequerimientoCompra())) {
+                    throw errorUsuario("No se puede cambiar el afiliado mientras el requerimiento tiene reclamos prestacionales u ordenes de compra asociados.");
+                }
+                fuenteAfiliado = transaccion.getAfiliadoVigente(
+                        afiliadoCuilRecibido, afiliadoIntRecibido.intValue());
+                if (fuenteAfiliado == null
+                        || !mismoTexto(afiliadoCuilRecibido, fuenteAfiliado.getAfiliadoCuilTitular())
+                        || !mismoInteger(afiliadoIntRecibido, fuenteAfiliado.getAfiliadoInt())) {
+                    throw errorUsuario("El afiliado seleccionado no existe o ya no esta vigente. Actualice la busqueda.");
+                }
             }
+            requerimiento.setAfiliadoCuilTitular(fuenteAfiliado.getAfiliadoCuilTitular());
+            requerimiento.setAfiliadoInt(fuenteAfiliado.getAfiliadoInt());
 
-
-            requerimiento.setAfiliadoCuilTitular(
-                    afiliadoCuilActual
-            );
-
-            requerimiento.setAfiliadoInt(
-                    afiliadoIntActual
-            );
-
-            /*
-             * El snapshot completo del afiliado también permanece inmutable.
-             *
-             * No se vuelve a consultar ni reconstruir desde los datos actuales
-             * del padrón durante una edición del requerimiento.
-             */
             requerimiento.setAfiliadoIdOspim(
-                    actual.getAfiliadoIdOspim()
+                    fuenteAfiliado.getAfiliadoIdOspim()
             );
 
             requerimiento.setAfiliadoNombre(
-                    actual.getAfiliadoNombre()
+                    fuenteAfiliado.getAfiliadoNombre()
             );
 
             requerimiento.setAfiliadoApellido(
-                    actual.getAfiliadoApellido()
+                    fuenteAfiliado.getAfiliadoApellido()
             );
 
             requerimiento.setAfiliadoDocumentoTipo(
-                    actual.getAfiliadoDocumentoTipo()
+                    fuenteAfiliado.getAfiliadoDocumentoTipo()
             );
 
             requerimiento.setAfiliadoDocumentoNro(
-                    actual.getAfiliadoDocumentoNro()
+                    fuenteAfiliado.getAfiliadoDocumentoNro()
             );
 
             requerimiento.setAfiliadoDireccion(
-                    actual.getAfiliadoDireccion()
+                    fuenteAfiliado.getAfiliadoDireccion()
             );
 
             requerimiento.setAfiliadoLocalidad(
-                    actual.getAfiliadoLocalidad()
+                    fuenteAfiliado.getAfiliadoLocalidad()
             );
 
             requerimiento.setAfiliadoProvincia(
-                    actual.getAfiliadoProvincia()
+                    fuenteAfiliado.getAfiliadoProvincia()
             );
 
             requerimiento.setAfiliadoCelular(
-                    actual.getAfiliadoCelular()
+                    fuenteAfiliado.getAfiliadoCelular()
             );
 
             requerimiento.setAfiliadoTelefono(
-                    actual.getAfiliadoTelefono()
+                    fuenteAfiliado.getAfiliadoTelefono()
             );
 
             requerimiento.setAfiliadoEmail(
-                    actual.getAfiliadoEmail()
+                    fuenteAfiliado.getAfiliadoEmail()
             );
 
             if (requerimiento.isLegales() != actual.isLegales()) {
@@ -302,7 +269,7 @@ public class EditarRequerimientoCompraHelper {
             requerimiento.setLegales(actual.getLegales());
 
             /*
-             * Sector y afiliado ya fueron restaurados desde persistencia.
+             * Sector conservado y referencia de afiliado validada en la transaccion.
              *
              * El resto de los datos estructurales permanece editable
              * porque el requerimiento sigue PENDIENTE.
@@ -318,13 +285,19 @@ public class EditarRequerimientoCompraHelper {
             int idGuardado =
                     transaccion.guardarRequerimientoCompra(
                             requerimiento,
-                            normalizarUsuario(usuario)
+                            normalizarUsuario(usuario),
+                            cambiarAfiliado
                     );
 
             if (idGuardado <= 0) {
                 throw new IllegalStateException(
                         "El guardado no devolvió un identificador válido."
                 );
+            }
+
+            if (cambiarAfiliado) {
+                transaccion.registrarReasignacionAfiliado(
+                        actual, requerimiento, normalizarUsuario(usuario));
             }
 
             transaccion.commit();
@@ -1908,10 +1881,10 @@ public class EditarRequerimientoCompraHelper {
         }
 
         /*
-         * El snapshot del afiliado se captura exclusivamente durante el alta.
+         * La captura inicial del afiliado se realiza durante el alta.
          *
-         * En requerimientos existentes la identidad y los datos asociados
-         * al afiliado son inmutables.
+         * En requerimientos existentes, guardarRequerimientoCompra valida la
+         * reasignacion bajo bloqueo y obtiene el maestro en la misma transaccion.
          */
         if (tx == null && requerimiento.getIdRequerimientoCompra() <= 0
                 && requerimiento.tieneAfiliadoInformado()) {

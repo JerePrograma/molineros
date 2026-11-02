@@ -605,8 +605,21 @@ public class RequerimientoCompraOrdenServiceImpl {
     private RequerimientoCompraOrden obtenerPorRequerimiento(Connection con,
             int idRequerimiento) throws Exception {
         PreparedStatement stmt = con.prepareStatement(
-                "SELECT * FROM compras.requerimiento_orden_compra_consulta "
-                + "WHERE id_requerimiento = ?");
+                "SELECT o.id_orden_compra,o.id_requerimiento,o.alta_usr,o.modi_fecha,o.modi_usr,"
+                + "o.version_edicion,o.fecha_emision,o.condicion,o.forma_pago,o.plazo_pago,"
+                + "o.entrega,o.observaciones,o.iva,o.iibb,r.alta_usr AS solicitante,"
+                + "rr.id_reclamo_prestacional,rp.tipo_documento,rp.id_prestador,"
+                + "rp.empresa_cuit,rp.empresa_sucursal,rp.descripcion_empresa,"
+                + "p.id_prestador AS prestador_id_actual,p.descripcion AS prestador_descripcion_actual,"
+                + "p.cuit AS prestador_cuit_actual,e.cuit AS empresa_cuit_actual,e.razon_soc AS empresa_razon_actual "
+                + "FROM compras.requerimiento_orden_compra o "
+                + "JOIN compras.requerimiento r ON r.id_requerimiento=o.id_requerimiento "
+                + "LEFT JOIN compras.requerimiento_presupuesto rp "
+                + "ON rp.id_requerimiento_presupuesto=o.id_presupuesto AND rp.id_requerimiento=o.id_requerimiento "
+                + "LEFT JOIN public.prestador p ON p.id_prestador=rp.id_prestador "
+                + "LEFT JOIN informacion_afip.empresa e ON e.cuit=rp.empresa_cuit AND e.sucursal=rp.empresa_sucursal "
+                + "LEFT JOIN compras.requerimiento_reclamo_prestacional rr ON rr.id_requerimiento=o.id_requerimiento "
+                + "WHERE o.id_requerimiento=?");
         RequerimientoCompraOrden orden = null;
         try {
             stmt.setInt(1, idRequerimiento);
@@ -621,24 +634,29 @@ public class RequerimientoCompraOrdenServiceImpl {
                     orden.setModiUsr(rs.getString("modi_usr"));
                     orden.setVersionEdicion(rs.getInt("version_edicion"));
                     orden.setFechaEmision(rs.getDate("fecha_emision"));
-                    orden.setFechaOrdenMedica(rs.getDate("fecha_orden_medica"));
-                    orden.setFechaRecepcion(rs.getDate("fecha_recepcion"));
-                    orden.setMoneda(rs.getString("moneda"));
-                    orden.setProveedor(rs.getString("proveedor"));
-                    orden.setProveedorCuit(rs.getString("proveedor_cuit"));
-                    orden.setProveedorDomicilio(rs.getString("proveedor_domicilio"));
-                    orden.setProveedorContacto(rs.getString("proveedor_contacto"));
-                    orden.setProveedorEmail(rs.getString("proveedor_email"));
-                    orden.setProveedorTelefono(rs.getString("proveedor_telefono"));
+                    if (rs.getInt("tipo_documento") == RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_COTIZACION_EMPRESA) {
+                        boolean identificada = normalizar(rs.getString("empresa_cuit")) != null
+                                && normalizar(rs.getString("empresa_sucursal")) != null;
+                        orden.setProveedor(identificada
+                                ? (rs.getString("empresa_cuit_actual") != null
+                                    ? rs.getString("empresa_razon_actual") : "[EMPRESA NO RESUELTA]")
+                                : rs.getString("descripcion_empresa"));
+                        orden.setProveedorCuit(identificada ? rs.getString("empresa_cuit_actual") : rs.getString("empresa_cuit"));
+                    } else {
+                        orden.setProveedor(rs.getObject("prestador_id_actual") != null
+                                ? rs.getString("prestador_descripcion_actual") : "[PROVEEDOR NO RESUELTO]");
+                        orden.setProveedorCuit(rs.getString("prestador_cuit_actual"));
+                    }
+                    if (orden.getProveedorCuit() == null) {
+                        orden.setProveedorCuit("");
+                    }
                     orden.setCondicion(rs.getString("condicion"));
                     orden.setFormaPago(rs.getString("forma_pago"));
                     orden.setPlazoPago(rs.getString("plazo_pago"));
                     orden.setEntrega(rs.getString("entrega"));
                     orden.setObservaciones(rs.getString("observaciones"));
-                    orden.setConfeccionadoPor(rs.getString("confeccionado_por"));
-                    orden.setTelefonoCompras(rs.getString("telefono_compras"));
+                    orden.setConfeccionadoPor(rs.getString("alta_usr"));
                     orden.setSolicitante(rs.getString("solicitante"));
-                    orden.setPlan(rs.getString("plan"));
                     orden.setIdReclamoPrestacional(rs.getInt("id_reclamo_prestacional"));
                     orden.setIva(rs.getBigDecimal("iva"));
                     orden.setIibb(rs.getBigDecimal("iibb"));
@@ -652,9 +670,44 @@ public class RequerimientoCompraOrdenServiceImpl {
         if (orden == null) {
             return null;
         }
+        stmt = con.prepareStatement("SELECT fecha_documento FROM compras.requerimiento_presupuesto "
+                + "WHERE id_requerimiento=? AND tipo_documento=? AND baja_fecha IS NULL");
+        try {
+            stmt.setInt(1, idRequerimiento);
+            stmt.setInt(2, RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_ORDEN_MEDICA);
+            ResultSet rs = stmt.executeQuery();
+            try {
+                java.sql.Date fecha = null;
+                boolean distintas = false;
+                while (rs.next()) {
+                    java.sql.Date actual = rs.getDate("fecha_documento");
+                    if (actual != null) {
+                        if (fecha != null && !fecha.equals(actual)) {
+                            distintas = true;
+                        }
+                        fecha = actual;
+                    }
+                }
+                orden.setFechaOrdenMedica(distintas ? null : fecha);
+            } finally {
+                rs.close();
+            }
+        } finally {
+            stmt.close();
+        }
         stmt = con.prepareStatement(
-                "SELECT * FROM compras.requerimiento_orden_compra_detalle_consulta "
-                + "WHERE id_orden_compra = ? ORDER BY orden");
+                "SELECT od.id_requerimiento_detalle,od.cantidad,od.precio_unitario,"
+                + "d.tipo_item,d.observaciones,n.id_prestacion AS nomenclador_id_actual,"
+                + "n.codigo AS nomenclador_codigo_actual,n.descripcion AS nomenclador_descripcion_actual,"
+                + "m.id_medicamento AS medicamento_id_actual,m.troquel AS medicamento_troquel_actual,"
+                + "m.nombre AS medicamento_nombre_actual,m.presentacion AS medicamento_presentacion_actual "
+                + "FROM compras.requerimiento_orden_compra_detalle od "
+                + "JOIN compras.requerimiento_orden_compra o ON o.id_orden_compra=od.id_orden_compra "
+                + "JOIN compras.requerimiento_detalle d ON d.id_detalle=od.id_requerimiento_detalle "
+                + "AND d.id_requerimiento=o.id_requerimiento "
+                + "LEFT JOIN autorizaciones.nomenclador n ON n.id_prestacion=d.id_prestacion "
+                + "LEFT JOIN public.medicamentos m ON m.id_medicamento=d.id_medicamento "
+                + "WHERE od.id_orden_compra=? ORDER BY od.orden");
         try {
             stmt.setInt(1, orden.getIdOrdenCompra());
             ResultSet rs = stmt.executeQuery();
@@ -663,11 +716,36 @@ public class RequerimientoCompraOrdenServiceImpl {
                     RequerimientoCompraDetalle detalle = new RequerimientoCompraDetalle();
                     detalle.setId(Integer.valueOf(rs.getInt("id_requerimiento_detalle")));
                     detalle.setIdRequerimiento(Integer.valueOf(idRequerimiento));
-                    detalle.setCodigoItem(rs.getString("codigo_item"));
-                    detalle.setDescripcionItem(rs.getString("descripcion_item"));
-                    detalle.setCantidad(Integer.valueOf(rs.getInt("cantidad")));
-                    detalle.setPrecioUnitarioEstimado(rs.getBigDecimal("precio_unitario"));
-                    detalle.setPrecioTotalEstimado(rs.getBigDecimal("precio_total"));
+                    String tipo = rs.getString("tipo_item");
+                    String codigo = null;
+                    String descripcion = null;
+                    if (RequerimientoCompraDetalle.TIPO_ITEM_NOMENCLADOR.equals(tipo)) {
+                        boolean resuelto = rs.getObject("nomenclador_id_actual") != null;
+                        codigo = resuelto ? normalizar(rs.getString("nomenclador_codigo_actual")) : null;
+                        descripcion = resuelto ? normalizar(rs.getString("nomenclador_descripcion_actual"))
+                                : "[NOMENCLADOR NO RESUELTO]";
+                    } else if (RequerimientoCompraDetalle.TIPO_ITEM_MEDICAMENTO.equals(tipo)) {
+                        Object idMedicamento = rs.getObject("medicamento_id_actual");
+                        if (idMedicamento != null) {
+                            java.math.BigDecimal troquel = rs.getBigDecimal("medicamento_troquel_actual");
+                            codigo = troquel != null ? troquel.toPlainString() : idMedicamento.toString();
+                            descripcion = unir(normalizar(rs.getString("medicamento_nombre_actual")),
+                                    normalizar(rs.getString("medicamento_presentacion_actual")));
+                        } else {
+                            descripcion = "[MEDICAMENTO NO RESUELTO]";
+                        }
+                    }
+                    String observaciones = normalizar(rs.getString("observaciones"));
+                    detalle.setCodigoItem(codigo);
+                    detalle.setDescripcionItem(descripcion == null ? observaciones
+                            : (observaciones == null ? descripcion : descripcion + "\n" + observaciones));
+                    int cantidad = rs.getInt("cantidad");
+                    java.math.BigDecimal precio = rs.getBigDecimal("precio_unitario");
+                    detalle.setCantidad(Integer.valueOf(cantidad));
+                    detalle.setPrecioUnitarioEstimado(precio);
+                    detalle.setPrecioTotalEstimado(precio != null
+                            ? precio.multiply(new java.math.BigDecimal(cantidad)).setScale(2, java.math.BigDecimal.ROUND_HALF_UP)
+                            : null);
                     orden.getDetalles().add(detalle);
                 }
             } finally {

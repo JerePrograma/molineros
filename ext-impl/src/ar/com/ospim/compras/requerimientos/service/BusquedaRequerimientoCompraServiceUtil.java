@@ -33,6 +33,11 @@ public class BusquedaRequerimientoCompraServiceUtil {
         return instance;
     }
 
+    public static RequerimientoCompra getAfiliadoVigente(
+            java.sql.Connection con,String cuilTitular,int integrante)throws Exception {
+        return getInstance().getAfiliadoVigente(con,cuilTitular,integrante);
+    }
+
     public static List<RequerimientoCompra> buscarRequerimientosListado(
             RequerimientoCompraFiltro filtro,
             boolean incluirReclamoRp) throws Exception {

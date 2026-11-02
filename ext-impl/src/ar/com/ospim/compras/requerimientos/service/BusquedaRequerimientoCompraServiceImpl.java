@@ -15,7 +15,6 @@ import ar.com.ospim.util.ConnectionHelper;
 
 import java.util.ArrayList;
 import java.math.BigDecimal;
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,7 +29,7 @@ import java.util.HashMap;
  *
  * Regla de esta clase:
  * - abrir/cerrar conexiones;
- * - ejecutar CALL a funciones PostgreSQL;
+ * - consultar tablas y padrones mediante SELECT parametrizados;
  * - parametrizar;
  * - mapear ResultSet a beans.
  *
@@ -38,8 +37,87 @@ import java.util.HashMap;
  */
 public class BusquedaRequerimientoCompraServiceImpl {
 
+    private static final String SQL_AFILIADO_VIGENTE =
+            "SELECT a.cuil_titular AS afiliado_cuil_titular,a.inte AS afiliado_int,a.id_ospim AS afiliado_id_ospim,a.nombre "
+                    + "AS afiliado_nombre, a.apellido AS afiliado_apellido, NULLIF(concat_ws(', "
+                    + "',NULLIF(btrim(a.apellido),''),NULLIF(btrim(a.nombre),'')),'')::VARCHAR AS afiliado_nombre_apellido, "
+                    + "a.documento_tipo AS afiliado_documento_tipo,a.docu_numero AS afiliado_documento_nro, NULLIF(concat_ws(' "
+                    + "',NULLIF(btrim(a.documento_tipo),''),NULLIF(btrim(a.docu_numero),'')),'')::VARCHAR AS afiliado_documento, "
+                    + "NULLIF(concat_ws(' ',NULLIF(btrim(dom.calle),''),dom.numero::VARCHAR, CASE WHEN NULLIF(btrim(dom.piso),'') IS "
+                    + "NOT NULL THEN 'Piso '||btrim(dom.piso) END, CASE WHEN NULLIF(btrim(dom.depto),'') IS NOT NULL THEN 'Dto "
+                    + "'||btrim(dom.depto) END),'')::VARCHAR AS afiliado_direccion, loc.detalle::VARCHAR AS "
+                    + "afiliado_localidad,prov.detalle::VARCHAR AS afiliado_provincia, NULLIF(concat_ws(' "
+                    + "',NULLIF(btrim(dom.cod_area_celular),''),NULLIF(btrim(dom.celular),'')),'')::VARCHAR AS afiliado_celular, "
+                    + "NULLIF(concat_ws(' ',NULLIF(btrim(dom.cod_area_telefono),''),NULLIF(btrim(dom.telefono),'')),'')::VARCHAR AS "
+                    + "afiliado_telefono, a.email AS afiliado_email,a.id_seccional AS afiliado_id_seccional,sec.descripcion AS "
+                    + "afiliado_seccional_descripcion FROM public.afiliado a LEFT JOIN public.seccional sec ON "
+                    + "sec.id_seccional=a.id_seccional LEFT JOIN LATERAL (SELECT ad.* FROM public.afi_domicilio ad WHERE "
+                    + "ad.cuil_titular=a.cuil_titular AND (ad.inte=a.inte OR ad.inte=0) AND ad.domi_tipo='P' AND "
+                    + "ad.alta_usr<>'datosveraz' AND ad.baja_fecha IS NULL ORDER BY CASE WHEN ad.inte=a.inte THEN 0 ELSE 1 "
+                    + "END,ad.id_domicilio DESC LIMIT 1) dom ON TRUE LEFT JOIN public.localidad loc ON loc.id_localidad=dom.localidad "
+                    + "LEFT JOIN public.provincia prov ON prov.id_provincia=dom.provincia WHERE a.cuil_titular=? AND a.inte=? AND "
+                    + "a.baja_fecha IS NULL FOR SHARE OF a";
+
+    private static final String SQL_CABECERA_COLUMNAS =
+            "r.id_requerimiento AS id,r.alta_fecha,r.alta_usr,r.modi_fecha,r.modi_usr,r.baja_fecha,r.baja_usr, "
+                    + "r.afiliado_cuil_titular,r.afiliado_int,a.id_ospim AS afiliado_id_ospim,a.nombre AS afiliado_nombre, a.apellido "
+                    + "AS afiliado_apellido, CASE WHEN a.cuil_titular IS NULL AND r.afiliado_cuil_titular IS NOT NULL THEN '[AFILIADO "
+                    + "NO RESUELTO]' ELSE NULLIF(concat_ws(', ',NULLIF(btrim(a.apellido),''),NULLIF(btrim(a.nombre),'')),'') "
+                    + "END::VARCHAR AS afiliado_nombre_apellido, a.documento_tipo AS afiliado_documento_tipo,a.docu_numero AS "
+                    + "afiliado_documento_nro, NULLIF(concat_ws(' "
+                    + "',NULLIF(btrim(a.documento_tipo),''),NULLIF(btrim(a.docu_numero),'')),'')::VARCHAR AS afiliado_documento, "
+                    + "NULLIF(concat_ws(' ',NULLIF(btrim(dom.calle),''),dom.numero::VARCHAR, CASE WHEN NULLIF(btrim(dom.piso),'') IS "
+                    + "NOT NULL THEN 'Piso '||btrim(dom.piso) END, CASE WHEN NULLIF(btrim(dom.depto),'') IS NOT NULL THEN 'Dto "
+                    + "'||btrim(dom.depto) END),'')::VARCHAR AS afiliado_direccion, loc.detalle::VARCHAR AS "
+                    + "afiliado_localidad,prov.detalle::VARCHAR AS afiliado_provincia, NULLIF(concat_ws(' "
+                    + "',NULLIF(btrim(dom.cod_area_celular),''),NULLIF(btrim(dom.celular),'')),'')::VARCHAR AS afiliado_celular, "
+                    + "NULLIF(concat_ws(' ',NULLIF(btrim(dom.cod_area_telefono),''),NULLIF(btrim(dom.telefono),'')),'')::VARCHAR AS "
+                    + "afiliado_telefono, a.email AS afiliado_email,a.id_seccional AS afiliado_id_seccional,sec.descripcion AS "
+                    + "afiliado_seccional_descripcion, r.id_sector,s.descripcion AS "
+                    + "sector_descripcion,s.requiere_afiliado,r.cargo_ospim,r.cargo_tercerizadora, "
+                    + "r.id_tercerizadora,r.recupero,r.surge,r.legales,r.observaciones,r.observacion_interna,r.motivo_baja, r.estado "
+                    + "AS id_estado,NULL::VARCHAR AS estado_descripcion";
+
+    private static final String SQL_CABECERA_JOINS =
+            "JOIN compras.sector_requerimiento s ON s.id_sector=r.id_sector LEFT JOIN public.afiliado a ON "
+                    + "a.cuil_titular=r.afiliado_cuil_titular AND a.inte=r.afiliado_int LEFT JOIN public.seccional sec ON "
+                    + "sec.id_seccional=a.id_seccional LEFT JOIN LATERAL (SELECT ad.* FROM public.afi_domicilio ad WHERE "
+                    + "ad.cuil_titular=a.cuil_titular AND (ad.inte=a.inte OR ad.inte=0) AND ad.domi_tipo='P' AND "
+                    + "ad.alta_usr<>'datosveraz' AND ad.baja_fecha IS NULL ORDER BY CASE WHEN ad.inte=a.inte THEN 0 ELSE 1 "
+                    + "END,ad.id_domicilio DESC LIMIT 1) dom ON TRUE LEFT JOIN public.localidad loc ON loc.id_localidad=dom.localidad "
+                    + "LEFT JOIN public.provincia prov ON prov.id_provincia=dom.provincia";
+
+    private static final String SQL_CABECERA_BASE =
+            "SELECT " + SQL_CABECERA_COLUMNAS + " FROM compras.requerimiento r " + SQL_CABECERA_JOINS;
+
+    private static final String SQL_DETALLE_COLUMNAS =
+            "d.id_detalle AS id,d.id_requerimiento,d.tipo_item,d.id_tipo_prestacion,tp.descripcion::VARCHAR AS "
+                    + "tipo_prestacion, CASE WHEN d.tipo_item='MEDICAMENTO' THEN "
+                    + "COALESCE(m.troquel::VARCHAR,m.id_medicamento::VARCHAR) ELSE n.codigo END::VARCHAR AS codigo_item, CASE WHEN "
+                    + "d.tipo_item='MEDICAMENTO' AND m.id_medicamento IS NULL THEN '[MEDICAMENTO NO RESUELTO]' WHEN "
+                    + "d.tipo_item='MEDICAMENTO' THEN NULLIF(btrim(concat_ws(' "
+                    + "',NULLIF(btrim(m.nombre),''),NULLIF(btrim(m.presentacion),''))),'') WHEN d.tipo_item='NOMENCLADOR' AND "
+                    + "n.id_prestacion IS NULL THEN '[PRESTACION NO RESUELTA]' WHEN d.tipo_item='NOMENCLADOR' THEN n.descripcion ELSE "
+                    + "d.descripcion_nomenclador END::VARCHAR AS descripcion_item, "
+                    + "d.id_prestacion,n.id_tipo_nomenclador,n.codigo::VARCHAR AS codigo_nomenclador,n.descripcion::VARCHAR AS "
+                    + "descripcion_nomenclador, d.id_medicamento,m.troquel::INTEGER AS troquel, NULLIF(btrim(concat_ws(' "
+                    + "',NULLIF(btrim(m.nombre),''),NULLIF(btrim(m.presentacion),''))),'')::VARCHAR AS nombre_medicamento, "
+                    + "d.cantidad,d.precio_unitario_estimado,d.precio_total_estimado,d.id_prestador,p.cuit::VARCHAR AS prestador_cuit, "
+                    + "CASE WHEN d.id_prestador IS NOT NULL AND p.id_prestador IS NULL THEN '[PRESTADOR NO RESUELTO]' ELSE "
+                    + "p.descripcion END::VARCHAR AS prestador_razon_social,d.observaciones";
+
+    private static final String SQL_DETALLE_FROM =
+            "FROM compras.requerimiento_detalle d LEFT JOIN compras.tipo_prestacion tp ON "
+                    + "tp.id_tipo_prestacion=d.id_tipo_prestacion LEFT JOIN autorizaciones.nomenclador n ON "
+                    + "n.id_prestacion=d.id_prestacion AND d.tipo_item='NOMENCLADOR' LEFT JOIN public.medicamentos m ON "
+                    + "m.id_medicamento=d.id_medicamento AND d.tipo_item='MEDICAMENTO' LEFT JOIN public.prestador p ON "
+                    + "p.id_prestador=d.id_prestador";
+
+    private static final String SQL_DETALLE_BASE =
+            "SELECT " + SQL_DETALLE_COLUMNAS + " " + SQL_DETALLE_FROM + " WHERE d.baja_fecha IS NULL";
+
     private static final String SQL_BUSCAR_REQUERIMIENTOS_FILTRADOS =
-            "SELECT rb.* FROM compras.requerimiento_base() rb CROSS JOIN (SELECT q.*, NULLIF(upper(btrim(q.p_texto)), '') A"
+            "SELECT rb.* FROM (" + SQL_CABECERA_BASE + ") rb CROSS JOIN (SELECT q.*, NULLIF(upper(btrim(q.p_texto)), '') A"
                     + "S v_texto, NULLIF(regexp_replace(COALESCE(q.p_afiliado_cuil_titular, ''), '[^0-9]', '', 'g'), '') AS v_cuil FR"
                     + "OM (SELECT ?::INTEGER AS p_estado, ?::INTEGER AS p_sector, ?::VARCHAR AS p_afiliado_cuil_titular, ?::INTEGER A"
                     + "S p_afiliado_int, ?::VARCHAR AS p_id_tercerizadora, ?::BOOLEAN AS p_recupero, ?::BOOLEAN AS p_surge, ?::VARCHA"
@@ -56,91 +134,150 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + ".p_texto) OR upper( COALESCE( rb.observaciones, '' ) ) LIKE '%' || p.v_texto || '%' OR upper( COALESCE( rb.sec"
                     + "tor_descripcion, '' ) ) LIKE '%' || p.v_texto || '%' OR upper( COALESCE( rb.afiliado_nombre_apellido, '' ) ) L"
                     + "IKE '%' || p.v_texto || '%' OR upper( COALESCE( rb.afiliado_documento, '' ) ) LIKE '%' || p.v_texto || '%' OR "
-                    + "EXISTS ( SELECT 1 FROM compras.requerimiento_detalle d WHERE d.id_requerimiento = rb.id AND d.baja_fecha IS NU"
-                    + "LL AND ( upper( COALESCE( d.tipo_item, '' ) ) LIKE '%' || p.v_texto || '%' OR upper( COALESCE(d.codigo_nomencl"
+                    + "EXISTS ( SELECT 1 FROM (" + SQL_DETALLE_BASE + ") d WHERE d.id_requerimiento = rb.id AND ( upper( COALESCE( d.tipo_item, '' ) ) LIKE '%' || p.v_texto || '%' OR upper( COALESCE(d.codigo_nomencl"
                     + "ador, '') ) LIKE '%' || p.v_texto || '%' OR upper( COALESCE(d.descripcion_nomenclador, '') ) LIKE '%' || p.v_t"
                     + "exto || '%' OR upper( COALESCE(d.nombre_medicamento, '') ) LIKE '%' || p.v_texto || '%' OR COALESCE(d.troquel:"
                     + ":VARCHAR, '') LIKE '%' || btrim(p.p_texto) || '%' OR upper( COALESCE( d.observaciones, '' ) ) LIKE '%' || p.v_"
                     + "texto || '%' ) ) )";
 
     private static final String SQL_BUSCAR_REQUERIMIENTOS =
-            "SELECT rb.*, afi.id_seccional AS afiliado_id_seccional, sec.descripcion AS afiliado_seccional_descripcion FROM ("
-                    + SQL_BUSCAR_REQUERIMIENTOS_FILTRADOS
-                    + ") rb LEFT JOIN public.afiliado afi ON afi.cuil_titular = rb.afiliado_cuil_titular AND afi.inte = rb.afiliado_int LEFT JOIN public.seccional sec ON sec.id_seccional = afi.id_seccional ORDER BY rb.id DESC";
+            SQL_BUSCAR_REQUERIMIENTOS_FILTRADOS + " ORDER BY rb.id DESC";
 
-    /* La entrada sin filtros pagina IDs antes de armar las cabeceras. */
+    /* La entrada sin filtros pagina IDs antes de consultar los padrones. */
     private static final String SQL_BUSCAR_REQUERIMIENTOS_INICIALES =
-            "WITH candidatos AS ("
-                    + "SELECT r.id_requerimiento FROM compras.requerimiento r "
-                    + "JOIN compras.sector_requerimiento s ON s.id_sector = r.id_sector "
-                    + "WHERE (r.baja_fecha IS NULL OR r.estado = ?)"
-                    + "), pagina AS ("
-                    + "SELECT id_requerimiento FROM candidatos "
-                    + "ORDER BY id_requerimiento DESC LIMIT ? OFFSET ?"
-                    + ") SELECT r.*, r.id_requerimiento AS id, r.estado AS id_estado, "
-                    + "s.descripcion AS sector_descripcion, s.requiere_afiliado, "
-                    + "NULLIF(concat_ws(', ', NULLIF(btrim(r.afiliado_apellido), ''), "
-                    + "NULLIF(btrim(r.afiliado_nombre), '')), '')::VARCHAR "
-                    + "AS afiliado_nombre_apellido, "
-                    + "NULLIF(concat_ws(' ', NULLIF(btrim(r.afiliado_documento_tipo), ''), "
-                    + "NULLIF(btrim(r.afiliado_documento_nro), '')), '')::VARCHAR "
-                    + "AS afiliado_documento, "
-                    + "compras.estado_requerimiento_descripcion(r.estado) AS estado_descripcion, "
-                    + "tot.total_registros FROM pagina p "
-                    + "JOIN compras.requerimiento r ON r.id_requerimiento = p.id_requerimiento "
-                    + "JOIN compras.sector_requerimiento s ON s.id_sector = r.id_sector "
-                    + "CROSS JOIN (SELECT count(*) AS total_registros FROM candidatos) tot "
-                    + "ORDER BY r.id_requerimiento DESC";
+            "WITH candidatos AS (SELECT r.id_requerimiento FROM compras.requerimiento r "
+                    + "JOIN compras.sector_requerimiento s ON s.id_sector=r.id_sector "
+                    + "WHERE (r.baja_fecha IS NULL OR r.estado=?)), pagina AS ("
+                    + "SELECT id_requerimiento FROM candidatos ORDER BY id_requerimiento DESC LIMIT ? OFFSET ?) "
+                    + "SELECT " + SQL_CABECERA_COLUMNAS + ",tot.total_registros FROM pagina pg "
+                    + "JOIN compras.requerimiento r ON r.id_requerimiento=pg.id_requerimiento " + SQL_CABECERA_JOINS
+                    + " CROSS JOIN (SELECT count(*) AS total_registros FROM candidatos) tot ORDER BY r.id_requerimiento DESC";
 
-    private static final String SQL_GET_REQUERIMIENTO =
-            "SELECT rb.*, r.observacion_interna, r.motivo_baja "
-                    + "FROM compras.get_requerimiento(?) rb "
-                    + "JOIN compras.requerimiento r ON r.id_requerimiento = rb.id";
-
+    private static final String SQL_GET_REQUERIMIENTO = SQL_CABECERA_BASE + " WHERE r.id_requerimiento=?";
     private static final String SQL_GET_REQUERIMIENTO_DETALLE =
-            "{call compras.get_requerimiento_detalle_clasificado(?)}";
+            SQL_DETALLE_BASE + " AND d.id_requerimiento=? ORDER BY d.id_detalle";
 
     private static final String SQL_LISTAR_TIPOS_PRESTACION =
-            "{call compras.listar_tipos_prestacion()}";
+            "SELECT t.id_tipo_prestacion,t.descripcion,t.id_sector,s.descripcion AS sector_descripcion FROM "
+                    + "compras.tipo_prestacion t JOIN compras.sector_requerimiento s ON s.id_sector=t.id_sector WHERE s.activo=TRUE "
+                    + "AND s.baja_fecha IS NULL ORDER BY t.id_tipo_prestacion";
 
     private static final String SQL_GET_SECTOR =
-            "{call compras.get_sector_requerimiento(?)}";
+            "SELECT s.id_sector AS id,s.descripcion,s.requiere_afiliado FROM compras.sector_requerimiento s WHERE "
+                    + "s.id_sector=? AND s.activo=TRUE AND s.baja_fecha IS NULL";
 
     private static final String SQL_BUSCAR_EMPRESAS_COTIZACION =
-            "{call compras.buscar_empresas_cotizacion(?,?,?,?)}";
+            "WITH p AS (SELECT ?::VARCHAR AS cuit,?::VARCHAR AS descripcion,?::VARCHAR AS sucursal,?::INTEGER AS limite) "
+                    + "SELECT btrim(e.cuit)::VARCHAR AS cuit,btrim(e.sucursal)::VARCHAR AS sucursal,btrim(e.razon_soc)::VARCHAR AS "
+                    + "razon_soc FROM informacion_afip.empresa e CROSS JOIN p WHERE e.baja_fecha IS NULL AND NULLIF(btrim(e.cuit),'') "
+                    + "IS NOT NULL AND length(btrim(e.cuit))<=11 AND NULLIF(btrim(e.sucursal),'') IS NOT NULL AND "
+                    + "length(btrim(e.sucursal))<=6 AND NULLIF(btrim(e.razon_soc),'') IS NOT NULL AND (NULLIF(btrim(p.cuit),'') IS "
+                    + "NULL OR btrim(e.cuit)=btrim(p.cuit)) AND (NULLIF(btrim(p.descripcion),'') IS NULL OR upper(e.razon_soc) LIKE "
+                    + "'%'||upper(btrim(p.descripcion))||'%') AND (NULLIF(btrim(p.sucursal),'') IS NULL OR "
+                    + "btrim(e.sucursal)=btrim(p.sucursal)) ORDER BY e.razon_soc,e.cuit,e.sucursal LIMIT (SELECT CASE WHEN "
+                    + "COALESCE(limite,0)<=0 THEN 100 ELSE LEAST(limite,100) END FROM p)";
 
     private static final String SQL_BUSCAR_EMPRESAS_COTIZACION_RAPIDA =
-            "{call compras.buscar_empresas_cotizacion_rapida(?,?,?,?)}";
+            "WITH p AS (SELECT NULLIF(btrim(?::VARCHAR),'') AS cuit,NULLIF(btrim(?::VARCHAR),'') AS "
+                    + "descripcion,NULLIF(btrim(?::VARCHAR),'') AS sucursal,?::INTEGER AS limite),validos AS (SELECT * FROM p WHERE "
+                    + "(cuit IS NOT NULL AND cuit ~ '^[0-9]{11}$') OR (cuit IS NULL AND length(descripcion)>=3)) SELECT * FROM "
+                    + "((SELECT btrim(e.cuit)::VARCHAR AS cuit,btrim(e.sucursal)::VARCHAR AS sucursal,btrim(e.razon_soc)::VARCHAR AS "
+                    + "razon_soc FROM informacion_afip.empresa e CROSS JOIN validos p WHERE e.baja_fecha IS NULL AND "
+                    + "NULLIF(btrim(e.cuit),'') IS NOT NULL AND length(btrim(e.cuit))<=11 AND NULLIF(btrim(e.sucursal),'') IS NOT NULL "
+                    + "AND length(btrim(e.sucursal))<=6 AND NULLIF(btrim(e.razon_soc),'') IS NOT NULL AND p.cuit IS NOT NULL AND "
+                    + "e.cuit=p.cuit AND (p.sucursal IS NULL OR e.sucursal=p.sucursal) AND (p.descripcion IS NULL OR "
+                    + "upper(e.razon_soc) LIKE '%'||upper(p.descripcion)||'%') ORDER BY e.cuit,e.sucursal LIMIT (SELECT CASE WHEN "
+                    + "COALESCE(limite,0)<=0 THEN 101 ELSE LEAST(limite,101) END FROM p)) UNION ALL (SELECT btrim(e.cuit)::VARCHAR AS "
+                    + "cuit,btrim(e.sucursal)::VARCHAR AS sucursal,btrim(e.razon_soc)::VARCHAR AS razon_soc FROM "
+                    + "informacion_afip.empresa e CROSS JOIN validos p WHERE e.baja_fecha IS NULL AND NULLIF(btrim(e.cuit),'') IS NOT "
+                    + "NULL AND length(btrim(e.cuit))<=11 AND NULLIF(btrim(e.sucursal),'') IS NOT NULL AND "
+                    + "length(btrim(e.sucursal))<=6 AND NULLIF(btrim(e.razon_soc),'') IS NOT NULL AND p.cuit IS NULL AND "
+                    + "upper(e.razon_soc) LIKE '%'||upper(p.descripcion)||'%' AND (p.sucursal IS NULL OR btrim(e.sucursal)=p.sucursal) "
+                    + "LIMIT (SELECT CASE WHEN COALESCE(limite,0)<=0 THEN 101 ELSE LEAST(limite,101) END FROM p))) q ORDER BY "
+                    + "razon_soc,cuit,sucursal";
+
+    private static final String SQL_DOCUMENTO_COLUMNAS =
+            "rp.id_requerimiento_presupuesto,rp.id_requerimiento,rp.tipo_documento,rp.fecha_documento,rp.numero_receta,"
+                    + "rp.id_prestador, rp.empresa_cuit,rp.empresa_sucursal, CASE WHEN rp.empresa_cuit IS NULL OR rp.empresa_sucursal "
+                    + "IS NULL THEN rp.descripcion_empresa WHEN e.cuit IS NULL THEN '[EMPRESA NO RESUELTA]' ELSE e.razon_soc "
+                    + "END::VARCHAR AS descripcion_empresa, "
+                    + "rp.dl_group_id,rp.dl_folder_id,rp.dl_file_entry_id,rp.dl_file_uuid,rp.nombre_original,rp.nombre_persistido,"
+                    + "rp.titulo, CASE WHEN rp.id_prestador IS NULL THEN rp.descripcion_prestador WHEN p.id_prestador IS NULL THEN "
+                    + "'[PRESTADOR NO RESUELTO]' ELSE p.descripcion END::VARCHAR AS descripcion_prestador, "
+                    + "rp.alta_fecha,rp.alta_usr,rp.baja_fecha,rp.baja_usr,rp.empresa_adjudicada";
+
+    private static final String SQL_DOCUMENTO_BASE =
+            "SELECT " + SQL_DOCUMENTO_COLUMNAS + " FROM compras.requerimiento_presupuesto rp "
+                    + "LEFT JOIN public.prestador p ON p.id_prestador=rp.id_prestador "
+                    + "LEFT JOIN informacion_afip.empresa e ON e.cuit=rp.empresa_cuit AND e.sucursal=rp.empresa_sucursal ";
 
     private static final String SQL_LISTAR_PRESUPUESTOS =
-            "{call compras.listar_documentos_requerimiento(?,?)}";
+            SQL_DOCUMENTO_BASE
+                    + "WHERE rp.id_requerimiento=? AND rp.tipo_documento=? AND rp.baja_fecha IS NULL ORDER BY rp.alta_fecha DESC,rp.id_requerimiento_presupuesto DESC";
 
     private static final String SQL_GET_PRESUPUESTO =
-            "{call compras.get_documento_requerimiento(?,?,?)}";
+            SQL_DOCUMENTO_BASE
+                    + "WHERE rp.id_requerimiento_presupuesto=? AND rp.id_requerimiento=? AND rp.tipo_documento=? AND rp.baja_fecha IS NULL";
 
-    private static final String SQL_LISTAR_COTIZACIONES_EMPRESA =
-            "{call compras.listar_documentos_requerimiento(?,?)}";
+    private static final String SQL_LISTAR_COTIZACIONES_EMPRESA = SQL_LISTAR_PRESUPUESTOS;
 
-    private static final String SQL_GET_COTIZACION_EMPRESA =
-            "{call compras.get_documento_requerimiento(?,?,?)}";
+    private static final String SQL_GET_COTIZACION_EMPRESA = SQL_GET_PRESUPUESTO;
 
     private static final String SQL_GET_ORDEN_MEDICA =
-            "{call compras.listar_ordenes_medicas_requerimiento(?)}";
+            SQL_DOCUMENTO_BASE
+                    + "WHERE rp.id_requerimiento=? AND rp.tipo_documento=2 AND rp.baja_fecha IS NULL";
 
     private static final String SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO =
-            "{call compras.buscar_items_historicos_afiliado_clasificado(?,?,?,?,?)}";
+            "SELECT h.id_prestacion,h.id_tipo_nomenclador,h.codigo,h.descripcion,h.id_tipo_prestacion FROM (SELECT DISTINCT "
+                    + "ON (d.id_prestacion,n.id_tipo_nomenclador) "
+                    + "d.id_prestacion,n.id_tipo_nomenclador,NULLIF(btrim(n.codigo),'')::VARCHAR AS "
+                    + "codigo,NULLIF(btrim(n.descripcion),'')::VARCHAR AS descripcion,d.id_tipo_prestacion,r.alta_fecha AS "
+                    + "fecha_requerimiento,r.id_requerimiento AS id_requerimiento_origen,d.id_detalle AS id_detalle_origen FROM "
+                    + "compras.requerimiento r JOIN compras.requerimiento_detalle d ON d.id_requerimiento=r.id_requerimiento JOIN "
+                    + "autorizaciones.nomenclador n ON n.id_prestacion=d.id_prestacion WHERE r.afiliado_cuil_titular=? AND "
+                    + "r.afiliado_int=? AND r.id_sector=? AND r.id_requerimiento<>? AND r.baja_fecha IS NULL AND d.baja_fecha IS NULL "
+                    + "AND d.tipo_item='NOMENCLADOR' AND d.id_prestacion>0 AND n.id_tipo_nomenclador>0 AND NULLIF(btrim(n.codigo),'') "
+                    + "IS NOT NULL AND btrim(n.codigo) NOT IN ('101002','9999009') AND NULLIF(btrim(n.descripcion),'') IS NOT NULL "
+                    + "ORDER BY d.id_prestacion,n.id_tipo_nomenclador,r.alta_fecha DESC NULLS LAST,r.id_requerimiento "
+                    + "DESC,d.id_detalle DESC) h ORDER BY h.fecha_requerimiento DESC NULLS LAST,h.id_requerimiento_origen "
+                    + "DESC,h.id_detalle_origen DESC LIMIT ?";
 
     private static final String SQL_TIENE_SITUACION_MEDICA_VIGENTE =
-            "{call compras.tiene_situacion_medica_vigente(?,?)}";
+            "SELECT EXISTS (SELECT 1 FROM public.afi_situ_medica sm WHERE sm.cuil_titular=? AND sm.inte=? AND sm.baja_fecha "
+                    + "IS NULL AND (sm.vigen_hasta IS NULL OR sm.vigen_hasta>CURRENT_DATE))";
 
     private static final String SQL_LISTAR_PRESTADORES_ADJUDICADOS =
-            "{call compras.listar_prestadores_adjudicados(?)}";
+            "SELECT DISTINCT d.id_prestador::INTEGER AS id_prestador FROM compras.requerimiento_detalle d WHERE "
+                    + "d.id_requerimiento=? AND d.baja_fecha IS NULL";
+
+    private static final String SQL_LISTAR_PRESTADORES_ADJUDICADOS_BATCH =
+            "SELECT DISTINCT d.id_requerimiento::INTEGER,d.id_prestador::INTEGER,p.descripcion::VARCHAR FROM "
+                    + "compras.requerimiento_detalle d JOIN compras.requerimiento r ON r.id_requerimiento=d.id_requerimiento LEFT JOIN "
+                    + "public.prestador p ON p.id_prestador=d.id_prestador WHERE d.id_requerimiento=ANY(?::INTEGER[]) AND d.baja_fecha "
+                    + "IS NULL AND r.baja_fecha IS NULL AND r.estado<>? ORDER BY d.id_requerimiento::INTEGER,d.id_prestador::INTEGER";
 
     private static final String SQL_LISTAR_PRESUPUESTOS_PRESTADOR =
-            "{call compras.listar_presupuestos_prestador(?,?)}";
+            SQL_DOCUMENTO_BASE
+                    + "WHERE rp.id_requerimiento=? AND rp.id_prestador=? AND rp.tipo_documento=1 AND rp.baja_fecha IS NULL ORDER BY rp.id_requerimiento_presupuesto";
 
     private static final String SQL_GET_PEDIDO_COTIZACION_PRESTADOR =
-            "{call compras.get_pedido_cotizacion_prestador(?,?)}";
+            "SELECT pc.* FROM compras.requerimiento_pedido_cotizacion pc JOIN compras.requerimiento_cotizacion_prestador rcp "
+                    + "ON rcp.id_requerimiento=pc.id_requerimiento AND rcp.id_prestador=pc.id_prestador WHERE pc.id_requerimiento=? "
+                    + "AND pc.id_prestador=? AND pc.intento=rcp.intentos AND rcp.estado_envio IN (?,?) ORDER BY pc.intento DESC LIMIT 1";
+
+    private static final String SQL_GET_REQUERIMIENTO_PDF =
+            "SELECT rb.id AS id_requerimiento,rb.alta_fecha,rb.alta_usr,rb.id_estado,rb.estado_descripcion,"
+                    + "rb.id_sector,rb.sector_descripcion,rb.requiere_afiliado,rb.afiliado_id_ospim,rb.afiliado_int,"
+                    + "rb.afiliado_nombre_apellido,rb.afiliado_documento,rb.afiliado_direccion,rb.afiliado_localidad,"
+                    + "rb.afiliado_provincia,rb.afiliado_celular,rb.afiliado_telefono,rb.afiliado_email,"
+                    + "rb.afiliado_seccional_descripcion AS afiliado_seccional,rb.cargo_ospim,rb.cargo_tercerizadora,"
+                    + "rb.id_tercerizadora,rb.recupero,rb.surge,rb.observaciones,d.id AS detalle_id,"
+                    + "CASE WHEN d.id IS NULL THEN NULL ELSE row_number() OVER (PARTITION BY rb.id ORDER BY d.id)::INTEGER END AS detalle_orden,"
+                    + "d.tipo_item,d.codigo_item,d.descripcion_item,d.id_prestacion,d.id_tipo_nomenclador,"
+                    + "d.codigo_nomenclador,d.descripcion_nomenclador,d.id_medicamento,d.troquel,d.nombre_medicamento,"
+                    + "d.cantidad,d.precio_unitario_estimado,d.precio_total_estimado,d.prestador_razon_social,"
+                    + "d.prestador_cuit,d.observaciones AS detalle_observaciones FROM (" + SQL_CABECERA_BASE + ") rb "
+                    + "LEFT JOIN (" + SQL_DETALLE_BASE + ") d ON d.id_requerimiento=rb.id WHERE rb.id=? ORDER BY d.id NULLS LAST";
 
     public List<RequerimientoCompra> buscarRequerimientos(
             RequerimientoCompraFiltro filtro) throws Exception {
@@ -161,10 +298,11 @@ public class BusquedaRequerimientoCompraServiceImpl {
             setParametrosBusqueda(stmt, filtro, filtro.getIdEstado(), 0);
             stmt.setInt(12, estadoAnulado);
 
+            Map<String, String> estadosDescripciones = leerDescripcionesEstados(con);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
-                RequerimientoCompra requerimiento = mapRequerimiento(rs);
+                RequerimientoCompra requerimiento = mapRequerimiento(rs, estadosDescripciones);
                 requerimiento.setAfiliadoIdSeccional(getInteger(rs, "afiliado_id_seccional"));
                 requerimiento.setAfiliadoSeccionalDescripcion(
                         rs.getString("afiliado_seccional_descripcion"));
@@ -196,9 +334,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
             stmt.setInt(1, estadoAnulado);
             stmt.setInt(2, porPagina);
             stmt.setLong(3, ((long) pagina - 1L) * porPagina);
+            Map<String, String> estadosDescripciones = leerDescripcionesEstados(con);
             rs = stmt.executeQuery();
             while (rs.next()) {
-                RequerimientoCompra requerimiento = mapRequerimiento(rs);
+                RequerimientoCompra requerimiento = mapRequerimiento(rs, estadosDescripciones);
                 requerimiento.setTotalRegistros(rs.getInt("total_registros"));
                 resultado.add(requerimiento);
             }
@@ -246,9 +385,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     ConfiguracionComprasHelper.leerObligatoria("COMPRAS_LIMITES", con));
             stmt.setInt(parametros + 1, porPagina);
             stmt.setLong(parametros + 2, ((long) pagina - 1L) * porPagina);
+            Map<String, String> estadosDescripciones = leerDescripcionesEstados(con);
             rs = stmt.executeQuery();
             while (rs.next()) {
-                RequerimientoCompra requerimiento = mapRequerimiento(rs);
+                RequerimientoCompra requerimiento = mapRequerimiento(rs, estadosDescripciones);
                 requerimiento.setTotalRegistros(rs.getInt("total_registros"));
                 resultado.add(requerimiento);
             }
@@ -300,13 +440,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             con = ConnectionHelper.getConnection();
             stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO);
             stmt.setInt(1, idRequerimientoCompra);
+            Map<String, String> estadosDescripciones = leerDescripcionesEstados(con);
             rs = stmt.executeQuery();
 
             if (!rs.next()) {
                 return null;
             }
 
-            RequerimientoCompra requerimiento = mapRequerimiento(rs);
+            RequerimientoCompra requerimiento = mapRequerimiento(rs, estadosDescripciones);
             requerimiento.setObservacionInterna(rs.getString("observacion_interna"));
             requerimiento.setMotivoBaja(rs.getString("motivo_baja"));
             return requerimiento;
@@ -320,18 +461,19 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<Map<String, Object>> filas =
                 new ArrayList<Map<String, Object>>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(
-                    "{call compras.get_requerimiento_compra_pdf(?)}"
+            stmt = con.prepareStatement(
+                    SQL_GET_REQUERIMIENTO_PDF
             );
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
+            Map<String, String> estadosDescripciones = leerDescripcionesEstados(con);
             ResultSetMetaData columnas = rs.getMetaData();
 
             while (rs.next()) {
@@ -339,6 +481,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                 for (int i = 1; i <= columnas.getColumnCount(); i++) {
                     fila.put(columnas.getColumnLabel(i), rs.getObject(i));
                 }
+                fila.put("estado_descripcion", estadosDescripciones.get(String.valueOf(fila.get("id_estado"))));
                 filas.add(fila);
             }
             return filas;
@@ -352,14 +495,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraDetalle> resultado =
                 new ArrayList<RequerimientoCompraDetalle>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_REQUERIMIENTO_DETALLE);
+            stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO_DETALLE);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -438,14 +581,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int limite) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraDetalle> resultado =
                 new ArrayList<RequerimientoCompraDetalle>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO);
+            stmt = con.prepareStatement(SQL_BUSCAR_ITEMS_HISTORICOS_AFILIADO);
             stmt.setString(1, cuilTitular);
             stmt.setInt(2, inte);
             stmt.setInt(3, idSector);
@@ -497,14 +640,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<TipoPrestacionCompra> resultado =
                 new ArrayList<TipoPrestacionCompra>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_LISTAR_TIPOS_PRESTACION);
+            stmt = con.prepareStatement(SQL_LISTAR_TIPOS_PRESTACION);
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -552,12 +695,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_SECTOR);
+            stmt = con.prepareStatement(SQL_GET_SECTOR);
             stmt.setInt(1, idSector);
             rs = stmt.executeQuery();
 
@@ -573,12 +716,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int inte) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_TIENE_SITUACION_MEDICA_VIGENTE);
+            stmt = con.prepareStatement(SQL_TIENE_SITUACION_MEDICA_VIGENTE);
             stmt.setString(1, cuilTitular);
             stmt.setInt(2, inte);
             rs = stmt.executeQuery();
@@ -625,13 +768,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int limite) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<Empresa> resultado = new ArrayList<Empresa>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_BUSCAR_EMPRESAS_COTIZACION);
+            stmt = con.prepareStatement(SQL_BUSCAR_EMPRESAS_COTIZACION);
             stmt.setString(1, cuit);
             stmt.setString(2, descripcion);
             stmt.setString(3, sucursal);
@@ -662,13 +805,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int limite) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<Empresa> resultado = new ArrayList<Empresa>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(
+            stmt = con.prepareStatement(
                     SQL_BUSCAR_EMPRESAS_COTIZACION_RAPIDA
             );
             stmt.setString(1, cuit);
@@ -703,14 +846,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_LISTAR_PRESUPUESTOS);
+            stmt = con.prepareStatement(SQL_LISTAR_PRESUPUESTOS);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, 1);
             rs = stmt.executeQuery();
@@ -730,14 +873,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_LISTAR_COTIZACIONES_EMPRESA);
+            stmt = con.prepareStatement(SQL_LISTAR_COTIZACIONES_EMPRESA);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, 3);
             rs = stmt.executeQuery();
@@ -758,12 +901,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_PRESUPUESTO);
+            stmt = con.prepareStatement(SQL_GET_PRESUPUESTO);
             stmt.setInt(1, idRequerimientoPresupuesto);
             stmt.setInt(2, idRequerimientoCompra);
             stmt.setInt(3, 1);
@@ -781,12 +924,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_COTIZACION_EMPRESA);
+            stmt = con.prepareStatement(SQL_GET_COTIZACION_EMPRESA);
             stmt.setInt(1, idRequerimientoPresupuesto);
             stmt.setInt(2, idRequerimientoCompra);
             stmt.setInt(3, 3);
@@ -803,14 +946,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_GET_ORDEN_MEDICA);
+            stmt = con.prepareStatement(SQL_GET_ORDEN_MEDICA);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -841,12 +984,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
         array.append('}');
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall("{call compras.listar_prestadores_adjudicados_batch(?)}");
+            stmt = con.prepareStatement(SQL_LISTAR_PRESTADORES_ADJUDICADOS_BATCH);
             stmt.setString(1, array.toString());
+            stmt.setInt(2, ConfiguracionComprasHelper.resolverEstado("ANULADO",
+                    ConfiguracionComprasHelper.leerObligatoria(ConfiguracionComprasHelper.CONFIG_ESTADOS_IDS, con)));
             rs = stmt.executeQuery();
             while (rs.next()) {
                 Integer id = Integer.valueOf(rs.getInt("id_requerimiento"));
@@ -871,13 +1016,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idRequerimientoCompra) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<Integer> resultado = new ArrayList<Integer>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_LISTAR_PRESTADORES_ADJUDICADOS);
+            stmt = con.prepareStatement(SQL_LISTAR_PRESTADORES_ADJUDICADOS);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -900,14 +1045,14 @@ public class BusquedaRequerimientoCompraServiceImpl {
             int idPrestador) throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
             con = ConnectionHelper.getConnection();
-            stmt = con.prepareCall(SQL_LISTAR_PRESUPUESTOS_PRESTADOR);
+            stmt = con.prepareStatement(SQL_LISTAR_PRESUPUESTOS_PRESTADOR);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, idPrestador);
             rs = stmt.executeQuery();
@@ -923,17 +1068,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
-    private RequerimientoCompra mapRequerimiento(ResultSet rs) throws Exception {
-        RequerimientoCompra r = RequerimientoCompra.paraMapeo();
+    private Map<String, String> leerDescripcionesEstados(Connection con) throws Exception {
+        return ConfiguracionComprasHelper.parsearPares("COMPRAS_ESTADOS_DESCRIPCIONES",
+                ConfiguracionComprasHelper.leerObligatoria("COMPRAS_ESTADOS_DESCRIPCIONES", con));
+    }
 
-        r.setId(getInteger(rs, "id"));
-        r.setAltaFecha(rs.getTimestamp("alta_fecha"));
-        r.setAltaUsr(getString(rs, "alta_usr"));
-        r.setModiFecha(rs.getTimestamp("modi_fecha"));
-        r.setModiUsr(getString(rs, "modi_usr"));
-        r.setBajaFecha(rs.getTimestamp("baja_fecha"));
-        r.setBajaUsr(getString(rs, "baja_usr"));
-
+    private void mapAfiliado(RequerimientoCompra r, ResultSet rs) throws Exception {
         r.setAfiliadoCuilTitular(getString(rs, "afiliado_cuil_titular"));
         r.setAfiliadoInt(getInteger(rs, "afiliado_int"));
         r.setAfiliadoIdOspim(getInteger(rs, "afiliado_id_ospim"));
@@ -949,6 +1089,45 @@ public class BusquedaRequerimientoCompraServiceImpl {
         r.setAfiliadoCelular(getString(rs, "afiliado_celular"));
         r.setAfiliadoTelefono(getString(rs, "afiliado_telefono"));
         r.setAfiliadoEmail(getString(rs, "afiliado_email"));
+    }
+
+    /** Identidad vigente bloqueada dentro de la transaccion recibida. */
+    public RequerimientoCompra getAfiliadoVigente(Connection con, String cuilTitular,
+            int integrante) throws Exception {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = con.prepareStatement(SQL_AFILIADO_VIGENTE);
+            stmt.setString(1, cuilTitular);
+            stmt.setInt(2, integrante);
+            rs = stmt.executeQuery();
+            if (!rs.next()) {
+                return null;
+            }
+            RequerimientoCompra afiliado = RequerimientoCompra.paraMapeo();
+            mapAfiliado(afiliado, rs);
+            if (rs.next()) {
+                throw new java.sql.SQLException("La referencia del afiliado no es unica.");
+            }
+            return afiliado;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    private RequerimientoCompra mapRequerimiento(ResultSet rs, Map<String, String> estadosDescripciones) throws Exception {
+        RequerimientoCompra r = RequerimientoCompra.paraMapeo();
+
+        r.setId(getInteger(rs, "id"));
+        r.setAltaFecha(rs.getTimestamp("alta_fecha"));
+        r.setAltaUsr(getString(rs, "alta_usr"));
+        r.setModiFecha(rs.getTimestamp("modi_fecha"));
+        r.setModiUsr(getString(rs, "modi_usr"));
+        r.setBajaFecha(rs.getTimestamp("baja_fecha"));
+        r.setBajaUsr(getString(rs, "baja_usr"));
+
+        mapAfiliado(r, rs);
 
         r.setIdSector(getInteger(rs, "id_sector"));
         r.setSectorDescripcion(getString(rs, "sector_descripcion"));
@@ -961,7 +1140,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
         r.setLegales(getBoolean(rs, "legales"));
         r.setObservaciones(getString(rs, "observaciones"));
         r.setIdEstado(getInteger(rs, "id_estado"));
-        r.setEstadoDescripcion(getString(rs, "estado_descripcion"));
+        r.setEstadoDescripcion(estadosDescripciones.get(String.valueOf(r.getIdEstado())));
 
         return r;
     }
@@ -1226,7 +1405,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
             throws Exception {
 
         Connection con = null;
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
 
         try {
@@ -1234,7 +1413,7 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     ConnectionHelper.getConnection();
 
             stmt =
-                    con.prepareCall(
+                    con.prepareStatement(
                             SQL_GET_PEDIDO_COTIZACION_PRESTADOR
                     );
 
@@ -1247,6 +1426,9 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     2,
                     idPrestador
             );
+            String estadosEnvio = ConfiguracionComprasHelper.leerObligatoria(ConfiguracionComprasHelper.CONFIG_ESTADOS_ENVIO, con);
+            stmt.setString(3, ConfiguracionComprasHelper.resolverEstadoEnvio("ENVIADO", estadosEnvio));
+            stmt.setString(4, ConfiguracionComprasHelper.resolverEstadoEnvio("COTIZADO", estadosEnvio));
 
             rs =
                     stmt.executeQuery();
@@ -1466,11 +1648,12 @@ public class BusquedaRequerimientoCompraServiceImpl {
         try {
             stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO);
             stmt.setInt(1, idRequerimientoCompra);
+            Map<String, String> estadosDescripciones = leerDescripcionesEstados(con);
             rs = stmt.executeQuery();
             if (!rs.next()) {
                 return null;
             }
-            RequerimientoCompra requerimiento = mapRequerimiento(rs);
+            RequerimientoCompra requerimiento = mapRequerimiento(rs, estadosDescripciones);
             requerimiento.setObservacionInterna(rs.getString("observacion_interna"));
             requerimiento.setMotivoBaja(rs.getString("motivo_baja"));
             return requerimiento;
@@ -1482,11 +1665,11 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     public List<RequerimientoCompraDetalle> getDetalles(Connection con,
             int idRequerimientoCompra) throws Exception {
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraDetalle> resultado = new ArrayList<RequerimientoCompraDetalle>();
         try {
-            stmt = con.prepareCall(SQL_GET_REQUERIMIENTO_DETALLE);
+            stmt = con.prepareStatement(SQL_GET_REQUERIMIENTO_DETALLE);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
             while (rs.next()) {
@@ -1663,13 +1846,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
     public List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(
             Connection con, int idRequerimientoCompra) throws Exception {
 
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
-            stmt = con.prepareCall(SQL_GET_ORDEN_MEDICA);
+            stmt = con.prepareStatement(SQL_GET_ORDEN_MEDICA);
             stmt.setInt(1, idRequerimientoCompra);
             rs = stmt.executeQuery();
 
@@ -1687,13 +1870,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
     public List<RequerimientoCompraPresupuesto> listarPresupuestos(
             Connection con, int idRequerimientoCompra) throws Exception {
 
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> resultado =
                 new ArrayList<RequerimientoCompraPresupuesto>();
 
         try {
-            stmt = con.prepareCall(SQL_LISTAR_PRESUPUESTOS);
+            stmt = con.prepareStatement(SQL_LISTAR_PRESUPUESTOS);
             stmt.setInt(1, idRequerimientoCompra);
             stmt.setInt(2, 1);
             rs = stmt.executeQuery();
@@ -1732,11 +1915,11 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     public List<RequerimientoCompraPresupuesto> listarDocumentos(Connection con,
             int idRequerimiento, int tipoDocumento) throws Exception {
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<RequerimientoCompraPresupuesto> documentos = new ArrayList<RequerimientoCompraPresupuesto>();
         try {
-            stmt = con.prepareCall(SQL_LISTAR_PRESUPUESTOS);
+            stmt = con.prepareStatement(SQL_LISTAR_PRESUPUESTOS);
             stmt.setInt(1, idRequerimiento);
             stmt.setInt(2, tipoDocumento);
             rs = stmt.executeQuery();
@@ -1753,11 +1936,11 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
     public List<Empresa> buscarEmpresasCotizacion(Connection con, String cuit,
             String descripcion, String sucursal, int limite) throws Exception {
-        CallableStatement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rs = null;
         List<Empresa> empresas = new ArrayList<Empresa>();
         try {
-            stmt = con.prepareCall(SQL_BUSCAR_EMPRESAS_COTIZACION);
+            stmt = con.prepareStatement(SQL_BUSCAR_EMPRESAS_COTIZACION);
             stmt.setString(1, cuit);
             stmt.setString(2, descripcion);
             stmt.setString(3, sucursal);

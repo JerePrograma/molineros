@@ -47,6 +47,11 @@ public class EditarRequerimientoCompraServiceImpl {
     }
 
     public int guardarRequerimientoCompra(Connection con, RequerimientoCompra r, String usuario) throws Exception {
+        return guardarRequerimientoCompra(con, r, usuario, false);
+    }
+
+    private int guardarRequerimientoCompra(Connection con, RequerimientoCompra r, String usuario,
+            boolean actualizarAfiliado) throws Exception {
         usuario = resolverUsuarioAuditoria(con, usuario);
         PreparedStatement stmt=null; ResultSet rs=null;
         try {
@@ -66,12 +71,28 @@ public class EditarRequerimientoCompraServiceImpl {
                 stmt.setBoolean(20,r.isSurge());stmt.setBoolean(21,r.isLegales());stmt.setString(22,r.getObservaciones());
                 stmt.setString(23,usuario);stmt.setString(24,r.getObservacionInterna());
             } else {
+                String columnasAfiliado = actualizarAfiliado
+                    ? ",afiliado_cuil_titular=?,afiliado_int=?,afiliado_id_ospim=?,afiliado_nombre=?,afiliado_apellido=?,"
+                        + "afiliado_documento_tipo=?,afiliado_documento_nro=?,afiliado_direccion=?,afiliado_localidad=?,"
+                        + "afiliado_provincia=?,afiliado_celular=?,afiliado_telefono=?,afiliado_email=?"
+                    : "";
                 stmt=con.prepareStatement("UPDATE compras.requerimiento SET cargo_ospim=?,cargo_tercerizadora=?,id_tercerizadora=?,"
-                    + "recupero=?,surge=?,observaciones=?,observacion_interna=?,modi_fecha=now(),modi_usr=? "
-                    + "WHERE id_requerimiento=? AND estado=? AND baja_fecha IS NULL RETURNING id_requerimiento");
+                    + "recupero=?,surge=?,observaciones=?,observacion_interna=?,modi_fecha=now(),modi_usr=?"
+                    + columnasAfiliado + " WHERE id_requerimiento=? AND estado=? AND baja_fecha IS NULL RETURNING id_requerimiento");
                 setNullableInteger(stmt,1,r.getCargoOspim());setNullableInteger(stmt,2,r.getCargoTercerizadora());stmt.setString(3,r.getIdTercerizadora());
                 stmt.setBoolean(4,r.isRecupero());stmt.setBoolean(5,r.isSurge());stmt.setString(6,r.getObservaciones());
-                stmt.setString(7,r.getObservacionInterna());stmt.setString(8,usuario);stmt.setInt(9,r.getIdRequerimientoCompra());stmt.setInt(10,r.getEstado());
+                stmt.setString(7,r.getObservacionInterna());stmt.setString(8,usuario);
+                int indice=9;
+                if(actualizarAfiliado){
+                    stmt.setString(indice++,r.getAfiliadoCuilTitular());setNullableInteger(stmt,indice++,r.getAfiliadoInt());
+                    setNullableInteger(stmt,indice++,r.getAfiliadoIdOspim());stmt.setString(indice++,r.getAfiliadoNombre());
+                    stmt.setString(indice++,r.getAfiliadoApellido());stmt.setString(indice++,r.getAfiliadoDocumentoTipo());
+                    stmt.setString(indice++,r.getAfiliadoDocumentoNro());stmt.setString(indice++,r.getAfiliadoDireccion());
+                    stmt.setString(indice++,r.getAfiliadoLocalidad());stmt.setString(indice++,r.getAfiliadoProvincia());
+                    stmt.setString(indice++,r.getAfiliadoCelular());stmt.setString(indice++,r.getAfiliadoTelefono());
+                    stmt.setString(indice++,r.getAfiliadoEmail());
+                }
+                stmt.setInt(indice++,r.getIdRequerimientoCompra());stmt.setInt(indice,r.getEstado());
             }
             rs=stmt.executeQuery();return rs.next()?rs.getInt(1):0;
         } finally {cerrar(rs);ConnectionHelper.cerrar(stmt);}
@@ -358,6 +379,36 @@ public class EditarRequerimientoCompraServiceImpl {
             ConnectionHelper.cerrar(stmt);
             ConnectionHelper.cerrar(bloqueo);
         }
+    }
+
+    private void registrarReasignacionAfiliado(Connection con,RequerimientoCompra anterior,
+            RequerimientoCompra nuevo,String usuario)throws Exception {
+        usuario=resolverUsuarioAuditoria(con,usuario);
+        PreparedStatement stmt=null;
+        try{
+            stmt=con.prepareStatement("INSERT INTO compras.requerimiento_afiliado_historial "
+                + "(id_requerimiento,afiliado_cuil_titular_anterior,afiliado_int_anterior,"
+                + "afiliado_cuil_titular_nuevo,afiliado_int_nuevo,modi_usr,modi_fecha) VALUES (?,?,?,?,?,?,now())");
+            stmt.setInt(1,nuevo.getIdRequerimientoCompra());
+            stmt.setString(2,anterior.getAfiliadoCuilTitular());setNullableInteger(stmt,3,anterior.getAfiliadoInt());
+            stmt.setString(4,nuevo.getAfiliadoCuilTitular());setNullableInteger(stmt,5,nuevo.getAfiliadoInt());
+            stmt.setString(6,usuario);
+            if(stmt.executeUpdate()!=1)throw new SQLException("No se pudo registrar la reasignacion del afiliado.");
+        }finally{ConnectionHelper.cerrar(stmt);}
+    }
+
+    private boolean tieneAsociacionesAfiliado(Connection con,int id)throws Exception {
+        PreparedStatement stmt=null;ResultSet rs=null;
+        try{
+            stmt=con.prepareStatement("SELECT EXISTS (SELECT 1 FROM compras.requerimiento_reclamo_prestacional WHERE id_requerimiento=?) "
+                + "OR EXISTS (SELECT 1 FROM compras.requerimiento_orden_compra WHERE id_requerimiento=?)");
+            stmt.setInt(1,id);stmt.setInt(2,id);
+            rs=stmt.executeQuery();
+            if(!rs.next())throw new SQLException("No se pudieron verificar las asociaciones del requerimiento.");
+            boolean tieneAsociaciones=rs.getBoolean(1);
+            if(rs.wasNull())throw new SQLException("No se pudieron verificar las asociaciones del requerimiento.");
+            return tieneAsociaciones;
+        }finally{cerrar(rs);ConnectionHelper.cerrar(stmt);}
     }
 
     private int guardarConceptoAutomatico(
@@ -850,6 +901,24 @@ public class EditarRequerimientoCompraServiceImpl {
 
             this.service = service;
             this.con = con;
+        }
+
+        public int guardarRequerimientoCompra(RequerimientoCompra requerimiento,
+                String usuario,boolean actualizarAfiliado)throws Exception {
+            return service.guardarRequerimientoCompra(con,requerimiento,usuario,actualizarAfiliado);
+        }
+
+        public void registrarReasignacionAfiliado(RequerimientoCompra anterior,
+                RequerimientoCompra nuevo,String usuario)throws Exception {
+            service.registrarReasignacionAfiliado(con,anterior,nuevo,usuario);
+        }
+
+        public boolean tieneAsociacionesAfiliado(int id)throws Exception {
+            return service.tieneAsociacionesAfiliado(con,id);
+        }
+
+        public RequerimientoCompra getAfiliadoVigente(String cuil,int integrante)throws Exception {
+            return BusquedaRequerimientoCompraServiceUtil.getAfiliadoVigente(con,cuil,integrante);
         }
 
         public int guardarRequerimientoCompra(

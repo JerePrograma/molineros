@@ -42,11 +42,13 @@ public class RequerimientoCompraComparativaServiceImpl {
                         + "ON c.id_prestador = p.id_prestador AND c.id_requerimiento = ? "
                         + "WHERE p.id_prestador = ?"
                     : "SELECT c.*, rp.id_prestador AS prestador_id, p.descripcion "
-                    + "FROM compras.listar_documentos_requerimiento(?, 1) rp "
+                    + "FROM compras.requerimiento_presupuesto rp "
                     + "JOIN public.prestador p ON p.id_prestador = rp.id_prestador "
                     + "LEFT JOIN compras.requerimiento_comparativa c "
                     + "ON c.id_requerimiento = rp.id_requerimiento "
                     + "AND c.id_prestador = rp.id_prestador "
+                    + "WHERE rp.id_requerimiento = ? AND rp.tipo_documento = 1 "
+                    + "AND rp.baja_fecha IS NULL "
                     + "ORDER BY rp.id_prestador");
             stmt.setInt(1, idRequerimiento);
             if (idPrestador > 0) {

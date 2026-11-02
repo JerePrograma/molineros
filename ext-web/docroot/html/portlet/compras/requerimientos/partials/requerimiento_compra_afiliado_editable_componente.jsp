@@ -18,15 +18,15 @@ Efectos secundarios:
 --%>
 <%
 /*
- * La identidad del afiliado se selecciona exclusivamente durante el alta.
+ * La identidad del afiliado puede seleccionarse en alta y corregirse en borrador.
  *
  * Actualizar los datos de contacto es una capacidad distinta:
  * no modifica el afiliado asociado al requerimiento.
  */
 boolean afiliadoComponenteEditable =
-        esNuevo
-        && modoEditable
-        && puedeEditarEstructuraPantalla;
+        modoEditable
+        && puedeEditarEstructuraPantalla
+        && (esNuevo || req.isPendiente());
 
 /*
  * La actualización de los datos de contacto debe estar disponible
