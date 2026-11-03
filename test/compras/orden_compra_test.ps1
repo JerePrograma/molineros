@@ -1,4 +1,4 @@
-param([string]$EvidenceName = 'offline', [string]$TestDatabase = '', [ValidateRange(1, 65535)][int]$TestPort = 5432)
+param([string]$EvidenceName = 'offline', [string]$TestDatabase = '', [ValidateRange(1, 65535)][int]$TestPort = 5432, [switch]$TestSuministro)
 $ErrorActionPreference = 'Stop'
 $repoPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $artifactPath = Join-Path $repoPath ('output\orden-compra-qa\' + $EvidenceName)
@@ -30,6 +30,8 @@ $sources = @(
     'ext-impl\src\ar\com\ospim\compras\requerimientos\service\RequerimientoCompraOrdenServiceUtil.java',
     'ext-impl\src\ar\com\ospim\servlets\PdfServlet.java',
     'test\compras\fixtures\datos\ComprasFuenteDatosFixture.java',
+    'test\compras\ComprasOrdenSuministroTest.java',
+    'test\compras\ComprasOrdenSuministroJdbcTest.java',
     'test\compras\ComprasOrdenHelperTest.java',
     'test\compras\ComprasContactoAfiliadoTokenTest.java',
     'test\compras\ComprasOrdenConsultaTest.java',
@@ -48,7 +50,7 @@ $compileOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encodi
 $compileExit = $LASTEXITCODE
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'javac.log'), ($compileOutput + ('javac_exit=' + $compileExit)), $latinEncoding)
 if ($compileExit -ne 0) { $compileOutput | Write-Output; throw ('javac fallo: ' + $compileExit) }
-foreach ($test in @('ComprasOrdenHelperTest', 'ComprasContactoAfiliadoTokenTest', 'ComprasOrdenConsultaTest', 'ComprasOrdenPdfTest')) {
+foreach ($test in @('ComprasOrdenHelperTest', 'ComprasContactoAfiliadoTokenTest', 'ComprasOrdenConsultaTest', 'ComprasOrdenSuministroTest', 'ComprasOrdenPdfTest')) {
     $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath $test $artifactPath 2>&1 | ForEach-Object { $_.ToString() })
     $runExit = $LASTEXITCODE
     [System.IO.File]::WriteAllLines((Join-Path $artifactPath ($test + '.log')), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
@@ -64,5 +66,12 @@ if ($TestDatabase.Length -gt 0) {
     [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'ComprasOrdenEdicionJdbcTest.log'), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
     $runOutput | Write-Output
     if ($runExit -ne 0) { throw ('ComprasOrdenEdicionJdbcTest fallo: ' + $runExit) }
+    if ($TestSuministro) {
+        $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' ('-Dcompras.test.port=' + $TestPort) '-cp' $classpath 'ComprasOrdenSuministroJdbcTest' $TestDatabase 2>&1 | ForEach-Object { $_.ToString() })
+        $runExit = $LASTEXITCODE
+        [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'ComprasOrdenSuministroJdbcTest.log'), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)
+        $runOutput | Write-Output
+        if ($runExit -ne 0) { throw ('ComprasOrdenSuministroJdbcTest fallo: ' + $runExit) }
+    }
 }
 Write-Output ('javac_exit=' + $compileExit + ' tests_exit=0')

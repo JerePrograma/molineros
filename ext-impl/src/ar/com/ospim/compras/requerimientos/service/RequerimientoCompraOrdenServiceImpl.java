@@ -20,6 +20,7 @@ import ar.com.ospim.liquidaciones.beans.TelefonoPrestador;
 import ar.com.ospim.liquidaciones.beans.ContactoElectronicoPrestador;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrdenSuministro;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraOrdenHelper;
 import java.util.Date;
@@ -673,6 +674,50 @@ public class RequerimientoCompraOrdenServiceImpl {
         return ordenes;
     }
 
+    public RequerimientoCompraOrdenSuministro obtenerSuministro(int idOrdenCompra)
+            throws Exception {
+        Connection con = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            return obtenerSuministro(con, idOrdenCompra);
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    private RequerimientoCompraOrdenSuministro obtenerSuministro(Connection con,
+            int idOrdenCompra) throws Exception {
+        PreparedStatement stmt = con.prepareStatement(
+                "SELECT id_orden_compra,fecha_contacto,persona_contactada,medio_contacto,detalle,"
+                + "respuesta_1,respuesta_2,respuesta_3,respuesta_4,respuesta_5,"
+                + "alta_fecha,alta_usr,modi_fecha,modi_usr,version_edicion "
+                + "FROM compras.requerimiento_orden_compra_suministro WHERE id_orden_compra=?");
+        try {
+            stmt.setInt(1, idOrdenCompra);
+            ResultSet rs = stmt.executeQuery();
+            try {
+                if (!rs.next()) return null;
+                RequerimientoCompraOrdenSuministro datos = new RequerimientoCompraOrdenSuministro();
+                datos.setIdOrdenCompra(rs.getInt("id_orden_compra"));
+                datos.setFechaContacto(rs.getDate("fecha_contacto"));
+                datos.setPersonaContactada(rs.getString("persona_contactada"));
+                datos.setMedioContacto(rs.getString("medio_contacto"));
+                datos.setDetalle(rs.getString("detalle"));
+                datos.setRespuesta1(rs.getString("respuesta_1"));
+                datos.setRespuesta2(rs.getString("respuesta_2"));
+                datos.setRespuesta3(rs.getString("respuesta_3"));
+                datos.setRespuesta4(rs.getString("respuesta_4"));
+                datos.setRespuesta5(rs.getString("respuesta_5"));
+                datos.setAltaFecha(rs.getTimestamp("alta_fecha"));
+                datos.setAltaUsr(rs.getString("alta_usr"));
+                datos.setModiFecha(rs.getTimestamp("modi_fecha"));
+                datos.setModiUsr(rs.getString("modi_usr"));
+                datos.setVersionEdicion(rs.getInt("version_edicion"));
+                return datos;
+            } finally { rs.close(); }
+        } finally { stmt.close(); }
+    }
+
     public RequerimientoCompraOrden obtenerPorRequerimiento(int idRequerimiento)
             throws Exception {
         Connection con = null;
@@ -916,6 +961,7 @@ public class RequerimientoCompraOrdenServiceImpl {
             }finally{rs.close();}}finally{stmt.close();}
         }
         public RequerimientoCompraOrden obtenerOrden(int id) throws Exception {return service.obtenerPorRequerimiento(con,id);}
+        public RequerimientoCompraOrdenSuministro obtenerSuministro(int id) throws Exception {return service.obtenerSuministro(con,id);}
         public List<RequerimientoCompraPresupuesto> listarDocumentos(int id,int tipo) throws Exception {
             return BusquedaRequerimientoCompraServiceUtil.listarDocumentos(con,id,tipo);
         }
@@ -951,6 +997,54 @@ public class RequerimientoCompraOrdenServiceImpl {
                     + "WHERE id_orden_compra=? AND id_requerimiento=? AND version_edicion=?");
             int filas;try{stmt.setString(1,orden.getCondicion());stmt.setString(2,orden.getFormaPago());stmt.setString(3,orden.getPlazoPago());stmt.setString(4,orden.getEntrega());stmt.setString(5,orden.getObservaciones());stmt.setString(6,usuario);stmt.setInt(7,orden.getIdOrdenCompra());stmt.setInt(8,orden.getIdRequerimientoCompra());stmt.setInt(9,orden.getVersionEdicion());filas=stmt.executeUpdate();}finally{stmt.close();}
             return filas;
+        }
+        public int insertarSuministro(RequerimientoCompraOrdenSuministro datos,
+                String usuario) throws Exception {
+            PreparedStatement stmt = con.prepareStatement(
+                    "INSERT INTO compras.requerimiento_orden_compra_suministro "
+                    + "(id_orden_compra,fecha_contacto,persona_contactada,medio_contacto,detalle,"
+                    + "respuesta_1,respuesta_2,respuesta_3,respuesta_4,respuesta_5,alta_usr,version_edicion) "
+                    + "VALUES (?,?,?,?,?,?,?,?,?,?,?,1)");
+            try {
+                stmt.setInt(1, datos.getIdOrdenCompra());
+                stmt.setDate(2, datos.getFechaContacto() == null ? null
+                        : new java.sql.Date(datos.getFechaContacto().getTime()));
+                stmt.setString(3, datos.getPersonaContactada());
+                stmt.setString(4, datos.getMedioContacto());
+                stmt.setString(5, datos.getDetalle());
+                stmt.setString(6, datos.getRespuesta1());
+                stmt.setString(7, datos.getRespuesta2());
+                stmt.setString(8, datos.getRespuesta3());
+                stmt.setString(9, datos.getRespuesta4());
+                stmt.setString(10, datos.getRespuesta5());
+                stmt.setString(11, usuario);
+                return stmt.executeUpdate();
+            } finally { stmt.close(); }
+        }
+        public int actualizarSuministro(RequerimientoCompraOrdenSuministro datos,
+                String usuario) throws Exception {
+            PreparedStatement stmt = con.prepareStatement(
+                    "UPDATE compras.requerimiento_orden_compra_suministro "
+                    + "SET fecha_contacto=?,persona_contactada=?,medio_contacto=?,detalle=?,"
+                    + "respuesta_1=?,respuesta_2=?,respuesta_3=?,respuesta_4=?,respuesta_5=?,"
+                    + "modi_fecha=now(),modi_usr=?,version_edicion=version_edicion+1 "
+                    + "WHERE id_orden_compra=? AND version_edicion=?");
+            try {
+                stmt.setDate(1, datos.getFechaContacto() == null ? null
+                        : new java.sql.Date(datos.getFechaContacto().getTime()));
+                stmt.setString(2, datos.getPersonaContactada());
+                stmt.setString(3, datos.getMedioContacto());
+                stmt.setString(4, datos.getDetalle());
+                stmt.setString(5, datos.getRespuesta1());
+                stmt.setString(6, datos.getRespuesta2());
+                stmt.setString(7, datos.getRespuesta3());
+                stmt.setString(8, datos.getRespuesta4());
+                stmt.setString(9, datos.getRespuesta5());
+                stmt.setString(10, usuario);
+                stmt.setInt(11, datos.getIdOrdenCompra());
+                stmt.setInt(12, datos.getVersionEdicion());
+                return stmt.executeUpdate();
+            } finally { stmt.close(); }
         }
         public int completarPrecio(int orden,int detalle,java.math.BigDecimal precio) throws Exception {
             PreparedStatement stmt=con.prepareStatement("UPDATE compras.requerimiento_orden_compra_detalle SET precio_unitario=? WHERE id_orden_compra=? AND id_requerimiento_detalle=? AND precio_unitario IS NULL");

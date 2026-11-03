@@ -6,6 +6,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativaDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrdenSuministro;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
@@ -15,6 +16,8 @@ import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraOrdenServi
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,6 +34,126 @@ import java.util.Set;
 public class RequerimientoCompraOrdenHelper {
 
     private static final Log _log = LogFactoryUtil.getLog(RequerimientoCompraOrdenHelper.class);
+
+    /** Consulta el seguimiento de una OC ya preparada para su vista de suministro. */
+    public RequerimientoCompraOrdenSuministro cargarSuministro(RequerimientoCompraOrden orden)
+            throws Exception {
+        if (orden == null || orden.getIdOrdenCompra() <= 0
+                || orden.getRequerimiento() == null
+                || !orden.getRequerimiento().isActivo()
+                || !orden.getRequerimiento().isOrdenCompra()
+                || orden.getIdRequerimientoCompra() <= 0
+                || orden.getIdRequerimientoCompra()
+                    != orden.getRequerimiento().getIdRequerimientoCompra()) {
+            throw new IllegalArgumentException("La Orden de Compra emitida ya no esta disponible.");
+        }
+        RequerimientoCompraOrdenSuministro datos = obtenerSuministro(orden.getIdOrdenCompra());
+        if (datos == null) {
+            datos = new RequerimientoCompraOrdenSuministro();
+            datos.setIdOrdenCompra(orden.getIdOrdenCompra());
+        } else {
+            validarSuministroCargado(datos, orden.getIdOrdenCompra());
+        }
+        return datos;
+    }
+
+    /** Guarda el seguimiento sin alterar las condiciones ni la version comercial de la OC. */
+    public RequerimientoCompraOrdenSuministro guardarSuministro(int idRequerimiento,
+            int idOrden, int version, Map<String, String> entrada, String usuario)
+            throws Exception {
+        if (idRequerimiento <= 0 || idOrden <= 0 || version < 0
+                || version == Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("No se pudo identificar la gestion de suministro.");
+        }
+        if (entrada == null) {
+            throw new IllegalArgumentException("No se recibieron los datos de la gestion de suministro.");
+        }
+        String auditoria = texto(usuario, 100, true, "Usuario de auditoria");
+        RequerimientoCompraOrdenSuministro cambio = new RequerimientoCompraOrdenSuministro();
+        cambio.setIdOrdenCompra(idOrden);
+        cambio.setVersionEdicion(version);
+        cambio.setFechaContacto(fechaContactoSuministro(entrada.get("fecha_contacto")));
+        cambio.setPersonaContactada(texto(entrada.get("suministro_persona"), 100, false, "Persona contactada"));
+        cambio.setMedioContacto(texto(entrada.get("suministro_medio"), 100, false, "Medio de contacto"));
+        cambio.setDetalle(texto(entrada.get("suministro_detalle"), 4000, false, "Detalle de la gestion"));
+        cambio.setRespuesta1(respuestaSuministro(entrada.get("suministro_pregunta_1")));
+        cambio.setRespuesta2(respuestaSuministro(entrada.get("suministro_pregunta_2")));
+        cambio.setRespuesta3(respuestaSuministro(entrada.get("suministro_pregunta_3")));
+        cambio.setRespuesta4(respuestaSuministro(entrada.get("suministro_pregunta_4")));
+        cambio.setRespuesta5(respuestaSuministro(entrada.get("suministro_pregunta_5")));
+        Transaccion tx = abrirTransaccion();
+        try {
+            RequerimientoCompra requerimiento = cargarRequerimiento(idRequerimiento, tx);
+            RequerimientoCompraOrden orden = tx.obtenerOrden(idRequerimiento);
+            if (requerimiento.getEstado() != estado(tx, "ORDEN_COMPRA")
+                    || orden == null || orden.getIdOrdenCompra() != idOrden
+                    || orden.getIdRequerimientoCompra() != idRequerimiento) {
+                throw new IllegalArgumentException("La Orden de Compra emitida ya no esta disponible.");
+            }
+            RequerimientoCompraOrdenSuministro actual = tx.obtenerSuministro(idOrden);
+            if (actual != null) validarSuministroCargado(actual, idOrden);
+            if (version != (actual == null ? 0 : actual.getVersionEdicion())) {
+                throw new IllegalArgumentException(
+                        "La gestion de suministro fue modificada por otro usuario. Actualice la pantalla.");
+            }
+            int filas = actual == null ? tx.insertarSuministro(cambio, auditoria)
+                    : tx.actualizarSuministro(cambio, auditoria);
+            if (filas != 1) {
+                throw new IllegalArgumentException(
+                        "La gestion de suministro fue modificada por otro usuario. Actualice la pantalla.");
+            }
+            RequerimientoCompraOrdenSuministro guardada = tx.obtenerSuministro(idOrden);
+            if (guardada == null || guardada.getIdOrdenCompra() != idOrden
+                    || guardada.getVersionEdicion() != version + 1) {
+                throw new IllegalStateException("No se pudo confirmar el guardado de la gestion de suministro.");
+            }
+            validarSuministroCargado(guardada, idOrden);
+            tx.commit();
+            return guardada;
+        } catch (Exception e) { revertir(tx, e); throw e; }
+        finally { tx.cerrar(); }
+    }
+
+    private Date fechaContactoSuministro(String entrada) {
+        String valor = texto(entrada, 10, false, "Fecha de contacto");
+        if (valor.length() == 0) return null;
+        if (!valor.matches("[0-9]{2}/[0-9]{2}/[0-9]{4}")) {
+            throw new IllegalArgumentException("La fecha de contacto debe tener formato dd/MM/yyyy.");
+        }
+        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+        formato.setLenient(false);
+        try { return formato.parse(valor); }
+        catch (ParseException e) {
+            throw new IllegalArgumentException("La fecha de contacto no es valida.");
+        }
+    }
+
+    private String respuestaSuministro(String entrada) {
+        String valor = texto(entrada, 15, false, "Respuesta de seguimiento");
+        if (valor.length() > 0 && !"SI".equals(valor) && !"NO".equals(valor)
+                && !"NO_CORRESPONDE".equals(valor)) {
+            throw new IllegalArgumentException("La respuesta de seguimiento no es valida.");
+        }
+        return valor;
+    }
+
+    private void validarSuministroCargado(RequerimientoCompraOrdenSuministro datos, int idOrden) {
+        if (datos.getIdOrdenCompra() != idOrden || datos.getVersionEdicion() <= 0) {
+            throw new IllegalStateException("La gestion de suministro guardada no corresponde a la OC.");
+        }
+        texto(datos.getPersonaContactada(), 100, false, "Persona contactada");
+        texto(datos.getMedioContacto(), 100, false, "Medio de contacto");
+        texto(datos.getDetalle(), 4000, false, "Detalle de la gestion");
+        respuestaSuministro(datos.getRespuesta1());
+        respuestaSuministro(datos.getRespuesta2());
+        respuestaSuministro(datos.getRespuesta3());
+        respuestaSuministro(datos.getRespuesta4());
+        respuestaSuministro(datos.getRespuesta5());
+    }
+
+    protected RequerimientoCompraOrdenSuministro obtenerSuministro(int idOrden) throws Exception {
+        return RequerimientoCompraOrdenServiceUtil.obtenerSuministro(idOrden);
+    }
 
     /** Revalida la OC vigente antes de actualizar el contacto de su afiliado. */
     public void validarAfiliadoContactoOrden(int id, String cuilTitular,

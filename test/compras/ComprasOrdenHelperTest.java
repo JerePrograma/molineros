@@ -511,7 +511,7 @@ public class ComprasOrdenHelperTest {
         igual("Action token contacto real vinculado a OC", Integer.valueOf(40), Integer.valueOf(
                 ActualizarContactoAfiliadoCompraToken.validarSuministro((javax.portlet.RenderRequest)p.proxy(), "20111111112", 1)));
         igual("Action contacto no habilita edicion de OC", Boolean.FALSE, p.atributos.get("ordenCompraEditable"));
-        igual("Action contacto no publica token de guardado OC", Integer.valueOf(0), Integer.valueOf(gestion.publicados));
+        igual("Action suministro publica token de guardado", Integer.valueOf(1), Integer.valueOf(gestion.publicados));
 
         p = new PeticionPrueba(); gestion.mostrar(p);
         igual("Action consulta normal sin token contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
@@ -991,6 +991,7 @@ public class ComprasOrdenHelperTest {
         protected RequerimientoCompra obtenerRequerimiento(int id) { return r; }
         protected List<RequerimientoCompraDetalle> obtenerDetalles(int id) { return detalles; }
         protected RequerimientoCompraOrden obtenerOrden(int id) { return guardada; }
+        protected ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrdenSuministro obtenerSuministro(int id) { return null; }
         protected RequerimientoCompraOrden guardarOrden(RequerimientoCompraOrden orden, String usuario) {
             guardados++; orden.setIdOrdenCompra(900); guardada = orden; return orden;
         }

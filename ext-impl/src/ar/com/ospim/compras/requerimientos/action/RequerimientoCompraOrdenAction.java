@@ -4,6 +4,7 @@ import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
 
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrdenSuministro;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraOrdenHelper;
 import ar.com.ospim.util.PermissionUtil;
@@ -49,6 +50,10 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
     public void processAction(ActionMapping mapping, ActionForm form, PortletConfig config,
             ActionRequest request, ActionResponse response) throws Exception {
         int id = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
+        if ("guardar_suministro".equals(ParamUtil.getString(request, "cmd"))) {
+            guardarSuministro(request, response, id);
+            return;
+        }
         try {
             User user = obtenerUsuario(request);
             if (!puedeEditar(user)) {
@@ -119,13 +124,18 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
                 throw new IllegalArgumentException(
                         "Todavia no se emitio una Orden de Compra para este requerimiento.");
             }
+            boolean suministro = !nueva && consulta
+                    && ParamUtil.getBoolean(request, "gestion_suministro", false);
+            if (suministro) {
+                request.setAttribute("ordenSuministro", obtenerHelper().cargarSuministro(orden));
+            }
             request.setAttribute("ordenCompra", orden);
             request.setAttribute("ordenCompraSoloConstancia", Boolean.valueOf(constancia));
             request.setAttribute("ordenCompraEditable", Boolean.valueOf(editable));
             request.setAttribute("ordenCompraPuedeCrear", Boolean.valueOf(nueva));
             request.setAttribute("ordenCompraRequiereDatos",
                     Boolean.valueOf(obtenerHelper().requiereCompletarDatos(orden)));
-            if (editable) {
+            if (editable || suministro) {
                 publicarToken(request);
             }
             if (!nueva && consulta
@@ -146,6 +156,60 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             }
         }
         return mapping.findForward(FORWARD);
+    }
+
+    /** Guardado del seguimiento: mismo formulario y validacion que la consulta de OC. */
+    private void guardarSuministro(ActionRequest request, ActionResponse response, int id) {
+        Map<String, String> entrada = obtenerEntradaSuministro(request);
+        request.setAttribute("ordenSuministroEntrada", entrada);
+        try {
+            User user = obtenerUsuario(request);
+            if (!puedeConsultar(user)) {
+                throw new IllegalArgumentException("No posee permisos para gestionar el suministro de la Orden de Compra.");
+            }
+            consumirToken(request);
+            RequerimientoCompraOrdenSuministro guardado = obtenerHelper().guardarSuministro(
+                    id, ParamUtil.getInteger(request, "id_orden_compra", 0),
+                    ParamUtil.getInteger(request, "version_suministro", -1), entrada,
+                    user.getScreenName());
+            request.setAttribute("ordenSuministro", guardado);
+            request.removeAttribute("ordenSuministroEntrada");
+            request.setAttribute("ordenSuministroGuardado", Boolean.TRUE);
+        } catch (ValidacionCompraException e) {
+            request.setAttribute("ordenSuministroError", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            request.setAttribute("ordenSuministroError", e.getMessage());
+        } catch (Exception e) {
+            _log.error("No se pudo guardar la gestion de suministro. Requerimiento=" + id, e);
+            request.setAttribute("ordenSuministroError",
+                    "No se pudo guardar la gestion de suministro. Vuelva a consultar la OC antes de reintentar.");
+        }
+        response.setRenderParameter("struts_action", RUTA);
+        response.setRenderParameter("id_requerimiento_compra", String.valueOf(id));
+        response.setRenderParameter("origen_ordenes", "1");
+        response.setRenderParameter("gestion_suministro", "1");
+    }
+
+    private Map<String, String> obtenerEntradaSuministro(ActionRequest request) {
+        Map<String, String> entrada = new HashMap<String, String>();
+        String[] campos = { "suministro_persona", "suministro_medio", "suministro_detalle",
+                "suministro_pregunta_1", "suministro_pregunta_2", "suministro_pregunta_3",
+                "suministro_pregunta_4", "suministro_pregunta_5", "version_suministro",
+                "contactoDia", "contactoMes", "contactoAnio" };
+        for (int i = 0; i < campos.length; i++) {
+            entrada.put(campos[i], ParamUtil.getString(request, campos[i]));
+        }
+        String fecha = "";
+        if (entrada.get("contactoDia").length() > 0 || entrada.get("contactoMes").length() > 0
+                || entrada.get("contactoAnio").length() > 0) {
+            int dia = ParamUtil.getInteger(request, "contactoDia", -1);
+            int mes = ParamUtil.getInteger(request, "contactoMes", -2) + 1;
+            int anio = ParamUtil.getInteger(request, "contactoAnio", -1);
+            fecha = (dia >= 0 && dia < 10 ? "0" : "") + dia + "/"
+                    + (mes >= 0 && mes < 10 ? "0" : "") + mes + "/" + anio;
+        }
+        entrada.put("fecha_contacto", fecha);
+        return entrada;
     }
 
     /** Permiso de una sola descarga, limitado al resultado de la emision. */

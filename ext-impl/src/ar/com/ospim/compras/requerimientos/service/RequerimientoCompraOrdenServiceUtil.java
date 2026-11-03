@@ -1,6 +1,7 @@
 package ar.com.ospim.compras.requerimientos.service;
 
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrdenSuministro;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
@@ -27,6 +28,11 @@ public class RequerimientoCompraOrdenServiceUtil {
                 idSector, estadoOrdenCompra, inicio, cantidad);
     }
 
+    public static RequerimientoCompraOrdenSuministro obtenerSuministro(int idOrdenCompra)
+            throws Exception {
+        return service.obtenerSuministro(idOrdenCompra);
+    }
+
     public static RequerimientoCompraOrden obtenerPorRequerimiento(int idRequerimiento)
             throws Exception {
         return service.obtenerPorRequerimiento(idRequerimiento);
@@ -50,6 +56,9 @@ public class RequerimientoCompraOrdenServiceUtil {
         public Map<String,Object> obtenerSector(int id)throws Exception{return tx.obtenerSector(id);}
         public Map<String,Object> obtenerRelacionRp(int id)throws Exception{return tx.obtenerRelacionRp(id);}
         public RequerimientoCompraOrden obtenerOrden(int id)throws Exception{return tx.obtenerOrden(id);}
+        public RequerimientoCompraOrdenSuministro obtenerSuministro(int id)throws Exception{return tx.obtenerSuministro(id);}
+        public int insertarSuministro(RequerimientoCompraOrdenSuministro datos,String usuario)throws Exception{return tx.insertarSuministro(datos,usuario);}
+        public int actualizarSuministro(RequerimientoCompraOrdenSuministro datos,String usuario)throws Exception{return tx.actualizarSuministro(datos,usuario);}
         public List<RequerimientoCompraPresupuesto> listarDocumentos(int id,int tipo)throws Exception{return tx.listarDocumentos(id,tipo);}
         public List<RequerimientoCompraPresupuesto> listarOrdenesMedicas(int id)throws Exception{return tx.listarOrdenesMedicas(id);}
         public List<RequerimientoCompraComparativa> listarComparativas(int id,int prestador)throws Exception{return tx.listarComparativas(id,prestador);}
