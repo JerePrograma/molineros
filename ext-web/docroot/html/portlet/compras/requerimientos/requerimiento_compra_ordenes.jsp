@@ -38,6 +38,7 @@ if (!RequerimientoCompraOrdenAction.puedeConsultar(user)) {
     buscarOrdenesURL.setWindowState(LiferayWindowState.MAXIMIZED);
     buscarOrdenesURL.setParameter("struts_action", "/compras/view");
     buscarOrdenesURL.setParameter("tabs1", "orden-de-compra");
+    pageContext.setAttribute("buscarOrdenesURL", buscarOrdenesURL);
     PortletURL paginaOrdenesURL = renderResponse.createRenderURL();
     paginaOrdenesURL.setWindowState(LiferayWindowState.MAXIMIZED);
     paginaOrdenesURL.setParameter("struts_action", "/compras/view");
@@ -84,7 +85,7 @@ if (!RequerimientoCompraOrdenAction.puedeConsultar(user)) {
                             yearValue="<%= GetterUtil.getInteger(valoresFiltros[4], -1) %>"
                             yearRangeStart="1900" yearRangeEnd="<%= anioActualOrdenes %>"
                             firstDayOfWeek="<%= Calendar.getInstance().getFirstDayOfWeek() - 1 %>"
-                            nullable="true" />
+                            dayNullable="true" monthNullable="true" yearNullable="true" />
                 </td>
                 <td><label>Fecha Alta OC hasta:</label></td>
                 <td>
@@ -96,7 +97,7 @@ if (!RequerimientoCompraOrdenAction.puedeConsultar(user)) {
                             yearValue="<%= GetterUtil.getInteger(valoresFiltros[7], -1) %>"
                             yearRangeStart="1900" yearRangeEnd="<%= anioActualOrdenes %>"
                             firstDayOfWeek="<%= Calendar.getInstance().getFirstDayOfWeek() - 1 %>"
-                            nullable="true" />
+                            dayNullable="true" monthNullable="true" yearNullable="true" />
                 </td>
             </tr>
             <tr><td colspan="4">&nbsp;</td></tr>
