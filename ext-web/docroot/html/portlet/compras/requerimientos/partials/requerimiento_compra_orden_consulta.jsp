@@ -89,6 +89,60 @@ if (ordenTieneAlta) {
     <td><textarea rows="5" cols="80" id="<portlet:namespace />suministroDetalle" name="<portlet:namespace />suministro_detalle"></textarea></td></tr>
 </table>
 </fieldset>
+<fieldset class="block-labels">
+<legend>Preguntas de seguimiento (provisorias)</legend>
+<table class="lfr-table" width="100%">
+<tr>
+    <td><label for="<portlet:namespace />suministroPregunta1">&iquest;Lo recibi&oacute; en tiempo y forma?</label></td>
+    <td><select id="<portlet:namespace />suministroPregunta1" name="<portlet:namespace />suministro_pregunta_1">
+        <option value=""></option>
+        <option value="SI">S&iacute;</option>
+        <option value="NO">No</option>
+        <option value="NO_CORRESPONDE">No corresponde</option>
+    </select></td>
+</tr>
+<tr><td colspan="2">&nbsp;</td></tr>
+<tr>
+    <td><label for="<portlet:namespace />suministroPregunta2">&iquest;Recibi&oacute; todos los art&iacute;culos solicitados?</label></td>
+    <td><select id="<portlet:namespace />suministroPregunta2" name="<portlet:namespace />suministro_pregunta_2">
+        <option value=""></option>
+        <option value="SI">S&iacute;</option>
+        <option value="NO">No</option>
+        <option value="NO_CORRESPONDE">No corresponde</option>
+    </select></td>
+</tr>
+<tr><td colspan="2">&nbsp;</td></tr>
+<tr>
+    <td><label for="<portlet:namespace />suministroPregunta3">&iquest;Los art&iacute;culos recibidos coinciden con lo indicado?</label></td>
+    <td><select id="<portlet:namespace />suministroPregunta3" name="<portlet:namespace />suministro_pregunta_3">
+        <option value=""></option>
+        <option value="SI">S&iacute;</option>
+        <option value="NO">No</option>
+        <option value="NO_CORRESPONDE">No corresponde</option>
+    </select></td>
+</tr>
+<tr><td colspan="2">&nbsp;</td></tr>
+<tr>
+    <td><label for="<portlet:namespace />suministroPregunta4">&iquest;Los art&iacute;culos se recibieron en buen estado?</label></td>
+    <td><select id="<portlet:namespace />suministroPregunta4" name="<portlet:namespace />suministro_pregunta_4">
+        <option value=""></option>
+        <option value="SI">S&iacute;</option>
+        <option value="NO">No</option>
+        <option value="NO_CORRESPONDE">No corresponde</option>
+    </select></td>
+</tr>
+<tr><td colspan="2">&nbsp;</td></tr>
+<tr>
+    <td><label for="<portlet:namespace />suministroPregunta5">&iquest;Necesita asistencia o seguimiento adicional?</label></td>
+    <td><select id="<portlet:namespace />suministroPregunta5" name="<portlet:namespace />suministro_pregunta_5">
+        <option value=""></option>
+        <option value="SI">S&iacute;</option>
+        <option value="NO">No</option>
+        <option value="NO_CORRESPONDE">No corresponde</option>
+    </select></td>
+</tr>
+</table>
+</fieldset>
 <table class="lfr-table"><tr><td align="left">
 <input type="button" value="Guardar" onclick="jQuery('#<portlet:namespace />suministroBocetoMensaje').show();return false;" />&nbsp;&nbsp;
 <input type="button" value="Volver a la OC" onclick="window.location.href='<%= ordenConsultaURL.toString() %>';" />

@@ -344,16 +344,16 @@ jQuery(function ($) {
     }
 
     //botones/selects deshabilitados
-    $box.find('input[type="text"], input:not([type]), textarea').prop('readOnly', true);
-    $box.find('button, input[type="button"], input[type="submit"], select').prop('disabled', true);
+    $box.find('input[type="text"], input:not([type]), textarea').attr('readonly', 'readonly');
+    $box.find('button, input[type="button"], input[type="submit"], select').attr('disabled', 'disabled');
 
     //links sin acción
-    $box.find('a').on('click', function (e) { e.preventDefault(); });
+    $box.find('a').bind('click', function (e) { e.preventDefault(); });
 
     //sin tabulador ni teclado/pegado
     $box.find('input, select, textarea, button, a')
         .attr('tabindex','-1')
-        .on('keydown keypress input paste', function (e) { e.preventDefault(); });
+        .bind('keydown keypress input paste', function (e) { e.preventDefault(); });
   }
 
   freeze();
