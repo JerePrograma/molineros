@@ -20,7 +20,6 @@ if (ordenTieneAlta) {
 }
 %>
 <% if (ordenSuministro) { %>
-<div class="portlet-msg-info">Boceto visual de Gesti&oacute;n de Suministro. Los campos son provisorios y los datos ingresados no se guardan.</div>
 <% } %>
 <fieldset class="block-labels">
 <legend><%= ordenSuministro ? "Gesti&oacute;n de Suministro" : "Orden de Compra" %></legend>
@@ -88,9 +87,8 @@ if (ordenTieneAlta) {
     <td><textarea rows="5" cols="80" id="<portlet:namespace />suministroDetalle" name="<portlet:namespace />suministro_detalle"></textarea></td></tr>
 </table>
 </fieldset>
-<div id="<portlet:namespace />suministroBocetoMensaje" class="portlet-msg-info" style="display:none;">Simulaci&oacute;n visual. Los datos no se guardaron.</div>
 <table class="lfr-table"><tr><td align="left">
-<input type="button" value="Guardar (simulaci&oacute;n)" onclick="jQuery('#<portlet:namespace />suministroBocetoMensaje').show();return false;" />&nbsp;&nbsp;
+<input type="button" value="Guardar" onclick="jQuery('#<portlet:namespace />suministroBocetoMensaje').show();return false;" />&nbsp;&nbsp;
 <input type="button" value="Volver a la OC" onclick="window.location.href='<%= ordenConsultaURL.toString() %>';" />
 </td></tr></table>
 </form>
