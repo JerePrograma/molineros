@@ -29,6 +29,19 @@ public final class ActualizarContactoAfiliadoCompraToken {
     public static void publicar(
             RenderRequest request,
             RequerimientoCompra requerimiento) {
+        publicar(request, requerimiento, false);
+    }
+
+    public static void publicarSuministro(
+            RenderRequest request,
+            RequerimientoCompra requerimiento) {
+        publicar(request, requerimiento, true);
+    }
+
+    private static void publicar(
+            RenderRequest request,
+            RequerimientoCompra requerimiento,
+            boolean suministro) {
 
         if (request == null || requerimiento == null) {
             return;
@@ -38,7 +51,8 @@ public final class ActualizarContactoAfiliadoCompraToken {
         Contexto contexto = new Contexto(
                 requerimiento.getIdRequerimientoCompra(),
                 requerimiento.getAfiliadoCuilTitular(),
-                requerimiento.getAfiliadoInt()
+                requerimiento.getAfiliadoInt(),
+                suministro
         );
         PortletSession session = request.getPortletSession();
 
@@ -102,6 +116,26 @@ public final class ActualizarContactoAfiliadoCompraToken {
         }
     }
 
+    /** Identidad y origen propios de la pantalla de suministro de una OC. */
+    public static int validarSuministro(
+            RenderRequest request,
+            String cuilTitular,
+            int integrante) throws Exception {
+        validar(request, cuilTitular, integrante);
+        PortletSession session = request.getPortletSession();
+        Contexto contexto;
+        synchronized (session) {
+            contexto = obtenerContextos(session).valores.get(
+                    ParamUtil.getString(request, PARAM_TOKEN));
+        }
+        if (contexto == null || !contexto.suministro
+                || contexto.idRequerimientoCompra <= 0) {
+            throw new Exception(
+                    "La pantalla no corresponde a la gestion de una Orden de Compra.");
+        }
+        return contexto.idRequerimientoCompra;
+    }
+
     public static void vincular(
             RenderRequest request,
             String cuilTitular,
@@ -144,7 +178,8 @@ public final class ActualizarContactoAfiliadoCompraToken {
                     new Contexto(
                             contexto.idRequerimientoCompra,
                             WebKeysCompras.trimToNull(cuilTitular),
-                            Integer.valueOf(integrante)
+                            Integer.valueOf(integrante),
+                            contexto.suministro
                     )
             );
             session.setAttribute(SESSION_CONTEXTOS, contextos);
@@ -177,15 +212,18 @@ public final class ActualizarContactoAfiliadoCompraToken {
         private final int idRequerimientoCompra;
         private final String cuilTitular;
         private final Integer integrante;
+        private final boolean suministro;
 
         private Contexto(
                 int idRequerimientoCompra,
                 String cuilTitular,
-                Integer integrante) {
+                Integer integrante,
+                boolean suministro) {
 
             this.idRequerimientoCompra = idRequerimientoCompra;
             this.cuilTitular = cuilTitular;
             this.integrante = integrante;
+            this.suministro = suministro;
         }
     }
 

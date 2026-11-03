@@ -36,15 +36,17 @@ if (ordenTieneAlta) {
             firstDayOfWeek="<%= ordenAlta.getFirstDayOfWeek() %>" disabled="<%= true %>" />
     </td>
 </tr>
+<% if (!ordenSuministro) { %>
 <tr><td colspan="4">&nbsp;</td></tr>
 <tr>
-    <td><label><%= ordenSuministro ? "Referencia:" : "Sector:" %></label></td>
-    <td colspan="3"><input type="text" size="50" readonly="readonly" value="<%= ordenCompraTexto(ordenSuministro && ordenRequerimiento.tieneAfiliadoInformado() ? ordenRequerimiento.getAfiliadoNombreApellidoVisible() : ordenRequerimiento.getSectorDescripcionVisible()) %>" /></td>
+    <td><label>Sector:</label></td>
+    <td colspan="3"><input type="text" size="50" readonly="readonly" value="<%= ordenCompraTexto(ordenRequerimiento.getSectorDescripcionVisible()) %>" /></td>
 </tr>
+<% } %>
 </table>
 </fieldset>
-<% if (!ordenSuministro) { %>
 <%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_orden_afiliado.jsp" %>
+<% if (!ordenSuministro) { %>
 <fieldset class="block-labels">
 <legend>Detalle de la compra</legend>
 <table class="lfr-table taglib-search-iterator" width="100%">

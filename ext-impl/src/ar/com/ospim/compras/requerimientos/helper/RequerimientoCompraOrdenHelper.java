@@ -32,6 +32,26 @@ public class RequerimientoCompraOrdenHelper {
 
     private static final Log _log = LogFactoryUtil.getLog(RequerimientoCompraOrdenHelper.class);
 
+    /** Revalida la OC vigente antes de actualizar el contacto de su afiliado. */
+    public void validarAfiliadoContactoOrden(int id, String cuilTitular,
+            int integrante) throws Exception {
+        RequerimientoCompra requerimiento = cargarRequerimiento(id, null);
+        RequerimientoCompraOrden orden = obtenerOrden(id);
+        String cuilEsperado = WebKeysCompras.trimToNull(
+                requerimiento.getAfiliadoCuilTitular());
+        if (!requerimiento.isOrdenCompra()
+                || requerimiento.getIdRequerimientoCompra() != id
+                || orden == null || orden.getIdOrdenCompra() <= 0
+                || orden.getIdRequerimientoCompra() != id
+                || !requerimiento.tieneAfiliadoInformado()
+                || cuilEsperado == null
+                || !cuilEsperado.equals(WebKeysCompras.trimToNull(cuilTitular))
+                || requerimiento.getAfiliadoInt().intValue() != integrante) {
+            throw new IllegalArgumentException(
+                    "El afiliado no corresponde a una Orden de Compra emitida y vigente.");
+        }
+    }
+
     public RequerimientoCompraOrden preparar(int id, String nombreUsuario)
             throws Exception {
         RequerimientoCompraOrden orden = prepararParaGuardar(id, nombreUsuario);

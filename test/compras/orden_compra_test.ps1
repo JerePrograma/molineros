@@ -19,6 +19,9 @@ $sources = @(
     'ext-impl\src\ar\com\ospim\compras\WebKeysCompras.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\action\CambiarEstadoRequerimientoCompraAction.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\action\RequerimientoCompraOrdenAction.java',
+    'ext-impl\src\ar\com\ospim\compras\requerimientos\action\ActualizarContactoAfiliadoCompraAction.java',
+    'ext-impl\src\ar\com\ospim\compras\requerimientos\action\ActualizarContactoAfiliadoCompraToken.java',
+    'ext-impl\src\ar\com\ospim\crm\action\ActualizaDomicilioAfiliadoAction.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\action\RequerimientoCompraRenderActionUtil.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\beans\RequerimientoCompraOrden.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\helper\RequerimientoCompraOrdenHelper.java',
@@ -28,6 +31,7 @@ $sources = @(
     'ext-impl\src\ar\com\ospim\servlets\PdfServlet.java',
     'test\compras\fixtures\datos\ComprasFuenteDatosFixture.java',
     'test\compras\ComprasOrdenHelperTest.java',
+    'test\compras\ComprasContactoAfiliadoTokenTest.java',
     'test\compras\ComprasOrdenConsultaTest.java',
     'test\compras\ComprasOrdenEdicionJdbcTest.java',
     'test\compras\ComprasOrdenPdfTest.java'
@@ -44,7 +48,7 @@ $compileOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encodi
 $compileExit = $LASTEXITCODE
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'javac.log'), ($compileOutput + ('javac_exit=' + $compileExit)), $latinEncoding)
 if ($compileExit -ne 0) { $compileOutput | Write-Output; throw ('javac fallo: ' + $compileExit) }
-foreach ($test in @('ComprasOrdenHelperTest', 'ComprasOrdenConsultaTest', 'ComprasOrdenPdfTest')) {
+foreach ($test in @('ComprasOrdenHelperTest', 'ComprasContactoAfiliadoTokenTest', 'ComprasOrdenConsultaTest', 'ComprasOrdenPdfTest')) {
     $runOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath $test $artifactPath 2>&1 | ForEach-Object { $_.ToString() })
     $runExit = $LASTEXITCODE
     [System.IO.File]::WriteAllLines((Join-Path $artifactPath ($test + '.log')), ($runOutput + ('java_exit=' + $runExit)), $latinEncoding)

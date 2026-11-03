@@ -128,6 +128,12 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             if (editable) {
                 publicarToken(request);
             }
+            if (!nueva && consulta
+                    && ParamUtil.getBoolean(request, "gestion_suministro", false)
+                    && orden.getRequerimiento().tieneAfiliadoInformado()) {
+                ActualizarContactoAfiliadoCompraToken.publicarSuministro(
+                        request, orden.getRequerimiento());
+            }
         } catch (IllegalArgumentException e) {
             if (request.getAttribute("ordenCompraError") == null) {
                 request.setAttribute("ordenCompraError", e.getMessage());

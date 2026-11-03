@@ -56,7 +56,7 @@ public class ActualizaDomicilioAfiliadoAction extends PortletAction {
 		
 		String cmd = ParamUtil.getString(renderRequest, Constants.CMD); 
 		String cuilTitular = ParamUtil.getString(renderRequest, "cuil_titular");
-		int inte = ParamUtil.getInteger(renderRequest, "inte");
+		int inte = obtenerIntegranteContacto(renderRequest);
 		String email = ParamUtil.getString(renderRequest, "email"); 
 		String emailOriginal = ParamUtil.getString(renderRequest, "email_original");
 
@@ -359,6 +359,7 @@ public class ActualizaDomicilioAfiliadoAction extends PortletAction {
 
 				    } catch (Exception e) {
 				        _log.error("Error guardando/bajando teléfonos del afiliado " + cuilTitular + "/" + inte, e);
+				        throw new SystemException(e);
 				    } finally {
 				        ConnectionHelper.cerrar(null, con);
 				    }
@@ -404,5 +405,9 @@ public class ActualizaDomicilioAfiliadoAction extends PortletAction {
 
 		return mapping.findForward(getForward(renderRequest, "portlet.crm.actualiza.domicilio.popup"));
 	}
+
+    protected int obtenerIntegranteContacto(RenderRequest request) {
+        return ParamUtil.getInteger(request, "inte");
+    }
 
 }

@@ -1,5 +1,6 @@
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction;
+import ar.com.ospim.compras.requerimientos.action.ActualizarContactoAfiliadoCompraToken;
 import com.liferay.portal.model.Role;
 import com.liferay.portal.model.User;
 import com.liferay.portal.model.impl.RoleImpl;
@@ -47,6 +48,7 @@ public class ComprasOrdenHelperTest {
         permisosEdicion();
         descargaEmision();
         flujoAction();
+        contactoSuministro();
         System.out.println("COMPRAS_ORDEN_HELPER_OFFLINE_OK checks=" + checks);
         System.out.println("Helper productivo; generacion directa con fuentes canonicas; sin DB ni UI.");
     }
@@ -491,6 +493,61 @@ public class ComprasOrdenHelperTest {
         igual("Action consulta recibe error", Boolean.TRUE, Boolean.valueOf(peticion.atributos.get("ordenCompraError") != null));
     }
 
+    private static void contactoSuministro() throws Exception {
+        datosPrueba.instalar();
+        Mock modelo = empresaFixture();
+        modelo.r.setAfiliadoCuilTitular("20111111112");
+        modelo.r.setAfiliadoInt(Integer.valueOf(1));
+        modelo.guardada = modelo.prepararParaGuardar(40, "Compras");
+        modelo.guardada.setIdOrdenCompra(900);
+        modelo.r.setEstado(ConfiguracionComprasHelper.getEstadoOrdenCompra());
+        AccionPrueba gestion = new AccionPrueba(modelo, ConfiguracionComprasHelper.getRolGestionCompras());
+        PeticionPrueba p = new PeticionPrueba();
+        p.parametros.put("gestion_suministro", "true");
+        gestion.mostrar(p);
+        String token = (String)p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN);
+        igual("Action suministro publica contacto", Boolean.TRUE, Boolean.valueOf(token != null && token.length() > 0));
+        p.parametros.put(ActualizarContactoAfiliadoCompraToken.PARAM_TOKEN, token);
+        igual("Action token contacto real vinculado a OC", Integer.valueOf(40), Integer.valueOf(
+                ActualizarContactoAfiliadoCompraToken.validarSuministro((javax.portlet.RenderRequest)p.proxy(), "20111111112", 1)));
+        igual("Action contacto no habilita edicion de OC", Boolean.FALSE, p.atributos.get("ordenCompraEditable"));
+        igual("Action contacto no publica token de guardado OC", Integer.valueOf(0), Integer.valueOf(gestion.publicados));
+
+        p = new PeticionPrueba(); gestion.mostrar(p);
+        igual("Action consulta normal sin token contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        AccionPrueba mixta = new AccionPrueba(modelo, new String[] { ConfiguracionComprasHelper.getRolAbmCompras(),
+                ConfiguracionComprasHelper.getRolGestionCompras() });
+        p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); mixta.mostrar(p);
+        igual("Action multirrol publica contacto por GESTION", Boolean.TRUE,
+                Boolean.valueOf(p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN) != null));
+
+        AccionPrueba abm = new AccionPrueba(modelo, ConfiguracionComprasHelper.getRolAbmCompras());
+        p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); abm.mostrar(p);
+        igual("Action ABM historica sin contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true");
+        p.atributos.put("ordenCompraCreada", Boolean.TRUE); abm.mostrar(p);
+        igual("Action constancia ABM sin contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        igual("Action constancia sigue disponible", Boolean.TRUE, p.atributos.get("ordenCompraSoloConstancia"));
+
+        modelo.r.setAfiliadoCuilTitular(null);
+        p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); gestion.mostrar(p);
+        igual("Action OC sin afiliado sin token contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        modelo.r.setAfiliadoCuilTitular("20111111112");
+        modelo.r.setBajaFecha(new Date());
+        p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); gestion.mostrar(p);
+        igual("Action OC inactiva sin token contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        igual("Action OC inactiva informa error", Boolean.TRUE, Boolean.valueOf(p.atributos.get("ordenCompraError") != null));
+
+        modelo = empresaFixture(); modelo.r.setAfiliadoCuilTitular("20111111112"); modelo.r.setAfiliadoInt(Integer.valueOf(1));
+        abm = new AccionPrueba(modelo, ConfiguracionComprasHelper.getRolAbmCompras());
+        p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); abm.mostrar(p);
+        igual("Action borrador ABM sin contacto suministro", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        gestion = new AccionPrueba(modelo, ConfiguracionComprasHelper.getRolGestionCompras());
+        p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); gestion.mostrar(p);
+        igual("Action borrador GESTION sin contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        igual("Action borrador GESTION rechazado", Boolean.TRUE, Boolean.valueOf(p.atributos.get("ordenCompraError") != null));
+    }
+
     private static class AccionPrueba extends RequerimientoCompraOrdenAction {
         Mock modelo;
         User usuario;
@@ -537,6 +594,9 @@ public class ComprasOrdenHelperTest {
     private static class PeticionPrueba implements java.lang.reflect.InvocationHandler {
         Map<String, String> parametros = new HashMap<String, String>();
         Map<String, Object> atributos = new HashMap<String, Object>();
+        Map<String, Object> atributosSesion = new HashMap<String, Object>();
+        javax.portlet.PortletSession sesion = (javax.portlet.PortletSession)Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class[] { javax.portlet.PortletSession.class }, this);
         PeticionPrueba() { parametros.put("id_requerimiento_compra", "40"); }
         Object proxy() {
             return java.lang.reflect.Proxy.newProxyInstance(getClass().getClassLoader(),
@@ -544,6 +604,13 @@ public class ComprasOrdenHelperTest {
         }
         public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) {
             String nombre = method.getName();
+            if (proxy instanceof javax.portlet.PortletSession) {
+                if ("getAttribute".equals(nombre)) return atributosSesion.get(args[0]);
+                if ("setAttribute".equals(nombre)) { atributosSesion.put((String)args[0], args[1]); return null; }
+                if ("removeAttribute".equals(nombre)) { atributosSesion.remove(args[0]); return null; }
+                if ("getAttributeNames".equals(nombre)) return java.util.Collections.enumeration(atributosSesion.keySet());
+            }
+            if ("getPortletSession".equals(nombre)) return sesion;
             if ("getParameter".equals(nombre)) return parametros.get(args[0]);
             if ("getParameterValues".equals(nombre)) {
                 String valor = parametros.get(args[0]); return valor == null ? null : new String[] { valor };
