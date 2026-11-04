@@ -3,6 +3,11 @@ import java.sql.Connection;
 import java.util.*;
 import ar.com.ospim.compras.requerimientos.beans.*;
 import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+import ar.com.ospim.util.PermissionUtil;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.model.User;
+import com.liferay.portal.model.impl.RoleImpl;
+import com.liferay.portal.model.impl.UserImpl;
 
 /** Reglas reales; solo ServiceImpl recibe datos DB simulados. */
 public class ComprasConfiguracionTest {
@@ -20,6 +25,15 @@ public class ComprasConfiguracionTest {
     }
     private static ComprasFuenteDatosFixture source() throws Exception {
         ComprasFuenteDatosFixture fixture=new ComprasFuenteDatosFixture();fixture.cargarConfiguracionPrueba();fixture.instalar();return fixture;
+    }
+    /* Referencia: ComprasOrdenSuministroTest.Accion; roles del usuario aislados. */
+    private static User usuarioConRoles(String[] nombres) {
+        final List<Role> roles=nombres==null?null:new ArrayList<Role>();
+        for(int i=0;nombres!=null&&i<nombres.length;i++) {
+            if(nombres[i]==null) {roles.add(null);continue;}
+            Role rol=new RoleImpl();rol.setName(nombres[i]);roles.add(rol);
+        }
+        return new UserImpl(){public List<Role> getRoles(){return roles;}};
     }
     public static void main(String[] args) throws Exception {
         test("relectura DB por operacion sin cache",new Scenario(){public void run() throws Exception{
@@ -84,6 +98,54 @@ public class ComprasConfiguracionTest {
             check("rol_cotizar_prueba".equals(ConfiguracionComprasHelper.getRolCotizarCompras()),"rol cotizar");
             check("rol_autorizar_prueba".equals(ConfiguracionComprasHelper.getRolAutorizarCompras()),"rol autorizar");
             db.configuracion.put("COMPRAS_ROLES","ABM=otro_rol");check("otro_rol".equals(ConfiguracionComprasHelper.getRolAbmCompras()),"rol cacheado");
+        }});
+        test("roles de Compras toleran mayusculas y minusculas sin aceptar otros nombres",new Scenario(){public void run() throws Exception{
+            ComprasFuenteDatosFixture db=source();
+            String[] codigos={"VIEW","ABM","ANULAR","COTIZAR","AUTORIZAR","GESTION"};
+            String[][] variantes={
+                {"VIEW_COMPRAS","view_compras","ViEw_CoMpRaS"},
+                {"ABM_COMPRAS","abm_compras","AbM_cOmPrAs"},
+                {"ANULAR_COMPRAS","anular_compras","AnUlAr_CoMpRaS"},
+                {"COTIZAR_COMPRAS","cotizar_compras","CoTiZaR_cOmPrAs"},
+                {"AUTORIZAR_COMPRAS","autorizar_compras","AuToRiZaR_cOmPrAs"},
+                {"GESTION_COMPRAS","gestion_compras","GeStIoN_cOmPrAs"}
+            };
+            Locale original=Locale.getDefault();int aceptados=0;int rechazados=0;
+            try {
+                Locale[] idiomas={Locale.ENGLISH,new Locale("tr","TR")};
+                for(int idioma=0;idioma<idiomas.length;idioma++) {
+                    Locale.setDefault(idiomas[idioma]);
+                    for(int configurado=0;configurado<3;configurado++) {
+                        StringBuffer mapa=new StringBuffer();
+                        for(int rol=0;rol<codigos.length;rol++) {if(rol>0)mapa.append(';');mapa.append(codigos[rol]).append('=').append(variantes[rol][configurado]);}
+                        db.configuracion.put("COMPRAS_ROLES",mapa.toString());
+                        String[] esperados={ConfiguracionComprasHelper.getRolViewCompras(),ConfiguracionComprasHelper.getRolAbmCompras(),ConfiguracionComprasHelper.getRolAnularCompras(),ConfiguracionComprasHelper.getRolCotizarCompras(),ConfiguracionComprasHelper.getRolAutorizarCompras(),ConfiguracionComprasHelper.getRolGestionCompras()};
+                        for(int rol=0;rol<codigos.length;rol++) {
+                            String caso=codigos[rol]+" locale="+idiomas[idioma]+" configurado="+configurado;
+                            check(variantes[rol][configurado].equals(esperados[rol]),caso+" getter no refleja configuracion");
+                            for(int asignado=0;asignado<3;asignado++) {
+                                check(PermissionUtil.userContainsRole(usuarioConRoles(new String[]{variantes[rol][asignado]}),esperados[rol]),caso+" asignado="+asignado);aceptados++;
+                            }
+                            for(int otro=0;otro<codigos.length;otro++) {
+                                if(otro==rol)continue;
+                                check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[]{variantes[otro][0]}),esperados[rol]),caso+" acepto otro rol "+codigos[otro]);rechazados++;
+                            }
+                            String[] ajenos={variantes[rol][0]+"_OTRO","OTRO_"+variantes[rol][0],"COMPRAS_"+codigos[rol]};
+                            for(int otro=0;otro<ajenos.length;otro++) {check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[]{ajenos[otro]}),esperados[rol]),caso+" acepto nombre distinto "+ajenos[otro]);rechazados++;}
+                            check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[0]),esperados[rol]),caso+" acepto usuario sin rol");rechazados++;
+                        }
+                    }
+                }
+            } finally {Locale.setDefault(original);}
+            System.out.println("COMPRAS_ROLES_CASE_MATRIX_OK roles=6 locales=2 aceptados="+aceptados+" rechazados="+rechazados);
+        }});
+        test("comparacion de roles rechaza entradas nulas y vacias",new Scenario(){public void run(){
+            User user=usuarioConRoles(new String[]{"VIEW_COMPRAS"});
+            check(!PermissionUtil.userContainsRole(null,"VIEW_COMPRAS"),"usuario null aceptado");
+            check(!PermissionUtil.userContainsRole(user,null),"rol null aceptado");
+            check(!PermissionUtil.userContainsRole(user,""),"rol vacio aceptado");
+            check(!PermissionUtil.userContainsRole(usuarioConRoles(null),"VIEW_COMPRAS"),"lista null aceptada");
+            check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[]{null}),"VIEW_COMPRAS"),"rol null en lista aceptado");
         }});
         test("rol requerido ausente o duplicado falla cerrado",new Scenario(){public void run() throws Exception{
             ComprasFuenteDatosFixture db=source();db.configuracion.put("COMPRAS_ROLES","VIEW=lectura");reject(new Scenario(){public void run(){ConfiguracionComprasHelper.getRolAbmCompras();}});

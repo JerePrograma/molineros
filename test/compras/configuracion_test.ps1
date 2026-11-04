@@ -22,6 +22,7 @@ $classpathEntries+='C:\apache-tomcat-8.5.23\lib\servlet-api.jar'
 $classpathEntries+='C:\apache-tomcat-8.5.23\webapps\ROOT\WEB-INF\lib\portal-impl.jar'
 $classpath=$classpathEntries -join ';'
 $sources=@(
+ 'ext-impl\src\ar\com\ospim\util\PermissionUtil.java',
  'ext-impl\src\ar\com\ospim\compras\requerimientos\helper\ConfiguracionComprasHelper.java',
  'ext-impl\src\ar\com\ospim\compras\WebKeysCompras.java',
  'ext-impl\src\ar\com\ospim\compras\requerimientos\beans\RequerimientoCompra.java',

@@ -37,14 +37,14 @@ if (tabs1 == null) {
 String tabs1Values = mostrarRequerimientos ? "requerimientos" : "";
 String tabs1Names = mostrarRequerimientos ? "Requerimientos" : "";
 
-if (mostrarOrdenesCompra) {
-    tabs1Values += (tabs1Values.length() > 0 ? "," : "") + "orden-de-compra";
-    tabs1Names += (tabs1Names.length() > 0 ? "," : "") + "Orden de Compra";
-}
-
 if (mostrarParaAutorizar) {
     tabs1Values += (tabs1Values.length() > 0 ? "," : "") + "para-autorizar";
     tabs1Names += (tabs1Names.length() > 0 ? "," : "") + "Para Autorizar";
+}
+
+if (mostrarOrdenesCompra) {
+    tabs1Values += (tabs1Values.length() > 0 ? "," : "") + "orden-de-compra";
+    tabs1Names += (tabs1Names.length() > 0 ? "," : "") + "Orden de Compra";
 }
 
 if (mostrarConfiguracionCorreos) {
