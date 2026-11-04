@@ -2,6 +2,9 @@ package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
 
+import ar.com.ospim.afiliados.beans.Afiliado;
+import ar.com.ospim.afiliados.services.BusquedaAfiliadoServiceUtil;
+import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrdenSuministro;
@@ -14,6 +17,8 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.model.User;
 import com.liferay.portal.struts.PortletAction;
 import com.liferay.portal.util.PortalUtil;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import javax.portlet.ActionRequest;
@@ -128,6 +133,26 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
                     && ParamUtil.getBoolean(request, "gestion_suministro", false);
             if (suministro) {
                 request.setAttribute("ordenSuministro", obtenerHelper().cargarSuministro(orden));
+            }
+            // Mismo padron que VerRequerimientoCompraAction.cargarAfiliadoRequerimiento.
+            request.removeAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
+            if (!nueva && consulta && orden.getRequerimiento().tieneAfiliadoInformado()) {
+                List<Afiliado> afiliados = null;
+                try {
+                    afiliados = buscarAfiliadoComponente(
+                            orden.getRequerimiento().getAfiliadoCuilTitular(),
+                            orden.getRequerimiento().getAfiliadoIntString());
+                } catch (Exception e) {
+                    _log.warn("No se pudo completar el componente visual del afiliado.", e);
+                }
+                if (afiliados != null && afiliados.size() == 1) {
+                    Afiliado afiliado = afiliados.get(0);
+                    if (!orden.getRequerimiento().getAfiliadoCuilTitular().equals(afiliado.getCuil_titular())
+                            || orden.getRequerimiento().getAfiliadoInt().intValue() != afiliado.getInte()) {
+                        throw new IllegalArgumentException("El afiliado consultado no coincide con el requerimiento.");
+                    }
+                    request.setAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA, afiliado);
+                }
             }
             request.setAttribute("ordenCompra", orden);
             request.setAttribute("ordenCompraSoloConstancia", Boolean.valueOf(constancia));
@@ -266,6 +291,12 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             entrada.put(campo, ParamUtil.getString(request, campo));
         }
         return entrada;
+    }
+
+    protected List<Afiliado> buscarAfiliadoComponente(String cuil, String inte) throws Exception {
+        return BusquedaAfiliadoServiceUtil.getBusquedaAfiliadosComponente(
+                cuil, inte, null, null, 0, null, null,
+                WebKeysGlobal.ID_DEFAULT_ENTIDAD, 0, 0, new BigDecimal(0));
     }
 
     protected RequerimientoCompraOrdenHelper obtenerHelper() {

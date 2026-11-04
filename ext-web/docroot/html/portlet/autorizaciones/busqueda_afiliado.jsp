@@ -17,6 +17,10 @@
 		datos_afiliado_struts_action = "/autorizaciones/buscar_afiliado_datos";
 	}
 
+	String fecha_vto_struts_action = "/compras/buscar_afiliado_datos".equals(datos_afiliado_struts_action)
+			? "/compras/buscar_afiliado_fecha_vto_documentacion"
+			: "/autorizaciones/buscar_afiliado_fecha_vto_documentacion";
+
 	if (pag_reintegro != null) {
 		pag_reintegro = "true";
 	}
@@ -768,7 +772,7 @@
 				jQuery('#<portlet:namespace />discapacidad').show();
 				jQuery('#<portlet:namespace />discapacidad_vto').show();
 
-				var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliado_fecha_vto_documentacion&cuil_titular=' + cuil + '&inte=' + inte;
+				var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=<%=fecha_vto_struts_action%>&cuil_titular=' + cuil + '&inte=' + inte;
 				<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_TES_1_"))%>'>
 				url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/tesoreria/buscar_afiliado_fecha_vto_documentacion&cuil_titular=' + cuil + '&inte=' + inte;
 				</c:if>
@@ -781,7 +785,7 @@
 							var hoy = new Date();
 							var vVto = fechaVto.split("-");
 							var vto = new Date(vVto[2], vVto[1], vVto[0]);
-							jQuery('#<portlet:namespace/>discapacidad_vto').html("Vto. Documentación " + fechaVto);
+							jQuery('#<portlet:namespace/>discapacidad_vto').html("<%= "/compras/buscar_afiliado_datos".equals(datos_afiliado_struts_action) ? "Vto. CUD: " : "Vto. Documentación " %>" + fechaVto);
 							if (vto < hoy) {
 								alert("El certificado de Discapacidad Esta Vencido desde el " + fechaVto);
 							}

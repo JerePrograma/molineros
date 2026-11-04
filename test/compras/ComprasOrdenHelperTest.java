@@ -1,3 +1,4 @@
+import ar.com.ospim.afiliados.beans.Afiliado;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction;
 import ar.com.ospim.compras.requerimientos.action.ActualizarContactoAfiliadoCompraToken;
@@ -502,6 +503,9 @@ public class ComprasOrdenHelperTest {
         modelo.guardada.setIdOrdenCompra(900);
         modelo.r.setEstado(ConfiguracionComprasHelper.getEstadoOrdenCompra());
         AccionPrueba gestion = new AccionPrueba(modelo, ConfiguracionComprasHelper.getRolGestionCompras());
+        Afiliado afiliado = new Afiliado();
+        afiliado.setCuil_titular("20111111112"); afiliado.setInte(1);
+        gestion.afiliados.add(afiliado);
         PeticionPrueba p = new PeticionPrueba();
         p.parametros.put("gestion_suministro", "true");
         gestion.mostrar(p);
@@ -512,9 +516,33 @@ public class ComprasOrdenHelperTest {
                 ActualizarContactoAfiliadoCompraToken.validarSuministro((javax.portlet.RenderRequest)p.proxy(), "20111111112", 1)));
         igual("Action contacto no habilita edicion de OC", Boolean.FALSE, p.atributos.get("ordenCompraEditable"));
         igual("Action suministro publica token de guardado", Integer.valueOf(1), Integer.valueOf(gestion.publicados));
+        igual("Action suministro publica mismo bean de afiliado", Boolean.TRUE,
+                Boolean.valueOf(p.atributos.get(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA) == afiliado));
+        igual("Action componente consulta CUIL del requerimiento", "20111111112", gestion.cuilConsultado);
+        igual("Action componente consulta integrante del requerimiento", "1", gestion.inteConsultado);
 
         p = new PeticionPrueba(); gestion.mostrar(p);
         igual("Action consulta normal sin token contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        igual("Action OC publica mismo bean de afiliado", Boolean.TRUE,
+                Boolean.valueOf(p.atributos.get(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA) == afiliado));
+        gestion.errorAfiliado = new SQLException("Falla simulada del padron");
+        p = new PeticionPrueba(); p.atributos.put(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA, afiliado);
+        gestion.mostrar(p);
+        igual("Action fallo padron conserva OC", modelo.guardada, p.atributos.get("ordenCompra"));
+        igual("Action fallo padron elimina bean previo", null, p.atributos.get(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA));
+        igual("Action fallo visual no invalida OC", null, p.atributos.get("ordenCompraError"));
+        gestion.errorAfiliado = null;
+        afiliado.setCuil_titular("20999999999");
+        p = new PeticionPrueba(); gestion.mostrar(p);
+        igual("Action CUIL ajeno no publica OC", null, p.atributos.get("ordenCompra"));
+        igual("Action CUIL ajeno no publica afiliado", null, p.atributos.get(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA));
+        igual("Action CUIL ajeno informa rechazo", Boolean.TRUE, Boolean.valueOf(p.atributos.get("ordenCompraError") != null));
+        afiliado.setCuil_titular("20111111112"); afiliado.setInte(2);
+        p = new PeticionPrueba(); gestion.mostrar(p);
+        igual("Action integrante ajeno no publica OC", null, p.atributos.get("ordenCompra"));
+        igual("Action integrante ajeno no publica afiliado", null, p.atributos.get(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA));
+        igual("Action integrante ajeno informa rechazo", Boolean.TRUE, Boolean.valueOf(p.atributos.get("ordenCompraError") != null));
+        afiliado.setInte(1);
         AccionPrueba mixta = new AccionPrueba(modelo, new String[] { ConfiguracionComprasHelper.getRolAbmCompras(),
                 ConfiguracionComprasHelper.getRolGestionCompras() });
         p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); mixta.mostrar(p);
@@ -524,14 +552,20 @@ public class ComprasOrdenHelperTest {
         AccionPrueba abm = new AccionPrueba(modelo, ConfiguracionComprasHelper.getRolAbmCompras());
         p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); abm.mostrar(p);
         igual("Action ABM historica sin contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        igual("Action ABM sin permiso no consulta afiliado", Integer.valueOf(0), Integer.valueOf(abm.busquedasAfiliado));
         p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true");
         p.atributos.put("ordenCompraCreada", Boolean.TRUE); abm.mostrar(p);
         igual("Action constancia ABM sin contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
         igual("Action constancia sigue disponible", Boolean.TRUE, p.atributos.get("ordenCompraSoloConstancia"));
+        igual("Action constancia no consulta afiliado", Integer.valueOf(0), Integer.valueOf(abm.busquedasAfiliado));
+        igual("Action constancia sin bean afiliado", null, p.atributos.get(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA));
 
+        int busquedasAfiliado = gestion.busquedasAfiliado;
         modelo.r.setAfiliadoCuilTitular(null);
         p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); gestion.mostrar(p);
         igual("Action OC sin afiliado sin token contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        igual("Action OC sin afiliado no consulta padron", Integer.valueOf(busquedasAfiliado), Integer.valueOf(gestion.busquedasAfiliado));
+        igual("Action OC sin afiliado no publica bean", null, p.atributos.get(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA));
         modelo.r.setAfiliadoCuilTitular("20111111112");
         modelo.r.setBajaFecha(new Date());
         p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); gestion.mostrar(p);
@@ -542,6 +576,7 @@ public class ComprasOrdenHelperTest {
         abm = new AccionPrueba(modelo, ConfiguracionComprasHelper.getRolAbmCompras());
         p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); abm.mostrar(p);
         igual("Action borrador ABM sin contacto suministro", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
+        igual("Action borrador ABM no consulta padron", Integer.valueOf(0), Integer.valueOf(abm.busquedasAfiliado));
         gestion = new AccionPrueba(modelo, ConfiguracionComprasHelper.getRolGestionCompras());
         p = new PeticionPrueba(); p.parametros.put("gestion_suministro", "true"); gestion.mostrar(p);
         igual("Action borrador GESTION sin contacto", null, p.atributos.get(ActualizarContactoAfiliadoCompraToken.ATTR_TOKEN));
@@ -554,6 +589,11 @@ public class ComprasOrdenHelperTest {
         int consumidos;
         int publicados;
         int descargas;
+        List<Afiliado> afiliados = new ArrayList<Afiliado>();
+        Exception errorAfiliado;
+        int busquedasAfiliado;
+        String cuilConsultado;
+        String inteConsultado;
         AccionPrueba(Mock modelo, String nombreRol) {
             this(modelo, new String[] { nombreRol });
         }
@@ -570,6 +610,11 @@ public class ComprasOrdenHelperTest {
             };
         }
         protected RequerimientoCompraOrdenHelper obtenerHelper() { return modelo; }
+        protected List<Afiliado> buscarAfiliadoComponente(String cuil, String inte) throws Exception {
+            busquedasAfiliado++; cuilConsultado = cuil; inteConsultado = inte;
+            if (errorAfiliado != null) throw errorAfiliado;
+            return afiliados;
+        }
         protected User obtenerUsuario(javax.portlet.PortletRequest request) { return usuario; }
         protected void consumirToken(javax.portlet.ActionRequest request) { consumidos++; }
         protected void publicarToken(javax.portlet.RenderRequest request) { publicados++; }

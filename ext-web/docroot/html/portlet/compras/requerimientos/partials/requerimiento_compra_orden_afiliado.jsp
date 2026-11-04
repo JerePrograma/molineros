@@ -1,16 +1,18 @@
 <%--
-Referencia: /html/portlet/liquidaciones/busqueda_afiliado.jsp, incluido sin alterar su formato.
-Adapta cargarAfiliadoVista/bloquearComponenteAfiliadoVista a la consulta de OC.
+Incluye el mismo /html/portlet/autorizaciones/busqueda_afiliado.jsp usado por Requerimientos.
+Carga el padron con seleccionaCamposAfiliado del componente original, sin duplicar su presentacion.
 Requiere ordenRequerimiento, ordenCompra y ordenSuministro del caller.
 Mantiene la identidad en consulta y reutiliza el flujo real de contacto de Compras.
 No persiste los campos provisorios del boceto de suministro.
 --%>
 <%@ include file="/html/portlet/compras/requerimientos/partials/runtime/requerimiento_compra_runtime_javascript_helper_componente.jsp" %>
-<% if (ordenRequerimiento != null && ordenRequerimiento.tieneAfiliadoInformado()) { %>
+<% if (ordenRequerimiento != null && ordenRequerimiento.tieneAfiliadoInformado()) {
+    Afiliado ordenAfiliado = (Afiliado) renderRequest.getAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
+%>
 <fieldset class="block-labels">
     <legend><liferay-ui:message key="datos-afiliado" /></legend>
     <div id="<portlet:namespace />orden_afiliado_panel">
-        <liferay-util:include page="/html/portlet/liquidaciones/busqueda_afiliado.jsp">
+        <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
             <liferay-util:param name="edit_mode" value="false" />
             <liferay-util:param name="pag_reintegro" value="1" />
             <liferay-util:param name="origen" value="" />
@@ -55,6 +57,31 @@ No persiste los campos provisorios del boceto de suministro.
     function cargarAfiliadoOrdenCompra() {
         var panel = jQuery('#<portlet:namespace />orden_afiliado_panel');
         panel.find('#<portlet:namespace />entidad').val('<%= jsCompra(WebKeysGlobal.ENTIDADES_UOMA[0]) %>');
+        <% if (ordenAfiliado != null) { %>
+        seleccionaCamposAfiliado(
+                '<%= jsCompra(ordenAfiliado.getCuil_titular()) %>',
+                '<%= jsCompra(ordenAfiliado.getInteAsString()) %>',
+                '<%= jsCompra(ordenAfiliado.getDocumento_tipo()) %>',
+                '<%= jsCompra(ordenAfiliado.getDocu_numero()) %>',
+                '<%= jsCompra(ordenAfiliado.getNombre()) %>',
+                '<%= jsCompra(ordenAfiliado.getApellido()) %>',
+                '<%= ordenAfiliado.getSeccional() != null ? String.valueOf(ordenAfiliado.getSeccional().getId()) : "" %>',
+                '<%= jsCompra(ordenAfiliado.getSeccional() != null ? ordenAfiliado.getSeccional().getDescripcion() : "") %>',
+                '<%= ordenAfiliado.getId_ospim() > 0 ? String.valueOf(ordenAfiliado.getId_ospim()) : "" %>',
+                '<%= ordenAfiliado.getId_uoma() > 0 ? String.valueOf(ordenAfiliado.getId_uoma()) : "" %>',
+                '<%= ordenAfiliado.getId_amtima() > 0 ? String.valueOf(ordenAfiliado.getId_amtima()) : "" %>',
+                '<%= jsCompra(ordenAfiliado.getBaja_fechaAsString()) %>',
+                '<%= jsCompra(ordenAfiliado.getNombrePlan()) %>',
+                '<%= ordenAfiliado.getUltimo_plan() != null ? String.valueOf(ordenAfiliado.getUltimo_plan().getId()) : "" %>',
+                '<%= jsCompra(ordenAfiliado.getAlta_fechaAsString()) %>',
+                '<%= jsCompra(ordenAfiliado.getDiscapacitado()) %>',
+                '<%= jsCompra(ordenAfiliado.getId_tercerizadora()) %>',
+                '<%= jsCompra(ordenAfiliado.getDesc_tercerizadora()) %>',
+                false, '', '', '',
+                '<%= ordenAfiliado.getTieneAntecedentesJudiciales() %>',
+                '<%= jsCompra(ordenAfiliado.getColorAntecedenteJudicial()) %>',
+                '<%= jsCompra(ordenAfiliado.getCodigoAntecedenteJudicial()) %>');
+        <% } else { %>
         panel.find('#<portlet:namespace />numero_afi').val('<%= jsCompra(ordenRequerimiento.getAfiliadoIdOspimString()) %>');
         panel.find('#<portlet:namespace />cuil').val('<%= jsCompra(ordenRequerimiento.getAfiliadoCuilTitularVisible()) %>');
         panel.find('#<portlet:namespace />inte').val('<%= jsCompra(ordenRequerimiento.getAfiliadoIntString()) %>');
@@ -66,6 +93,7 @@ No persiste los campos provisorios del boceto de suministro.
         panel.find('#<portlet:namespace />seccional').val('<%= jsCompra(ordenRequerimiento.getAfiliadoSeccionalDescripcion()) %>');
         panel.find('#<portlet:namespace />secc_seleccionada').val('<%= WebKeysCompras.isEmpty(ordenRequerimiento.getAfiliadoSeccionalDescripcion()) ? "" : "1" %>');
         panel.find('#<portlet:namespace />nombre_plan').val('<%= jsCompra(ordenCompra.getPlan()) %>');
+        <% } %>
         panel.find('input[type="text"], textarea').attr('readonly', 'readonly');
         panel.find('select').attr('disabled', 'disabled');
         panel.find('#<portlet:namespace />id_seccional, #<portlet:namespace />seccional')
