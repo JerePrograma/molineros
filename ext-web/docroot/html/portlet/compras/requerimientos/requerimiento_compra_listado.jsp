@@ -538,8 +538,7 @@ if (tercerizadoras == null) {
                     <span id="<portlet:namespace />estadoExportacion"
                           role="status" aria-live="polite"></span>
                     <iframe id="<portlet:namespace />descargaRequerimientos"
-                            title="Descarga de requerimientos" style="display:none"
-                            onload="<portlet:namespace />verificarDescargaRequerimientos();"></iframe>
+                            title="Descarga de requerimientos" style="display:none"></iframe>
                 </c:if>
             </td>
         </tr>
@@ -1596,6 +1595,8 @@ if (tercerizadoras == null) {
     }
 
     jQuery(function() {
+        jQuery('#<portlet:namespace />descargaRequerimientos').bind(
+                'load', <portlet:namespace />verificarDescargaRequerimientos);
         jQuery('#<portlet:namespace />buscar').click(function() {
             <portlet:namespace />buscarRequerimientos();
         });
