@@ -3,6 +3,11 @@
 <%
 	String id_seccional = ParamUtil.getString(request, "id_seccional");
 	String seccional = ParamUtil.getString(request, "seccional");
+	String busqueda_seccional_struts_action = ParamUtil.getString(request,
+			"busqueda_seccional_struts_action", "/liquidaciones/buscar_seccional");
+	if (!"/compras/buscar_seccional".equals(busqueda_seccional_struts_action)) {
+		busqueda_seccional_struts_action = "/liquidaciones/buscar_seccional";
+	}
 	String prefijo = ParamUtil.getString(request, "prefijo","");
 %>
 <table>
@@ -45,7 +50,7 @@ function <portlet:namespace />buscarSeccional<%=prefijo%>() {
 	
     popup = Liferay.Popup({title:"<liferay-ui:message key="busqueda-seccionales" />",modal:true,width:420});
        
-    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/buscar_seccional&id_seccional='+id_seccional+
+    var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=<%=busqueda_seccional_struts_action%>&id_seccional='+id_seccional+
     		  '&seccional='+encodeURI(seccional)+'&prefijo=<%=prefijo%>';
 
 	<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_COR_1_"))%>'> 
@@ -95,7 +100,7 @@ function <portlet:namespace />buscarSeccionalOnDiv<%=prefijo%>(e){
     		jQuery("#<portlet:namespace />id_seccional<%=prefijo%>").val("");
         }
         
-		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/liquidaciones/buscar_seccional&id_seccional='+id_seccional+
+		var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=<%=busqueda_seccional_struts_action%>&id_seccional='+id_seccional+
 		  '&seccional='+encodeURI(seccional)+'&prefijo=<%=prefijo%>';
 		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_COR_1_"))%>'> 
 	       url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString()%>"/>&struts_action=/correspondencia/buscar_seccional&id_seccional='+id_seccional+

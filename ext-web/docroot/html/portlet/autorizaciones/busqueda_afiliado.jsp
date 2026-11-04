@@ -17,6 +17,9 @@
 		datos_afiliado_struts_action = "/autorizaciones/buscar_afiliado_datos";
 	}
 
+	String busqueda_afiliado_struts_action = "/compras/buscar_afiliado_datos".equals(datos_afiliado_struts_action)
+			? "/compras/buscar_afiliados" : "/liquidaciones/buscar_afiliados";
+
 	String fecha_vto_struts_action = "/compras/buscar_afiliado_datos".equals(datos_afiliado_struts_action)
 			? "/compras/buscar_afiliado_fecha_vto_documentacion"
 			: "/autorizaciones/buscar_afiliado_fecha_vto_documentacion";
@@ -225,6 +228,8 @@
 			<td colspan="4" style="vertical-align:top" >
 				<liferay-util:include page='/html/portlet/autorizaciones/busqueda_seccional.jsp'>
 					<liferay-util:param value="<%=prefijo%>" name="prefijo" />
+					<liferay-util:param name="busqueda_seccional_struts_action"
+							value='<%= "/compras/buscar_afiliado_datos".equals(datos_afiliado_struts_action) ? "/compras/buscar_seccional" : "/liquidaciones/buscar_seccional" %>' />
 				</liferay-util:include>
 			</td>
 
@@ -446,7 +451,7 @@
 			fecha_prestacion = 'null';
 		}
 
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=<%=busqueda_afiliado_struts_action%>&cuil=' + cuil +
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&popup=true&fecha_referencia=' + fecha_prestacion;
 
 		<c:if test='<%=(renderResponse!=null && renderResponse.getNamespace()!=null && renderResponse.getNamespace().equals("_COR_1_"))%>'>
@@ -489,7 +494,7 @@
 		fecha_prestacion = curr_date + "/" + curr_month + "/" + curr_year;
 		</c:if>
 
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=<%=busqueda_afiliado_struts_action%>&cuil=' + cuil +
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
 				'&fecha_referencia=' + fecha_prestacion + '&popup=true';
 
@@ -562,7 +567,7 @@
 		popupAfill = Liferay.Popup({title:"<liferay-ui:message key="grupo-filtro-busqueda-afiliado" />",modal:true,width:830});
 
 		<c:if test="<%= !Boolean.parseBoolean(pag_reintegro) %>">
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=<%=busqueda_afiliado_struts_action%>&cuil=' + cuil +
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi + '&origen=<%=prefijo%>&popup=true&fecha_referencia=' + fecha_prestacion;
 		</c:if>
 
@@ -574,7 +579,7 @@
 		ext = '&ext=1';
 		</c:if>
 
-		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/liquidaciones/buscar_afiliados&cuil=' + cuil +
+		var url = '<portlet:renderURL windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=<%=busqueda_afiliado_struts_action%>&cuil=' + cuil +
 				'&inte=' + inte + '&tipoDoc=' + tipoDoc + '&nroDoc=' + nroDoc + '&seccional=' + seccional + '&nombre=' + encodeURI(nombre) + '&apellido=' + encodeURI(apellido) + '&entidad=' + entidad + '&numero_afi=' + numero_afi +
 				'&fecha_referencia=' + fecha_prestacion + '&origen=<%=prefijo%>&popup=true' + ext;
 

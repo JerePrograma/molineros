@@ -23,10 +23,13 @@ Efectos secundarios:
  * Actualizar los datos de contacto es una capacidad distinta:
  * no modifica el afiliado asociado al requerimiento.
  */
+boolean consultaAfiliadoOrden = Boolean.TRUE.equals(
+        renderRequest.getAttribute("compras.requerimiento.consultaAfiliadoOrden"));
+
 boolean afiliadoComponenteEditable =
-        modoEditable
+        consultaAfiliadoOrden || (modoEditable
         && puedeEditarEstructuraPantalla
-        && (esNuevo || req.isPendiente());
+        && (esNuevo || req.isPendiente()));
 
 /*
  * La actualización de los datos de contacto debe estar disponible
@@ -35,7 +38,7 @@ boolean afiliadoComponenteEditable =
  * Se conserva únicamente el permiso funcional de ABM.
  */
 boolean puedeActualizarContactoAfiliado =
-        puedeABM;
+        puedeABM || consultaAfiliadoOrden;
 
 Object tokenContactoAfiliadoAttribute =
         renderRequest.getAttribute(
