@@ -97,10 +97,16 @@ public class ComprasDocumentosPermisoAltaTest {
             try {
                 for (int algorithm = 5; algorithm <= 6; algorithm++) {
                     PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM = algorithm;
-                    for (String rolConfigurado : new String[] {"abm_compras", "ABM_ComPrAs"}) {
-                        rolConfiguradoConDistintaCaja(rolConfigurado, 0);
-                        rolConfiguradoConDistintaCaja(rolConfigurado, 4);
+                    String[][] paresRoles = {{"abm_compras", "ABM_Compras"},
+                        {"ABM_ComPrAs", "ABM_Compras"}, {"Compras_ABM", "ABM_Compras"},
+                        {"ABM_COMPRAS", "compras_abm"}, {"cOmPrAs_AbM", "aBm_cOmPrAs"}};
+                    for (int par = 0; par < paresRoles.length; par++) {
+                        rolConfiguradoConDistintaCaja(paresRoles[par][0], paresRoles[par][1], 0);
+                        rolConfiguradoConDistintaCaja(paresRoles[par][0], paresRoles[par][1], 4);
                     }
+                    coexistenciaRoles(false);
+                    coexistenciaRoles(true);
+                    falloSegundoAlias();
                 }
             } finally {
                 ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", rolesOriginales);
@@ -117,20 +123,65 @@ public class ComprasDocumentosPermisoAltaTest {
         System.out.println("Creadores y check DL productivos; servicios simulados; sin DB, red ni UI.");
     }
 
-    private static void rolConfiguradoConDistintaCaja(String configurado, int type) throws Exception {
+    private static void rolConfiguradoConDistintaCaja(String configurado, String asignado, int type) throws Exception {
         ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES",
                 "VIEW=VIEW_COMPRAS;ABM=" + configurado + ";ANULAR=ANULAR_COMPRAS;COTIZAR=COTIZAR_COMPRAS;AUTORIZAR=AUTORIZAR_COMPRAS");
         Fixture f = new Fixture();
-        f.roleName = "ABM_Compras";
+        f.roleName = asignado;
         f.expectUpdate = type == 4;
         f.install();
         try {
             crear(type, f);
-            verificar(f.allowed.contains("VIEW"), "El fallback no agrego VIEW al rol configurado con otra caja.");
+            verificar(f.allowed.contains("VIEW"), "El fallback no agrego VIEW al rol configurado con alias u otra caja.");
             verificar(f.roleFallbacks > 0, "No se ejercito el fallback getRoles de RoleService.");
             verificar(type != 4 || f.allowed.contains("UPDATE"), "Comparativa sin UPDATE en rol configurado.");
             f.preservados();
             scenarios++;
+        } finally { f.restore(); }
+    }
+
+    private static void coexistenciaRoles(boolean comparison) throws Exception {
+        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", "ABM=ABM_COMPRAS");
+        Fixture f = new Fixture();
+        f.coexistAlias = true;
+        f.expectUpdate = comparison;
+        f.allowed.add("VIEW");
+        f.install();
+        try {
+            asegurar(f.entry, comparison);
+            verificar(f.roleFallbacks > 0, "No se buscaron aliases cuando existe el rol exacto.");
+            verificar(f.aliasAllowed.contains("VIEW"), "El segundo alias no recibio VIEW.");
+            verificar(f.aliasAllowed.contains("DELETE_DISCUSSION"), "Se retiraron acciones previas del segundo alias.");
+            igual("UPDATE solo comparativa alias", Boolean.valueOf(comparison), Boolean.valueOf(f.aliasAllowed.contains("UPDATE")));
+            igual("UPDATE solo comparativa exacto", Boolean.valueOf(comparison), Boolean.valueOf(f.allowed.contains("UPDATE")));
+            int escrituras = comparison ? 2 : 1;
+            igual("grants por roleId sin duplicados", Integer.valueOf(escrituras), Integer.valueOf(f.writes));
+            asegurar(f.entry, comparison);
+            igual("aliases idempotentes", Integer.valueOf(escrituras), Integer.valueOf(f.writes));
+            f.checkerRoleId = ROLE + 2;
+            checkDl(f, "VIEW", true);
+            checkDl(f, "UPDATE", comparison);
+            f.preservados();
+            aprobado("aliases coexistentes preservan permisos update=" + comparison);
+        } finally { f.restore(); }
+    }
+
+    private static void falloSegundoAlias() throws Exception {
+        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", "ABM=ABM_COMPRAS");
+        Fixture f = new Fixture();
+        f.coexistAlias = true;
+        f.failAliasGrant = true;
+        f.install();
+        try {
+            try { crear(0, f); throw new AssertionError("Exito falso tras fallar el segundo alias."); }
+            catch (Exception expected) { verificar(contieneCausa(expected, "GRANT_ALIAS_SIMULADO"), "Se perdio causa del segundo grant."); }
+            igual("se intentaron ambos grants", Integer.valueOf(2), Integer.valueOf(f.grantAttempts));
+            igual("solo primer grant exitoso", Integer.valueOf(1), Integer.valueOf(f.writes));
+            igual("se compenso solo documento creado", Integer.valueOf(1), Integer.valueOf(f.deletes));
+            verificar(f.deleted, "No se compenso el documento tras fallar el segundo alias.");
+            verificar(!f.aliasAllowed.contains("VIEW"), "Segundo grant fallido devolvio permiso falso.");
+            f.preservados();
+            aprobado("fallo segundo alias compensa documento sin exito falso");
         } finally { f.restore(); }
     }
 
@@ -347,6 +398,10 @@ public class ComprasDocumentosPermisoAltaTest {
         private final ServiceContext context = new ServiceContext();
         private String roleName = "ABM_COMPRAS";
         private int roleFallbacks;
+        private boolean coexistAlias;
+        private boolean failAliasGrant;
+        private long checkerRoleId = ROLE;
+        private final List<String> aliasAllowed = new ArrayList<String>(Arrays.asList(new String[] {"DELETE_DISCUSSION"}));
         private boolean expectUpdate;
         private boolean failAdd;
         private boolean failGrant;
@@ -455,7 +510,7 @@ public class ComprasDocumentosPermisoAltaTest {
                 igual("grupo DL", Long.valueOf(GROUP), a[0]);
                 igual("clase DL", RESOURCE, a[1]);
                 igual("archivo DL", Long.valueOf(FILE), a[2]);
-                return Boolean.valueOf(allowed.contains(a[3]));
+                return Boolean.valueOf(accionesRol(checkerRoleId).contains(a[3]));
             }
             if ("getRole".equals(method)) {
                 igual("empresa rol", Long.valueOf(COMPANY), a[0]);
@@ -469,6 +524,10 @@ public class ComprasDocumentosPermisoAltaTest {
                 List<Role> roles = new ArrayList<Role>();
                 roles.add((Role) model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE + 1)}, {"getName", "ROL_AJENO"}}));
                 roles.add((Role) model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE)}, {"getName", roleName}}));
+                if (coexistAlias) {
+                    roles.add((Role) model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE + 2)}, {"getName", "Compras_ABM"}}));
+                    roles.add((Role) model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE + 2)}, {"getName", "Compras_ABM"}}));
+                }
                 return roles;
             }
             if ("getResource".equals(method)) {
@@ -476,18 +535,18 @@ public class ComprasDocumentosPermisoAltaTest {
                 return model(Resource.class, new Object[][] {{"getResourceId", Long.valueOf(RES)}});
             }
             if ("getRolePermissions".equals(method)) {
-                igual("rol lectura", Long.valueOf(ROLE), a[0]);
+                List<String> actuales = accionesRol(((Long) a[0]).longValue());
                 igual("recurso lectura", Long.valueOf(RES), a[1]);
                 List<Permission> result = new ArrayList<Permission>();
-                for (int i = 0; i < allowed.size(); i++) {
-                    result.add((Permission) model(Permission.class, new Object[][] {{"getActionId", allowed.get(i)}}));
+                for (int i = 0; i < actuales.size(); i++) {
+                    result.add((Permission) model(Permission.class, new Object[][] {{"getActionId", actuales.get(i)}}));
                 }
                 return result;
             }
             if ("setRolePermissions".equals(method)) {
-                igual("rol escritura", Long.valueOf(ROLE), a[0]);
+                long roleId = ((Long) a[0]).longValue();
                 igual("recurso escritura", Long.valueOf(RES), a[2]);
-                grant((String[]) a[1]);
+                grant((String[]) a[1], roleId);
                 return null;
             }
             if ("getResourceActions".equals(method)) {
@@ -503,13 +562,11 @@ public class ComprasDocumentosPermisoAltaTest {
             }
             if ("getAvailableResourcePermissionActionIds".equals(method)) {
                 individual(a);
-                igual("rol lectura6", Long.valueOf(ROLE), a[4]);
-                return new ArrayList<String>(allowed);
+                return new ArrayList<String>(accionesRol(((Long) a[4]).longValue()));
             }
             if ("setResourcePermissions".equals(method)) {
                 individual(a);
-                igual("rol escritura6", Long.valueOf(ROLE), a[4]);
-                grant((String[]) a[5]);
+                grant((String[]) a[5], ((Long) a[4]).longValue());
                 return null;
             }
             return fallback(p, m, a);
@@ -522,24 +579,32 @@ public class ComprasDocumentosPermisoAltaTest {
             igual("primKey individual", String.valueOf(FILE), a[3]);
         }
 
-        private void grant(String[] actions) throws Exception {
+        private List<String> accionesRol(long roleId) {
+            if (roleId == ROLE) return allowed;
+            verificar(coexistAlias && roleId == ROLE + 2, "Se intento otorgar o leer permisos de un rol ajeno.");
+            return aliasAllowed;
+        }
+
+        private void grant(String[] actions, long roleId) throws Exception {
             grantAttempts++;
+            List<String> actuales = accionesRol(roleId);
             List<String> updated = Arrays.asList(actions);
-            List<String> expected = new ArrayList<String>(allowed);
+            List<String> expected = new ArrayList<String>(actuales);
             if (!expected.contains("VIEW")) expected.add("VIEW");
             if (expectUpdate && !expected.contains("UPDATE")) expected.add("UPDATE");
             verificar(updated.size() == expected.size() && updated.containsAll(expected),
                     "Se concedieron acciones distintas de la union autorizada.");
-            verificar(updated.containsAll(allowed), "Se retiraron acciones previas ABM.");
+            verificar(updated.containsAll(actuales), "Se retiraron acciones previas ABM.");
             verificar(updated.contains("VIEW"), "No se agrego VIEW.");
-            if (!expectUpdate && !allowed.contains("UPDATE")) {
+            if (!expectUpdate && !actuales.contains("UPDATE")) {
                 verificar(!updated.contains("UPDATE"), "UPDATE concedido a otro tipo de documento.");
             }
             if (expectUpdate) verificar(updated.contains("UPDATE"), "Comparativa sin UPDATE.");
             verificar(!updated.contains("DELETE") && !updated.contains("PERMISSIONS"), "Se agregaron acciones no autorizadas.");
             if (failGrant) throw new SystemException("GRANT_SIMULADO");
-            allowed.clear();
-            allowed.addAll(updated);
+            if (failAliasGrant && roleId == ROLE + 2) throw new SystemException("GRANT_ALIAS_SIMULADO");
+            actuales.clear();
+            actuales.addAll(updated);
             writes++;
         }
     }

@@ -3,13 +3,13 @@ package ar.com.ospim.compras.requerimientos.documentos;
 import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
 
 import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.util.PermissionUtil;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 
 import com.liferay.documentlibrary.service.DLLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.NoSuchFolderException;
-import com.liferay.portal.NoSuchRoleException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
@@ -263,137 +263,130 @@ public class DocumentoLibraryComprasHelper
 
         String rolAbmCompras = ConfiguracionComprasHelper.getRolAbmCompras();
 
-        Role role = null;
-        try {
-            role = RoleLocalServiceUtil.getRole(
-                    entry.getCompanyId(),
-                    rolAbmCompras
-            );
-        } catch (NoSuchRoleException e) {
-            // PermissionUtil acepta roles legacy como ABM_Compras.
-            List<Role> roles = RoleLocalServiceUtil.getRoles(
-                    entry.getCompanyId());
-            if (roles == null) {
-                throw new Exception(
-                        "No se pudieron determinar los roles de la empresa.");
-            }
-            for (int i = 0; i < roles.size(); i++) {
-                Role candidato = roles.get(i);
-                if (candidato != null && candidato.getName() != null
-                        && rolAbmCompras.toUpperCase(Locale.ENGLISH).equals(
-                                candidato.getName().toUpperCase(Locale.ENGLISH))) {
-                    role = candidato;
-                    break;
-                }
-            }
-            if (role == null) {
-                // Un rol no configurado no debe impedir crear el adjunto.
-                // No se concede ningun permiso y la descarga mantiene su check DL.
-                _log.warn("No se agregan permisos de documento de Compras: rol "
-                        + rolAbmCompras
-                        + " no configurado. companyId=" + entry.getCompanyId()
-                        + ", fileEntryId=" + entry.getFileEntryId());
-                return;
-            }
-        }
-        long roleId = role.getRoleId();
-        String nombreRecurso = DLFileEntry.class.getName();
-        String primKey = String.valueOf(entry.getFileEntryId());
-        int scope = ResourceConstants.SCOPE_INDIVIDUAL;
-        int algoritmo = PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM;
-        List<String> acciones = new ArrayList<String>();
-        long resourceId = 0L;
-
-        if (algoritmo == 6) {
-            List<ResourceAction> recursosAccion =
-                    ResourceActionLocalServiceUtil
-                            .getResourceActions(nombreRecurso);
-            List<String> disponibles = new ArrayList<String>();
-            for (int i = 0; recursosAccion != null
-                    && i < recursosAccion.size(); i++) {
-
-                ResourceAction accion = recursosAccion.get(i);
-                if (accion != null && accion.getActionId() != null) {
-                    disponibles.add(accion.getActionId());
-                }
-            }
-            if (disponibles.isEmpty()) {
-                throw new Exception(
-                        "No se pudieron determinar las acciones de DL."
-                );
-            }
-            List<String> concedidas =
-                    ResourcePermissionLocalServiceUtil
-                            .getAvailableResourcePermissionActionIds(
-                                    entry.getCompanyId(),
-                                    nombreRecurso,
-                                    scope,
-                                    primKey,
-                                    roleId,
-                                    disponibles
-                            );
-            if (concedidas == null) {
-                throw new Exception(
-                        "No se pudieron determinar los permisos de DL."
-                );
-            }
-            acciones.addAll(concedidas);
-        } else if (algoritmo >= 1 && algoritmo <= 5) {
-            Resource recurso = ResourceLocalServiceUtil.getResource(
-                    entry.getCompanyId(),
-                    nombreRecurso,
-                    scope,
-                    primKey
-            );
-            resourceId = recurso.getResourceId();
-            List<Permission> permisos =
-                    PermissionLocalServiceUtil.getRolePermissions(
-                            roleId,
-                            resourceId
-                    );
-            for (int i = 0; permisos != null && i < permisos.size(); i++) {
-                Permission permiso = permisos.get(i);
-                if (permiso != null && permiso.getActionId() != null
-                        && !acciones.contains(permiso.getActionId())) {
-
-                    acciones.add(permiso.getActionId());
-                }
-            }
-        } else {
+        List<Role> roles = RoleLocalServiceUtil.getRoles(entry.getCompanyId());
+        if (roles == null) {
             throw new Exception(
-                    "Algoritmo de permisos de Liferay no soportado."
-            );
+                    "No se pudieron determinar los roles de la empresa.");
         }
-
-        boolean cambio = false;
-        if (!acciones.contains(ActionKeys.VIEW)) {
-            acciones.add(ActionKeys.VIEW);
-            cambio = true;
+        List<Long> rolesAbm = new ArrayList<Long>();
+        for (int i = 0; i < roles.size(); i++) {
+            Role candidato = roles.get(i);
+            if (candidato != null && PermissionUtil.rolesEquivalentes(
+                    rolAbmCompras, candidato.getName())) {
+                Long roleId = Long.valueOf(candidato.getRoleId());
+                if (!rolesAbm.contains(roleId)) {
+                    rolesAbm.add(roleId);
+                }
+            }
         }
-        if (permitirUpdate && !acciones.contains(ActionKeys.UPDATE)) {
-            acciones.add(ActionKeys.UPDATE);
-            cambio = true;
-        }
-        if (!cambio) {
+        if (rolesAbm.isEmpty()) {
+            // Sin un rol equivalente, la descarga mantiene su check DL.
+            _log.warn("No se agregan permisos de documento de Compras: rol "
+                    + rolAbmCompras
+                    + " no configurado. companyId=" + entry.getCompanyId()
+                    + ", fileEntryId=" + entry.getFileEntryId());
             return;
         }
-        String[] accionesActualizadas =
-                acciones.toArray(new String[acciones.size()]);
-        if (algoritmo == 6) {
-            ResourcePermissionLocalServiceUtil.setResourcePermissions(
-                    entry.getCompanyId(),
-                    nombreRecurso,
-                    scope,
-                    primKey,
-                    roleId,
-                    accionesActualizadas
-            );
-        } else {
-            PermissionLocalServiceUtil.setRolePermissions(
-                    roleId,
-                    accionesActualizadas,
-                    resourceId
-            );
+        for (int indiceRol = 0; indiceRol < rolesAbm.size(); indiceRol++) {
+            long roleId = rolesAbm.get(indiceRol).longValue();
+            String nombreRecurso = DLFileEntry.class.getName();
+            String primKey = String.valueOf(entry.getFileEntryId());
+            int scope = ResourceConstants.SCOPE_INDIVIDUAL;
+            int algoritmo = PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM;
+            List<String> acciones = new ArrayList<String>();
+            long resourceId = 0L;
+
+            if (algoritmo == 6) {
+                List<ResourceAction> recursosAccion =
+                        ResourceActionLocalServiceUtil
+                                .getResourceActions(nombreRecurso);
+                List<String> disponibles = new ArrayList<String>();
+                for (int i = 0; recursosAccion != null
+                        && i < recursosAccion.size(); i++) {
+
+                    ResourceAction accion = recursosAccion.get(i);
+                    if (accion != null && accion.getActionId() != null) {
+                        disponibles.add(accion.getActionId());
+                    }
+                }
+                if (disponibles.isEmpty()) {
+                    throw new Exception(
+                            "No se pudieron determinar las acciones de DL."
+                    );
+                }
+                List<String> concedidas =
+                        ResourcePermissionLocalServiceUtil
+                                .getAvailableResourcePermissionActionIds(
+                                        entry.getCompanyId(),
+                                        nombreRecurso,
+                                        scope,
+                                        primKey,
+                                        roleId,
+                                        disponibles
+                                );
+                if (concedidas == null) {
+                    throw new Exception(
+                            "No se pudieron determinar los permisos de DL."
+                    );
+                }
+                acciones.addAll(concedidas);
+            } else if (algoritmo >= 1 && algoritmo <= 5) {
+                Resource recurso = ResourceLocalServiceUtil.getResource(
+                        entry.getCompanyId(),
+                        nombreRecurso,
+                        scope,
+                        primKey
+                );
+                resourceId = recurso.getResourceId();
+                List<Permission> permisos =
+                        PermissionLocalServiceUtil.getRolePermissions(
+                                roleId,
+                                resourceId
+                        );
+                for (int i = 0; permisos != null && i < permisos.size(); i++) {
+                    Permission permiso = permisos.get(i);
+                    if (permiso != null && permiso.getActionId() != null
+                            && !acciones.contains(permiso.getActionId())) {
+
+                        acciones.add(permiso.getActionId());
+                    }
+                }
+            } else {
+                throw new Exception(
+                        "Algoritmo de permisos de Liferay no soportado."
+                );
+            }
+
+            boolean cambio = false;
+            if (!acciones.contains(ActionKeys.VIEW)) {
+                acciones.add(ActionKeys.VIEW);
+                cambio = true;
+            }
+            if (permitirUpdate && !acciones.contains(ActionKeys.UPDATE)) {
+                acciones.add(ActionKeys.UPDATE);
+                cambio = true;
+            }
+            if (!cambio) {
+                continue;
+            }
+            String[] accionesActualizadas =
+                    acciones.toArray(new String[acciones.size()]);
+            if (algoritmo == 6) {
+                ResourcePermissionLocalServiceUtil.setResourcePermissions(
+                        entry.getCompanyId(),
+                        nombreRecurso,
+                        scope,
+                        primKey,
+                        roleId,
+                        accionesActualizadas
+                );
+            } else {
+                PermissionLocalServiceUtil.setRolePermissions(
+                        roleId,
+                        accionesActualizadas,
+                        resourceId
+                );
+            }
         }
     }
 

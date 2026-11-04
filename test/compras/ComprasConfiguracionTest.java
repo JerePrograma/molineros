@@ -99,23 +99,23 @@ public class ComprasConfiguracionTest {
             check("rol_autorizar_prueba".equals(ConfiguracionComprasHelper.getRolAutorizarCompras()),"rol autorizar");
             db.configuracion.put("COMPRAS_ROLES","ABM=otro_rol");check("otro_rol".equals(ConfiguracionComprasHelper.getRolAbmCompras()),"rol cacheado");
         }});
-        test("roles de Compras toleran mayusculas y minusculas sin aceptar otros nombres",new Scenario(){public void run() throws Exception{
+        test("roles de Compras toleran alias y mayusculas sin aceptar otros nombres",new Scenario(){public void run() throws Exception{
             ComprasFuenteDatosFixture db=source();
             String[] codigos={"VIEW","ABM","ANULAR","COTIZAR","AUTORIZAR","GESTION"};
             String[][] variantes={
-                {"VIEW_COMPRAS","view_compras","ViEw_CoMpRaS"},
-                {"ABM_COMPRAS","abm_compras","AbM_cOmPrAs"},
-                {"ANULAR_COMPRAS","anular_compras","AnUlAr_CoMpRaS"},
-                {"COTIZAR_COMPRAS","cotizar_compras","CoTiZaR_cOmPrAs"},
-                {"AUTORIZAR_COMPRAS","autorizar_compras","AuToRiZaR_cOmPrAs"},
-                {"GESTION_COMPRAS","gestion_compras","GeStIoN_cOmPrAs"}
+                {"VIEW_COMPRAS","view_compras","ViEw_CoMpRaS","COMPRAS_VIEW","compras_view","CoMpRaS_vIeW"},
+                {"ABM_COMPRAS","abm_compras","AbM_cOmPrAs","COMPRAS_ABM","compras_abm","CoMpRaS_aBm"},
+                {"ANULAR_COMPRAS","anular_compras","AnUlAr_CoMpRaS","COMPRAS_ANULAR","compras_anular","CoMpRaS_aNuLaR"},
+                {"COTIZAR_COMPRAS","cotizar_compras","CoTiZaR_cOmPrAs","COMPRAS_COTIZAR","compras_cotizar","CoMpRaS_cOtIzAr"},
+                {"AUTORIZAR_COMPRAS","autorizar_compras","AuToRiZaR_cOmPrAs","COMPRAS_AUTORIZAR","compras_autorizar","CoMpRaS_aUtOrIzAr"},
+                {"GESTION_COMPRAS","gestion_compras","GeStIoN_cOmPrAs","COMPRAS_GESTION","compras_gestion","CoMpRaS_gEsTiOn"}
             };
             Locale original=Locale.getDefault();int aceptados=0;int rechazados=0;
             try {
                 Locale[] idiomas={Locale.ENGLISH,new Locale("tr","TR")};
                 for(int idioma=0;idioma<idiomas.length;idioma++) {
                     Locale.setDefault(idiomas[idioma]);
-                    for(int configurado=0;configurado<3;configurado++) {
+                    for(int configurado=0;configurado<variantes[0].length;configurado++) {
                         StringBuffer mapa=new StringBuffer();
                         for(int rol=0;rol<codigos.length;rol++) {if(rol>0)mapa.append(';');mapa.append(codigos[rol]).append('=').append(variantes[rol][configurado]);}
                         db.configuracion.put("COMPRAS_ROLES",mapa.toString());
@@ -123,21 +123,39 @@ public class ComprasConfiguracionTest {
                         for(int rol=0;rol<codigos.length;rol++) {
                             String caso=codigos[rol]+" locale="+idiomas[idioma]+" configurado="+configurado;
                             check(variantes[rol][configurado].equals(esperados[rol]),caso+" getter no refleja configuracion");
-                            for(int asignado=0;asignado<3;asignado++) {
+                            for(int asignado=0;asignado<variantes[rol].length;asignado++) {
                                 check(PermissionUtil.userContainsRole(usuarioConRoles(new String[]{variantes[rol][asignado]}),esperados[rol]),caso+" asignado="+asignado);aceptados++;
                             }
                             for(int otro=0;otro<codigos.length;otro++) {
                                 if(otro==rol)continue;
                                 check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[]{variantes[otro][0]}),esperados[rol]),caso+" acepto otro rol "+codigos[otro]);rechazados++;
                             }
-                            String[] ajenos={variantes[rol][0]+"_OTRO","OTRO_"+variantes[rol][0],"COMPRAS_"+codigos[rol]};
+                            String[] ajenos={variantes[rol][0]+"_OTRO","OTRO_"+variantes[rol][0],"COMPRAS_"+codigos[rol]+"_OTRO"};
                             for(int otro=0;otro<ajenos.length;otro++) {check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[]{ajenos[otro]}),esperados[rol]),caso+" acepto nombre distinto "+ajenos[otro]);rechazados++;}
                             check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[0]),esperados[rol]),caso+" acepto usuario sin rol");rechazados++;
                         }
                     }
                 }
             } finally {Locale.setDefault(original);}
-            System.out.println("COMPRAS_ROLES_CASE_MATRIX_OK roles=6 locales=2 aceptados="+aceptados+" rechazados="+rechazados);
+            System.out.println("COMPRAS_ROLES_ALIAS_MATRIX_OK roles=6 variantes=6 locales=2 aceptados="+aceptados+" rechazados="+rechazados);
+        }});
+        test("alias de Compras no se extienden a otras familias ni roles desconocidos",new Scenario(){public void run(){
+            Locale original=Locale.getDefault();
+            try {
+                Locale[] idiomas={Locale.ENGLISH,new Locale("tr","TR")};
+                for(int idioma=0;idioma<idiomas.length;idioma++) {
+                    Locale.setDefault(idiomas[idioma]);
+                    String[][] distintos={{"VIEW_LIQUIDACIONES","LIQUIDACIONES_VIEW"},{"ABM_AUTORIZACIONES","AUTORIZACIONES_ABM"},{"OTRO_COMPRAS","COMPRAS_OTRO"},{"SUPER_COMPRAS","COMPRAS_SUPER"},{"VIEW_COMPRAS"," COMPRAS_VIEW"},{"VIEW_COMPRAS","COMPRAS_VIEW "}};
+                    for(int i=0;i<distintos.length;i++) {
+                        check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[]{distintos[i][0]}),distintos[i][1]),"acepto alias ajeno "+distintos[i][1]);
+                        if(i<4) {check(!PermissionUtil.userContainsRole(usuarioConRoles(new String[]{distintos[i][1]}),distintos[i][0]),"acepto alias ajeno inverso "+distintos[i][0]);}
+                        // RoleImpl.getName() recorta espacios; probar el comparador DL con el nombre sin modelo.
+                        else {check(!PermissionUtil.rolesEquivalentes(distintos[i][1],distintos[i][0]),"acepto espacios en alias "+distintos[i][1]);}
+                    }
+                    check(PermissionUtil.userContainsRole(usuarioConRoles(new String[]{"Rol_Compras_Personalizado"}),"ROL_COMPRAS_PERSONALIZADO"),"rol personalizado exacto cambio");
+                    check(PermissionUtil.userContainsRole(usuarioConRoles(new String[]{"ABM_Liquidaciones"}),"abm_liquidaciones"),"comparacion legacy de otra familia cambio");
+                }
+            } finally {Locale.setDefault(original);}
         }});
         test("comparacion de roles rechaza entradas nulas y vacias",new Scenario(){public void run(){
             User user=usuarioConRoles(new String[]{"VIEW_COMPRAS"});

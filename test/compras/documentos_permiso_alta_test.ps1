@@ -23,6 +23,7 @@ foreach ($folder in @('lib\global', 'lib\portal', 'lib\development', 'ext-lib\gl
 $classpathEntries += 'C:\apache-tomcat-8.5.23\lib\ecj-4.6.3.jar'
 $classpath = $classpathEntries -join ';'
 $sources = @(
+    'ext-impl\src\ar\com\ospim\util\PermissionUtil.java',
     'test\compras\fixtures\configuracion\ConfiguracionComprasDatosFixture.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\documentos\DocumentoLibraryComprasHelper.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\helper\PresupuestoCompraHelper.java',
