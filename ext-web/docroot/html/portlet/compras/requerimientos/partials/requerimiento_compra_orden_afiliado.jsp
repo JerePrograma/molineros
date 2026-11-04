@@ -1,5 +1,5 @@
 <%--
-Referencia: Liquidaciones/busqueda_afiliado.jsp y componente de afiliado de Compras.
+Referencia: /html/portlet/liquidaciones/busqueda_afiliado.jsp, incluido sin alterar su formato.
 Adapta cargarAfiliadoVista/bloquearComponenteAfiliadoVista a la consulta de OC.
 Requiere ordenRequerimiento, ordenCompra y ordenSuministro del caller.
 Mantiene la identidad en consulta y reutiliza el flujo real de contacto de Compras.
@@ -10,7 +10,7 @@ No persiste los campos provisorios del boceto de suministro.
 <fieldset class="block-labels">
     <legend><liferay-ui:message key="datos-afiliado" /></legend>
     <div id="<portlet:namespace />orden_afiliado_panel">
-        <liferay-util:include page="/html/portlet/autorizaciones/busqueda_afiliado.jsp">
+        <liferay-util:include page="/html/portlet/liquidaciones/busqueda_afiliado.jsp">
             <liferay-util:param name="edit_mode" value="false" />
             <liferay-util:param name="pag_reintegro" value="1" />
             <liferay-util:param name="origen" value="" />
