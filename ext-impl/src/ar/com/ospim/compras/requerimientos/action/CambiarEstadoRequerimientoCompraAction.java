@@ -604,10 +604,13 @@ public class CambiarEstadoRequerimientoCompraAction
             throws Exception {
 
         if (user == null
-                || !PermissionUtil.userContainsRole(
-                user,
-                ConfiguracionComprasHelper.getRolAbmCompras()
-        )) {
+                || (!PermissionUtil.userContainsRole(
+                        user,
+                        ConfiguracionComprasHelper.getRolAbmCompras()
+                ) && !PermissionUtil.userContainsRole(
+                        user,
+                        ConfiguracionComprasHelper.getRolAnularCompras()
+                ))) {
             throw new Exception(
                     "No posee permisos para anular "
                             + "requerimientos de compras."

@@ -27,6 +27,12 @@ public final class ExportarRequerimientosCompraHelper {
     private static final int MAX_CONTEXTOS = 20;
 
     public static boolean puedeConsultar(User user) throws Exception {
+        return puedeExportar(user)
+                || (user != null && PermissionUtil.userContainsRole(
+                        user, ConfiguracionComprasHelper.getRolAnularCompras()));
+    }
+
+    public static boolean puedeExportar(User user) throws Exception {
         return user != null
                 && (PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolViewCompras())
                 || PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAbmCompras())
@@ -35,7 +41,7 @@ public final class ExportarRequerimientosCompraHelper {
     }
 
     public static void validarPermiso(User user) throws Exception {
-        if (!puedeConsultar(user)) {
+        if (!puedeExportar(user)) {
             throw new SecurityException(
                     "No posee permisos para consultar requerimientos de compras.");
         }

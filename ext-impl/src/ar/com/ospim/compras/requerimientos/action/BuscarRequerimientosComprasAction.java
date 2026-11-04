@@ -222,7 +222,10 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
     }
 
     private void validarPermisoView(User user) throws Exception {
-        ExportarRequerimientosCompraHelper.validarPermiso(user);
+        if (!ExportarRequerimientosCompraHelper.puedeConsultar(user)) {
+            throw new SecurityException(
+                    "No posee permisos para consultar requerimientos de compras.");
+        }
     }
 
     private void cargarCatalogos(RenderRequest request) {

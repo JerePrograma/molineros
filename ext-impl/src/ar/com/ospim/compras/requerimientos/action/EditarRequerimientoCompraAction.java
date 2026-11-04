@@ -1682,7 +1682,7 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         );
         boolean puedeAnular = PermissionUtil.userContainsRole(
                 user,
-                ConfiguracionComprasHelper.getRolAbmCompras()
+                ConfiguracionComprasHelper.getRolAnularCompras()
         );
         boolean puedeAutorizar = PermissionUtil.userContainsRole(
                 user,
@@ -1747,6 +1747,9 @@ public class EditarRequerimientoCompraAction extends PortletAction {
         if (!PermissionUtil.userContainsRole(
                 user,
                 ConfiguracionComprasHelper.getRolAbmCompras()
+        ) && !PermissionUtil.userContainsRole(
+                user,
+                ConfiguracionComprasHelper.getRolAnularCompras()
         )) {
             errorCampo(
                     "permisos",

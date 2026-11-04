@@ -531,7 +531,7 @@ if (tercerizadoras == null) {
                            onClick="<portlet:namespace />altaRequerimiento();" />
                 </c:if>
                 <c:if test="<%= !estadoForzadoActivo
-                        && ExportarRequerimientosCompraHelper.puedeConsultar(user) %>">
+                        && ExportarRequerimientosCompraHelper.puedeExportar(user) %>">
                     <input type="button" id="<portlet:namespace />exportar"
                            value="Exportar" disabled="disabled"
                            onClick="<portlet:namespace />exportarRequerimientos();" />

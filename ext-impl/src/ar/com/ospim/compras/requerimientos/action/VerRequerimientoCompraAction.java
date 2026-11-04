@@ -268,6 +268,10 @@ public class VerRequerimientoCompraAction extends PortletAction {
                         || PermissionUtil.userContainsRole(
                         user,
                         ConfiguracionComprasHelper.getRolAutorizarCompras()
+                )
+                        || PermissionUtil.userContainsRole(
+                        user,
+                        ConfiguracionComprasHelper.getRolAnularCompras()
                 );
 
         if (!permitido) {

@@ -72,13 +72,13 @@ boolean showAutorizarButton =
                 ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAutorizarCompras()
         );
 
-boolean showAnularButtons = 
-        user != null 
-        && PermissionUtil.userContainsRole( 
-                user, 
-                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAbmCompras()
-        ); 
- 
+boolean showAnularButtons =
+        user != null
+        && (showABMButtons || PermissionUtil.userContainsRole(
+                user,
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getRolAnularCompras()
+        ));
+
 boolean showEditarButton =
         (showABMButtons
                 && (
