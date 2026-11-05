@@ -1,10 +1,17 @@
 param(
     [string]$EvidenceName = 'offline',
-    [string]$ServiceSnapshotPath = ''
+    [string]$ServiceSnapshotPath = '',
+    [string]$EvidencePath = ''
 )
 $ErrorActionPreference = 'Stop'
 $repoPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-$artifactPath = Join-Path $repoPath ('.codex\artifacts\compras-primera-carga-20261023\' + $EvidenceName)
+Set-Location -LiteralPath 'C:\wsmolineros\ext'
+$root = (git rev-parse --show-toplevel).Trim()
+$origin = (git remote get-url origin).Trim()
+if ($LASTEXITCODE -ne 0 -or $root -ne 'C:/wsmolineros/ext' -or $origin -ne 'https://github.com/JerePrograma/molineros.git') { throw 'Repositorio o ruta incorrectos.' }
+if ($EvidencePath -eq '') { $EvidencePath = Join-Path ([IO.Path]::GetTempPath()) ('molineros-compras-primera-carga-' + $EvidenceName + '-' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-fff')) }
+$artifactPath = [IO.Path]::GetFullPath($EvidencePath)
+if ($artifactPath -eq $repoPath -or $artifactPath.StartsWith($repoPath + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'La evidencia debe guardarse fuera del repositorio.' }
 $classOutput = Join-Path $artifactPath 'classes'
 $latinEncoding = [System.Text.Encoding]::GetEncoding(28591)
 $initialHead = (& git -C $repoPath rev-parse HEAD).Trim()
@@ -24,6 +31,7 @@ if ($ServiceSnapshotPath -ne '') {
     $sources[4] = Join-Path $ServiceSnapshotPath 'BusquedaRequerimientoCompraServiceImpl.java'
     $sources[5] = Join-Path $ServiceSnapshotPath 'BusquedaRequerimientoCompraServiceUtil.java'
 }
+$sources += Join-Path $repoPath 'ext-impl\src\ar\com\ospim\compras\requerimientos\helper\ConfiguracionComprasHelper.java'
 [System.IO.File]::WriteAllLines((Join-Path $artifactPath 'context.txt'), @(
     ('Inicio UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss')),
     ('HEAD inicial: ' + $initialHead),

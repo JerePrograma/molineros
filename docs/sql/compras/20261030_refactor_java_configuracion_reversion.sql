@@ -1,3 +1,6 @@
+-- Migracion historica anterior a 20261105_reducir_configuracion_estructural.sql.
+-- No ejecutar nuevamente despues de esa reduccion: las guardas completas
+-- abortan al encontrar claves estructurales retiradas. No reponerlas.
 -- Reversion SOLO de las claves agregadas por configuracion.sql.
 -- No restaura Java ni retira datos de tipo 15. No borrar cargas de negocio.
 -- Precondicion: no existia ninguna clave al instalar; el avance lo verifica.

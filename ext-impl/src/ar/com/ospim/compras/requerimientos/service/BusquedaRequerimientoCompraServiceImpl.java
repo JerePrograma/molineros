@@ -1625,6 +1625,10 @@ public class BusquedaRequerimientoCompraServiceImpl {
 
 
     public String getConfiguracionCompra(String clave) throws Exception {
+        String fijo = ConfiguracionComprasHelper.getValorFijo(clave);
+        if (fijo != null) {
+            return fijo;
+        }
         Connection con = null;
         try {
             con = ConnectionHelper.getConnection();
@@ -1634,9 +1638,13 @@ public class BusquedaRequerimientoCompraServiceImpl {
         }
     }
 
-    /** Lee el valor crudo sin cerrar la conexion de la operacion. */
+    /** Resuelve el contrato fijo o lee el parametro operativo sin cerrar la conexion. */
     public String getConfiguracionCompra(String clave, Connection con)
             throws Exception {
+        String fijo = ConfiguracionComprasHelper.getValorFijo(clave);
+        if (fijo != null) {
+            return fijo;
+        }
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {

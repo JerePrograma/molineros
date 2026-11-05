@@ -1,3 +1,6 @@
+-- Migracion historica anterior a 20261105_reducir_configuracion_estructural.sql.
+-- No ejecutar nuevamente despues de esa reduccion: las guardas completas
+-- abortan al encontrar claves estructurales retiradas. No reponerlas.
 -- Configuracion del refactor Java. PostgreSQL 9.6 / ISO-8859-1 sin BOM.
 -- PREPARADO PARA LA PROXIMA MIGRACION: no ejecutado en produccion.
 -- Fuente: catalogo instalado y comportamiento Java vigente del 30/10/2026.

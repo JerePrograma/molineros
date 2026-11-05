@@ -11,13 +11,78 @@ import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 
-/** Configuracion de Compras leida en cada operacion, sin cache. */
+/** Contratos legacy fijos y configuracion operativa leida sin cache. */
 public final class ConfiguracionComprasHelper {
     public static final String CONFIG_CONCEPTOS_AUTOMATICOS = "COMPRAS_CONCEPTOS_AUTOMATICOS";
     public static final String CONFIG_RUBROS_CONCEPTO_AUTOMATICO = "COMPRAS_RUBROS_CONCEPTO_AUTOMATICO";
     public static final String CONFIG_CANTIDAD_CONCEPTO_AUTOMATICO = "COMPRAS_CANTIDAD_CONCEPTO_AUTOMATICO";
 
     private ConfiguracionComprasHelper() {
+    }
+
+    /**
+     * Valores estructurales del modulo, como los roles y estados de WebKeysLiquidaciones.
+     * Conserva las claves de los callers legacy sin consultar system_config.
+     * null indica un parametro operativo que debe seguir leyendose de la base.
+     */
+    public static String getValorFijo(String clave) {
+        if ("COMPRAS_CANTIDAD_CONCEPTO_AUTOMATICO".equals(clave)) return "1";
+        if ("COMPRAS_CANTIDAD_DETALLE_INICIAL".equals(clave)) return "1";
+        if ("COMPRAS_CONTACTO_PRIORIDADES_EMAIL".equals(clave)) return "E=1";
+        if ("COMPRAS_CONTACTO_TIPOS_EMAIL".equals(clave)) return "E";
+        if ("COMPRAS_ENVIO_ESTADOS_FINALES".equals(clave)) return "ENVIADO;ERROR;EMAIL_INVALIDO";
+        if ("COMPRAS_ENVIO_ESTADOS_REINTENTO".equals(clave)) return "PENDIENTE;ERROR;EMAIL_INVALIDO";
+        if ("COMPRAS_ESTADOS_ADMINISTRAR_PRESUPUESTOS".equals(clave)) return "2";
+        if ("COMPRAS_ESTADOS_ANULAR".equals(clave)) return "1;2;3";
+        if ("COMPRAS_ESTADOS_CONSULTAR_RP".equals(clave)) return "3;4;6;7;5";
+        if ("COMPRAS_ESTADOS_CORREGIR_ITEM".equals(clave)) return "1;2;3";
+        if ("COMPRAS_ESTADOS_DESCRIPCIONES".equals(clave)) return "1=PENDIENTE;2=ENVIADO A COTIZAR;3=COTIZADO;4=RECLAMO (RP);6=PARA AUTORIZAR;7=AUTORIZADO;5=ORDEN DE COMPRA;99=ANULADO";
+        if ("COMPRAS_ESTADOS_EDITAR_COTIZACION".equals(clave)) return "2";
+        if ("COMPRAS_ESTADOS_EDITAR_ESTRUCTURA".equals(clave)) return "1";
+        if ("COMPRAS_ESTADOS_EDITAR_OBSERVACION_INTERNA".equals(clave)) return "1;2;3;4;5;6;7;99";
+        if ("COMPRAS_ESTADOS_EDITAR_SURGE".equals(clave)) return "1;2";
+        if ("COMPRAS_ESTADOS_ELIMINAR_DETALLE".equals(clave)) return "1;2";
+        if ("COMPRAS_ESTADOS_ENVIAR_AUTORIZAR".equals(clave)) return "4";
+        if ("COMPRAS_ESTADOS_ENVIAR_COTIZAR".equals(clave)) return "1";
+        if ("COMPRAS_ESTADOS_ENVIO".equals(clave)) return "PENDIENTE=PENDIENTE;PROCESANDO=PROCESANDO;ENVIADO=ENVIADO;COTIZADO=COTIZADO;ERROR=ERROR;EMAIL_INVALIDO=EMAIL_INVALIDO";
+        if ("COMPRAS_ESTADOS_IDS".equals(clave)) return "PENDIENTE=1;A_COTIZAR=2;COTIZADO=3;RECLAMO_RP=4;ORDEN_COMPRA=5;PARA_AUTORIZAR=6;AUTORIZADO=7;ANULADO=99";
+        if ("COMPRAS_ESTADOS_NOTIFICAR_PRESTADORES".equals(clave)) return "1;2";
+        if ("COMPRAS_ESTADOS_NOTIFICAR_TODOS".equals(clave)) return "1";
+        if ("COMPRAS_ESTADOS_PRESTADORES_ENVIADOS".equals(clave)) return "2;3;4;5;6;7;99";
+        if ("COMPRAS_ESTADOS_REINTENTAR_NOTIFICACIONES".equals(clave)) return "2";
+        if ("COMPRAS_ESTADOS_SOLO_LECTURA".equals(clave)) return "3;4;6;7;5;99";
+        if ("COMPRAS_ESTADOS_VER_COTIZACION".equals(clave)) return "2;3;4;6;7;5;99";
+        if ("COMPRAS_ESTADOS_VER_PRESUPUESTOS".equals(clave)) return "2;3;4;6;7;5;99";
+        if ("COMPRAS_FILTROS_NOMENCLADOR".equals(clave)) return "FARMACIA=9;DISCAPACIDAD=8;ODONTOLOGIA=1;PRESTACIONES MEDICAS=0";
+        if ("COMPRAS_LIMITES".equals(clave)) return "PRESUPUESTOS_POR_CARGA=10;PRESTADORES_ENVIADOS=500;DL_EXTENSION=20;DL_TITULO=240;ITEMS_HISTORICOS_AFILIADO=20;ORDENES_MEDICAS_POR_CARGA=20;REQUERIMIENTOS_POR_PAGINA=50;RECETA_ORDEN_MEDICA=100";
+        if ("COMPRAS_MAX_ERROR_NOTIFICACION".equals(clave)) return "4000";
+        if ("COMPRAS_OC_MAX_IMPORTE".equals(clave)) return "99999999999999.99";
+        if ("COMPRAS_ROLES".equals(clave)) return "VIEW=VIEW_COMPRAS;ABM=ABM_COMPRAS;ANULAR=ANULAR_COMPRAS;COTIZAR=COTIZAR_COMPRAS;AUTORIZAR=AUTORIZAR_COMPRAS";
+        if ("COMPRAS_RP_COMPROBANTE_INICIAL".equals(clave)) return "OTR";
+        if ("COMPRAS_RP_DESCRIPCION_NO_RECUPERABLE".equals(clave)) return "NO ES RECUPERABLE";
+        if ("COMPRAS_RP_ERROR_DEFECTO".equals(clave)) return "Error de vinculacion no especificado.";
+        if ("COMPRAS_RP_ESTADO_PRESTACION_INICIAL".equals(clave)) return "0";
+        if ("COMPRAS_RP_FRECUENCIA_INICIAL".equals(clave)) return "UNICA";
+        if ("COMPRAS_RP_MAX_ERROR".equals(clave)) return "2000";
+        if ("COMPRAS_RP_MAX_OBSERVACION".equals(clave)) return "200";
+        if ("COMPRAS_RP_NO_RECUPERABLE".equals(clave)) return "2";
+        if ("COMPRAS_RP_RECUPERABLE_INTEGRACION".equals(clave)) return "3";
+        if ("COMPRAS_RP_RECUPERABLE_SUR".equals(clave)) return "1";
+        if ("COMPRAS_RP_SUCURSAL_INICIAL".equals(clave)) return "000";
+        if ("COMPRAS_RP_TIPO_PRESTACION_INICIAL".equals(clave)) return "1";
+        if ("COMPRAS_RP_VIGENCIA_CONTEXTO_MILLIS".equals(clave)) return "7200000";
+        if ("COMPRAS_RUBROS_INSUMOS".equals(clave)) return "6";
+        if ("COMPRAS_RUBROS_PROTESIS".equals(clave)) return "3;4;5";
+        if ("COMPRAS_SECTORES_BUSQUEDA_SIN_ACENTOS".equals(clave)) return "PRESTACIONES MEDICAS";
+        if ("COMPRAS_SECTORES_DESCRIPCION_VISIBLE".equals(clave)) return "PRESTACIONES MEDICAS=PRESTACIONES MÉDICAS;ODONTOLOGIA=ODONTOLOGÍA";
+        if ("COMPRAS_SECTORES_DETALLE_OBSERVACION".equals(clave)) return "RRHH;LEGALES;SISTEMAS;OTROS";
+        if ("COMPRAS_SECTORES_NO_SELECCIONABLES".equals(clave)) return "LEGALES;OTROS";
+        if ("COMPRAS_SECTORES_RP".equals(clave)) return "PRESTACIONES MEDICAS=PRESTACIONES MEDICAS;DISCAPACIDAD=DISCAPACIDAD;FARMACIA=FARMACIA;ODONTOLOGIA=ODONTOLOGIA;LEGALES=LEGALES";
+        if ("COMPRAS_SECTORES_SIN_COTIZACION_PRESTADOR".equals(clave)) return "RRHH;SISTEMAS";
+        if ("COMPRAS_SECTOR_MEDICO".equals(clave)) return "PRESTACIONES MEDICAS";
+        if ("COMPRAS_TIPO_NOMENCLADOR_FARMACIA".equals(clave)) return "9";
+        if ("COMPRAS_TRANSICIONES_ESTADO".equals(clave)) return "1=2,99;2=3,99;3=4,99;4=6;6=7";
+        return null;
     }
 
     public static String leerObligatoria(String clave) {

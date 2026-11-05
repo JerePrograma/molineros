@@ -35,9 +35,9 @@ $sourcepath=@('ext-impl\src','ext-service\src','ext-web\docroot\WEB-INF\src') | 
 [IO.File]::WriteAllLines((Join-Path $artifactPath 'contexto.txt'),@(
  ('Inicio Argentina: '+[TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow,'Argentina Standard Time').ToString('yyyy-MM-dd HH:mm:ss')),
  ('HEAD inicial: '+$initialHead),
- 'Estado funcional inicial: configuracion Compras real, valores DB simulados en frontera ServiceImpl.',
+ 'Estado funcional inicial: contratos estructurales Compras reales; valores operativos DB simulados en frontera ServiceImpl.',
  'Log inicial: prueba offline sin Tomcat, DB, red, correo ni UI. No sustituye reglas por stubs.',
- 'Verifica relectura sin cache, formato, listas/mapas exactos, roles, estados, transiciones, defaults y contrato DTO.'
+ 'Verifica 56 claves fijas sin acceso JDBC, 11 operativas sin cache, parsers, roles, estados, transiciones, defaults y contrato DTO.'
 ),$latinEncoding)
 $ErrorActionPreference='Continue' # stderr nativo se registra; manda el exit code.
 $compileOutput=@(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encoding' 'ISO-8859-1' '-source' '1.5' '-target' '1.5' '-classpath' $classpath '-sourcepath' ($sourcepath -join ';') '-d' $classOutput @sources 2>&1 | ForEach-Object {$_.ToString()})

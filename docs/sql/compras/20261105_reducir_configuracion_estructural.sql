@@ -1,0 +1,159 @@
+-- Retiro de configuracion estructural de Compras. PostgreSQL 9.6 / ISO-8859-1.
+-- Referencia: validacion completa y bloqueo de 20261030_refactor_java_configuracion_reversion.sql.
+-- OBLIGATORIO: desplegar primero el Java que resuelve estas reglas en el Helper.
+-- El Java anterior consulta estas claves y no puede funcionar despues del retiro.
+-- Destino autorizado: QA 12.1.1.12 / devmolineros. No modifica datos de negocio.
+-- Conserva las 11 variables operativas y el marcador historico de la migracion,
+-- requerido por 20261030_refactor_java_diabetes_15_condicionado.sql.
+-- Repetible: una clave retirada ausente es valida. Un valor cambiado o duplicado
+-- aborta toda la transaccion para no perder configuracion personalizada.
+BEGIN;
+SET LOCAL statement_timeout = '15s';
+SET LOCAL lock_timeout = '2s';
+DO $destino_qa12$
+BEGIN
+    IF inet_server_addr() IS DISTINCT FROM '12.1.1.12'::inet
+       OR current_database() IS DISTINCT FROM 'devmolineros' THEN
+        RAISE EXCEPTION 'La reduccion de configuracion solo se aplica en QA12/devmolineros.';
+    END IF;
+END;
+$destino_qa12$;
+LOCK TABLE public.system_config IN SHARE ROW EXCLUSIVE MODE;
+DO $reducir_configuracion$
+DECLARE
+    fila RECORD;
+    cantidad INTEGER;
+BEGIN
+    IF (SELECT count(*) FROM public.system_config WHERE id='COMPRAS_REFACTOR_CONFIG_VERSION') <> 1
+       OR NOT EXISTS (SELECT 1 FROM public.system_config
+                      WHERE id='COMPRAS_REFACTOR_CONFIG_VERSION' AND valor='20261030') THEN
+        RAISE EXCEPTION 'La version de configuracion no permite esta reduccion.';
+    END IF;
+    -- Lista cerrada de las 56 claves estructurales de la entrega del 30/10/2026.
+    FOR fila IN SELECT * FROM (VALUES
+            ('COMPRAS_CANTIDAD_CONCEPTO_AUTOMATICO', '1'),
+            ('COMPRAS_CANTIDAD_DETALLE_INICIAL', '1'),
+            ('COMPRAS_CONTACTO_PRIORIDADES_EMAIL', 'E=1'),
+            ('COMPRAS_CONTACTO_TIPOS_EMAIL', 'E'),
+            ('COMPRAS_ENVIO_ESTADOS_FINALES', 'ENVIADO;ERROR;EMAIL_INVALIDO'),
+            ('COMPRAS_ENVIO_ESTADOS_REINTENTO', 'PENDIENTE;ERROR;EMAIL_INVALIDO'),
+            ('COMPRAS_ESTADOS_ADMINISTRAR_PRESUPUESTOS', '2'),
+            ('COMPRAS_ESTADOS_ANULAR', '1;2;3'),
+            ('COMPRAS_ESTADOS_CONSULTAR_RP', '3;4;6;7;5'),
+            ('COMPRAS_ESTADOS_CORREGIR_ITEM', '1;2;3'),
+            ('COMPRAS_ESTADOS_DESCRIPCIONES', '1=PENDIENTE;2=ENVIADO A COTIZAR;3=COTIZADO;4=RECLAMO (RP);6=PARA AUTORIZAR;7=AUTORIZADO;5=ORDEN DE COMPRA;99=ANULADO'),
+            ('COMPRAS_ESTADOS_EDITAR_COTIZACION', '2'),
+            ('COMPRAS_ESTADOS_EDITAR_ESTRUCTURA', '1'),
+            ('COMPRAS_ESTADOS_EDITAR_OBSERVACION_INTERNA', '1;2;3;4;5;6;7;99'),
+            ('COMPRAS_ESTADOS_EDITAR_SURGE', '1;2'),
+            ('COMPRAS_ESTADOS_ELIMINAR_DETALLE', '1;2'),
+            ('COMPRAS_ESTADOS_ENVIAR_AUTORIZAR', '4'),
+            ('COMPRAS_ESTADOS_ENVIAR_COTIZAR', '1'),
+            ('COMPRAS_ESTADOS_ENVIO', 'PENDIENTE=PENDIENTE;PROCESANDO=PROCESANDO;ENVIADO=ENVIADO;COTIZADO=COTIZADO;ERROR=ERROR;EMAIL_INVALIDO=EMAIL_INVALIDO'),
+            ('COMPRAS_ESTADOS_IDS', 'PENDIENTE=1;A_COTIZAR=2;COTIZADO=3;RECLAMO_RP=4;ORDEN_COMPRA=5;PARA_AUTORIZAR=6;AUTORIZADO=7;ANULADO=99'),
+            ('COMPRAS_ESTADOS_NOTIFICAR_PRESTADORES', '1;2'),
+            ('COMPRAS_ESTADOS_NOTIFICAR_TODOS', '1'),
+            ('COMPRAS_ESTADOS_PRESTADORES_ENVIADOS', '2;3;4;5;6;7;99'),
+            ('COMPRAS_ESTADOS_REINTENTAR_NOTIFICACIONES', '2'),
+            ('COMPRAS_ESTADOS_SOLO_LECTURA', '3;4;6;7;5;99'),
+            ('COMPRAS_ESTADOS_VER_COTIZACION', '2;3;4;6;7;5;99'),
+            ('COMPRAS_ESTADOS_VER_PRESUPUESTOS', '2;3;4;6;7;5;99'),
+            ('COMPRAS_FILTROS_NOMENCLADOR', 'FARMACIA=9;DISCAPACIDAD=8;ODONTOLOGIA=1;PRESTACIONES MEDICAS=0'),
+            ('COMPRAS_LIMITES', 'PRESUPUESTOS_POR_CARGA=10;PRESTADORES_ENVIADOS=500;DL_EXTENSION=20;DL_TITULO=240;ITEMS_HISTORICOS_AFILIADO=20;ORDENES_MEDICAS_POR_CARGA=20;REQUERIMIENTOS_POR_PAGINA=50;RECETA_ORDEN_MEDICA=100'),
+            ('COMPRAS_MAX_ERROR_NOTIFICACION', '4000'),
+            ('COMPRAS_OC_MAX_IMPORTE', '99999999999999.99'),
+            ('COMPRAS_ROLES', 'VIEW=VIEW_COMPRAS;ABM=ABM_COMPRAS;ANULAR=ANULAR_COMPRAS;COTIZAR=COTIZAR_COMPRAS;AUTORIZAR=AUTORIZAR_COMPRAS'),
+            ('COMPRAS_RP_COMPROBANTE_INICIAL', 'OTR'),
+            ('COMPRAS_RP_DESCRIPCION_NO_RECUPERABLE', 'NO ES RECUPERABLE'),
+            ('COMPRAS_RP_ERROR_DEFECTO', 'Error de vinculacion no especificado.'),
+            ('COMPRAS_RP_ESTADO_PRESTACION_INICIAL', '0'),
+            ('COMPRAS_RP_FRECUENCIA_INICIAL', 'UNICA'),
+            ('COMPRAS_RP_MAX_ERROR', '2000'),
+            ('COMPRAS_RP_MAX_OBSERVACION', '200'),
+            ('COMPRAS_RP_NO_RECUPERABLE', '2'),
+            ('COMPRAS_RP_RECUPERABLE_INTEGRACION', '3'),
+            ('COMPRAS_RP_RECUPERABLE_SUR', '1'),
+            ('COMPRAS_RP_SUCURSAL_INICIAL', '000'),
+            ('COMPRAS_RP_TIPO_PRESTACION_INICIAL', '1'),
+            ('COMPRAS_RP_VIGENCIA_CONTEXTO_MILLIS', '7200000'),
+            ('COMPRAS_RUBROS_INSUMOS', '6'),
+            ('COMPRAS_RUBROS_PROTESIS', '3;4;5'),
+            ('COMPRAS_SECTORES_BUSQUEDA_SIN_ACENTOS', 'PRESTACIONES MEDICAS'),
+            ('COMPRAS_SECTORES_DESCRIPCION_VISIBLE', 'PRESTACIONES MEDICAS=PRESTACIONES MÉDICAS;ODONTOLOGIA=ODONTOLOGÍA'),
+            ('COMPRAS_SECTORES_DETALLE_OBSERVACION', 'RRHH;LEGALES;SISTEMAS;OTROS'),
+            ('COMPRAS_SECTORES_NO_SELECCIONABLES', 'LEGALES;OTROS'),
+            ('COMPRAS_SECTORES_RP', 'PRESTACIONES MEDICAS=PRESTACIONES MEDICAS;DISCAPACIDAD=DISCAPACIDAD;FARMACIA=FARMACIA;ODONTOLOGIA=ODONTOLOGIA;LEGALES=LEGALES'),
+            ('COMPRAS_SECTORES_SIN_COTIZACION_PRESTADOR', 'RRHH;SISTEMAS'),
+            ('COMPRAS_SECTOR_MEDICO', 'PRESTACIONES MEDICAS'),
+            ('COMPRAS_TIPO_NOMENCLADOR_FARMACIA', '9'),
+            ('COMPRAS_TRANSICIONES_ESTADO', '1=2,99;2=3,99;3=4,99;4=6;6=7')
+        ) AS configuracion(id,valor)
+    LOOP
+        SELECT count(*) INTO cantidad FROM public.system_config WHERE id=fila.id;
+        IF cantidad > 1 OR (cantidad = 1 AND NOT EXISTS (
+                SELECT 1 FROM public.system_config c WHERE c.id=fila.id AND c.valor=fila.valor)) THEN
+            RAISE EXCEPTION 'La clave % cambio o esta duplicada; conservar configuracion y revisar reduccion.', fila.id;
+        END IF;
+    END LOOP;
+    -- La validacion de todas las claves termina antes de retirar la primera.
+    DELETE FROM public.system_config WHERE id IN (
+            'COMPRAS_CANTIDAD_CONCEPTO_AUTOMATICO',
+            'COMPRAS_CANTIDAD_DETALLE_INICIAL',
+            'COMPRAS_CONTACTO_PRIORIDADES_EMAIL',
+            'COMPRAS_CONTACTO_TIPOS_EMAIL',
+            'COMPRAS_ENVIO_ESTADOS_FINALES',
+            'COMPRAS_ENVIO_ESTADOS_REINTENTO',
+            'COMPRAS_ESTADOS_ADMINISTRAR_PRESUPUESTOS',
+            'COMPRAS_ESTADOS_ANULAR',
+            'COMPRAS_ESTADOS_CONSULTAR_RP',
+            'COMPRAS_ESTADOS_CORREGIR_ITEM',
+            'COMPRAS_ESTADOS_DESCRIPCIONES',
+            'COMPRAS_ESTADOS_EDITAR_COTIZACION',
+            'COMPRAS_ESTADOS_EDITAR_ESTRUCTURA',
+            'COMPRAS_ESTADOS_EDITAR_OBSERVACION_INTERNA',
+            'COMPRAS_ESTADOS_EDITAR_SURGE',
+            'COMPRAS_ESTADOS_ELIMINAR_DETALLE',
+            'COMPRAS_ESTADOS_ENVIAR_AUTORIZAR',
+            'COMPRAS_ESTADOS_ENVIAR_COTIZAR',
+            'COMPRAS_ESTADOS_ENVIO',
+            'COMPRAS_ESTADOS_IDS',
+            'COMPRAS_ESTADOS_NOTIFICAR_PRESTADORES',
+            'COMPRAS_ESTADOS_NOTIFICAR_TODOS',
+            'COMPRAS_ESTADOS_PRESTADORES_ENVIADOS',
+            'COMPRAS_ESTADOS_REINTENTAR_NOTIFICACIONES',
+            'COMPRAS_ESTADOS_SOLO_LECTURA',
+            'COMPRAS_ESTADOS_VER_COTIZACION',
+            'COMPRAS_ESTADOS_VER_PRESUPUESTOS',
+            'COMPRAS_FILTROS_NOMENCLADOR',
+            'COMPRAS_LIMITES',
+            'COMPRAS_MAX_ERROR_NOTIFICACION',
+            'COMPRAS_OC_MAX_IMPORTE',
+            'COMPRAS_ROLES',
+            'COMPRAS_RP_COMPROBANTE_INICIAL',
+            'COMPRAS_RP_DESCRIPCION_NO_RECUPERABLE',
+            'COMPRAS_RP_ERROR_DEFECTO',
+            'COMPRAS_RP_ESTADO_PRESTACION_INICIAL',
+            'COMPRAS_RP_FRECUENCIA_INICIAL',
+            'COMPRAS_RP_MAX_ERROR',
+            'COMPRAS_RP_MAX_OBSERVACION',
+            'COMPRAS_RP_NO_RECUPERABLE',
+            'COMPRAS_RP_RECUPERABLE_INTEGRACION',
+            'COMPRAS_RP_RECUPERABLE_SUR',
+            'COMPRAS_RP_SUCURSAL_INICIAL',
+            'COMPRAS_RP_TIPO_PRESTACION_INICIAL',
+            'COMPRAS_RP_VIGENCIA_CONTEXTO_MILLIS',
+            'COMPRAS_RUBROS_INSUMOS',
+            'COMPRAS_RUBROS_PROTESIS',
+            'COMPRAS_SECTORES_BUSQUEDA_SIN_ACENTOS',
+            'COMPRAS_SECTORES_DESCRIPCION_VISIBLE',
+            'COMPRAS_SECTORES_DETALLE_OBSERVACION',
+            'COMPRAS_SECTORES_NO_SELECCIONABLES',
+            'COMPRAS_SECTORES_RP',
+            'COMPRAS_SECTORES_SIN_COTIZACION_PRESTADOR',
+            'COMPRAS_SECTOR_MEDICO',
+            'COMPRAS_TIPO_NOMENCLADOR_FARMACIA',
+            'COMPRAS_TRANSICIONES_ESTADO'
+        );
+END;
+$reducir_configuracion$;
+COMMIT;
