@@ -110,85 +110,105 @@ public class BuscarRequerimientosComprasAction extends PortletAction {
 
             int pagina = Math.max(1, ParamUtil.getInteger(renderRequest, "pagina", 1));
 
-            List<RequerimientoCompra> requerimientos =
-                    BusquedaRequerimientoCompraServiceUtil
-                            .buscarRequerimientosListado(
-                                    filtro,
-                                    incluirReclamoRpEnCotizados,
-                                    pagina
-                            );
-
-            if (pagina > 1 && requerimientos.isEmpty()) {
-                pagina = 1;
-                requerimientos = BusquedaRequerimientoCompraServiceUtil
-                        .buscarRequerimientosListado(filtro, incluirReclamoRpEnCotizados, pagina);
-            }
-            renderRequest.setAttribute(WebKeysCompras.PAGINA_REQUERIMIENTOS_COMPRA,
-                    Integer.valueOf(pagina));
-
-            /*
-             * Id RP debe estar disponible tanto en la solapa general
-             * Requerimientos como en Cotizados.
-             *
-             * Las relaciones se recuperan en una única consulta batch;
-             * no se consulta individualmente desde el JSP.
-             */
-            Map<Integer, RequerimientoCompraReclamoPrestacional> relacionesRp =
-                    cargarRelacionesRpListado(
-                            requerimientos
-                    );
-
-            boolean mostrarIdRpListado = true;
-
+            prepararResultadoBusqueda(renderRequest, filtro,
+                    incluirReclamoRpEnCotizados, pagina);
             cargarCatalogos(renderRequest);
-            setResultadoBusqueda(renderRequest, filtro, requerimientos);
-
-            renderRequest.setAttribute(
-                    ExportarRequerimientosCompraHelper.TOKEN,
-                    ExportarRequerimientosCompraHelper.publicar(
-                            PortalUtil.getHttpServletRequest(renderRequest).getSession(),
-                            user.getUserId(), filtro, incluirReclamoRpEnCotizados,
-                            mostrarIdRpListado, renderRequest.getLocale()
-                    )
-            );
-
-            renderRequest.setAttribute(
-                    WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
-                    Boolean.valueOf(
-                            mostrarIdRpListado
-                    )
-            );
-
-            renderRequest.setAttribute(
-                    WebKeysCompras.RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
-                    relacionesRp
-            );
         } catch (Exception e) {
-            _log.error(e);
-
-            renderRequest.setAttribute(
-                    WebKeysCompras.ERROR_PARA_ALERT,
-                    getMensajeError(e)
-            );
-
-            renderRequest.setAttribute(
-                    WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
-                    Boolean.FALSE
-            );
-
-            renderRequest.setAttribute(
-                    WebKeysCompras.RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
-                    new HashMap<Integer, RequerimientoCompraReclamoPrestacional>()
-            );
-
-            setResultadoBusqueda(
-                    renderRequest,
-                    new RequerimientoCompraFiltro(),
-                    new ArrayList<RequerimientoCompra>()
-            );
+            publicarErrorBusqueda(renderRequest, e);
         }
 
         return mapping.findForward(WebKeysCompras.FORWARD_COMPRAS_RESULT_SEARCH);
+    }
+
+    /* La vista inicial y las busquedas AJAX publican el mismo resultado.
+     * Referencia: Liquidaciones/ViewReintegroEntryAction prepara el request
+     * antes de entregar la vista; no se ejecuta otro render de Struts. */
+    public void prepararResultadoBusqueda(RenderRequest renderRequest,
+            RequerimientoCompraFiltro filtro, boolean incluirReclamoRp,
+            int pagina) throws Exception {
+        User user = PortalUtil.getUser(renderRequest);
+        validarPermisoView(user);
+        renderRequest.setAttribute(ExportarRequerimientosCompraHelper.TOKEN, null);
+
+        List<RequerimientoCompra> requerimientos =
+                BusquedaRequerimientoCompraServiceUtil
+                        .buscarRequerimientosListado(
+                                filtro,
+                                incluirReclamoRp,
+                                pagina
+                        );
+
+        if (pagina > 1 && requerimientos.isEmpty()) {
+            pagina = 1;
+            requerimientos = BusquedaRequerimientoCompraServiceUtil
+                    .buscarRequerimientosListado(filtro, incluirReclamoRp, pagina);
+        }
+        renderRequest.setAttribute(WebKeysCompras.PAGINA_REQUERIMIENTOS_COMPRA,
+                Integer.valueOf(pagina));
+
+        /*
+         * Id RP debe estar disponible tanto en la solapa general
+         * Requerimientos como en Cotizados.
+         *
+         * Las relaciones se recuperan en una única consulta batch;
+         * no se consulta individualmente desde el JSP.
+         */
+        Map<Integer, RequerimientoCompraReclamoPrestacional> relacionesRp =
+                cargarRelacionesRpListado(
+                        requerimientos
+                );
+
+        boolean mostrarIdRpListado = true;
+
+        setResultadoBusqueda(renderRequest, filtro, requerimientos);
+
+        renderRequest.setAttribute(
+                ExportarRequerimientosCompraHelper.TOKEN,
+                ExportarRequerimientosCompraHelper.publicar(
+                        PortalUtil.getHttpServletRequest(renderRequest).getSession(),
+                        user.getUserId(), filtro, incluirReclamoRp,
+                        mostrarIdRpListado, renderRequest.getLocale()
+                )
+        );
+
+        renderRequest.setAttribute(
+                WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
+                Boolean.valueOf(
+                        mostrarIdRpListado
+                )
+        );
+
+        renderRequest.setAttribute(
+                WebKeysCompras.RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
+                relacionesRp
+        );
+    }
+
+    public void publicarErrorBusqueda(RenderRequest renderRequest, Exception e) {
+        _log.error(e);
+
+        renderRequest.setAttribute(ExportarRequerimientosCompraHelper.TOKEN, null);
+
+        renderRequest.setAttribute(
+                WebKeysCompras.ERROR_PARA_ALERT,
+                getMensajeError(e)
+        );
+
+        renderRequest.setAttribute(
+                WebKeysCompras.MOSTRAR_ID_RP_LISTADO,
+                Boolean.FALSE
+        );
+
+        renderRequest.setAttribute(
+                WebKeysCompras.RELACIONES_RECLAMO_PRESTACIONAL_COMPRA,
+                new HashMap<Integer, RequerimientoCompraReclamoPrestacional>()
+        );
+
+        setResultadoBusqueda(
+                renderRequest,
+                new RequerimientoCompraFiltro(),
+                new ArrayList<RequerimientoCompra>()
+        );
     }
 
     private Map<Integer, RequerimientoCompraReclamoPrestacional>

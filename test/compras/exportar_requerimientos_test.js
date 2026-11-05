@@ -7,7 +7,7 @@ var script = source.substring(source.indexOf('<script type="text/javascript">') 
 script = script.replace(/<portlet:namespace\s*\/>/g, 'ns_').replace(/<%=[\s\S]*?%>/g, '');
 var checks = 0;
 function check(value, label) { assert.ok(value, label); checks++; }
-function tab(runReady) {
+function tab(runReady, tokenInicial) {
     var controls = {};
     var pending = [];
     var ready = [];
@@ -32,6 +32,7 @@ function tab(runReady) {
             show: function() { data.visible = true; return this; },
             hide: function() { data.visible = false; return this; },
             each: function() { return this; },
+            bind: function(name, handler) { return bind(name, handler); },
             click: function(handler) { return bind('click', handler); },
             change: function(handler) { return bind('change', handler); },
             keyup: function(handler) { return bind('keyup', handler); },
@@ -68,6 +69,9 @@ function tab(runReady) {
             if (status === 'success') jq('#ns_busquedaRequerimientosDiv .compras-exportacion-token').val(token);
             pending[index].callback('',status);
         }};
+    if (tokenInicial !== undefined) {
+        jq('#ns_busquedaRequerimientosDiv .compras-exportacion-token').val(tokenInicial);
+    }
     if (runReady) ready.forEach(function(callback) { callback(); });
     return result;
 }
@@ -105,8 +109,8 @@ a.c.ns_buscarRequerimientos(); a.finish(4,'','success');
 check(a.jq('#ns_exportar').attr('disabled') === 'disabled', 'HTML de error sin token bloquea');
 a.c.ns_buscarRequerimientos(); a.finish(5,'busqueda-vacia-valida','success');
 check(a.jq('#ns_exportar').attr('disabled') === undefined, 'cero resultados exitosos exportables');
-check(source.indexOf('!estadoForzadoActivo\n                        && ExportarRequerimientosCompraHelper.puedeConsultar(user)') >= 0,
-      'guard de Requerimientos independiente de alta');
+check(/!estadoForzadoActivo\s*&& ExportarRequerimientosCompraHelper\.puedeExportar\(user\)/.test(source),
+      'guard de exportacion de Requerimientos independiente de alta');
 var paginado = tab();
 paginado.jq('#ns_id_requerimiento_compra').val('123');
 paginado.jq('#ns_estado').val('3');
@@ -127,9 +131,33 @@ paginado.c.ns_buscarRequerimientos(-2);
 check(paginado.pending[2].url.indexOf('&pagina=1') >= 0, 'pagina negativa vuelve a primera');
 paginado.c.ns_buscarRequerimientos('invalida');
 check(paginado.pending[3].url.indexOf('&pagina=1') >= 0, 'pagina invalida vuelve a primera');
+var inicial = tab(true, 'token-inicial');
+check(inicial.pending.length === 0, 'resultado inicial no requiere consulta AJAX');
+check(inicial.c.ns_tokenExportacion === 'token-inicial', 'inicializacion conserva token del resultado renderizado');
+check(inicial.jq('#ns_exportar').attr('disabled') === undefined, 'resultado inicial valido permite exportar');
+inicial.c.ns_exportarRequerimientos();
+check(inicial.jq('#ns_descargaRequerimientos').attr('src').indexOf('token-inicial') >= 0,
+      'exporta filtro del resultado inicial');
+inicial.jq('#ns_estado').val('99');
+inicial.trigger('#ns_estado', 'change');
+check(inicial.pending.length === 0, 'editar filtro inicial no consulta');
+check(inicial.c.ns_tokenExportacion === 'token-inicial', 'editar filtro inicial conserva token visible');
 var manual = tab(true);
-check(manual.pending.length === 0, 'inicializacion no realiza consultas AJAX');
+check(manual.pending.length === 0, 'inicializacion sin token no realiza consultas AJAX');
 check(manual.controls['#ns_buscando'].visible === false, 'indicador de busqueda oculto al iniciar');
+check(manual.jq('#ns_exportar').attr('disabled') === 'disabled', 'sin token inicial exportacion bloqueada');
+manual.c.ns_exportarRequerimientos();
+check(manual.jq('#ns_descargaRequerimientos').attr('src') === undefined, 'sin token inicial no descarga');
+check(/id="<portlet:namespace \/>buscando"[^>]*style="display:\s*none;?"/.test(source),
+      'indicador oculto desde HTML inicial');
+['Desde', 'Hasta'].forEach(function(limite) {
+    ['day', 'month', 'year'].forEach(function(componente) {
+        var atributo = {day:'Dia', month:'Mes', year:'Anio'}[componente];
+        var patron = new RegExp(componente + 'Param="fechaAlta' + limite + atributo
+                + '"\\s+' + componente + 'Value="-1"');
+        check(patron.test(source), 'fecha ' + limite + ' ' + componente + ' vacia desde HTML inicial');
+    });
+});
 var filterValues = {
     estado:'3', sector_id:'7', surge:'true', id_tercerizadora_combo:' tercero ',
     id_requerimiento_compra:'123', cuil:' 20000000001 ', inte:'2', tipoDoc:'DNI',

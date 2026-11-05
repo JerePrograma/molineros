@@ -217,13 +217,13 @@ if (tercerizadoras == null) {
             <td>
                 <liferay-ui:input-date
                         dayParam="fechaAltaDesdeDia"
-                        dayValue="<%= fechaAltaDesde.get(Calendar.DATE) %>"
+                        dayValue="-1"
                         dayNullable="<%= true %>"
                         monthParam="fechaAltaDesdeMes"
-                        monthValue="<%= fechaAltaDesde.get(Calendar.MONTH) %>"
+                        monthValue="-1"
                         monthNullable="<%= true %>"
                         yearParam="fechaAltaDesdeAnio"
-                        yearValue="<%= fechaAltaDesde.get(Calendar.YEAR) %>"
+                        yearValue="-1"
                         yearNullable="<%= true %>"
                         yearRangeStart="2025"
                         yearRangeEnd="<%= fechaAltaDesde.get(Calendar.YEAR)%>"
@@ -238,13 +238,13 @@ if (tercerizadoras == null) {
             <td>
                 <liferay-ui:input-date
                         dayParam="fechaAltaHastaDia"
-                        dayValue="<%= fechaAltaHasta.get(Calendar.DATE) %>"
+                        dayValue="-1"
                         dayNullable="<%= true %>"
                         monthParam="fechaAltaHastaMes"
-                        monthValue="<%= fechaAltaHasta.get(Calendar.MONTH) %>"
+                        monthValue="-1"
                         monthNullable="<%= true %>"
                         yearParam="fechaAltaHastaAnio"
-                        yearValue="<%= fechaAltaHasta.get(Calendar.YEAR) %>"
+                        yearValue="-1"
                         yearNullable="<%= true %>"
                         yearRangeStart="2025"
                         yearRangeEnd="<%= fechaAltaHasta.get(Calendar.YEAR)%>"
@@ -552,7 +552,7 @@ if (tercerizadoras == null) {
 
 <fieldset class="block-labels compras-resultados-requerimientos">
     <div align="center"
-         id="<portlet:namespace />buscando">
+         id="<portlet:namespace />buscando" style="display:none;">
 
         <table style="align:center;">
             <tr>
@@ -570,6 +570,16 @@ if (tercerizadoras == null) {
 
     <div align="center"
          id="<portlet:namespace />busquedaRequerimientosDiv">
+        <c:choose>
+            <c:when test="<%= renderRequest.getAttribute(WebKeysCompras.ERROR_PARA_ALERT) != null %>">
+                <div class="portlet-msg-error"><%= HtmlUtil.escape(
+                        (String) renderRequest.getAttribute(WebKeysCompras.ERROR_PARA_ALERT)) %></div>
+            </c:when>
+            <c:otherwise>
+                <liferay-util:include
+                        page="/html/portlet/compras/requerimientos/requerimiento_compra_busqueda_resultado.jsp" />
+            </c:otherwise>
+        </c:choose>
     </div>
 </fieldset>
 
@@ -1654,9 +1664,11 @@ if (tercerizadoras == null) {
             return true;
         });
 
-        <portlet:namespace />limpiarFechasAltaFiltro();
         <portlet:namespace />desbloquearTercerizadoraFiltro(false);
         jQuery('#<portlet:namespace />buscando').hide();
-        <portlet:namespace />buscarRequerimientos();
+        <portlet:namespace />tokenExportacion =
+                jQuery('#<portlet:namespace />busquedaRequerimientosDiv'
+                        + ' .compras-exportacion-token').val();
+        <portlet:namespace />actualizarExportacion('');
     });
 </script>

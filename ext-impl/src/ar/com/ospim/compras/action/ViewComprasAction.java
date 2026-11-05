@@ -3,6 +3,10 @@ package ar.com.ospim.compras.action;
 import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
 import ar.com.ospim.compras.requerimientos.helper.ExportarRequerimientosCompraHelper;
 import ar.com.ospim.compras.requerimientos.action.RequerimientoCompraOrdenAction;
+import ar.com.ospim.compras.requerimientos.action.BuscarRequerimientosComprasAction;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraFiltro;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraEstado;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraOrdenServiceUtil;
 
@@ -81,6 +85,8 @@ public class ViewComprasAction extends PortletAction {
             cargarTercerizadoras(
                     renderRequest
             );
+
+            cargarRequerimientos(renderRequest);
 
             return mapping.findForward(
                     WebKeysCompras.FORWARD_COMPRAS_VIEW
@@ -296,6 +302,85 @@ public class ViewComprasAction extends PortletAction {
         } catch (Exception e) {
             _log.error("No se pudo consultar el listado de ordenes de compra emitidas.", e);
             request.setAttribute("comprasOrdenesError", "No se pudo consultar las ordenes de compra. Verifique la disponibilidad de Compras.");
+        }
+    }
+
+    /* Se consultan los filtros que muestra el listado al abrir la solapa.
+     * Fechas y afiliado se inicializan vacios en esa pantalla. */
+    private void cargarRequerimientos(RenderRequest request) {
+        String tab = (String) request.getAttribute("tabs1");
+        boolean paraAutorizar = "para-autorizar".equals(tab);
+        if (!"requerimientos".equals(tab) && !paraAutorizar) {
+            return;
+        }
+
+        BuscarRequerimientosComprasAction busqueda =
+                new BuscarRequerimientosComprasAction();
+        try {
+            User user = PortalUtil.getUser(request);
+            if (paraAutorizar && (user == null
+                    || !PermissionUtil.userContainsRole(user,
+                            ConfiguracionComprasHelper.getRolAutorizarCompras()))) {
+                throw new SecurityException(
+                        "No posee permisos para autorizar requerimientos de compras.");
+            }
+
+            RequerimientoCompraFiltro filtro = new RequerimientoCompraFiltro();
+            String estado = ParamUtil.getString(request, "estado", "");
+            if (WebKeysCompras.isEmpty(estado)) {
+                estado = String.valueOf(ConfiguracionComprasHelper.getEstadoPendiente());
+            }
+            if (paraAutorizar) {
+                filtro.setIdEstado(Integer.valueOf(
+                        ConfiguracionComprasHelper.getEstadoParaAutorizar()));
+            } else {
+                List<RequerimientoCompraEstado> estados =
+                        (List<RequerimientoCompraEstado>) request.getAttribute(
+                                WebKeysCompras.ESTADOS_REQUERIMIENTO);
+                for (int i = 0; estados != null && i < estados.size(); i++) {
+                    RequerimientoCompraEstado item = estados.get(i);
+                    if (item != null && String.valueOf(item.getIdEstado()).equals(estado)) {
+                        filtro.setIdEstado(Integer.valueOf(item.getIdEstado()));
+                        break;
+                    }
+                }
+            }
+
+            String sector = ParamUtil.getString(request, "sector_id", "0");
+            List<RequerimientoCompraSector> sectores =
+                    (List<RequerimientoCompraSector>) request.getAttribute(
+                            WebKeysCompras.SECTORES_REQUERIMIENTO);
+            for (int i = 0; sectores != null && i < sectores.size(); i++) {
+                RequerimientoCompraSector item = sectores.get(i);
+                if (item != null && String.valueOf(item.getIdSector()).equals(sector)) {
+                    filtro.setIdSector(Integer.valueOf(item.getIdSector()));
+                    break;
+                }
+            }
+
+            filtro.setIdRequerimientoCompra(getEnteroOrdenes(request,
+                    "id_requerimiento_compra", "ID del requerimiento", false));
+            String idTercerizadora = getParametroOrdenes(request, "id_tercerizadora");
+            List<TercerizadoraServicio> tercerizadoras =
+                    (List<TercerizadoraServicio>) request.getAttribute(
+                            "compras.requerimientos.tercerizadoras");
+            for (int i = 0; tercerizadoras != null && i < tercerizadoras.size(); i++) {
+                TercerizadoraServicio item = tercerizadoras.get(i);
+                if (item != null && !WebKeysCompras.isEmpty(idTercerizadora)
+                        && !"0".equals(idTercerizadora)
+                        && idTercerizadora.equalsIgnoreCase(item.getId_tercerizadora())) {
+                    filtro.setIdTercerizadora(idTercerizadora.toUpperCase());
+                    break;
+                }
+            }
+
+            String surge = ParamUtil.getString(request, "surge", "");
+            if ("true".equals(surge) || "false".equals(surge)) {
+                filtro.setSurge(Boolean.valueOf(surge));
+            }
+            busqueda.prepararResultadoBusqueda(request, filtro, false, 1);
+        } catch (Exception e) {
+            busqueda.publicarErrorBusqueda(request, e);
         }
     }
 
