@@ -71,15 +71,20 @@ if (estados == null) {
             new ArrayList<RequerimientoCompraEstado>();
 }
 
+String estadoPendiente =
+        String.valueOf(
+                ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoPendiente()
+        );
+
 String estadoFiltro =
         ParamUtil.getString(
                 renderRequest,
                 "estado",
-                "0"
+                estadoPendiente
         );
 
 if (WebKeysCompras.isEmpty(estadoFiltro)) {
-    estadoFiltro = "0";
+    estadoFiltro = estadoPendiente;
 }
 
 if (estadoForzadoActivo) {
@@ -1652,5 +1657,6 @@ if (tercerizadoras == null) {
         <portlet:namespace />limpiarFechasAltaFiltro();
         <portlet:namespace />desbloquearTercerizadoraFiltro(false);
         jQuery('#<portlet:namespace />buscando').hide();
+        <portlet:namespace />buscarRequerimientos();
     });
 </script>
