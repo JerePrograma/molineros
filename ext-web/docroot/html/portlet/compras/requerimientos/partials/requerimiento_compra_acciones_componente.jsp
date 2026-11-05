@@ -350,6 +350,7 @@ String botoneraReclamoPrestacionalFormId =
         || botoneraPuedeVerReclamoPrestacional) { %>
     <form action="<%= botoneraReclamoPrestacionalURL.toString() %>"
           method="post"
+          target="_blank"
           id="<%= botoneraReclamoPrestacionalFormId %>"
           style="display:none;">
         <input type="hidden"
@@ -446,14 +447,14 @@ String botoneraReclamoPrestacionalFormId =
                 <input type="button"
                        id="<portlet:namespace />btnCrearReclamoPrestacional"
                        value="Crear Reclamo Prestacional"
-                       onClick="return <portlet:namespace />enviarOperacionCompra(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>'), {boton: this});" />
+                       onClick="document.getElementById('<%= botoneraReclamoPrestacionalFormId %>').submit(); return false;" />
             <% } %>
 
             <% if (botoneraPuedeVerReclamoPrestacional) { %>
                 <input type="button"
                        id="<portlet:namespace />btnVerReclamoPrestacional"
                        value="Ver Reclamo Prestacional"
-                       onClick="return <portlet:namespace />enviarOperacionCompra(document.getElementById('<%= botoneraReclamoPrestacionalFormId %>'), {boton: this});" />
+                       onClick="document.getElementById('<%= botoneraReclamoPrestacionalFormId %>').submit(); return false;" />
             <% } %>
 
             <% if (botoneraReclamoEnProceso
