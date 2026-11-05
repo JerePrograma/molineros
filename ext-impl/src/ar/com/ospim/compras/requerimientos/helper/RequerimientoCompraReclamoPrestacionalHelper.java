@@ -21,6 +21,11 @@ import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPre
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.security.permission.PermissionChecker;
+import com.liferay.portal.security.auth.PrincipalException;
+import com.liferay.portal.security.permission.ActionKeys;
+import com.liferay.portlet.documentlibrary.model.DLFileEntry;
+import com.liferay.portlet.documentlibrary.service.permission.DLFileEntryPermission;
+import ar.com.ospim.util.PermissionUtil;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -223,7 +228,7 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         return r!=null&&r.isError()&&r.getIdReclamoPrestacionalInt()==reclamo;
     }
 
-    /** Genera una sola copia y sincroniza el adjunto del RP si cambio. */
+    /** Imprime el adjunto existente; solo ABM puede generarlo y sincronizarlo. */
     public byte[] imprimirComparativa(
             int idRequerimientoCompra,
             User user,
@@ -233,6 +238,50 @@ public final class RequerimientoCompraReclamoPrestacionalHelper {
         validarIdRequerimiento(idRequerimientoCompra);
         RequerimientoCompraReclamoPrestacional relacion =
                 obtenerPorRequerimiento(idRequerimientoCompra);
+        if (user == null || !PermissionUtil.userContainsRole(
+                user, ConfiguracionComprasHelper.getRolAbmCompras())) {
+            if (user == null || serviceContext == null || permissionChecker == null
+                    || user.getUserId() != serviceContext.getUserId()
+                    || user.getCompanyId() != serviceContext.getCompanyId()
+                    || permissionChecker.getUserId() != user.getUserId()) {
+                throw new PrincipalException();
+            }
+            if (relacion == null || !relacion.isVinculado()
+                    || relacion.getIdRequerimientoCompra() != idRequerimientoCompra
+                    || relacion.getBajaFecha() != null) {
+                throw new IllegalArgumentException(
+                        "No hay una comparativa disponible para imprimir.");
+            }
+            ReclamoPrestacional reclamo = ReclamosPrestacionesServiceUtil
+                    .getReclamoPrestacional(relacion.getIdReclamoPrestacionalInt());
+            if (reclamo == null
+                    || reclamo.getId_reclamo() != relacion.getIdReclamoPrestacionalInt()
+                    || reclamo.getBaja_fecha() != null) {
+                throw new IllegalArgumentException(
+                        "El RP de la comparativa no existe o no esta activo.");
+            }
+            DLFileEntry documento = DocumentoLibraryComprasHelper
+                    .obtenerComparativaReclamoPrestacional(
+                            idRequerimientoCompra, relacion.getIdReclamoPrestacionalInt(),
+                            serviceContext.getScopeGroupId());
+            if (documento == null) {
+                throw new IllegalArgumentException(
+                        "No hay una comparativa disponible para imprimir.");
+            }
+            if (documento.getCompanyId() != serviceContext.getCompanyId()) {
+                throw new PrincipalException();
+            }
+            DLFileEntryPermission.check(permissionChecker, documento.getFolderId(),
+                    documento.getName(), ActionKeys.VIEW);
+            byte[] contenido = DocumentoLibraryComprasHelper.leerContenidoDocumentLibrary(documento);
+            if (contenido == null || contenido.length < 5
+                    || contenido[0] != '%' || contenido[1] != 'P'
+                    || contenido[2] != 'D' || contenido[3] != 'F'
+                    || contenido[4] != '-') {
+                throw new Exception("La comparativa no contiene un PDF valido.");
+            }
+            return contenido;
+        }
         if (relacion == null || !relacion.isVinculado()) {
             return new PdfServlet().crearComparativaCompraComoAdjunto(
                     idRequerimientoCompra);

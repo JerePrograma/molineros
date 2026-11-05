@@ -1,3 +1,17 @@
+import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
+import ar.com.ospim.autorizaciones.services.ReclamoPrestacionServiceImpl;
+import ar.com.ospim.autorizaciones.services.ReclamosPrestacionesServiceUtil;
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraReclamoPrestacionalHelper;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceImpl;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
+import ar.com.ospim.util.ConnectionHelper;
+import com.liferay.portal.model.Role;
+import com.liferay.portal.model.User;
+import com.liferay.portal.model.impl.RoleImpl;
+import com.liferay.portal.model.impl.UserImpl;
+import com.mchange.v2.c3p0.PooledDataSource;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativaDetalle;
@@ -52,6 +66,13 @@ public class ComprasComparativaSincronizacionTest {
     private static final String TITULO = "68180-ComparativaCompra_1376";
 
     public static void main(String[] args) throws Exception {
+        ComprasFuenteDatosFixture configuracion = new ComprasFuenteDatosFixture() {
+            public RequerimientoCompra getRequerimientoCompra(int id) {
+                throw new AssertionError("Imprimir sin ABM no debe cargar datos para generar PDF.");
+            }
+        };
+        configuracion.cargarConfiguracionPrueba();
+        configuracion.instalar();
         Fixture normal = fixture(2, 3, false);
         byte[] correcto = generar(normal);
         byte[] erroneo = generar(fixture(2, 3, true));
@@ -100,6 +121,7 @@ public class ComprasComparativaSincronizacionTest {
         rechazarComparacion(null, correcto, "PDF_ANTERIOR_NULO");
         rechazarComparacion(correcto, pdfVacio(), "PDF_SIN_TEXTO");
         probarActualizacion(erroneo, correcto, otraMetadata);
+        probarImpresionSoloLectura(erroneo, correcto);
         System.out.println("COMPARATIVA_SINCRONIZACION_OK pruebas=" + pruebas);
     }
 
@@ -309,6 +331,135 @@ public class ComprasComparativaSincronizacionTest {
         aprobado(caso);
     }
 
+    /** Adapta usuarioConRoles de ComprasRolesPermisosTest y la frontera DL existente. */
+    private static void probarImpresionSoloLectura(byte[] guardado, byte[] distinto) throws Exception {
+        verificar(!Arrays.equals(guardado, distinto), "El PDF persistido debe diferir del recalculado.");
+        ClassLoader loaderAnterior = PortalClassLoaderUtil.getClassLoader();
+        PortalClassLoaderUtil.setClassLoader(ComprasComparativaSincronizacionTest.class.getClassLoader());
+        final BibliotecaFake fake = new BibliotecaFake(guardado);
+        fake.permiteActualizar = false;
+        final RequerimientoCompraReclamoPrestacional[] relacion = {new RequerimientoCompraReclamoPrestacional()};
+        relacion[0].setIdRequerimientoCompra(1376);
+        relacion[0].setIdReclamoPrestacional(Integer.valueOf(68180));
+        relacion[0].setEstado(WebKeysCompras.VINCULO_RECLAMO_VINCULADO);
+        final ReclamoPrestacional rp = new ReclamoPrestacional();
+        rp.setId(68180);
+        final int[] conexiones = {0};
+        Object archivo = reemplazarServicio(DLFileEntryLocalServiceUtil.class, proxy(DLFileEntryLocalService.class, fake));
+        Object carpeta = reemplazarServicio(DLFolderLocalServiceUtil.class, proxy(DLFolderLocalService.class, fake));
+        Object contenido = reemplazarServicio(DLLocalServiceUtil.class, proxy(DLLocalService.class, fake));
+        Object persistencia = reemplazarCampo(RequerimientoCompraReclamoPrestacionalServiceUtil.class, "instance",
+                new RequerimientoCompraReclamoPrestacionalServiceImpl() {
+                    public RequerimientoCompraReclamoPrestacional obtenerPorRequerimiento(int id) {
+                        if (id != 1376) throw new AssertionError("Consulto otro requerimiento.");
+                        return relacion[0];
+                    }
+                });
+        Object reclamos = reemplazarCampo(ReclamosPrestacionesServiceUtil.class, "instance",
+                new ReclamoPrestacionServiceImpl() {
+                    public ReclamoPrestacional getReclamoPrestacional(int id) {
+                        if (id != 68180) throw new AssertionError("Consulto otro RP.");
+                        return rp;
+                    }
+                });
+        Object datos = reemplazarCampo(ConnectionHelper.class, "datasource", proxy(PooledDataSource.class,
+                new InvocationHandler() {
+                    public Object invoke(Object obj, Method method, Object[] args) {
+                        if ("getConnection".equals(method.getName())) {
+                            conexiones[0]++;
+                            throw new AssertionError("Imprimir sin ABM no debe abrir una transaccion ni generar PDF.");
+                        }
+                        return valorDefecto(method.getReturnType());
+                    }
+                }));
+        try {
+            String[] roles = {"VIEW_COMPRAS", "COTIZAR_COMPRAS", "AUTORIZAR_COMPRAS", "ANULAR_COMPRAS"};
+            for (int i = 0; i < roles.length; i++) {
+                byte[] resultado = imprimir(usuario(roles[i]), fake);
+                verificar(Arrays.equals(guardado, resultado), "Regenero el archivo para " + roles[i]);
+                verificar(fake.actualizaciones == 0 && fake.altas == 0 && fake.version == 1D
+                        && !fake.permisos.contains("UPDATE") && conexiones[0] == 0,
+                        "Imprimir sin ABM altero el documento o abrio una transaccion.");
+                aprobado(roles[i] + "_IMPRIME_BYTES_EXISTENTES_SIN_ESCRIBIR");
+            }
+            int lecturas = fake.lecturas;
+            fake.permiteVer = false;
+            rechazarImpresion(usuario("VIEW_COMPRAS"), fake, "IMPRESION_SIN_VIEW_RECHAZADA");
+            verificar(fake.lecturas == lecturas, "Leyo el PDF sin VIEW.");
+            fake.permiteVer = true;
+            fake.existeDocumento = false;
+            rechazarImpresion(usuario("VIEW_COMPRAS"), fake, "IMPRESION_SIN_DOCUMENTO_NO_GENERA");
+            fake.existeDocumento = true;
+            RequerimientoCompraReclamoPrestacional anterior = relacion[0];
+            relacion[0] = null;
+            rechazarImpresion(usuario("VIEW_COMPRAS"), fake, "IMPRESION_SIN_VINCULO_NO_GENERA");
+            relacion[0] = anterior;
+            relacion[0].setBajaFecha(new Date());
+            rechazarImpresion(usuario("VIEW_COMPRAS"), fake, "IMPRESION_VINCULO_BAJA_RECHAZADA");
+            relacion[0].setBajaFecha(null);
+            rp.setBaja_fecha(new Date());
+            rechazarImpresion(usuario("VIEW_COMPRAS"), fake, "IMPRESION_RP_BAJA_RECHAZADA");
+            rp.setBaja_fecha(null);
+            User usuario = usuario("VIEW_COMPRAS");
+            usuario.setCompanyId(ID_COMPANIA + 1L);
+            rechazarImpresion(usuario, fake, "IMPRESION_COMPANIA_DISTINTA_RECHAZADA");
+            fake.companiaDocumento = ID_COMPANIA + 1L;
+            rechazarImpresion(usuario("VIEW_COMPRAS"), fake, "IMPRESION_DOCUMENTO_OTRA_COMPANIA_RECHAZADA");
+            fake.companiaDocumento = ID_COMPANIA;
+            fake.checkerUsuario = ID_USUARIO + 1L;
+            rechazarImpresion(usuario("VIEW_COMPRAS"), fake, "IMPRESION_CHECKER_DISTINTO_RECHAZADA");
+            fake.checkerUsuario = ID_USUARIO;
+            fake.contenido = new byte[] {1, 2, 3};
+            rechazarImpresion(usuario("VIEW_COMPRAS"), fake, "IMPRESION_PDF_INVALIDO_RECHAZADA");
+            fake.contenido = guardado;
+            verificar(fake.actualizaciones == 0 && fake.altas == 0 && fake.version == 1D
+                    && conexiones[0] == 0, "Un rechazo genero PDF, escribio o abrio transaccion.");
+        } finally {
+            reemplazarServicio(DLFileEntryLocalServiceUtil.class, archivo);
+            reemplazarServicio(DLFolderLocalServiceUtil.class, carpeta);
+            reemplazarServicio(DLLocalServiceUtil.class, contenido);
+            reemplazarCampo(RequerimientoCompraReclamoPrestacionalServiceUtil.class, "instance", persistencia);
+            reemplazarCampo(ReclamosPrestacionesServiceUtil.class, "instance", reclamos);
+            reemplazarCampo(ConnectionHelper.class, "datasource", datos);
+            PortalClassLoaderUtil.setClassLoader(loaderAnterior);
+        }
+    }
+
+    private static User usuario(String nombre) {
+        final List<Role> roles = new ArrayList<Role>();
+        Role rol = new RoleImpl();
+        rol.setName(nombre);
+        roles.add(rol);
+        User user = new UserImpl() { public List<Role> getRoles() { return roles; } };
+        user.setUserId(ID_USUARIO);
+        user.setCompanyId(ID_COMPANIA);
+        return user;
+    }
+
+    private static byte[] imprimir(User user, BibliotecaFake fake) throws Exception {
+        ServiceContext contexto = new ServiceContext();
+        contexto.setCompanyId(ID_COMPANIA);
+        contexto.setScopeGroupId(ID_GRUPO);
+        contexto.setUserId(ID_USUARIO);
+        PermissionChecker checker = (PermissionChecker) proxy(PermissionChecker.class, fake.permiso);
+        return new RequerimientoCompraReclamoPrestacionalHelper().imprimirComparativa(1376, user, contexto, checker);
+    }
+
+    private static void rechazarImpresion(User user, BibliotecaFake fake, String caso) throws Exception {
+        boolean rechazado = false;
+        try { imprimir(user, fake); } catch (Exception expected) { rechazado = true; }
+        verificar(rechazado, "No rechazo " + caso);
+        aprobado(caso);
+    }
+
+    private static Object reemplazarCampo(Class tipo, String nombre, Object valor) throws Exception {
+        Field campo = tipo.getDeclaredField(nombre);
+        campo.setAccessible(true);
+        Object anterior = campo.get(null);
+        campo.set(null, valor);
+        return anterior;
+    }
+
     private static Object reemplazarServicio(Class tipo, Object servicio) throws Exception {
         Field campo = tipo.getDeclaredField("_service");
         campo.setAccessible(true);
@@ -323,6 +474,8 @@ public class ComprasComparativaSincronizacionTest {
 
     private static final class BibliotecaFake implements InvocationHandler {
         private byte[] contenido;
+        private long checkerUsuario = ID_USUARIO;
+        private long companiaDocumento = ID_COMPANIA;
         private boolean permiteVer = true;
         private boolean permiteActualizar = true;
         private boolean existeDocumento = true;
@@ -348,7 +501,7 @@ public class ComprasComparativaSincronizacionTest {
                     if ("getFileEntryId".equals(nombre) || "getPrimaryKey".equals(nombre)) return Long.valueOf(identidadAlterada ? ID_DOCUMENTO + 1L : ID_DOCUMENTO);
                     if ("getFolderId".equals(nombre)) return Long.valueOf(ID_CARPETA);
                     if ("getGroupId".equals(nombre)) return Long.valueOf(ID_GRUPO);
-                    if ("getCompanyId".equals(nombre)) return Long.valueOf(ID_COMPANIA);
+                    if ("getCompanyId".equals(nombre)) return Long.valueOf(companiaDocumento);
                     if ("getUserId".equals(nombre)) return Long.valueOf(ID_USUARIO);
                     if ("getName".equals(nombre)) return NOMBRE;
                     if ("getTitle".equals(nombre)) return identidadAlterada ? TITULO + "-alterado" : TITULO;
@@ -373,7 +526,7 @@ public class ComprasComparativaSincronizacionTest {
             permiso = new InvocationHandler() {
                 public Object invoke(Object obj, Method method, Object[] args) {
                     String nombre = method.getName();
-                    if ("getUserId".equals(nombre)) return Long.valueOf(ID_USUARIO);
+                    if ("getUserId".equals(nombre)) return Long.valueOf(checkerUsuario);
                     if ("getCompanyId".equals(nombre)) return Long.valueOf(ID_COMPANIA);
                     if ("hasOwnerPermission".equals(nombre)) return Boolean.FALSE;
                     if ("hasPermission".equals(nombre)) {

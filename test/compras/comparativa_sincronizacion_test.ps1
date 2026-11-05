@@ -18,6 +18,7 @@ $sources = @(
     'ext-impl\src\ar\com\ospim\compras\requerimientos\documentos\DocumentoLibraryComprasHelper.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\helper\RequerimientoCompraReclamoPrestacionalHelper.java',
     'ext-impl\src\ar\com\ospim\servlets\PdfServlet.java',
+    'test\compras\fixtures\datos\ComprasFuenteDatosFixture.java',
     'test\compras\ComprasComparativaSincronizacionTest.java'
 ) | ForEach-Object { Join-Path $repoPath $_ }
 $initialLog = 'Sin log de Tomcat disponible; pruebas offline sin iniciar el servidor.'
@@ -30,9 +31,9 @@ if (Test-Path -LiteralPath $logPath) {
     ('Inicio UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss')),
     ('Inicio Argentina: ' + [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, 'Argentina Standard Time').ToString('yyyy-MM-dd HH:mm:ss')),
     ('HEAD inicial: ' + $initialHead),
-    'Estado inicial: imprimir comparativa genera un PDF nuevo sin renovar el adjunto ya persistido del RP.',
+    'Estado inicial del defecto: imprimir sin ABM entra al flujo de generacion y sincronizacion del adjunto del RP.',
     ('Log inicial: ' + $initialLog),
-    'Pruebas: plantilla Jasper real, cantidades erroneas/corregidas, metadata distinta, importes/impuestos, multipagina, DL con fixtures, permisos e idempotencia. Sin DB externa.'
+    'Pruebas: Jasper real, importes, multipagina, DL con fixtures, permisos, idempotencia e impresion solo lectura sin generar ni abrir transacciones. Sin DB externa.'
 ), $latinEncoding)
 $sourcepath = @('ext-impl\src', 'ext-service\src', 'ext-web\docroot\WEB-INF\src') | ForEach-Object { Join-Path $repoPath $_ }
 $compileOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\javac.exe' '-encoding' 'ISO-8859-1' '-source' '1.5' '-target' '1.5' '-classpath' $classpath '-sourcepath' ($sourcepath -join ';') '-d' $classOutput @sources 2>&1 | ForEach-Object { $_.ToString() })
