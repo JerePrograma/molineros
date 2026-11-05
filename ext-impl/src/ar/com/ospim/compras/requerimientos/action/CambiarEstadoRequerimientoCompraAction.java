@@ -1,6 +1,9 @@
 package ar.com.ospim.compras.requerimientos.action;
 
 import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
+import ar.com.ospim.compras.requerimientos.helper.NotificarAutorizacionCompraHelper;
+import com.liferay.portal.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import ar.com.ospim.compras.WebKeysCompras;
 
@@ -224,10 +227,10 @@ public class CambiarEstadoRequerimientoCompraAction
                         user
                 );
 
-                requerimientoHelper.cambiarEstado(
+                new NotificarAutorizacionCompraHelper().enviarAAutorizar(
                         idRequerimientoCompra,
-                        ConfiguracionComprasHelper.getEstadoParaAutorizar(),
-                        usuario
+                        usuario,
+                        (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY)
                 );
 
                 SessionMessages.add(
