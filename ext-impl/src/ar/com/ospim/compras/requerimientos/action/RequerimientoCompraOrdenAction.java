@@ -224,6 +224,12 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
         for (int i = 0; i < campos.length; i++) {
             entrada.put(campos[i], ParamUtil.getString(request, campos[i]));
         }
+        String[] encuesta = { "suministro_recepcion", "suministro_satisfaccion" };
+        for (int i = 0; i < encuesta.length; i++) {
+            if (request.getParameter(encuesta[i]) != null) {
+                entrada.put(encuesta[i], ParamUtil.getString(request, encuesta[i]));
+            }
+        }
         String fecha = "";
         if (entrada.get("contactoDia").length() > 0 || entrada.get("contactoMes").length() > 0
                 || entrada.get("contactoAnio").length() > 0) {

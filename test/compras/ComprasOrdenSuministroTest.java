@@ -37,7 +37,7 @@ public class ComprasOrdenSuministroTest {
     private static int checks;
     public static void main(String[] args) throws Exception {
         ComprasFuenteDatosFixture configuracion=new ComprasFuenteDatosFixture();configuracion.cargarConfiguracionPrueba();configuracion.instalar();
-        carga(); validaciones(); guardado(); action();
+        carga(); validaciones(); guardado(); encuesta(); action();
         System.out.println("COMPRAS_ORDEN_SUMINISTRO_OFFLINE_OK checks=" + checks);
         System.out.println("Sin base, portal ni datos reales; validaciones y coordinacion productivas.");
     }
@@ -119,6 +119,68 @@ public class ComprasOrdenSuministroTest {
         igual("rollback fallo SQL",Integer.valueOf(1),Integer.valueOf(m.rollbacks));comprobar("fallo no deja fila",m.fila==null);
     }
 
+    private static void encuesta() throws Exception {
+        String[] recepciones = { "", "SI", "PARCIALMENTE", "NO" };
+        String[] satisfacciones = { "", "MUY_SATISFECHO", "SATISFECHO", "NEUTRAL",
+                "INSATISFECHO", "MUY_INSATISFECHO" };
+        for (int i = 0; i < recepciones.length; i++) {
+            for (int j = 0; j < satisfacciones.length; j++) {
+                Modelo m = new Modelo();
+                RequerimientoCompraOrdenSuministro s = m.guardarSuministro(40, 900, 0,
+                        entradaEncuesta(recepciones[i], satisfacciones[j]), "gestor_encuesta");
+                igual("recepcion roundtrip " + i + "/" + j, recepciones[i], s.getRecepcionSuministro());
+                igual("satisfaccion roundtrip " + i + "/" + j, satisfacciones[j], s.getSatisfaccionEntrega());
+                comprobar("encuesta nueva no inventa respuesta previa", s.getRespuesta1() == null);
+            }
+        }
+        String[] invalidas = { "TAL_VEZ", "NO_CORRESPONDE", "SATISFECHO", repetir(16) };
+        for (int i = 0; i < invalidas.length; i++) {
+            rechazo("recepcion invalida " + i, new Modelo(), 40, 900, 0,
+                    entradaEncuesta(invalidas[i], "NEUTRAL"));
+        }
+        invalidas = new String[] { "TAL_VEZ", "SI", "PARCIALMENTE", repetir(21) };
+        for (int i = 0; i < invalidas.length; i++) {
+            rechazo("satisfaccion invalida " + i, new Modelo(), 40, 900, 0,
+                    entradaEncuesta("SI", invalidas[i]));
+        }
+        Map<String, String> incompleta = entradaEncuesta("", "");
+        incompleta.remove("suministro_satisfaccion");
+        rechazo("encuesta sin parametro satisfaccion", new Modelo(), 40, 900, 0, incompleta);
+        incompleta = entradaEncuesta("", ""); incompleta.remove("suministro_recepcion");
+        rechazo("encuesta sin parametro recepcion", new Modelo(), 40, 900, 0, incompleta);
+        Modelo m = new Modelo(); m.guardarSuministro(40, 900, 0, entrada(), "gestor_anterior");
+        String[] previas = { "SI", "NO", "NO_CORRESPONDE", "", "SI" };
+        Map<String, String> nueva = entradaEncuesta(" PARCIALMENTE ", " MUY_INSATISFECHO ");
+        for (int i = 1; i <= 5; i++) nueva.put("suministro_pregunta_" + i, "MANIPULADA");
+        RequerimientoCompraOrdenSuministro s = m.guardarSuministro(40, 900, 1, nueva, "gestor_nuevo");
+        igual("recepcion normalizada", "PARCIALMENTE", s.getRecepcionSuministro());
+        igual("satisfaccion normalizada", "MUY_INSATISFECHO", s.getSatisfaccionEntrega());
+        String[] actuales = { s.getRespuesta1(), s.getRespuesta2(), s.getRespuesta3(),
+                s.getRespuesta4(), s.getRespuesta5() };
+        for (int i = 0; i < previas.length; i++) igual("historico no reinterpretado " + i, previas[i], actuales[i]);
+        s = m.guardarSuministro(40, 900, 2, entrada(), "formulario_anterior");
+        igual("flujo anterior conserva recepcion", "PARCIALMENTE", s.getRecepcionSuministro());
+        igual("flujo anterior conserva satisfaccion", "MUY_INSATISFECHO", s.getSatisfaccionEntrega());
+        s = m.guardarSuministro(40, 900, 3, entradaEncuesta("", ""), "gestor_nuevo");
+        comprobar("recepcion opcional se puede borrar", vacio(s.getRecepcionSuministro()));
+        comprobar("satisfaccion opcional se puede borrar", vacio(s.getSatisfaccionEntrega()));
+        igual("borrado encuesta conserva respuesta previa", "NO", s.getRespuesta2());
+        m.fila.put("recepcion_suministro", "NEUTRAL");
+        boolean fallo = false; try { m.cargarSuministro(m.orden); }
+        catch (IllegalArgumentException e) { fallo = true; }
+        comprobar("carga rechaza recepcion corrupta", fallo);
+        m.fila.put("recepcion_suministro", "SI"); m.fila.put("satisfaccion_entrega", "NO");
+        fallo = false; try { m.cargarSuministro(m.orden); }
+        catch (IllegalArgumentException e) { fallo = true; }
+        comprobar("carga rechaza satisfaccion corrupta", fallo);
+    }
+
+    static Map<String, String> entradaEncuesta(String recepcion, String satisfaccion) {
+        Map<String, String> e = new HashMap<String, String>();
+        e.put("suministro_recepcion", recepcion); e.put("suministro_satisfaccion", satisfaccion);
+        return e;
+    }
+
     private static void action() throws Exception {
         String[][] roles={{"GESTION_COMPRAS"},{"ABM_COMPRAS","GESTION_COMPRAS"}};
         for(int i=0;i<roles.length;i++){
@@ -128,8 +190,22 @@ public class ComprasOrdenSuministroTest {
             igual("Action vista suministro "+i,"1",p.render.get("gestion_suministro"));
             igual("Action fecha de tags "+i,"03/11/2026",a.modelo.entrada.get("fecha_contacto"));
             igual("Action actor autenticado "+i,"gestor_fixture",a.modelo.actor);
+            comprobar("Action anterior no inyecta recepcion " + i, !a.modelo.entrada.containsKey("suministro_recepcion"));
+            comprobar("Action anterior no inyecta satisfaccion " + i, !a.modelo.entrada.containsKey("suministro_satisfaccion"));
             Peticion repetida=peticion();repetida.parametros.putAll(p.parametros);repetida.sesion.putAll(p.sesion);a.ejecutar(repetida);igual("Action doble envio sin guardar "+i,Integer.valueOf(1),Integer.valueOf(a.modelo.guardados));comprobar("Action repetido sin falso exito "+i,!Boolean.TRUE.equals(repetida.atributos.get("ordenSuministroGuardado")));
         }
+        Accion encuestaAction = new Accion(new String[]{"GESTION_COMPRAS"});
+        Peticion encuestaPeticion = peticion();
+        encuestaPeticion.parametros.put("suministro_recepcion", "PARCIALMENTE");
+        encuestaPeticion.parametros.put("suministro_satisfaccion", "MUY_INSATISFECHO");
+        token(encuestaPeticion); encuestaAction.ejecutar(encuestaPeticion);
+        igual("Action nueva recepcion", "PARCIALMENTE", encuestaAction.modelo.entrada.get("suministro_recepcion"));
+        igual("Action nueva satisfaccion", "MUY_INSATISFECHO", encuestaAction.modelo.entrada.get("suministro_satisfaccion"));
+        encuestaAction = new Accion(new String[]{"GESTION_COMPRAS"}); encuestaPeticion = peticion();
+        encuestaPeticion.parametros.put("suministro_recepcion", ""); token(encuestaPeticion);
+        encuestaAction.ejecutar(encuestaPeticion);
+        comprobar("Action distingue parametro presente vacio", encuestaAction.modelo.entrada.containsKey("suministro_recepcion"));
+        comprobar("Action conserva parametro ausente", !encuestaAction.modelo.entrada.containsKey("suministro_satisfaccion"));
         String[][] rechazados={{"ABM_COMPRAS"},{"VIEW_COMPRAS"},{"GESTION_COMPRAS_OTRO"},{}};
         for(int i=0;i<rechazados.length;i++){Accion a=new Accion(rechazados[i]);Peticion p=peticion();token(p);a.ejecutar(p);igual("Action rol rechazado "+i,Integer.valueOf(0),Integer.valueOf(a.modelo.guardados));comprobar("Action informa error permiso "+i,p.atributos.get("ordenSuministroError")!=null||p.atributos.get("ordenCompraError")!=null);}
         Accion a=new Accion(new String[]{"GESTION_COMPRAS"});Peticion p=peticion();a.ejecutar(p);igual("Action token omitido",Integer.valueOf(0),Integer.valueOf(a.modelo.guardados));
@@ -178,16 +254,16 @@ public class ComprasOrdenSuministroTest {
         private int escribir(String sql,Map<Integer,Object> p)throws Exception{
             if(falloEscritura)throw new SQLException("Fallo SQL sintetico suministro","22001");
             if(sql.startsWith("INSERT INTO compras.requerimiento_orden_compra_suministro")){
-                escrituras++;fila=fila("id_orden_compra",p.get(Integer.valueOf(1)),"alta_fecha",new Date(),"alta_usr",p.get(Integer.valueOf(11)),"version_edicion",Integer.valueOf(1));asignar(p,2);return 1;
+                escrituras++;fila=fila("id_orden_compra",p.get(Integer.valueOf(1)),"alta_fecha",new Date(),"alta_usr",p.get(Integer.valueOf(13)),"version_edicion",Integer.valueOf(1));asignar(p,2);return 1;
             }
             if(sql.startsWith("UPDATE compras.requerimiento_orden_compra_suministro")){
-                if(fila==null||!fila.get("version_edicion").equals(p.get(Integer.valueOf(12))))return 0;
-                escrituras++;asignar(p,1);fila.put("modi_usr",p.get(Integer.valueOf(10)));fila.put("modi_fecha",new Date());fila.put("version_edicion",Integer.valueOf(((Integer)fila.get("version_edicion")).intValue()+1));return 1;
+                if(fila==null||!fila.get("version_edicion").equals(p.get(Integer.valueOf(14))))return 0;
+                escrituras++;asignar(p,1);fila.put("modi_usr",p.get(Integer.valueOf(12)));fila.put("modi_fecha",new Date());fila.put("version_edicion",Integer.valueOf(((Integer)fila.get("version_edicion")).intValue()+1));return 1;
             }
             throw new SQLException("Escritura inesperada de fixture suministro.");
         }
-        private void asignar(Map<Integer,Object> p,int inicio){String[] c={"fecha_contacto","persona_contactada","medio_contacto","detalle","respuesta_1","respuesta_2","respuesta_3","respuesta_4","respuesta_5"};for(int i=0;i<c.length;i++)fila.put(c[i],p.get(Integer.valueOf(inicio+i)));}
-        private RequerimientoCompraOrdenSuministro convertir(Map<String,Object> f){if(f==null)return null;RequerimientoCompraOrdenSuministro s=new RequerimientoCompraOrdenSuministro();s.setIdOrdenCompra(((Integer)f.get("id_orden_compra")).intValue());s.setVersionEdicion(((Integer)f.get("version_edicion")).intValue());s.setPersonaContactada((String)f.get("persona_contactada"));s.setRespuesta1((String)f.get("respuesta_1"));return s;}
+        private void asignar(Map<Integer,Object> p,int inicio){String[] c={"fecha_contacto","persona_contactada","medio_contacto","detalle","respuesta_1","respuesta_2","respuesta_3","respuesta_4","respuesta_5","recepcion_suministro","satisfaccion_entrega"};for(int i=0;i<c.length;i++)fila.put(c[i],p.get(Integer.valueOf(inicio+i)));}
+        private RequerimientoCompraOrdenSuministro convertir(Map<String,Object> f){if(f==null)return null;RequerimientoCompraOrdenSuministro s=new RequerimientoCompraOrdenSuministro();s.setIdOrdenCompra(((Integer)f.get("id_orden_compra")).intValue());s.setVersionEdicion(((Integer)f.get("version_edicion")).intValue());s.setPersonaContactada((String)f.get("persona_contactada"));s.setRespuesta1((String)f.get("respuesta_1"));s.setRespuesta2((String)f.get("respuesta_2"));s.setRespuesta3((String)f.get("respuesta_3"));s.setRespuesta4((String)f.get("respuesta_4"));s.setRespuesta5((String)f.get("respuesta_5"));s.setRecepcionSuministro((String)f.get("recepcion_suministro"));s.setSatisfaccionEntrega((String)f.get("satisfaccion_entrega"));return s;}
     }
 
     private static class ModeloAction extends RequerimientoCompraOrdenHelper {

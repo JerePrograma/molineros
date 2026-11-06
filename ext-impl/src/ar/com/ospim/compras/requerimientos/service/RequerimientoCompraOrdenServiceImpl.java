@@ -598,6 +598,10 @@ public class RequerimientoCompraOrdenServiceImpl {
             int estadoOrdenCompra, int inicio, int cantidad) throws Exception {
         StringBuilder sql = new StringBuilder(
                 "SELECT o.id_orden_compra,o.id_requerimiento,o.alta_fecha,"
+                + "rr.id_reclamo_prestacional,rp.tipo_documento,rp.empresa_cuit,rp.empresa_sucursal,"
+                + "rp.descripcion_empresa,p.id_prestador AS prestador_id_actual,"
+                + "p.descripcion AS prestador_descripcion_actual,p.cuit AS prestador_cuit_actual,"
+                + "e.cuit AS empresa_cuit_actual,e.razon_soc AS empresa_razon_actual,"
                 + "r.id_sector,s.descripcion AS sector_descripcion,"
                 + "r.afiliado_cuil_titular,r.afiliado_int,"
                 + "a.nombre AS afiliado_nombre,a.apellido AS afiliado_apellido,"
@@ -606,6 +610,11 @@ public class RequerimientoCompraOrdenServiceImpl {
                 + "FROM compras.requerimiento_orden_compra o "
                 + "JOIN compras.requerimiento r ON r.id_requerimiento=o.id_requerimiento "
                 + "JOIN compras.sector_requerimiento s ON s.id_sector=r.id_sector "
+                + "LEFT JOIN compras.requerimiento_presupuesto rp "
+                + "ON rp.id_requerimiento_presupuesto=o.id_presupuesto AND rp.id_requerimiento=o.id_requerimiento "
+                + "LEFT JOIN public.prestador p ON p.id_prestador=rp.id_prestador "
+                + "LEFT JOIN informacion_afip.empresa e ON e.cuit=rp.empresa_cuit AND e.sucursal=rp.empresa_sucursal "
+                + "LEFT JOIN compras.requerimiento_reclamo_prestacional rr ON rr.id_requerimiento=o.id_requerimiento "
                 + "LEFT JOIN public.afiliado a ON a.cuil_titular=r.afiliado_cuil_titular "
                 + "AND a.inte=r.afiliado_int "
                 + "WHERE r.baja_fecha IS NULL AND r.estado=?");
@@ -651,6 +660,23 @@ public class RequerimientoCompraOrdenServiceImpl {
                     orden.setIdOrdenCompra(rs.getInt("id_orden_compra"));
                     orden.setIdRequerimientoCompra(rs.getInt("id_requerimiento"));
                     orden.setAltaFecha(rs.getTimestamp("alta_fecha"));
+                    orden.setIdReclamoPrestacional(rs.getInt("id_reclamo_prestacional"));
+                    if (rs.getInt("tipo_documento") == RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_COTIZACION_EMPRESA) {
+                        boolean identificada = normalizar(rs.getString("empresa_cuit")) != null
+                                && normalizar(rs.getString("empresa_sucursal")) != null;
+                        orden.setProveedor(identificada
+                                ? (rs.getString("empresa_cuit_actual") != null
+                                    ? rs.getString("empresa_razon_actual") : "[EMPRESA NO RESUELTA]")
+                                : rs.getString("descripcion_empresa"));
+                        orden.setProveedorCuit(identificada ? rs.getString("empresa_cuit_actual") : rs.getString("empresa_cuit"));
+                    } else {
+                        orden.setProveedor(rs.getObject("prestador_id_actual") != null
+                                ? rs.getString("prestador_descripcion_actual") : "[PROVEEDOR NO RESUELTO]");
+                        orden.setProveedorCuit(rs.getString("prestador_cuit_actual"));
+                    }
+                    if (orden.getProveedorCuit() == null) {
+                        orden.setProveedorCuit("");
+                    }
                     RequerimientoCompra requerimiento = RequerimientoCompra.paraMapeo();
                     requerimiento.setIdRequerimientoCompra(orden.getIdRequerimientoCompra());
                     requerimiento.setEstado(estadoOrdenCompra);
@@ -690,6 +716,7 @@ public class RequerimientoCompraOrdenServiceImpl {
         PreparedStatement stmt = con.prepareStatement(
                 "SELECT id_orden_compra,fecha_contacto,persona_contactada,medio_contacto,detalle,"
                 + "respuesta_1,respuesta_2,respuesta_3,respuesta_4,respuesta_5,"
+                + "recepcion_suministro,satisfaccion_entrega,"
                 + "alta_fecha,alta_usr,modi_fecha,modi_usr,version_edicion "
                 + "FROM compras.requerimiento_orden_compra_suministro WHERE id_orden_compra=?");
         try {
@@ -708,6 +735,8 @@ public class RequerimientoCompraOrdenServiceImpl {
                 datos.setRespuesta3(rs.getString("respuesta_3"));
                 datos.setRespuesta4(rs.getString("respuesta_4"));
                 datos.setRespuesta5(rs.getString("respuesta_5"));
+                datos.setRecepcionSuministro(rs.getString("recepcion_suministro"));
+                datos.setSatisfaccionEntrega(rs.getString("satisfaccion_entrega"));
                 datos.setAltaFecha(rs.getTimestamp("alta_fecha"));
                 datos.setAltaUsr(rs.getString("alta_usr"));
                 datos.setModiFecha(rs.getTimestamp("modi_fecha"));
@@ -1003,8 +1032,9 @@ public class RequerimientoCompraOrdenServiceImpl {
             PreparedStatement stmt = con.prepareStatement(
                     "INSERT INTO compras.requerimiento_orden_compra_suministro "
                     + "(id_orden_compra,fecha_contacto,persona_contactada,medio_contacto,detalle,"
-                    + "respuesta_1,respuesta_2,respuesta_3,respuesta_4,respuesta_5,alta_usr,version_edicion) "
-                    + "VALUES (?,?,?,?,?,?,?,?,?,?,?,1)");
+                    + "respuesta_1,respuesta_2,respuesta_3,respuesta_4,respuesta_5,"
+                    + "recepcion_suministro,satisfaccion_entrega,alta_usr,version_edicion) "
+                    + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1)");
             try {
                 stmt.setInt(1, datos.getIdOrdenCompra());
                 stmt.setDate(2, datos.getFechaContacto() == null ? null
@@ -1017,7 +1047,9 @@ public class RequerimientoCompraOrdenServiceImpl {
                 stmt.setString(8, datos.getRespuesta3());
                 stmt.setString(9, datos.getRespuesta4());
                 stmt.setString(10, datos.getRespuesta5());
-                stmt.setString(11, usuario);
+                stmt.setString(11, datos.getRecepcionSuministro());
+                stmt.setString(12, datos.getSatisfaccionEntrega());
+                stmt.setString(13, usuario);
                 return stmt.executeUpdate();
             } finally { stmt.close(); }
         }
@@ -1027,6 +1059,7 @@ public class RequerimientoCompraOrdenServiceImpl {
                     "UPDATE compras.requerimiento_orden_compra_suministro "
                     + "SET fecha_contacto=?,persona_contactada=?,medio_contacto=?,detalle=?,"
                     + "respuesta_1=?,respuesta_2=?,respuesta_3=?,respuesta_4=?,respuesta_5=?,"
+                    + "recepcion_suministro=?,satisfaccion_entrega=?,"
                     + "modi_fecha=now(),modi_usr=?,version_edicion=version_edicion+1 "
                     + "WHERE id_orden_compra=? AND version_edicion=?");
             try {
@@ -1040,9 +1073,11 @@ public class RequerimientoCompraOrdenServiceImpl {
                 stmt.setString(7, datos.getRespuesta3());
                 stmt.setString(8, datos.getRespuesta4());
                 stmt.setString(9, datos.getRespuesta5());
-                stmt.setString(10, usuario);
-                stmt.setInt(11, datos.getIdOrdenCompra());
-                stmt.setInt(12, datos.getVersionEdicion());
+                stmt.setString(10, datos.getRecepcionSuministro());
+                stmt.setString(11, datos.getSatisfaccionEntrega());
+                stmt.setString(12, usuario);
+                stmt.setInt(13, datos.getIdOrdenCompra());
+                stmt.setInt(14, datos.getVersionEdicion());
                 return stmt.executeUpdate();
             } finally { stmt.close(); }
         }

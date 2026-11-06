@@ -110,8 +110,11 @@ if (!RequerimientoCompraOrdenAction.puedeConsultar(user)) {
 <% } else {
     List<String> cabecerasOrdenes = new ArrayList<String>();
     cabecerasOrdenes.add("N\u00famero OC");
+    cabecerasOrdenes.add("ID Requerimiento");
+    cabecerasOrdenes.add("ID Reclamo Prestacional");
     cabecerasOrdenes.add("Fecha Alta OC");
     cabecerasOrdenes.add("Sector");
+    cabecerasOrdenes.add("Prestador adjudicado");
     cabecerasOrdenes.add("Referencia");
     cabecerasOrdenes.add("Acciones");
     SearchContainer contenedorOrdenes = new SearchContainer(renderRequest, null, null,
@@ -134,8 +137,12 @@ if (!RequerimientoCompraOrdenAction.puedeConsultar(user)) {
         }
         ResultRow filaOrden = new ResultRow(orden, String.valueOf(orden.getIdOrdenCompra()), i);
         filaOrden.addText(String.valueOf(orden.getIdOrdenCompra()), verOrdenURL);
+        filaOrden.addText(String.valueOf(orden.getIdRequerimientoCompra()), verOrdenURL);
+        filaOrden.addText(orden.getIdReclamoPrestacional() > 0
+                ? String.valueOf(orden.getIdReclamoPrestacional()) : "", verOrdenURL);
         filaOrden.addText(HtmlUtil.escape(orden.getAltaFechaAsString()), verOrdenURL);
         filaOrden.addText(HtmlUtil.escape(requerimientoOrden.getSectorDescripcionVisible()), verOrdenURL);
+        filaOrden.addText(HtmlUtil.escape(orden.getProveedor() == null ? "" : orden.getProveedor()), verOrdenURL);
         filaOrden.addText(HtmlUtil.escape(referenciaOrden), verOrdenURL);
         filaOrden.addText("Ver", verOrdenURL);
         filasOrdenes.add(filaOrden);

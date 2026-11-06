@@ -111,6 +111,70 @@ BEGIN
     ASSERT v_rechazado, 'La auditoria de alta no debe estar vacia.';
 END;
 $test$;
+-- La encuesta definitiva se agrega sin reinterpretar las cinco respuestas previas.
+\ir ../../docs/sql/compras/20261106_orden_compra_encuesta.sql
+\ir ../../docs/sql/compras/20261106_orden_compra_encuesta.sql
+DO $encuesta$
+DECLARE
+    v_id INTEGER;
+    v_respuesta TEXT;
+    v_rechazado BOOLEAN;
+BEGIN
+    ASSERT NOT EXISTS (
+        SELECT 1 FROM compras.requerimiento_orden_compra_suministro s
+        JOIN suministro_guardado_antes_upgrade a USING(id_orden_compra)
+        WHERE to_jsonb(s) - 'recepcion_suministro' - 'satisfaccion_entrega'
+            IS DISTINCT FROM a.datos - 'recepcion_suministro' - 'satisfaccion_entrega'),
+        'La encuesta debe conservar todas las respuestas, contacto y auditoria anteriores.';
+    ASSERT NOT EXISTS (SELECT 1 FROM compras.requerimiento_orden_compra_suministro
+        WHERE recepcion_suministro IS NOT NULL OR satisfaccion_entrega IS NOT NULL),
+        'Las respuestas previas no se deben transformar en respuestas a las nuevas preguntas.';
+    SELECT id_orden_compra INTO STRICT v_id FROM compras.requerimiento_orden_compra
+        WHERE id_requerimiento=1001;
+    FOREACH v_respuesta IN ARRAY ARRAY['', 'SI', 'PARCIALMENTE', 'NO'] LOOP
+        UPDATE compras.requerimiento_orden_compra_suministro
+            SET recepcion_suministro=v_respuesta WHERE id_orden_compra=v_id;
+    END LOOP;
+    FOREACH v_respuesta IN ARRAY ARRAY['', 'MUY_SATISFECHO', 'SATISFECHO', 'NEUTRAL',
+            'INSATISFECHO', 'MUY_INSATISFECHO'] LOOP
+        UPDATE compras.requerimiento_orden_compra_suministro
+            SET satisfaccion_entrega=v_respuesta WHERE id_orden_compra=v_id;
+    END LOOP;
+    FOREACH v_respuesta IN ARRAY ARRAY['TAL_VEZ', 'SATISFECHO', 'NO_CORRESPONDE'] LOOP
+        v_rechazado:=FALSE;
+        BEGIN
+            UPDATE compras.requerimiento_orden_compra_suministro
+                SET recepcion_suministro=v_respuesta WHERE id_orden_compra=v_id;
+        EXCEPTION WHEN check_violation THEN v_rechazado:=TRUE;
+        END;
+        ASSERT v_rechazado, 'Recepcion debe validar su dominio propio.';
+    END LOOP;
+    FOREACH v_respuesta IN ARRAY ARRAY['TAL_VEZ', 'SI', 'PARCIALMENTE'] LOOP
+        v_rechazado:=FALSE;
+        BEGIN
+            UPDATE compras.requerimiento_orden_compra_suministro
+                SET satisfaccion_entrega=v_respuesta WHERE id_orden_compra=v_id;
+        EXCEPTION WHEN check_violation THEN v_rechazado:=TRUE;
+        END;
+        ASSERT v_rechazado, 'Satisfaccion debe validar su dominio propio.';
+    END LOOP;
+    UPDATE compras.requerimiento_orden_compra_suministro
+        SET recepcion_suministro='PARCIALMENTE',satisfaccion_entrega='MUY_INSATISFECHO'
+        WHERE id_orden_compra=v_id;
+END;
+$encuesta$;
+CREATE TEMP TABLE encuesta_guardada_antes_upgrade AS
+    SELECT id_orden_compra,to_jsonb(s) AS datos FROM compras.requerimiento_orden_compra_suministro s;
+\ir ../../docs/sql/compras/20261106_orden_compra_encuesta.sql
+DO $reejecucion_encuesta$
+BEGIN
+    ASSERT NOT EXISTS (
+        SELECT 1 FROM compras.requerimiento_orden_compra_suministro s
+        JOIN encuesta_guardada_antes_upgrade a USING(id_orden_compra)
+        WHERE to_jsonb(s) IS DISTINCT FROM a.datos),
+        'Reejecutar la migracion debe conservar encuesta, historicos y auditoria.';
+END;
+$reejecucion_encuesta$;
 DELETE FROM compras.requerimiento_orden_compra_suministro
  WHERE alta_usr='suministro_upgrade_fixture'
    AND id_orden_compra=(SELECT id_orden_compra FROM compras.requerimiento_orden_compra WHERE id_requerimiento=1001);

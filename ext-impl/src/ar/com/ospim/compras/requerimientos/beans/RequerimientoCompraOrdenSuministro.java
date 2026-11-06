@@ -15,6 +15,8 @@ public class RequerimientoCompraOrdenSuministro {
     private String respuesta3;
     private String respuesta4;
     private String respuesta5;
+    private String recepcionSuministro;
+    private String satisfaccionEntrega;
     private int versionEdicion;
     private Date altaFecha;
     private String altaUsr;
@@ -41,6 +43,10 @@ public class RequerimientoCompraOrdenSuministro {
     public void setRespuesta4(String respuesta4) { this.respuesta4 = respuesta4; }
     public String getRespuesta5() { return respuesta5; }
     public void setRespuesta5(String respuesta5) { this.respuesta5 = respuesta5; }
+    public String getRecepcionSuministro() { return recepcionSuministro; }
+    public void setRecepcionSuministro(String recepcionSuministro) { this.recepcionSuministro = recepcionSuministro; }
+    public String getSatisfaccionEntrega() { return satisfaccionEntrega; }
+    public void setSatisfaccionEntrega(String satisfaccionEntrega) { this.satisfaccionEntrega = satisfaccionEntrega; }
     public int getVersionEdicion() { return versionEdicion; }
     public void setVersionEdicion(int versionEdicion) { this.versionEdicion = versionEdicion; }
     public Date getAltaFecha() { return altaFecha; }

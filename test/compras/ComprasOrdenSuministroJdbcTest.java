@@ -69,7 +69,53 @@ public class ComprasOrdenSuministroJdbcTest {
         igual("cabeceras comerciales intactas",cabeceras,filas(pool,"SELECT * FROM compras.requerimiento_orden_compra ORDER BY id_orden_compra"));
         igual("detalle comprado intacto",detalles,filas(pool,"SELECT * FROM compras.requerimiento_orden_compra_detalle ORDER BY id_orden_compra,orden"));
         igual("requerimientos intactos",requerimientos,filas(pool,"SELECT * FROM compras.requerimiento ORDER BY id_requerimiento"));
+        encuesta(helper, service, pool, id1);
+        igual("encuesta no altera cabeceras comerciales",cabeceras,filas(pool,"SELECT * FROM compras.requerimiento_orden_compra ORDER BY id_orden_compra"));
+        igual("encuesta no altera detalle comprado",detalles,filas(pool,"SELECT * FROM compras.requerimiento_orden_compra_detalle ORDER BY id_orden_compra,orden"));
     }
+    private static void encuesta(RequerimientoCompraOrdenHelper helper,
+            RequerimientoCompraOrdenServiceImpl service, ComboPooledDataSource pool, int id) throws Exception {
+        String historicoSql = "SELECT respuesta_1,respuesta_2,respuesta_3,respuesta_4,respuesta_5 "
+                + "FROM compras.requerimiento_orden_compra_suministro WHERE id_orden_compra=" + id;
+        List<Map<String,String>> historico = filas(pool, historicoSql);
+        Map<String,String> e = new HashMap<String,String>();
+        e.put("suministro_recepcion", "PARCIALMENTE");
+        e.put("suministro_satisfaccion", "MUY_INSATISFECHO");
+        for (int i = 1; i <= 5; i++) e.put("suministro_pregunta_" + i, "MANIPULADA");
+        helper.guardarSuministro(1001, id, 3, e, "encuesta_jdbc");
+        RequerimientoCompraOrdenSuministro s = service.obtenerSuministro(id);
+        igual("encuesta recepcion JDBC", "PARCIALMENTE", s.getRecepcionSuministro());
+        igual("encuesta satisfaccion JDBC", "MUY_INSATISFECHO", s.getSatisfaccionEntrega());
+        igual("encuesta conserva historicos JDBC", historico, filas(pool, historicoSql));
+        helper.guardarSuministro(1001, id, 4, entrada("Formulario anterior"), "legacy_jdbc");
+        s = service.obtenerSuministro(id);
+        igual("formulario anterior conserva recepcion JDBC", "PARCIALMENTE", s.getRecepcionSuministro());
+        igual("formulario anterior conserva satisfaccion JDBC", "MUY_INSATISFECHO", s.getSatisfaccionEntrega());
+        concurrentes(helper, pool, 1001, id, 5);
+        s = service.obtenerSuministro(id);
+        igual("concurrentes conservan recepcion nueva", "PARCIALMENTE", s.getRecepcionSuministro());
+        igual("concurrentes conservan satisfaccion nueva", "MUY_INSATISFECHO", s.getSatisfaccionEntrega());
+        List<Map<String,String>> antes = filas(pool, "SELECT * FROM compras.requerimiento_orden_compra_suministro ORDER BY id_orden_compra");
+        e.put("suministro_recepcion", "NEUTRAL");
+        boolean fallo = false;
+        try { helper.guardarSuministro(1001, id, 6, e, "invalido_jdbc"); }
+        catch (IllegalArgumentException ex) { fallo = true; }
+        comprobar("JDBC rechaza dominio cruzado recepcion", fallo);
+        e.put("suministro_recepcion", "SI"); e.put("suministro_satisfaccion", "NO"); fallo = false;
+        try { helper.guardarSuministro(1001, id, 6, e, "invalido_jdbc"); }
+        catch (IllegalArgumentException ex) { fallo = true; }
+        comprobar("JDBC rechaza dominio cruzado satisfaccion", fallo);
+        igual("rechazos encuesta sin escritura JDBC", antes,
+                filas(pool, "SELECT * FROM compras.requerimiento_orden_compra_suministro ORDER BY id_orden_compra"));
+        historico = filas(pool, historicoSql);
+        e.put("suministro_recepcion", ""); e.put("suministro_satisfaccion", "");
+        helper.guardarSuministro(1001, id, 6, e, "borrado_encuesta_jdbc");
+        s = service.obtenerSuministro(id);
+        comprobar("recepcion vacia persiste JDBC", vacio(s.getRecepcionSuministro()));
+        comprobar("satisfaccion vacia persiste JDBC", vacio(s.getSatisfaccionEntrega()));
+        igual("borrado encuesta conserva historicos JDBC", historico, filas(pool, historicoSql));
+    }
+
     private static void rollbackSql(RequerimientoCompraOrdenServiceImpl service,ComboPooledDataSource pool,RequerimientoCompraOrdenSuministro actual,List<Map<String,String>> antes)throws Exception {
         RequerimientoCompraOrdenServiceImpl.Transaccion tx=service.abrirTransaccion();boolean fallo=false;
         try{actual.setRespuesta1("VALOR_INVALIDO");tx.actualizarSuministro(actual,"sql_invalido");tx.commit();}catch(SQLException ex){fallo=true;tx.rollback();}finally{tx.cerrar();}

@@ -13,7 +13,7 @@ public class ComprasLecturasOrdenRpTest {
     private static Object vacio(Class tipo) { if(tipo==Boolean.TYPE)return Boolean.FALSE;if(tipo==Integer.TYPE)return Integer.valueOf(0);if(tipo==Long.TYPE)return Long.valueOf(0);return null; }
     private static class Datos implements InvocationHandler {
         String nombre="Prestador vigente",codigo="VIGENTE",descripcion="Prestacion vigente";
-        boolean sinMaestro,sinProveedor,empresa,empresaLibre,sinOrden,dosFechas,falla,sinAfiliado,afiliadoNoResuelto;
+        boolean sinMaestro,sinProveedor,empresa,empresaLibre,sinOrden,dosFechas,falla,sinAfiliado,afiliadoNoResuelto,sinReclamo;
         String tipo="NOMENCLADOR";
         final List<String> consultas=new ArrayList<String>();
         final List<Map<Integer,Object>> parametros=new ArrayList<Map<Integer,Object>>();
@@ -38,7 +38,7 @@ public class ComprasLecturasOrdenRpTest {
             if(falla)throw new SQLException("Fallo JDBC sintetico");
             List<Map<String,Object>> filas=new ArrayList<Map<String,Object>>();
             if(sql.indexOf("a.nombre AS afiliado_nombre")>=0) {
-                if(!sinOrden)filas.add(fila("id_orden_compra",Integer.valueOf(90),"id_requerimiento",Integer.valueOf(42),"alta_fecha",Timestamp.valueOf("2026-11-02 15:23:45"),"fecha_emision",java.sql.Date.valueOf("2026-10-31"),"alta_fecha_requerimiento",Timestamp.valueOf("2026-10-01 09:00:00"),"id_sector",Integer.valueOf(4),"sector_descripcion","Sistemas","afiliado_cuil_titular",sinAfiliado?null:"20000000001","afiliado_int",sinAfiliado?null:Integer.valueOf(0),"afiliado_nombre",sinAfiliado||afiliadoNoResuelto?null:"Nombre","afiliado_apellido",sinAfiliado||afiliadoNoResuelto?null:"Apellido","afiliado_no_resuelto",afiliadoNoResuelto?"[AFILIADO NO RESUELTO]":null));
+                if(!sinOrden)filas.add(fila("id_orden_compra",Integer.valueOf(90),"id_requerimiento",Integer.valueOf(42),"alta_fecha",Timestamp.valueOf("2026-11-02 15:23:45"),"fecha_emision",java.sql.Date.valueOf("2026-10-31"),"alta_fecha_requerimiento",Timestamp.valueOf("2026-10-01 09:00:00"),"id_sector",Integer.valueOf(4),"sector_descripcion","Sistemas","afiliado_cuil_titular",sinAfiliado?null:"20000000001","afiliado_int",sinAfiliado?null:Integer.valueOf(0),"afiliado_nombre",sinAfiliado||afiliadoNoResuelto?null:"Nombre","afiliado_apellido",sinAfiliado||afiliadoNoResuelto?null:"Apellido","afiliado_no_resuelto",afiliadoNoResuelto?"[AFILIADO NO RESUELTO]":null,"id_reclamo_prestacional",sinReclamo?null:Integer.valueOf(3002),"tipo_documento",Integer.valueOf(empresa?3:1),"prestador_id_actual",sinProveedor?null:Integer.valueOf(33),"prestador_descripcion_actual",nombre,"prestador_cuit_actual","30000000001","empresa_cuit",empresaLibre?null:"30000000002","empresa_sucursal",empresaLibre?null:"1","empresa_cuit_actual",sinProveedor?null:"30000000002","empresa_razon_actual",nombre,"descripcion_empresa","Texto libre"));
             } else if(sql.indexOf("FROM compras.requerimiento_orden_compra o ")>=0) {
                 if(!sinOrden)filas.add(fila("id_orden_compra",Integer.valueOf(90),"id_requerimiento",Integer.valueOf(42),"alta_fecha",Timestamp.valueOf("2026-11-02 15:23:45"),"fecha_emision",java.sql.Date.valueOf("2026-11-02"),"alta_usr","auditor","solicitante","solicitante","version_edicion",Integer.valueOf(3),"tipo_documento",Integer.valueOf(empresa?3:1),"id_prestador",empresa?null:Integer.valueOf(33),"prestador_id_actual",sinProveedor?null:Integer.valueOf(33),"prestador_descripcion_actual",nombre,"prestador_cuit_actual","30000000001","empresa_cuit",empresaLibre?null:"30000000002","empresa_sucursal",empresaLibre?null:"1","empresa_cuit_actual",sinProveedor?null:"30000000002","empresa_razon_actual",nombre,"descripcion_empresa","Texto libre","iva",BigDecimal.ZERO,"iibb",BigDecimal.ZERO));
             } else if(sql.indexOf("FROM compras.requerimiento_orden_compra_detalle od ")>=0) {
@@ -67,6 +67,8 @@ public class ComprasLecturasOrdenRpTest {
         ok(ordenes.size()==1,"Listado devuelve una cabecera por OC sin consultar detalles");
         RequerimientoCompraOrden o=ordenes.get(0);
         ok(o.getIdOrdenCompra()==90&&o.getIdRequerimientoCompra()==42,"Listado distingue ID OC del requerimiento");
+        ok(o.getIdReclamoPrestacional()==3002,"Listado muestra el reclamo vinculado al requerimiento");
+        ok("Prestador vigente".equals(o.getProveedor()),"Listado muestra el prestador de origen de la OC");
         ok(Timestamp.valueOf("2026-11-02 15:23:45").equals(o.getAltaFecha()),"Listado conserva alta propia OC con hora");
         ok("02/11/2026".equals(o.getAltaFechaAsString()),"Fecha visible es alta OC y no emision ni requerimiento");
         ok(o.getRequerimiento().getEstado()==45,"Listado conserva estado configurado de emitidas");
@@ -83,6 +85,22 @@ public class ComprasLecturasOrdenRpTest {
         ok(desde.equals(p.get(Integer.valueOf(3)))&&hasta.equals(p.get(Integer.valueOf(4))),"Fechas desde y hasta parametrizadas en orden");
         ok(Integer.valueOf(4).equals(p.get(Integer.valueOf(5))),"Sector parametrizado");
         ok(Integer.valueOf(11).equals(p.get(Integer.valueOf(6)))&&Integer.valueOf(20).equals(p.get(Integer.valueOf(7))),"Paginacion conserva limite y desplazamiento");
+        d=new Datos();d.nombre="Prestador actualizado";ar.com.ospim.util.ConnectionHelper.lectura=d.conexion();
+        ordenes=servicio.buscarEmitidas(null,null,null,null,45,0,11);
+        ok("Prestador actualizado".equals(ordenes.get(0).getProveedor()),"Listado vuelve a resolver el prestador vigente");
+        d=new Datos();d.empresa=true;ar.com.ospim.util.ConnectionHelper.lectura=d.conexion();
+        ordenes=servicio.buscarEmitidas(null,null,null,null,45,0,11);
+        ok("Prestador vigente".equals(ordenes.get(0).getProveedor()),"Listado resuelve empresa por CUIT y sucursal");
+        d.empresaLibre=true;ar.com.ospim.util.ConnectionHelper.lectura=d.conexion();
+        ordenes=servicio.buscarEmitidas(null,null,null,null,45,0,11);
+        ok("Texto libre".equals(ordenes.get(0).getProveedor()),"Listado conserva empresa sin referencia");
+        d=new Datos();d.sinProveedor=true;d.sinReclamo=true;ar.com.ospim.util.ConnectionHelper.lectura=d.conexion();
+        ordenes=servicio.buscarEmitidas(null,null,null,null,45,0,11);
+        ok(ordenes.size()==1&&ordenes.get(0).getIdReclamoPrestacional()==0,"Sin reclamo conserva OC sin inventar ID");
+        ok("[PROVEEDOR NO RESUELTO]".equals(ordenes.get(0).getProveedor()),"Prestador ausente no elimina la OC");
+        d.empresa=true;ar.com.ospim.util.ConnectionHelper.lectura=d.conexion();
+        ordenes=servicio.buscarEmitidas(null,null,null,null,45,0,11);
+        ok("[EMPRESA NO RESUELTA]".equals(ordenes.get(0).getProveedor()),"Empresa ausente conserva marca explicita");
         d=new Datos();d.sinAfiliado=true;ar.com.ospim.util.ConnectionHelper.lectura=d.conexion();
         ordenes=servicio.buscarEmitidas(null,null,null,null,45,0,11);
         ok(ordenes.size()==1&&ordenes.get(0).getRequerimiento().getAfiliadoCuilTitular()==null&&ordenes.get(0).getRequerimiento().getAfiliadoInt()==null,"Compra sin afiliado conserva cabecera y valores nulos");

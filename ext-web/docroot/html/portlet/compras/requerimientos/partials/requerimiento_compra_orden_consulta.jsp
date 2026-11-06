@@ -32,14 +32,10 @@ int ordenContactoMes = ordenGestionEntrada != null
 int ordenContactoAnio = ordenGestionEntrada != null
         ? GetterUtil.getInteger(ordenGestionEntrada.get("contactoAnio"), ordenContacto.get(Calendar.YEAR))
         : ordenContacto.get(Calendar.YEAR);
-String[] ordenRespuestas = ordenGestion != null
-        ? new String[] { ordenGestion.getRespuesta1(), ordenGestion.getRespuesta2(),
-            ordenGestion.getRespuesta3(), ordenGestion.getRespuesta4(), ordenGestion.getRespuesta5() }
-        : new String[] { "", "", "", "", "" };
-for (int preguntaSuministro = 0; preguntaSuministro < ordenRespuestas.length; preguntaSuministro++) {
-    ordenRespuestas[preguntaSuministro] = ordenCompraValor(ordenGestionEntrada,
-            "suministro_pregunta_" + (preguntaSuministro + 1), ordenRespuestas[preguntaSuministro]);
-}
+String ordenRecepcion = ordenCompraValor(ordenGestionEntrada,
+        "suministro_recepcion", ordenGestion != null ? ordenGestion.getRecepcionSuministro() : "");
+String ordenSatisfaccion = ordenCompraValor(ordenGestionEntrada,
+        "suministro_satisfaccion", ordenGestion != null ? ordenGestion.getSatisfaccionEntrega() : "");
 Calendar ordenAlta = Calendar.getInstance();
 boolean ordenTieneAlta = ordenCompra.getAltaFecha() != null;
 if (ordenTieneAlta) {
@@ -62,6 +58,16 @@ if (ordenTieneAlta) {
             yearRangeStart="<%= ordenAlta.get(Calendar.YEAR) - 20 %>" yearRangeEnd="<%= ordenAlta.get(Calendar.YEAR) + 20 %>"
             firstDayOfWeek="<%= ordenAlta.getFirstDayOfWeek() %>" disabled="<%= true %>" />
     </td>
+</tr>
+<tr>
+    <td><label>ID Requerimiento:</label></td>
+    <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getIdRequerimientoCompra() %>" /></td>
+    <td><label>ID Reclamo Prestacional:</label></td>
+    <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getIdReclamoPrestacional() > 0 ? String.valueOf(ordenCompra.getIdReclamoPrestacional()) : "" %>" /></td>
+</tr>
+<tr>
+    <td><label>Prestador adjudicado:</label></td>
+    <td colspan="3"><input type="text" size="80" readonly="readonly" value="<%= ordenCompraTexto(ordenCompra.getProveedor()) %>" /></td>
 </tr>
 <% if (!ordenSuministro) { %>
 <tr><td colspan="4">&nbsp;</td></tr>
@@ -132,55 +138,27 @@ if (ordenTieneAlta) {
 </table>
 </fieldset>
 <fieldset class="block-labels">
-<legend>Preguntas de seguimiento (provisorias)</legend>
+<legend>Preguntas de seguimiento</legend>
 <table class="lfr-table" width="100%">
 <tr>
-    <td><label for="<portlet:namespace />suministroPregunta1">&iquest;Lo recibi&oacute; en tiempo y forma?</label></td>
-    <td><select id="<portlet:namespace />suministroPregunta1" name="<portlet:namespace />suministro_pregunta_1">
+    <td><label for="<portlet:namespace />suministroRecepcion">&iquest;Recibi&oacute; correctamente el suministro adquirido por OSPIM para usted?</label></td>
+    <td><select id="<portlet:namespace />suministroRecepcion" name="<portlet:namespace />suministro_recepcion">
         <option value=""></option>
-        <option value="SI"<%= "SI".equals(ordenRespuestas[0]) ? " selected=\"selected\"" : "" %>>S&iacute;</option>
-        <option value="NO"<%= "NO".equals(ordenRespuestas[0]) ? " selected=\"selected\"" : "" %>>No</option>
-        <option value="NO_CORRESPONDE"<%= "NO_CORRESPONDE".equals(ordenRespuestas[0]) ? " selected=\"selected\"" : "" %>>No corresponde</option>
+        <option value="SI"<%= "SI".equals(ordenRecepcion) ? " selected=\"selected\"" : "" %>>S&iacute;</option>
+        <option value="PARCIALMENTE"<%= "PARCIALMENTE".equals(ordenRecepcion) ? " selected=\"selected\"" : "" %>>Parcialmente</option>
+        <option value="NO"<%= "NO".equals(ordenRecepcion) ? " selected=\"selected\"" : "" %>>No</option>
     </select></td>
 </tr>
 <tr><td colspan="2">&nbsp;</td></tr>
 <tr>
-    <td><label for="<portlet:namespace />suministroPregunta2">&iquest;Recibi&oacute; todos los art&iacute;culos solicitados?</label></td>
-    <td><select id="<portlet:namespace />suministroPregunta2" name="<portlet:namespace />suministro_pregunta_2">
+    <td><label for="<portlet:namespace />suministroSatisfaccion">&iquest;Qu&eacute; tan satisfecho/a est&aacute; con la entrega del suministro?</label></td>
+    <td><select id="<portlet:namespace />suministroSatisfaccion" name="<portlet:namespace />suministro_satisfaccion">
         <option value=""></option>
-        <option value="SI"<%= "SI".equals(ordenRespuestas[1]) ? " selected=\"selected\"" : "" %>>S&iacute;</option>
-        <option value="NO"<%= "NO".equals(ordenRespuestas[1]) ? " selected=\"selected\"" : "" %>>No</option>
-        <option value="NO_CORRESPONDE"<%= "NO_CORRESPONDE".equals(ordenRespuestas[1]) ? " selected=\"selected\"" : "" %>>No corresponde</option>
-    </select></td>
-</tr>
-<tr><td colspan="2">&nbsp;</td></tr>
-<tr>
-    <td><label for="<portlet:namespace />suministroPregunta3">&iquest;Los art&iacute;culos recibidos coinciden con lo indicado?</label></td>
-    <td><select id="<portlet:namespace />suministroPregunta3" name="<portlet:namespace />suministro_pregunta_3">
-        <option value=""></option>
-        <option value="SI"<%= "SI".equals(ordenRespuestas[2]) ? " selected=\"selected\"" : "" %>>S&iacute;</option>
-        <option value="NO"<%= "NO".equals(ordenRespuestas[2]) ? " selected=\"selected\"" : "" %>>No</option>
-        <option value="NO_CORRESPONDE"<%= "NO_CORRESPONDE".equals(ordenRespuestas[2]) ? " selected=\"selected\"" : "" %>>No corresponde</option>
-    </select></td>
-</tr>
-<tr><td colspan="2">&nbsp;</td></tr>
-<tr>
-    <td><label for="<portlet:namespace />suministroPregunta4">&iquest;Los art&iacute;culos se recibieron en buen estado?</label></td>
-    <td><select id="<portlet:namespace />suministroPregunta4" name="<portlet:namespace />suministro_pregunta_4">
-        <option value=""></option>
-        <option value="SI"<%= "SI".equals(ordenRespuestas[3]) ? " selected=\"selected\"" : "" %>>S&iacute;</option>
-        <option value="NO"<%= "NO".equals(ordenRespuestas[3]) ? " selected=\"selected\"" : "" %>>No</option>
-        <option value="NO_CORRESPONDE"<%= "NO_CORRESPONDE".equals(ordenRespuestas[3]) ? " selected=\"selected\"" : "" %>>No corresponde</option>
-    </select></td>
-</tr>
-<tr><td colspan="2">&nbsp;</td></tr>
-<tr>
-    <td><label for="<portlet:namespace />suministroPregunta5">&iquest;Necesita asistencia o seguimiento adicional?</label></td>
-    <td><select id="<portlet:namespace />suministroPregunta5" name="<portlet:namespace />suministro_pregunta_5">
-        <option value=""></option>
-        <option value="SI"<%= "SI".equals(ordenRespuestas[4]) ? " selected=\"selected\"" : "" %>>S&iacute;</option>
-        <option value="NO"<%= "NO".equals(ordenRespuestas[4]) ? " selected=\"selected\"" : "" %>>No</option>
-        <option value="NO_CORRESPONDE"<%= "NO_CORRESPONDE".equals(ordenRespuestas[4]) ? " selected=\"selected\"" : "" %>>No corresponde</option>
+        <option value="MUY_SATISFECHO"<%= "MUY_SATISFECHO".equals(ordenSatisfaccion) ? " selected=\"selected\"" : "" %>>Muy satisfecho/a</option>
+        <option value="SATISFECHO"<%= "SATISFECHO".equals(ordenSatisfaccion) ? " selected=\"selected\"" : "" %>>Satisfecho/a</option>
+        <option value="NEUTRAL"<%= "NEUTRAL".equals(ordenSatisfaccion) ? " selected=\"selected\"" : "" %>>Ni satisfecho/a ni insatisfecho/a</option>
+        <option value="INSATISFECHO"<%= "INSATISFECHO".equals(ordenSatisfaccion) ? " selected=\"selected\"" : "" %>>Insatisfecho/a</option>
+        <option value="MUY_INSATISFECHO"<%= "MUY_INSATISFECHO".equals(ordenSatisfaccion) ? " selected=\"selected\"" : "" %>>Muy insatisfecho/a</option>
     </select></td>
 </tr>
 </table>

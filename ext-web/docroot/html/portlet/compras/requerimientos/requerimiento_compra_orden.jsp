@@ -75,8 +75,12 @@ if (!ordenNueva) {
     <td><input type="text" size="15" readonly="readonly" value="<%= ordenNueva ? "Se asigna al guardar" : String.valueOf(ordenCompra.getIdOrdenCompra()) %>" /></td>
     <td><label>Fecha de emisi&oacute;n:</label></td>
     <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getFechaEmision() == null ? "" : new SimpleDateFormat("dd/MM/yyyy").format(ordenCompra.getFechaEmision()) %>" /></td>
-    <td><label>Requerimiento:</label></td>
+    <td><label>ID Requerimiento:</label></td>
     <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getIdRequerimientoCompra() %>" /></td>
+</tr>
+<tr>
+    <td><label>ID Reclamo Prestacional:</label></td>
+    <td colspan="5"><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getIdReclamoPrestacional() > 0 ? String.valueOf(ordenCompra.getIdReclamoPrestacional()) : "" %>" /></td>
 </tr>
 <tr>
     <td><label>&Aacute;rea solicitante:</label></td>
@@ -86,7 +90,7 @@ if (!ordenNueva) {
 </tr>
 <tr><td colspan="6">&nbsp;</td></tr>
 <tr>
-    <td><label>Proveedor adjudicado:</label></td>
+    <td><label>Prestador adjudicado:</label></td>
     <td colspan="3"><input type="text" size="80" readonly="readonly" value="<%= ordenCompraTexto(ordenCompra.getProveedor()) %>" /></td>
     <td><label>CUIT:</label></td>
     <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompraTexto(ordenCompra.getProveedorCuit()) %>" /></td>

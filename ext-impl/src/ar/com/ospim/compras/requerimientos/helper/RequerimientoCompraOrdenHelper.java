@@ -76,11 +76,20 @@ public class RequerimientoCompraOrdenHelper {
         cambio.setPersonaContactada(texto(entrada.get("suministro_persona"), 100, false, "Persona contactada"));
         cambio.setMedioContacto(texto(entrada.get("suministro_medio"), 100, false, "Medio de contacto"));
         cambio.setDetalle(texto(entrada.get("suministro_detalle"), 4000, false, "Detalle de la gestion"));
-        cambio.setRespuesta1(respuestaSuministro(entrada.get("suministro_pregunta_1")));
-        cambio.setRespuesta2(respuestaSuministro(entrada.get("suministro_pregunta_2")));
-        cambio.setRespuesta3(respuestaSuministro(entrada.get("suministro_pregunta_3")));
-        cambio.setRespuesta4(respuestaSuministro(entrada.get("suministro_pregunta_4")));
-        cambio.setRespuesta5(respuestaSuministro(entrada.get("suministro_pregunta_5")));
+        boolean encuesta = entrada.containsKey("suministro_recepcion");
+        if (encuesta != entrada.containsKey("suministro_satisfaccion")) {
+            throw new IllegalArgumentException("No se recibieron ambas respuestas de la encuesta de suministro.");
+        }
+        if (encuesta) {
+            cambio.setRecepcionSuministro(recepcionSuministro(entrada.get("suministro_recepcion")));
+            cambio.setSatisfaccionEntrega(satisfaccionEntrega(entrada.get("suministro_satisfaccion")));
+        } else {
+            cambio.setRespuesta1(respuestaSuministro(entrada.get("suministro_pregunta_1")));
+            cambio.setRespuesta2(respuestaSuministro(entrada.get("suministro_pregunta_2")));
+            cambio.setRespuesta3(respuestaSuministro(entrada.get("suministro_pregunta_3")));
+            cambio.setRespuesta4(respuestaSuministro(entrada.get("suministro_pregunta_4")));
+            cambio.setRespuesta5(respuestaSuministro(entrada.get("suministro_pregunta_5")));
+        }
         Transaccion tx = abrirTransaccion();
         try {
             RequerimientoCompra requerimiento = cargarRequerimiento(idRequerimiento, tx);
@@ -95,6 +104,18 @@ public class RequerimientoCompraOrdenHelper {
             if (version != (actual == null ? 0 : actual.getVersionEdicion())) {
                 throw new IllegalArgumentException(
                         "La gestion de suministro fue modificada por otro usuario. Actualice la pantalla.");
+            }
+            if (actual != null) {
+                if (encuesta) {
+                    cambio.setRespuesta1(actual.getRespuesta1());
+                    cambio.setRespuesta2(actual.getRespuesta2());
+                    cambio.setRespuesta3(actual.getRespuesta3());
+                    cambio.setRespuesta4(actual.getRespuesta4());
+                    cambio.setRespuesta5(actual.getRespuesta5());
+                } else {
+                    cambio.setRecepcionSuministro(actual.getRecepcionSuministro());
+                    cambio.setSatisfaccionEntrega(actual.getSatisfaccionEntrega());
+                }
             }
             int filas = actual == null ? tx.insertarSuministro(cambio, auditoria)
                     : tx.actualizarSuministro(cambio, auditoria);
@@ -137,6 +158,25 @@ public class RequerimientoCompraOrdenHelper {
         return valor;
     }
 
+    private String recepcionSuministro(String entrada) {
+        String valor = texto(entrada, 15, false, "Recepcion del suministro");
+        if (valor.length() > 0 && !"SI".equals(valor) && !"PARCIALMENTE".equals(valor)
+                && !"NO".equals(valor)) {
+            throw new IllegalArgumentException("La respuesta de recepcion del suministro no es valida.");
+        }
+        return valor;
+    }
+
+    private String satisfaccionEntrega(String entrada) {
+        String valor = texto(entrada, 20, false, "Satisfaccion con la entrega");
+        if (valor.length() > 0 && !"MUY_SATISFECHO".equals(valor) && !"SATISFECHO".equals(valor)
+                && !"NEUTRAL".equals(valor) && !"INSATISFECHO".equals(valor)
+                && !"MUY_INSATISFECHO".equals(valor)) {
+            throw new IllegalArgumentException("La respuesta de satisfaccion con la entrega no es valida.");
+        }
+        return valor;
+    }
+
     private void validarSuministroCargado(RequerimientoCompraOrdenSuministro datos, int idOrden) {
         if (datos.getIdOrdenCompra() != idOrden || datos.getVersionEdicion() <= 0) {
             throw new IllegalStateException("La gestion de suministro guardada no corresponde a la OC.");
@@ -149,6 +189,8 @@ public class RequerimientoCompraOrdenHelper {
         respuestaSuministro(datos.getRespuesta3());
         respuestaSuministro(datos.getRespuesta4());
         respuestaSuministro(datos.getRespuesta5());
+        recepcionSuministro(datos.getRecepcionSuministro());
+        satisfaccionEntrega(datos.getSatisfaccionEntrega());
     }
 
     protected RequerimientoCompraOrdenSuministro obtenerSuministro(int idOrden) throws Exception {
