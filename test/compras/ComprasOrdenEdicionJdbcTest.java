@@ -99,10 +99,12 @@ public class ComprasOrdenEdicionJdbcTest {
         comprobar("OC53 subtotal informado", new BigDecimal("85000").compareTo(creada.getDetalles().get(0).getPrecioTotalEstimado()) == 0);
         comprobar("OC53 impuestos opcionales cero", creada.getIva().signum() == 0 && creada.getIibb().signum() == 0);
         comprobar("OC53 total sin impuestos", new BigDecimal("85000").compareTo(creada.getTotal()) == 0);
+        igual("OC53 fecha estimada confirmada roundtrip", java.sql.Date.valueOf("2026-11-20"), creada.getFechaEstimadaEntrega());
         List<Map<String, String>> antes = filas(pool,
                 "SELECT * FROM compras.requerimiento_orden_compra WHERE id_requerimiento = ?", 53, null);
         igual("OC53 presupuesto de origen fijo", "53", antes.get(0).get("id_presupuesto"));
-        igual("cabecera solo16columnas", Integer.valueOf(16), Integer.valueOf(antes.get(0).size()));
+        igual("OC53 fecha estimada persistida DATE", "2026-11-20", antes.get(0).get("fecha_estimada_entrega"));
+        igual("cabecera normalizada y fecha confirmada", Integer.valueOf(17), Integer.valueOf(antes.get(0).size()));
         comprobar("cabecera sin moneda duplicada", !antes.get(0).containsKey("moneda"));
         comprobar("cabecera sin proveedor duplicado", !antes.get(0).containsKey("proveedor"));
         igual("detalle solo5columnas", Integer.valueOf(5), Integer.valueOf(detalles(pool, creada.getIdOrdenCompra()).get(0).size()));
@@ -149,6 +151,7 @@ public class ComprasOrdenEdicionJdbcTest {
         RequerimientoCompraOrden orden = new RequerimientoCompraOrden();
         orden.setIdRequerimientoCompra(requerimiento);
         orden.setFechaEmision(new Date());
+        orden.setFechaEstimadaEntrega(java.sql.Date.valueOf("2026-11-20"));
         RequerimientoCompraDetalle item = new RequerimientoCompraDetalle(Integer.valueOf(detalle));
         item.setIdRequerimientoCompra(requerimiento);
         item.setCantidad(Integer.valueOf(cantidad));

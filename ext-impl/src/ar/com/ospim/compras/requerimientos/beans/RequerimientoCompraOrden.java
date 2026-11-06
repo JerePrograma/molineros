@@ -14,6 +14,7 @@ public class RequerimientoCompraOrden {
     private int idRequerimientoCompra;
     private int idReclamoPrestacional;
     private Date fechaEmision;
+    private Date fechaEstimadaEntrega;
     private Date altaFecha;
     private Date fechaOrdenMedica;
     private Date fechaRecepcion;
@@ -59,6 +60,9 @@ public class RequerimientoCompraOrden {
 
     public Date getFechaEmision() { return fechaEmision; }
     public void setFechaEmision(Date fechaEmision) { this.fechaEmision = fechaEmision; }
+
+    public Date getFechaEstimadaEntrega() { return fechaEstimadaEntrega; }
+    public void setFechaEstimadaEntrega(Date fechaEstimadaEntrega) { this.fechaEstimadaEntrega = fechaEstimadaEntrega; }
 
     public Date getFechaOrdenMedica() { return fechaOrdenMedica; }
     public void setFechaOrdenMedica(Date fechaOrdenMedica) { this.fechaOrdenMedica = fechaOrdenMedica; }

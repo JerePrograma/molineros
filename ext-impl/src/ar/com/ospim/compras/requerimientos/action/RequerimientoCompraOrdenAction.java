@@ -8,6 +8,8 @@ import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrdenSuministro;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrdenSeguimiento;
+import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraOrdenSeguimientoHelper;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraOrdenHelper;
 import ar.com.ospim.util.PermissionUtil;
@@ -55,6 +57,10 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
     public void processAction(ActionMapping mapping, ActionForm form, PortletConfig config,
             ActionRequest request, ActionResponse response) throws Exception {
         int id = ParamUtil.getInteger(request, "id_requerimiento_compra", 0);
+        if ("guardar_seguimiento".equals(ParamUtil.getString(request, "cmd"))) {
+            guardarSeguimiento(request, response, id);
+            return;
+        }
         if ("guardar_suministro".equals(ParamUtil.getString(request, "cmd"))) {
             guardarSuministro(request, response, id);
             return;
@@ -80,14 +86,8 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
                 publicarDescargaEmision(request, user, id);
                 request.setAttribute("ordenCompraCreada", Boolean.TRUE);
             } else if (cmd.length() == 0) {
-                RequerimientoCompraOrden orden = obtenerHelper().prepararParaGuardar(id, user.getFullName());
-                if (orden.getIdOrdenCompra() == 0
-                        && !obtenerHelper().requiereCompletarDatos(orden)) {
-                    consumirToken(request);
-                    obtenerHelper().crearDirecta(id, user.getFullName(), user.getScreenName());
-                    publicarDescargaEmision(request, user, id);
-                    request.setAttribute("ordenCompraCreada", Boolean.TRUE);
-                }
+                // Una solicitud anterior sin cmd solo abre el formulario; no emite ni consume el token.
+                obtenerHelper().prepararParaGuardar(id, user.getFullName());
             } else {
                 throw new IllegalArgumentException("La operación de la Orden de Compra no es válida.");
             }
@@ -123,8 +123,7 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
                 throw new IllegalArgumentException("No posee permisos para consultar ordenes de compra emitidas.");
             }
             boolean editable = nueva && emisor;
-            if ((nueva && (!editable
-                    || !orden.getRequerimiento().esSectorSinCotizacionPrestador()))
+            if ((nueva && !editable)
                     || (!nueva && !orden.getRequerimiento().isOrdenCompra())) {
                 throw new IllegalArgumentException(
                         "Todavia no se emitio una Orden de Compra para este requerimiento.");
@@ -134,9 +133,13 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             if (suministro) {
                 request.setAttribute("ordenSuministro", obtenerHelper().cargarSuministro(orden));
             }
+            if (!nueva && consulta) {
+                request.setAttribute("ordenSeguimiento", obtenerSeguimientoHelper().cargar(orden));
+                request.setAttribute("ordenSeguimientoEditable", Boolean.valueOf(!suministro));
+            }
             // Mismo padron que VerRequerimientoCompraAction.cargarAfiliadoRequerimiento.
             request.removeAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
-            if (!nueva && consulta && orden.getRequerimiento().tieneAfiliadoInformado()) {
+            if ((nueva || consulta) && orden.getRequerimiento().tieneAfiliadoInformado()) {
                 List<Afiliado> afiliados = null;
                 try {
                     afiliados = buscarAfiliadoComponente(
@@ -160,7 +163,7 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             request.setAttribute("ordenCompraPuedeCrear", Boolean.valueOf(nueva));
             request.setAttribute("ordenCompraRequiereDatos",
                     Boolean.valueOf(obtenerHelper().requiereCompletarDatos(orden)));
-            if (editable || suministro) {
+            if (editable || suministro || (!nueva && consulta)) {
                 publicarToken(request);
             }
             if (!nueva && consulta
@@ -181,6 +184,44 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             }
         }
         return mapping.findForward(FORWARD);
+    }
+
+    protected RequerimientoCompraOrdenSeguimientoHelper obtenerSeguimientoHelper() {
+        return new RequerimientoCompraOrdenSeguimientoHelper();
+    }
+
+    /** Seguimiento manual independiente de las condiciones comerciales y del suministro. */
+    private void guardarSeguimiento(ActionRequest request, ActionResponse response, int id) {
+        Map<String, String> entrada = new HashMap<String, String>();
+        String[] campos = { "seg_calificacion", "seg_observaciones", "seg_factura_ingresada",
+                "seg_numero_factura", "seg_fecha_factura", "seg_estado_liquidacion",
+                "seg_estado_pago", "seg_id_liquidacion", "seg_id_orden_pago", "version_seguimiento" };
+        for (int i = 0; i < campos.length; i++) entrada.put(campos[i], ParamUtil.getString(request, campos[i]));
+        entrada.put("seg_liquidacion_auditada", ParamUtil.getString(request, "seg_liquidacion_auditada", "false"));
+        request.setAttribute("ordenSeguimientoEntrada", entrada);
+        try {
+            User user = obtenerUsuario(request);
+            if (!puedeConsultar(user)) {
+                throw new IllegalArgumentException("No posee permisos para gestionar el seguimiento de la Orden de Compra.");
+            }
+            consumirToken(request);
+            RequerimientoCompraOrdenSeguimiento guardado = obtenerSeguimientoHelper().guardar(
+                    id, ParamUtil.getInteger(request, "id_orden_compra", 0),
+                    ParamUtil.getInteger(request, "version_seguimiento", -1), entrada, user.getScreenName());
+            request.setAttribute("ordenSeguimiento", guardado);
+            request.removeAttribute("ordenSeguimientoEntrada");
+            request.setAttribute("ordenSeguimientoGuardado", Boolean.TRUE);
+        } catch (ValidacionCompraException e) {
+            request.setAttribute("ordenSeguimientoError", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            request.setAttribute("ordenSeguimientoError", e.getMessage());
+        } catch (Exception e) {
+            _log.error("No se pudo guardar el seguimiento de la orden. Requerimiento=" + id, e);
+            request.setAttribute("ordenSeguimientoError", "No se pudo guardar el seguimiento. Vuelva a consultar la orden antes de reintentar.");
+        }
+        response.setRenderParameter("struts_action", RUTA);
+        response.setRenderParameter("id_requerimiento_compra", String.valueOf(id));
+        response.setRenderParameter("origen_ordenes", "1");
     }
 
     /** Guardado del seguimiento: mismo formulario y validacion que la consulta de OC. */
@@ -288,9 +329,28 @@ public class RequerimientoCompraOrdenAction extends PortletAction {
             RequerimientoCompraOrden orden) {
         Map<String, String> entrada = new HashMap<String, String>();
         String[] campos = { "condicion", "forma_pago", "plazo_pago", "entrega",
-                "observaciones", "iva", "iibb" };
+                "observaciones", "iva", "iibb", "fecha_estimada_entrega" };
         for (int i = 0; i < campos.length; i++) {
             entrada.put(campos[i], ParamUtil.getString(request, campos[i]));
+        }
+        String[] fechaEntrega = { "entregaEstimadaDia", "entregaEstimadaMes", "entregaEstimadaAnio" };
+        boolean tieneFechaEntrega = false;
+        for (int i = 0; i < fechaEntrega.length; i++) {
+            if (request.getParameter(fechaEntrega[i]) != null) tieneFechaEntrega = true;
+            entrada.put(fechaEntrega[i], ParamUtil.getString(request, fechaEntrega[i]));
+        }
+        if (tieneFechaEntrega) {
+            int dia = ParamUtil.getInteger(request, "entregaEstimadaDia", -1);
+            int mes = ParamUtil.getInteger(request, "entregaEstimadaMes", -2) + 1;
+            int anio = ParamUtil.getInteger(request, "entregaEstimadaAnio", -1);
+            String fecha = (dia >= 0 && dia < 10 ? "0" : "") + dia + "/"
+                    + (mes >= 0 && mes < 10 ? "0" : "") + mes + "/" + anio;
+            if (!entrada.get("entregaEstimadaDia").matches("[0-9]{1,2}")
+                    || !entrada.get("entregaEstimadaMes").matches("[0-9]{1,2}")
+                    || !entrada.get("entregaEstimadaAnio").matches("[0-9]{4}")) {
+                fecha = "INVALIDA";
+            }
+            entrada.put("fecha_estimada_entrega", fecha);
         }
         for (RequerimientoCompraDetalle detalle : orden.getDetalles()) {
             String campo = "precio_" + detalle.getIdInt();

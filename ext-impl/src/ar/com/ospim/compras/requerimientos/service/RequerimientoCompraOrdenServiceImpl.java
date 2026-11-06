@@ -762,7 +762,7 @@ public class RequerimientoCompraOrdenServiceImpl {
             int idRequerimiento) throws Exception {
         PreparedStatement stmt = con.prepareStatement(
                 "SELECT o.id_orden_compra,o.id_requerimiento,o.alta_fecha,o.alta_usr,o.modi_fecha,o.modi_usr,"
-                + "o.version_edicion,o.fecha_emision,o.condicion,o.forma_pago,o.plazo_pago,"
+                + "o.version_edicion,o.fecha_emision,o.fecha_estimada_entrega,o.condicion,o.forma_pago,o.plazo_pago,"
                 + "o.entrega,o.observaciones,o.iva,o.iibb,r.alta_usr AS solicitante,"
                 + "rr.id_reclamo_prestacional,rp.tipo_documento,rp.id_prestador,"
                 + "rp.empresa_cuit,rp.empresa_sucursal,rp.descripcion_empresa,"
@@ -791,6 +791,7 @@ public class RequerimientoCompraOrdenServiceImpl {
                     orden.setModiUsr(rs.getString("modi_usr"));
                     orden.setVersionEdicion(rs.getInt("version_edicion"));
                     orden.setFechaEmision(rs.getDate("fecha_emision"));
+                    orden.setFechaEstimadaEntrega(rs.getDate("fecha_estimada_entrega"));
                     if (rs.getInt("tipo_documento") == RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_COTIZACION_EMPRESA) {
                         boolean identificada = normalizar(rs.getString("empresa_cuit")) != null
                                 && normalizar(rs.getString("empresa_sucursal")) != null;
@@ -1099,8 +1100,8 @@ public class RequerimientoCompraOrdenServiceImpl {
         PreparedStatement stmt = con.prepareStatement(
                 "INSERT INTO compras.requerimiento_orden_compra "
                 + "(id_requerimiento, id_presupuesto, alta_usr, fecha_emision, "
-                + "condicion, forma_pago, plazo_pago, entrega, observaciones, iva, iibb) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id_orden_compra");
+                + "condicion, forma_pago, plazo_pago, entrega, observaciones, iva, iibb, fecha_estimada_entrega) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id_orden_compra");
         try {
             stmt.setInt(1, orden.getIdRequerimientoCompra());
             stmt.setInt(2, idPresupuesto);
@@ -1114,6 +1115,8 @@ public class RequerimientoCompraOrdenServiceImpl {
             stmt.setString(9, orden.getObservaciones());
             stmt.setBigDecimal(10, orden.getIva());
             stmt.setBigDecimal(11, orden.getIibb());
+            stmt.setDate(12, orden.getFechaEstimadaEntrega() == null ? null
+                    : new java.sql.Date(orden.getFechaEstimadaEntrega().getTime()));
             ResultSet rs = stmt.executeQuery();
             try {
                 if (!rs.next()) {

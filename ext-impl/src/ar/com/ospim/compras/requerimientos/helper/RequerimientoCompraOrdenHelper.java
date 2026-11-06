@@ -291,10 +291,14 @@ public class RequerimientoCompraOrdenHelper {
             }
             return orden;
         }
-        if (esEmpresa(orden.getRequerimiento(),tx) && (!directa || entrada != null)) {
-            if (entrada == null) {
-                throw new IllegalArgumentException("No se recibieron los datos de la Orden de Compra.");
-            }
+        if (directa) {
+            throw new IllegalArgumentException("Complete la fecha estimada de entrega confirmada por el proveedor en el formulario de Orden de Compra antes de emitirla.");
+        }
+        if (entrada == null) {
+            throw new IllegalArgumentException("No se recibieron los datos de la Orden de Compra.");
+        }
+        orden.setFechaEstimadaEntrega(fechaEstimadaEntrega(entrada.get("fecha_estimada_entrega")));
+        if (esEmpresa(orden.getRequerimiento(),tx)) {
             completarPrecios(orden, entrada,tx);
             if (entrada.containsKey("iva")) {
                 orden.setIva(importeEntrada(entrada.get("iva"), false, "IVA",tx));
@@ -319,6 +323,19 @@ public class RequerimientoCompraOrdenHelper {
             }
         }
         return emitir(tx, orden, usuario);
+    }
+
+    private Date fechaEstimadaEntrega(String entrada) {
+        String valor = texto(entrada, 10, true, "Fecha estimada de entrega confirmada por el proveedor");
+        if (!valor.matches("[0-9]{2}/[0-9]{2}/[0-9]{4}")) {
+            throw new IllegalArgumentException("La fecha estimada de entrega debe tener formato dd/MM/yyyy.");
+        }
+        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+        formato.setLenient(false);
+        try { return formato.parse(valor); }
+        catch (ParseException e) {
+            throw new IllegalArgumentException("La fecha estimada de entrega no es valida.");
+        }
     }
 
     public RequerimientoCompraOrden crearDirecta(int id, String nombreUsuario,
@@ -777,6 +794,7 @@ public class RequerimientoCompraOrdenHelper {
     }
     private Map<String,String> entradaOrden(RequerimientoCompraOrden orden) {
         Map<String,String> f=new HashMap<String,String>();f.put("condicion",orden.getCondicion());f.put("forma_pago",orden.getFormaPago());f.put("plazo_pago",orden.getPlazoPago());f.put("entrega",orden.getEntrega());f.put("observaciones",orden.getObservaciones());
+        if(orden.getFechaEstimadaEntrega()!=null)f.put("fecha_estimada_entrega",new SimpleDateFormat("dd/MM/yyyy").format(orden.getFechaEstimadaEntrega()));
         if(orden.getIva()!=null)f.put("iva",orden.getIva().toPlainString());if(orden.getIibb()!=null)f.put("iibb",orden.getIibb().toPlainString());
         if(orden.getDetalles()!=null)for(RequerimientoCompraDetalle d:orden.getDetalles())if(d!=null && d.getPrecioUnitarioEstimado()!=null)f.put("precio_"+d.getIdInt(),d.getPrecioUnitarioEstimado().toPlainString());return f;
     }

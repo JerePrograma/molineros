@@ -42,63 +42,29 @@ if (ordenTieneAlta) {
     ordenAlta.setTime(ordenCompra.getAltaFecha());
 }
 %>
-<% if (ordenSuministro) { %>
-<% } %>
-<fieldset class="block-labels">
-<legend><%= ordenSuministro ? "Gesti&oacute;n de Suministro" : "Orden de Compra" %></legend>
-<table class="lfr-table" width="100%">
-<tr>
-    <td><label>N&uacute;mero OC:</label></td>
-    <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getIdOrdenCompra() %>" /></td>
-    <td><label>Fecha Alta OC:</label></td>
-    <td>
-        <liferay-ui:input-date dayParam="altaOCDia" dayValue="<%= ordenTieneAlta ? ordenAlta.get(Calendar.DATE) : 0 %>"
-            monthParam="altaOCMes" monthValue="<%= ordenTieneAlta ? ordenAlta.get(Calendar.MONTH) : -1 %>"
-            yearParam="altaOCAnio" yearValue="<%= ordenTieneAlta ? ordenAlta.get(Calendar.YEAR) : 0 %>"
-            yearRangeStart="<%= ordenAlta.get(Calendar.YEAR) - 20 %>" yearRangeEnd="<%= ordenAlta.get(Calendar.YEAR) + 20 %>"
-            firstDayOfWeek="<%= ordenAlta.getFirstDayOfWeek() %>" disabled="<%= true %>" />
-    </td>
-</tr>
-<tr>
-    <td><label>ID Requerimiento:</label></td>
-    <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getIdRequerimientoCompra() %>" /></td>
-    <td><label>ID Reclamo Prestacional:</label></td>
-    <td><input type="text" size="15" readonly="readonly" value="<%= ordenCompra.getIdReclamoPrestacional() > 0 ? String.valueOf(ordenCompra.getIdReclamoPrestacional()) : "" %>" /></td>
-</tr>
-<tr>
-    <td><label>Prestador adjudicado:</label></td>
-    <td colspan="3"><input type="text" size="80" readonly="readonly" value="<%= ordenCompraTexto(ordenCompra.getProveedor()) %>" /></td>
-</tr>
+<%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_orden_datos.jsp" %>
 <% if (!ordenSuministro) { %>
-<tr><td colspan="4">&nbsp;</td></tr>
-<tr>
-    <td><label>Sector:</label></td>
-    <td colspan="3"><input type="text" size="50" readonly="readonly" value="<%= ordenCompraTexto(ordenRequerimiento.getSectorDescripcionVisible()) %>" /></td>
-</tr>
+<% if (renderRequest.getAttribute("ordenSeguimientoError") != null) { %><div class="portlet-msg-error"><%= HtmlUtil.escape((String) renderRequest.getAttribute("ordenSeguimientoError")) %></div><% } %>
+<% if (Boolean.TRUE.equals(renderRequest.getAttribute("ordenSeguimientoGuardado"))) { %><div class="portlet-msg-success">Los datos del seguimiento de la orden fueron guardados.</div><% } %>
+<% if (seguimientoPuedeEditar) { %>
+<form action="<%= ordenGuardarURL.toString() %>" method="post" name="<portlet:namespace />seguimientoOrdenForm"
+      onsubmit="document.getElementById('<portlet:namespace />guardarSeguimientoOrden').disabled = true;">
+<input type="hidden" name="<portlet:namespace />cmd" value="guardar_seguimiento" />
+<input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= ordenCompra.getIdRequerimientoCompra() %>" />
+<input type="hidden" name="<portlet:namespace />id_orden_compra" value="<%= ordenCompra.getIdOrdenCompra() %>" />
+<input type="hidden" name="<portlet:namespace />version_seguimiento" value="<%= ordenCompraValor(ordenSeguimientoEntrada, "version_seguimiento", ordenSeguimiento.getVersionEdicion()) %>" />
+<input type="hidden" name="<portlet:namespace />compras_save_token" value="<%= HtmlUtil.escape((String) renderRequest.getAttribute("COMPRAS_SAVE_TOKEN")) %>" />
 <% } %>
-</table>
-</fieldset>
-<%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_orden_afiliado.jsp" %>
-<% if (!ordenSuministro) { %>
-<fieldset class="block-labels">
-<legend>Detalle de la compra</legend>
-<table class="lfr-table taglib-search-iterator" width="100%">
-<thead><tr class="portlet-section-header results-header"><th width="10%">Cantidad</th><th>Art&iacute;culo / prestaci&oacute;n</th></tr></thead>
-<tbody>
-<% int ordenFila = 0;
-   for (RequerimientoCompraDetalle detalleConsultaOrden : ordenCompra.getDetalles()) { %>
-<tr class="results-row<%= ordenFila++ % 2 == 0 ? "" : " alt" %>">
-    <td align="center"><%= detalleConsultaOrden.getCantidad() %></td>
-    <td><%= ordenCompraTexto(detalleConsultaOrden.getDescripcionItemVisible()) %></td>
-</tr>
-<% } %>
-</tbody>
-</table>
-</fieldset>
-<table class="lfr-table"><tr><td align="left">
-<input type="button" value="Gesti&oacute;n de Suministro" onclick="window.location.href='<%= ordenSuministroURL.toString() %>';" />&nbsp;&nbsp;
+<%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_orden_seguimiento.jsp" %>
+<table class="lfr-table" width="100%"><tr><td>
+<input type="button" value="Gesti&oacute;n de Suministro" onclick="window.location.href='<%= ordenSuministroURL.toString() %>';" />
 <input type="button" value="Volver al listado" onclick="window.location.href='<%= ordenVolverURL.toString() %>';" />
+<input type="button" value="Seguimiento y Trazabilidad" onclick="document.getElementById('<portlet:namespace />trazabilidadOrdenCompra').scrollIntoView();" />
+</td><td align="right">
+<input type="button" value="Imprimir Orden" onclick="window.location.href='/pdfservlet/?accion=ordenCompra&amp;id_requerimiento=<%= ordenCompra.getIdRequerimientoCompra() %>';" />
+<% if (seguimientoPuedeEditar) { %><input type="submit" id="<portlet:namespace />guardarSeguimientoOrden" value="Guardar Orden de Compra" /><% } %>
 </td></tr></table>
+<% if (seguimientoPuedeEditar) { %></form><% } %>
 <% } else { %>
 <form name="<portlet:namespace />gestionSuministroBoceto" action="<%= ordenGuardarURL.toString() %>" method="post"
       onsubmit="document.getElementById('<portlet:namespace />guardarGestionSuministro').disabled = true;">

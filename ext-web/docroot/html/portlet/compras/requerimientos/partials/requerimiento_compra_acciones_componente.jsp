@@ -162,12 +162,6 @@ botoneraOrdenCompraURL.setWindowState(WindowState.MAXIMIZED);
 botoneraOrdenCompraURL.setParameter("struts_action", "/compras/orden_compra");
 botoneraOrdenCompraURL.setParameter("id_requerimiento_compra", String.valueOf(botoneraIdRequerimientoActual));
 
-PortletURL botoneraCrearOrdenCompraURL = renderResponse.createActionURL();
-botoneraCrearOrdenCompraURL.setWindowState(WindowState.MAXIMIZED);
-botoneraCrearOrdenCompraURL.setParameter("struts_action", "/compras/orden_compra");
-String botoneraOrdenCompraFormId = namespaceCompra + "ordenCompraRequerimientoCompraForm";
-String botoneraOrdenCompraToken = (String) renderRequest.getAttribute("COMPRAS_SAVE_TOKEN");
-
 boolean botoneraHayDetalles =
         botoneraRequerimientoPersistido
         && req.getDetalles() != null
@@ -303,16 +297,6 @@ String botoneraReclamoPrestacionalFormId =
         <input type="hidden"
                name="<portlet:namespace />estado_nuevo"
                value="<%= String.valueOf(ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoACotizar()) %>" />
-    </form>
-<% } %>
-
-<% if (botoneraPuedePasarAOrdenCompra) { %>
-    <form action="<%= botoneraCrearOrdenCompraURL.toString() %>" method="post"
-          id="<%= botoneraOrdenCompraFormId %>" style="display:none;">
-        <input type="hidden" name="<portlet:namespace />id_requerimiento_compra"
-               value="<%= botoneraIdRequerimientoActual %>" />
-        <input type="hidden" name="<portlet:namespace />compras_save_token"
-               value="<%= HtmlUtil.escape(botoneraOrdenCompraToken) %>" />
     </form>
 <% } %>
 
@@ -491,16 +475,15 @@ String botoneraReclamoPrestacionalFormId =
 
 <script type="text/javascript">
     function <portlet:namespace />crearOrdenCompraDirecta(boton) {
-        var form = document.getElementById('<%= botoneraOrdenCompraFormId %>');
-        if (!boton || boton.disabled || !form) { return false; }
+        if (!boton || boton.disabled) { return false; }
         boton.disabled = true;
-        boton.value = 'Generando...';
+        boton.value = 'Abriendo...';
         try {
-            form.submit();
+            window.location.href = '<%= botoneraOrdenCompraURL.toString() %>';
         } catch (e) {
             boton.disabled = false;
             boton.value = 'Crear Orden de Compra';
-            alert('No se pudo enviar la solicitud de Orden de Compra.');
+            alert('No se pudo abrir el formulario de Orden de Compra.');
         }
         return false;
     }

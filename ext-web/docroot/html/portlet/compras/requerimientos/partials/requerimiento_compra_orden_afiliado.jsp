@@ -1,11 +1,10 @@
 <%--
 Incluye el mismo componente compuesto de afiliado y contacto usado por Requerimientos.
 Carga el padron con seleccionaCamposAfiliado del componente original, sin duplicar su presentacion.
-Requiere ordenRequerimiento, ordenCompra y ordenSuministro del caller.
+Requiere ordenRequerimiento, ordenCompra, ordenSuministro y comprasActualizaDomicilioURL del caller.
 Mantiene la identidad en consulta y reutiliza el flujo real de contacto de Compras.
 No persiste los campos provisorios del boceto de suministro.
 --%>
-<%@ include file="/html/portlet/compras/requerimientos/partials/runtime/requerimiento_compra_runtime_javascript_helper_componente.jsp" %>
 <% if (ordenRequerimiento != null && ordenRequerimiento.tieneAfiliadoInformado()) {
     Afiliado ordenAfiliado = (Afiliado) renderRequest.getAttribute(WebKeysCompras.AFILIADO_REQUERIMIENTO_COMPRA);
 %>
@@ -26,10 +25,7 @@ No persiste los campos provisorios del boceto de suministro.
 <% if (ordenSuministro) { %>
 <input type="hidden" id="<portlet:namespace />contacto_afiliado_identidad_fija" value="1" />
 <% } %>
-<portlet:renderURL var="comprasActualizaDomicilioURL"
-        windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
-    <portlet:param name="struts_action" value="/compras/actualiza_domicilio" />
-</portlet:renderURL>
+
 <script type="text/javascript">
 <%@ include file="/html/portlet/compras/requerimientos/partials/requerimiento_compra_scripts_contacto_afiliado_componente.jsp" %>
 (function() {

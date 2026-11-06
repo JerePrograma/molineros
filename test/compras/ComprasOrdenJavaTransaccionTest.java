@@ -14,7 +14,7 @@ public class ComprasOrdenJavaTransaccionTest {
     static Map<String,Object> fila(Object... datos){Map<String,Object> f=new HashMap<String,Object>();for(int i=0;i<datos.length;i+=2)f.put((String)datos[i],datos[i+1]);return f;}
     static final class BD {
         final ReentrantLock lock=new ReentrantLock();final List<String> sql=Collections.synchronizedList(new ArrayList<String>());
-        RequerimientoCompra r; String estadoRp="VINCULADO";Timestamp bajaRp;boolean sinRp; boolean sectorActivo=true; boolean fallarDetalle; boolean casPerdido; int orden; int origen=101;int version;int inserts;int commits;int rollbacks;BigDecimal precio;String condicion;String usuarioModi;int detalle=10;
+        RequerimientoCompra r; String estadoRp="VINCULADO";Timestamp bajaRp;boolean sinRp; boolean sectorActivo=true; boolean fallarDetalle; boolean casPerdido; int orden; int origen=101;int version;int inserts;int commits;int rollbacks;BigDecimal precio;java.sql.Date fechaEstimada;String condicion;String usuarioModi;int detalle=10;
         BD() {
             configuracion();BusquedaRequerimientoCompraServiceUtil.permitirLecturaGlobalPreparacion=true;
             r=new RequerimientoCompra();BusquedaRequerimientoCompraServiceUtil.permitirLecturaGlobalPreparacion=false;
@@ -26,14 +26,14 @@ public class ComprasOrdenJavaTransaccionTest {
         Connection conexion(){return(Connection)Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{Connection.class},new Conexion(this));}
     }
     static final class Conexion implements InvocationHandler {
-        final BD b;int locks;boolean snap;int orden;int estado;int version;BigDecimal precio;String condicion;
+        final BD b;int locks;boolean snap;int orden;int estado;int version;BigDecimal precio;java.sql.Date fechaEstimada;String condicion;
         Conexion(BD b){this.b=b;}
-        void bloquear(){b.lock.lock();locks++;if(!snap){snap=true;orden=b.orden;estado=b.r.getEstado();version=b.version;precio=b.precio;condicion=b.condicion;}}
+        void bloquear(){b.lock.lock();locks++;if(!snap){snap=true;orden=b.orden;estado=b.r.getEstado();version=b.version;precio=b.precio;fechaEstimada=b.fechaEstimada;condicion=b.condicion;}}
         void soltar(){while(locks>0){locks--;b.lock.unlock();}snap=false;}
         public Object invoke(Object proxy,Method m,Object[] a)throws Throwable {
             String n=m.getName();if(n.equals("prepareStatement")||n.equals("prepareCall")){String sql=(String)a[0];b.sql.add(sql);return Proxy.newProxyInstance(getClass().getClassLoader(),new Class[]{n.equals("prepareCall")?CallableStatement.class:PreparedStatement.class},new Sentencia(this,sql));}
             if(n.equals("commit")){b.commits++;soltar();}
-            if(n.equals("rollback")){b.rollbacks++;if(snap){b.orden=orden;b.r.setEstado(estado);b.version=version;b.precio=precio;b.condicion=condicion;}soltar();}
+            if(n.equals("rollback")){b.rollbacks++;if(snap){b.orden=orden;b.r.setEstado(estado);b.version=version;b.precio=precio;b.fechaEstimada=fechaEstimada;b.condicion=condicion;}soltar();}
             if(n.equals("close"))soltar();return defecto(m.getReturnType());
         }
     }
@@ -60,8 +60,8 @@ public class ComprasOrdenJavaTransaccionTest {
             else if(sql.startsWith("SELECT CURRENT_DATE"))f.add(fila("1",java.sql.Date.valueOf("2026-10-30")));
             else if(sql.startsWith("SELECT p.id_requerimiento FROM")){if(b.orden>0)f.add(fila("1",Integer.valueOf(42)));}
             else if(sql.startsWith("SELECT id_presupuesto FROM")){if(b.orden>0)f.add(fila("1",Integer.valueOf(b.origen)));}
-            else if(sql.startsWith("INSERT INTO compras.requerimiento_orden_compra ")){b.orden=900;b.inserts++;b.origen=((Integer)p.get(2)).intValue();b.condicion=(String)p.get(5);f.add(fila("1",Integer.valueOf(900)));}
-            else if(sql.startsWith("SELECT o.id_orden_compra,o.id_requerimiento")){if(b.orden>0)f.add(fila("id_orden_compra",Integer.valueOf(b.orden),"id_requerimiento",Integer.valueOf(42),"alta_usr","auditoria","version_edicion",Integer.valueOf(b.version),"fecha_emision",java.sql.Date.valueOf("2026-10-30"),"iva",BigDecimal.ZERO,"iibb",BigDecimal.ZERO,"condicion",b.condicion));}
+            else if(sql.startsWith("INSERT INTO compras.requerimiento_orden_compra ")){b.orden=900;b.inserts++;b.origen=((Integer)p.get(2)).intValue();b.condicion=(String)p.get(5);b.fechaEstimada=(java.sql.Date)p.get(12);f.add(fila("1",Integer.valueOf(900)));}
+            else if(sql.startsWith("SELECT o.id_orden_compra,o.id_requerimiento")){if(b.orden>0)f.add(fila("id_orden_compra",Integer.valueOf(b.orden),"id_requerimiento",Integer.valueOf(42),"alta_usr","auditoria","version_edicion",Integer.valueOf(b.version),"fecha_emision",java.sql.Date.valueOf("2026-10-30"),"fecha_estimada_entrega",b.fechaEstimada,"iva",BigDecimal.ZERO,"iibb",BigDecimal.ZERO,"condicion",b.condicion));}
             else if(sql.startsWith("SELECT od.id_requerimiento_detalle,od.cantidad")){if(b.orden>0)f.add(fila("id_requerimiento_detalle",Integer.valueOf(b.detalle),"tipo_item","OBSERVACION","observaciones","Equipo de prueba","cantidad",Integer.valueOf(2),"precio_unitario",b.precio,"precio_total",b.precio==null?null:b.precio.multiply(new BigDecimal(2))));}
             else if(sql.startsWith("SELECT fecha_documento FROM compras.requerimiento_presupuesto")){}
             else if(sql.indexOf("FOR UPDATE")>=0)f.add(fila("1",Integer.valueOf(42)));
@@ -89,9 +89,10 @@ public class ComprasOrdenJavaTransaccionTest {
         RequerimientoCompraComparativaDetalle cd=new RequerimientoCompraComparativaDetalle();cd.setIdDetalle(6);cd.setIdPrestacion(501);cd.setCantidad(Integer.valueOf(2));cd.setImporteUnitario(new BigDecimal("5.00"));c.getDetalles().add(cd);
         RequerimientoCompraComparativaServiceUtil.comparativas.clear();RequerimientoCompraComparativaServiceUtil.comparativas.add(c);return b;
     }
-    static Map<String,String> entrada(){Map<String,String> f=new HashMap<String,String>();f.put("precio_10","12.30");return f;}
+    static Map<String,String> entrada(){Map<String,String> f=new HashMap<String,String>();f.put("precio_10","12.30");f.put("fecha_estimada_entrega","20/11/2026");return f;}
     public static void main(String[] args)throws Exception {
         BD b=new BD();Helper h=new Helper(b);RequerimientoCompraOrden o=h.crear(42,entrada(),"auditoria");ok(o.getIdOrdenCompra()==900&&b.r.getEstado()==5&&b.inserts==1,"Crea y confirma bajo una TX.");
+        ok(java.sql.Date.valueOf("2026-11-20").equals(o.getFechaEstimadaEntrega()),"Fecha confirmada roundtrip tipada SQL DATE.");
         ok(b.precio.compareTo(new BigDecimal("12.30"))==0&&b.commits==1&&b.rollbacks==0,"Precio persistido y unico commit.");
         ok(b.sql.get(0).indexOf("bloquear_requerimiento_reclamo")>=0&&b.sql.get(1).indexOf("FOR UPDATE OF rp")>=0,"Bloqueo RP previo a cabecera.");
         for(String q:b.sql)ok(q.indexOf("bloquear_creacion_orden_compra")<0&&q.indexOf("confirmar_orden_compra_requerimiento")<0,"Sin decisiones SQL de OC.");
@@ -110,12 +111,14 @@ public class ComprasOrdenJavaTransaccionTest {
         b=new BD();BusquedaRequerimientoCompraServiceUtil.configuraciones.put("COMPRAS_OC_MAX_IMPORTE","20.00");rechazo=false;try{new Helper(b).crear(42,entrada(),"auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Limite de importe configurado se aplica al subtotal.");
         b=new BD();BusquedaRequerimientoCompraServiceUtil.configuraciones.remove("COMPRAS_OC_MAX_IMPORTE");rechazo=false;try{new Helper(b).crear(42,entrada(),"auditoria");}catch(IllegalStateException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Limite de importe ausente falla cerrado.");
         final BD concurrente=new BD();final List<Throwable> fallos=Collections.synchronizedList(new ArrayList<Throwable>());Runnable tarea=new Runnable(){public void run(){try{new Helper(concurrente).crear(42,entrada(),"auditoria");}catch(Throwable e){fallos.add(e);}}};Thread a=new Thread(tarea),c=new Thread(tarea);a.start();c.start();a.join();c.join();ok(fallos.isEmpty()&&concurrente.inserts==1&&concurrente.r.getEstado()==5,"Dos emisiones concurrentes conservan una sola OC.");
-        b=new BD();ar.com.ospim.util.ConnectionHelper.transaccionPreparada=b.conexion();RequerimientoCompraOrden dto=new RequerimientoCompraOrden();dto.setIdRequerimientoCompra(42);dto.setDetalles(new ArrayList<RequerimientoCompraDetalle>());RequerimientoCompraDetalle d=new RequerimientoCompraDetalle();d.setId(Integer.valueOf(10));d.setPrecioUnitarioEstimado(new BigDecimal("12.30"));d.setDescripcionItem("Descripcion manipulada");dto.getDetalles().add(d);o=RequerimientoCompraOrdenServiceUtil.crear(dto,"auditoria");ok(o.getDetalles().get(0).getDescripcionItemVisible().equals("Equipo de prueba")&&b.inserts==1,"Facade reconstruye DB e ignora descripcion DTO.");
-        b=prestador();o=new Helper(b).crearDirecta(42,"auditoria","auditoria");ok(o.getIdOrdenCompra()==900&&b.r.getEstado()==5&&b.precio.compareTo(new BigDecimal("5.00"))==0,"OC prestador reconstruye comparativa y RP vigentes.");
-        b=prestador();b.bajaRp=Timestamp.valueOf("2026-10-30 12:00:00.123456");rechazo=false;try{new Helper(b).crearDirecta(42,"auditoria","auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"RP de baja no permite OC prestador.");
-        b=prestador();b.sinRp=true;rechazo=false;try{new Helper(b).crearDirecta(42,"auditoria","auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Vinculo RP inexistente rechaza.");
-        b=prestador();b.r.getDetalles().get(0).setPrecioTotalEstimado(new BigDecimal("11.00"));rechazo=false;try{new Helper(b).crearDirecta(42,"auditoria","auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Subtotal instalado incoherente rechaza antes insertar.");
-        b=prestador();BusquedaRequerimientoCompraServiceUtil.documentos.clear();rechazo=false;try{new Helper(b).crearDirecta(42,"auditoria","auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Presupuesto prestador activo obligatorio.");
+        b=new BD();ar.com.ospim.util.ConnectionHelper.transaccionPreparada=b.conexion();RequerimientoCompraOrden dto=new RequerimientoCompraOrden();dto.setIdRequerimientoCompra(42);dto.setFechaEstimadaEntrega(java.sql.Date.valueOf("2026-11-20"));dto.setDetalles(new ArrayList<RequerimientoCompraDetalle>());RequerimientoCompraDetalle d=new RequerimientoCompraDetalle();d.setId(Integer.valueOf(10));d.setPrecioUnitarioEstimado(new BigDecimal("12.30"));d.setDescripcionItem("Descripcion manipulada");dto.getDetalles().add(d);o=RequerimientoCompraOrdenServiceUtil.crear(dto,"auditoria");ok(o.getDetalles().get(0).getDescripcionItemVisible().equals("Equipo de prueba")&&b.inserts==1,"Facade reconstruye DB e ignora descripcion DTO.");
+        b=prestador();o=new Helper(b).crear(42,entrada(),"auditoria");ok(o.getIdOrdenCompra()==900&&b.r.getEstado()==5&&b.precio.compareTo(new BigDecimal("5.00"))==0,"OC prestador reconstruye comparativa y RP vigentes.");
+        b=prestador();b.bajaRp=Timestamp.valueOf("2026-10-30 12:00:00.123456");rechazo=false;try{new Helper(b).crear(42,entrada(),"auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"RP de baja no permite OC prestador.");
+        b=prestador();b.sinRp=true;rechazo=false;try{new Helper(b).crear(42,entrada(),"auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Vinculo RP inexistente rechaza.");
+        b=prestador();b.r.getDetalles().get(0).setPrecioTotalEstimado(new BigDecimal("11.00"));rechazo=false;try{new Helper(b).crear(42,entrada(),"auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Subtotal instalado incoherente rechaza antes insertar.");
+        b=prestador();BusquedaRequerimientoCompraServiceUtil.documentos.clear();rechazo=false;try{new Helper(b).crear(42,entrada(),"auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Presupuesto prestador activo obligatorio.");
+        b=new BD();rechazo=false;try{new Helper(b).crearDirecta(42,"auditoria","auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0&&b.r.getEstado()==7,"Directa nueva no emite sin formulario/fecha.");
+        b=new BD();Map<String,String> sinFecha=entrada();sinFecha.remove("fecha_estimada_entrega");rechazo=false;try{new Helper(b).crear(42,sinFecha,"auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0&&b.r.getEstado()==7,"Sin fecha revierte sin persistir.");
         ok(ar.com.ospim.util.ConnectionHelper.aperturas==0,"Ninguna conexion global oculta.");
         System.out.println("APROBADAS="+checks+"; JDBC simulado, sin DB, UI ni DL reales.");
     }
