@@ -248,7 +248,7 @@ public class DocumentoLibraryComprasHelper
         asegurarPermisosAbm(entry, false);
     }
 
-    /* UPDATE se agrega solo al crear la comparativa regenerable del RP. */
+    /* Comparativa: VIEW para consulta; UPDATE solo para ABM. */
     private static void asegurarPermisosAbm(
             DLFileEntry entry, boolean permitirUpdate) throws Exception {
 
@@ -269,6 +269,15 @@ public class DocumentoLibraryComprasHelper
                     "No se pudieron determinar los roles de la empresa.");
         }
         List<Long> rolesAbm = new ArrayList<Long>();
+        List<Long> rolesLecturaComparativa = new ArrayList<Long>();
+        String rolViewCompras = null;
+        String rolCotizarCompras = null;
+        String rolAutorizarCompras = null;
+        if (permitirUpdate) {
+            rolViewCompras = ConfiguracionComprasHelper.getRolViewCompras();
+            rolCotizarCompras = ConfiguracionComprasHelper.getRolCotizarCompras();
+            rolAutorizarCompras = ConfiguracionComprasHelper.getRolAutorizarCompras();
+        }
         for (int i = 0; i < roles.size(); i++) {
             Role candidato = roles.get(i);
             if (candidato != null && PermissionUtil.rolesEquivalentes(
@@ -276,6 +285,17 @@ public class DocumentoLibraryComprasHelper
                 Long roleId = Long.valueOf(candidato.getRoleId());
                 if (!rolesAbm.contains(roleId)) {
                     rolesAbm.add(roleId);
+                }
+            } else if (permitirUpdate && candidato != null
+                    && (PermissionUtil.rolesEquivalentes(
+                            rolViewCompras, candidato.getName())
+                        || PermissionUtil.rolesEquivalentes(
+                            rolCotizarCompras, candidato.getName())
+                        || PermissionUtil.rolesEquivalentes(
+                            rolAutorizarCompras, candidato.getName()))) {
+                Long roleId = Long.valueOf(candidato.getRoleId());
+                if (!rolesLecturaComparativa.contains(roleId)) {
+                    rolesLecturaComparativa.add(roleId);
                 }
             }
         }
@@ -287,8 +307,11 @@ public class DocumentoLibraryComprasHelper
                     + ", fileEntryId=" + entry.getFileEntryId());
             return;
         }
-        for (int indiceRol = 0; indiceRol < rolesAbm.size(); indiceRol++) {
-            long roleId = rolesAbm.get(indiceRol).longValue();
+        List<Long> rolesDocumento = new ArrayList<Long>();
+        rolesDocumento.addAll(rolesAbm);
+        rolesDocumento.addAll(rolesLecturaComparativa);
+        for (int indiceRol = 0; indiceRol < rolesDocumento.size(); indiceRol++) {
+            long roleId = rolesDocumento.get(indiceRol).longValue();
             String nombreRecurso = DLFileEntry.class.getName();
             String primKey = String.valueOf(entry.getFileEntryId());
             int scope = ResourceConstants.SCOPE_INDIVIDUAL;
@@ -362,7 +385,8 @@ public class DocumentoLibraryComprasHelper
                 acciones.add(ActionKeys.VIEW);
                 cambio = true;
             }
-            if (permitirUpdate && !acciones.contains(ActionKeys.UPDATE)) {
+            if (permitirUpdate && rolesAbm.contains(Long.valueOf(roleId))
+                    && !acciones.contains(ActionKeys.UPDATE)) {
                 acciones.add(ActionKeys.UPDATE);
                 cambio = true;
             }

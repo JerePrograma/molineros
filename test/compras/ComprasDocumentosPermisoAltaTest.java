@@ -59,6 +59,10 @@ public class ComprasDocumentosPermisoAltaTest {
     private static final long FILE = 300L;
     private static final long ROLE = 500L;
     private static final long RES = 600L;
+    private static final String[] READERS = {"VIEW_COMPRAS", "COTIZAR_COMPRAS", "AUTORIZAR_COMPRAS",
+            "Compras_VIEW", "Compras_COTIZAR", "Compras_AUTORIZAR"};
+    private static final String READER_CONFIGURATION = "ABM=ABM_COMPRAS;VIEW=VIEW_Compras;"
+            + "COTIZAR=Cotizar_Compras;AUTORIZAR=Autorizar_Compras;ANULAR=ANULAR_COMPRAS";
     private static final String[] CASES = {"orden_medica", "presupuesto_tipo1",
             "presupuesto_tipo3", "pedido_pdf", "comparativa_pdf"};
     private static int checks;
@@ -79,6 +83,9 @@ public class ComprasDocumentosPermisoAltaTest {
             try { output.write(pdf); } finally { output.close(); }
             for (int algorithm = 5; algorithm <= 6; algorithm++) {
                 PropsValues.PERMISSIONS_USER_CHECK_ALGORITHM = algorithm;
+                lectoresComparativa(algorithm);
+                lectoresOtrosDocumentos(algorithm);
+                falloPermisoLector(algorithm);
                 for (int type = 0; type < CASES.length; type++) {
                     alta(type, algorithm);
                 }
@@ -123,6 +130,73 @@ public class ComprasDocumentosPermisoAltaTest {
         System.out.println("Creadores y check DL productivos; servicios simulados; sin DB, red ni UI.");
     }
 
+    private static void lectoresComparativa(int algorithm) throws Exception {
+        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", READER_CONFIGURATION);
+        Fixture f = new Fixture();
+        f.readerRoles = true;
+        f.expectUpdate = true;
+        f.install();
+        try {
+            crear(4, f);
+            for (int i = 0; i < READERS.length; i++) {
+                verificar(f.readerAllowed.get(i).contains("VIEW"), "LECTOR_SIN_VIEW: " + READERS[i]);
+                verificar(!f.readerAllowed.get(i).contains("UPDATE"), "Se concedio UPDATE al lector " + READERS[i]);
+                verificar(f.readerAllowed.get(i).contains("DELETE_DISCUSSION"), "Se retiraron acciones previas del lector.");
+                f.checkerRoleId = ROLE + 10 + i;
+                checkDl(f, "VIEW", true);
+                checkDl(f, "UPDATE", false);
+            }
+            verificar(f.allowed.contains("VIEW") && f.allowed.contains("UPDATE"), "ABM perdio VIEW o UPDATE de comparativa.");
+            igual("una concesion por rol individual", Integer.valueOf(READERS.length + 1), Integer.valueOf(f.writes));
+            asegurar(f.entry, true);
+            igual("lectores y aliases idempotentes", Integer.valueOf(READERS.length + 1), Integer.valueOf(f.writes));
+            f.preservados();
+            aprobado("comparativa lectores y aliases VIEW sin UPDATE algoritmo=" + algorithm);
+        } finally { f.restore(); }
+    }
+
+    private static void lectoresOtrosDocumentos(int algorithm) throws Exception {
+        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", READER_CONFIGURATION);
+        for (int type = 0; type < 4; type++) {
+            Fixture f = new Fixture();
+            f.readerRoles = true;
+            f.install();
+            try {
+                crear(type, f);
+                igual("otros documentos conservan solo grant ABM", Integer.valueOf(1), Integer.valueOf(f.writes));
+                for (int i = 0; i < READERS.length; i++) {
+                    igual("lector intacto en otro documento", Arrays.asList(new String[] {"DELETE_DISCUSSION"}), f.readerAllowed.get(i));
+                    f.checkerRoleId = ROLE + 10 + i;
+                    checkDl(f, "VIEW", false);
+                    checkDl(f, "UPDATE", false);
+                }
+                f.preservados();
+                aprobado(CASES[type] + " sin grants de lectores algoritmo=" + algorithm);
+            } finally { f.restore(); }
+        }
+    }
+
+    private static void falloPermisoLector(int algorithm) throws Exception {
+        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", READER_CONFIGURATION);
+        Fixture f = new Fixture();
+        f.readerRoles = true;
+        f.expectUpdate = true;
+        f.failReaderGrant = true;
+        f.install();
+        try {
+            try { crear(4, f); throw new AssertionError("Exito falso tras fallar la concesion del lector."); }
+            catch (Exception expected) { verificar(contieneCausa(expected, "GRANT_LECTOR_SIMULADO"), "Se perdio la causa del grant lector."); }
+            igual("una alta antes del fallo lector", Integer.valueOf(1), Integer.valueOf(f.adds));
+            igual("compensa solo comparativa creada", Integer.valueOf(1), Integer.valueOf(f.deletes));
+            verificar(f.deleted, "No se compenso la comparativa tras fallar VIEW del lector.");
+            for (int i = 0; i < READERS.length; i++) {
+                igual("lector sin exito parcial falso", Arrays.asList(new String[] {"DELETE_DISCUSSION"}), f.readerAllowed.get(i));
+            }
+            f.preservados();
+            aprobado("fallo grant lector compensa comparativa algoritmo=" + algorithm);
+        } finally { f.restore(); }
+    }
+
     private static void rolConfiguradoConDistintaCaja(String configurado, String asignado, int type) throws Exception {
         ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES",
                 "VIEW=VIEW_COMPRAS;ABM=" + configurado + ";ANULAR=ANULAR_COMPRAS;COTIZAR=COTIZAR_COMPRAS;AUTORIZAR=AUTORIZAR_COMPRAS");
@@ -141,7 +215,7 @@ public class ComprasDocumentosPermisoAltaTest {
     }
 
     private static void coexistenciaRoles(boolean comparison) throws Exception {
-        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", "ABM=ABM_COMPRAS");
+        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", READER_CONFIGURATION);
         Fixture f = new Fixture();
         f.coexistAlias = true;
         f.expectUpdate = comparison;
@@ -167,7 +241,7 @@ public class ComprasDocumentosPermisoAltaTest {
     }
 
     private static void falloSegundoAlias() throws Exception {
-        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", "ABM=ABM_COMPRAS");
+        ConfiguracionComprasDatosFixture.configurar("COMPRAS_ROLES", READER_CONFIGURATION);
         Fixture f = new Fixture();
         f.coexistAlias = true;
         f.failAliasGrant = true;
@@ -399,6 +473,9 @@ public class ComprasDocumentosPermisoAltaTest {
         private String roleName = "ABM_COMPRAS";
         private int roleFallbacks;
         private boolean coexistAlias;
+        private boolean readerRoles;
+        private boolean failReaderGrant;
+        private final List<List<String>> readerAllowed = new ArrayList<List<String>>();
         private boolean failAliasGrant;
         private long checkerRoleId = ROLE;
         private final List<String> aliasAllowed = new ArrayList<String>(Arrays.asList(new String[] {"DELETE_DISCUSSION"}));
@@ -418,6 +495,9 @@ public class ComprasDocumentosPermisoAltaTest {
         private final PermissionChecker checker;
 
         private Fixture() {
+            for (int i = 0; i < READERS.length; i++) {
+                readerAllowed.add(new ArrayList<String>(Arrays.asList(new String[] {"DELETE_DISCUSSION"})));
+            }
             context.setCompanyId(COMPANY);
             context.setScopeGroupId(GROUP);
             context.setUserId(USER);
@@ -528,6 +608,14 @@ public class ComprasDocumentosPermisoAltaTest {
                     roles.add((Role) model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE + 2)}, {"getName", "Compras_ABM"}}));
                     roles.add((Role) model(Role.class, new Object[][] {{"getRoleId", Long.valueOf(ROLE + 2)}, {"getName", "Compras_ABM"}}));
                 }
+                if (readerRoles) {
+                    for (int i = 0; i < READERS.length; i++) {
+                        Role reader = (Role) model(Role.class, new Object[][] {
+                            {"getRoleId", Long.valueOf(ROLE + 10 + i)}, {"getName", READERS[i]}});
+                        roles.add(reader);
+                        roles.add(reader);
+                    }
+                }
                 return roles;
             }
             if ("getResource".equals(method)) {
@@ -581,6 +669,9 @@ public class ComprasDocumentosPermisoAltaTest {
 
         private List<String> accionesRol(long roleId) {
             if (roleId == ROLE) return allowed;
+            if (readerRoles && roleId >= ROLE + 10 && roleId < ROLE + 10 + READERS.length) {
+                return readerAllowed.get((int) (roleId - ROLE - 10));
+            }
             verificar(coexistAlias && roleId == ROLE + 2, "Se intento otorgar o leer permisos de un rol ajeno.");
             return aliasAllowed;
         }
@@ -589,19 +680,22 @@ public class ComprasDocumentosPermisoAltaTest {
             grantAttempts++;
             List<String> actuales = accionesRol(roleId);
             List<String> updated = Arrays.asList(actions);
+            boolean reader = readerRoles && roleId >= ROLE + 10 && roleId < ROLE + 10 + READERS.length;
+            boolean allowUpdate = expectUpdate && !reader;
             List<String> expected = new ArrayList<String>(actuales);
             if (!expected.contains("VIEW")) expected.add("VIEW");
-            if (expectUpdate && !expected.contains("UPDATE")) expected.add("UPDATE");
+            if (allowUpdate && !expected.contains("UPDATE")) expected.add("UPDATE");
             verificar(updated.size() == expected.size() && updated.containsAll(expected),
                     "Se concedieron acciones distintas de la union autorizada.");
             verificar(updated.containsAll(actuales), "Se retiraron acciones previas ABM.");
             verificar(updated.contains("VIEW"), "No se agrego VIEW.");
-            if (!expectUpdate && !actuales.contains("UPDATE")) {
+            if (!allowUpdate && !actuales.contains("UPDATE")) {
                 verificar(!updated.contains("UPDATE"), "UPDATE concedido a otro tipo de documento.");
             }
-            if (expectUpdate) verificar(updated.contains("UPDATE"), "Comparativa sin UPDATE.");
+            if (allowUpdate) verificar(updated.contains("UPDATE"), "Comparativa ABM sin UPDATE.");
             verificar(!updated.contains("DELETE") && !updated.contains("PERMISSIONS"), "Se agregaron acciones no autorizadas.");
             if (failGrant) throw new SystemException("GRANT_SIMULADO");
+            if (failReaderGrant && reader) throw new SystemException("GRANT_LECTOR_SIMULADO");
             if (failAliasGrant && roleId == ROLE + 2) throw new SystemException("GRANT_ALIAS_SIMULADO");
             actuales.clear();
             actuales.addAll(updated);

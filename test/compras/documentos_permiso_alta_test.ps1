@@ -34,7 +34,7 @@ $sources = @(
     ('HEAD inicial: ' + $initialHead),
     'Estado inicial: cuatro creadores reales de Compras, entradas preparadas y servicios simulados.',
     'Log inicial: proceso Java aislado; no se usa DB, red, Tomcat ni UI.',
-    'Alcance: VIEW individual ABM; UPDATE solo comparativa; preservacion, idempotencia y compensacion.'
+    'Alcance: VIEW individual ABM; comparativa VIEW lectores/aliases y UPDATE solo ABM; algoritmos 5/6, preservacion, idempotencia y compensacion.'
 ), $latinEncoding)
 $sourcepath = @('ext-impl\src', 'ext-service\src', 'ext-web\docroot\WEB-INF\src') | ForEach-Object { Join-Path $repoPath $_ }
 $ErrorActionPreference = 'Continue' # Registrar stderr nativo y comprobar exit code.
