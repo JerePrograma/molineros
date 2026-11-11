@@ -620,9 +620,6 @@
 		        } else {
 
 		            jQuery('#<portlet:namespace />diabetesChk')
-		                .attr('checked', false);
-
-		            jQuery('#<portlet:namespace />diabetesChk')
 		                .attr('disabled', false);
 		        }
 				

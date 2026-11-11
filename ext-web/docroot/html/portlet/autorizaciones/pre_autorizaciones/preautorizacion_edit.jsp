@@ -1100,6 +1100,7 @@ function <portlet:namespace />initDateFields(){
 	   var esReclamoPrestacional = (('<%=preautorizacion.getIdReclamoPrestacional()==null || preautorizacion.getIdReclamoPrestacional()==0?false:true %>')==='true');
 	   <portlet:namespace />buscarAfiliados();
 	   <portlet:namespace />verificarDiabetesVigente();
+	   
 	   var url = '<portlet:renderURL windowState="<%=LiferayWindowState.EXCLUSIVE.toString() %>"/>&struts_action=/autorizaciones/buscar_afiliado_fecha_vto_documentacion&cuil_titular=';
 		   url += jQuery("#<portlet:namespace />cuil").val();
 		   url +='&inte=';
@@ -1531,6 +1532,7 @@ function <portlet:namespace />validarCampos(){
 
         if (<portlet:namespace />validarCampos()) {
 		document.getElementById("<portlet:namespace/>discapacidadChk").disabled=false;
+		document.getElementById("<portlet:namespace/>diabetesChk").disabled=false;
 		document.getElementById("<portlet:namespace/>medicamentoChk").disabled=false;
 		document.getElementById("<portlet:namespace/>alojamientoChk").disabled=false;
 		document.getElementById("<portlet:namespace/>protesisOrtChk").disabled=false;
@@ -2035,6 +2037,7 @@ function borraPreautorizacionCodigoNomenclador(idMod){
 function <portlet:namespace />siguienteSolapa() {
 	
 	document.getElementById("<portlet:namespace/>discapacidadChk").disabled=false;
+	document.getElementById("<portlet:namespace/>diabetesChk").disabled=false;
 	document.getElementById("<portlet:namespace />estadoPreautorizacion").disabled=false;
 	document.getElementById("<portlet:namespace/>medicamentoChk").disabled=false;
 	document.getElementById("<portlet:namespace/>alojamientoChk").disabled=false;

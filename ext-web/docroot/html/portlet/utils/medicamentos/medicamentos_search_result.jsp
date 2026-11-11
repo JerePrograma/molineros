@@ -15,7 +15,7 @@
 	headerNames.add("Troquel");
 	headerNames.add("Nombre");
 	headerNames.add("Presentacion");
-	headerNames.add("Cod Barras");
+	headerNames.add("Droga");
 	headerNames.add("Precio");
 	SearchContainer searchContainer = new SearchContainer(renderRequest, null, null,
 				SearchContainer.DEFAULT_CUR_PARAM,SearchContainer.MAX_DELTA, portletURL
@@ -93,7 +93,7 @@
 			sb3.append("\",\"");
 			sb3.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion():"");
 			sb3.append("\")'>");
-			sb3.append(medicamento.getCod_barra()!=null?medicamento.getCod_barra().trim():"");
+			sb3.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion().trim():"");
 			sb3.append("</a>");
 			row.addText(sb3.toString());
 			StringBuilder sb4 = new StringBuilder();
@@ -106,7 +106,7 @@
 			sb4.append("\",\"");
 			sb4.append(medicamento.getPresentacion()!=null?medicamento.getPresentacion():"");
 			sb4.append("\")'>");
-			sb4.append(medicamento.getCod_barra()!=null?medicamento.getCod_barra().trim():"");
+			sb4.append(medicamento.getDroga()!=null?medicamento.getDroga().trim():"");
 			sb4.append("</a>");
 			row.addText(sb4.toString());
 			StringBuilder sb5 = new StringBuilder();

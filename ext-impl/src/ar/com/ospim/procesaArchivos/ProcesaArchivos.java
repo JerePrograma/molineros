@@ -1845,7 +1845,7 @@ public final class ProcesaArchivos {
 		
   }else if("CHQ".equals(codigo)) {
 	    CuentaBancaria cb = null;
-		String nroCheque=line.substring(87,96).trim(); 
+		String nroCheque=line.substring(87,95).trim(); 
 		String idBanco=TraeListasServiceUtil.getSystemConfig("HOTELES_BCO_CHEQUE_CTA_CTE");
 		String idCtaBcria=TraeListasServiceUtil.getSystemConfig("HOTELES_BCO_CTA_BCRIA_CTA_CTE");
 		String idCuit=TraeListasServiceUtil.getSystemConfig("HOTELES_CUIT_CHEQUES_CTA_CTE");
