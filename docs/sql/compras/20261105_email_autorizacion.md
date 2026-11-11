@@ -1,8 +1,8 @@
 # Compras: correo al enviar el RP a autorizar
 
 El boton Para Autorizar conserva los permisos de COTIZAR_COMPRAS y la
-transicion transaccional vigente. Para Compras con RP vinculado prepara
-un unico correo con los documentos existentes:
+transicion transaccional vigente. Primero confirma el cambio de estado y,
+para Compras con RP vinculado, luego prepara un unico correo con los documentos:
 
 - Pedido de presupuesto del prestador adjudicado y del intento vigente,
   conservado en Document Library: RequerimientoCompra_{idCompra}.pdf.
@@ -29,39 +29,55 @@ con valor vacio, por pedido funcional. Es repetible y conserva cualquier valor
 ya configurado; aborta ante claves duplicadas. Esta entrega prepara el script,
 no lo aplica a una base de datos ni cambia direcciones reales.
 
-Completar el destinatario en SystemConfig antes de utilizar el envio del RP.
+Completar el destinatario en SystemConfig para habilitar el aviso por correo.
 Admite una o varias direcciones separadas por punto y coma o coma.
-Una clave vacia o con cualquier direccion invalida detiene la operacion
-antes de cambiar el estado. No se omiten destinatarios invalidos en silencio.
+Una clave vacia o con cualquier direccion invalida impide enviar el correo,
+pero no bloquea la transicion de estado: la incidencia se registra en el log.
+No se omiten destinatarios invalidos ni se afirma un envio que no se confirmo.
 
 Se reutilizan SMTP, remitente y credenciales del correo de cotizaciones de
 Compras. Se respeta REQUERIMIENTO_REDIRECCION_QA_HABILITADA; si esta habilitada,
 REQUERIMIENTO_EMAIL_QA reemplaza los destinos y tambien se valida estrictamente.
 No se agregan las copias de cotizacion a esta notificacion de autorizacion.
 Si GMAIL_SIZE_VALIDO_ADJUNTOS tiene un valor, se valida la suma de los bytes de
-los adjuntos antes de confirmar el estado, segun la convencion de Autorizaciones.
+los adjuntos antes de enviar el correo, segun la convencion de Autorizaciones.
 El limite no incluye la sobrecarga MIME ni reemplaza las restricciones del SMTP.
 
 ## Errores y concurrencia
 
 La identidad documental, la empresa, el sitio y el permiso VIEW se comprueban
 antes de leer los bytes. La falta de un documento requerido, un contenido
-invalido o un error de Jasper/DL detienen la operacion antes de cambiar el estado.
+invalido o un error de Jasper/DL impiden enviar el correo completo y generan
+una incidencia en el log; el cambio de estado confirmado se conserva.
 No se regeneran la comparativa ni el pedido al preparar este correo.
 
 El cambio de estado conserva sus bloqueos, validaciones del RP activo y
-rechazo de una segunda peticion. SMTP se ejecuta despues del commit: si falla,
-la pantalla informa que la compra quedo PARA AUTORIZAR y que no pudo confirmarse
-el correo. No se revierte el estado ni se reenvia automaticamente, dado que
+rechazo de una segunda peticion. Toda la preparacion del correo y SMTP se ejecutan
+despues del commit. Si fallan configuracion, documentos o SMTP, la pantalla
+conserva el guardado exitoso y el helper registra el fallo con su causa en el log,
+como las notificaciones posteriores al guardado de Ordenes de Pago de Liquidaciones.
+La pantalla conserva el mensaje habitual de estado actualizado; no afirma que el
+correo fue entregado. No se agregan excepciones de aviso, mensajes de sesion ni
+nuevas navegaciones. Si falla el cambio de estado, el error original se propaga y
+no se prepara ni envia correo. No se revierte ni se reenvia automaticamente, dado que
 el servidor SMTP podria haber aceptado parte o todo el mensaje. La recuperacion
 de ese aviso requiere verificar primero el resultado del envio.
 
 RRHH y Sistemas conservan su circuito de autorizacion sin RP y sin este correo.
 No se modifican la confirmacion de autorizacion ni la emision de Orden de Compra.
 
+La conciliacion del 11/11/2026 elimina la dependencia del flujo de autorizacion
+respecto del correo. Conserva los cambios del pull en configuracion operativa,
+permisos de lectura de comparativa y Ordenes de Compra/suministro/seguimiento.
+
 ## Referencias legacy
 
-- PreAutorizacionAction.enviarCorreoAutorizacion: SystemConfig y correo con adjuntos.
+- Liquidaciones: EditarOrdenesPagoOspimAction.processAction (guardado, correo posterior,
+  destinatario faltante registrado en log y respuesta exitosa habitual), y
+  SalvarUploadOrdenPagoFarmaciaOspimAction.enviaMailsTransferencias.
+- Caller de esa referencia: OrdenPago.enviarMailTransferenciaBCC delega al envio
+  desatendido; los problemas SMTP no modifican el resultado de la operacion.
+- PreAutorizacionAction.enviarCorreoAutorizacion: solo referencia de adjuntos/SystemConfig.
 - DescargarDocumentoCompraReclamoAction.descargarComparativa y descargarPedidoCotizacion:
   identidad DL, company/site, permiso VIEW y lectura segura.
 - PdfServlet.generaRptReclamoPrestacional: plantilla y parametros de la ficha RP.
@@ -77,6 +93,6 @@ persistencia en base de datos. El mismo script ejecuta tambien la clase existent
 ComprasAutorizadorPermisosTest para la regresion de reglas y transiciones.
 
 PRUEBA UI MANUAL PENDIENTE: no habia listener de Tomcat en 8080 ni una sesion
-local autenticada durante esta entrega. Quedan pendientes el build completo,
+local autenticada durante la revision del 11/11/2026. Quedan pendientes el build completo,
 la instalacion de la clave, la prueba de la ficha Jasper con datos reales y
 el envio SMTP con un destinatario configurado.

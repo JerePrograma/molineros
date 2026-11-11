@@ -22,30 +22,48 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.LogRecord;
 import javax.imageio.ImageIO;
 import javax.mail.BodyPart;
 import javax.mail.Multipart;
 import javax.mail.internet.MimeUtility;
 
-/** Patron de ComprasComparativaSincronizacionTest: reglas reales con fronteras simuladas. */
+/** Reglas productivas con fronteras simuladas; el correo no impide la transicion confirmada. */
 public class ComprasAutorizacionEmailTest {
     private static int checks;
     private static final int ID = 1376;
     private static final String DESTINO = "COMPRAS_EMAIL_AUTORIZACION";
     private static final String QA = "REQUERIMIENTO_EMAIL_QA";
     private static final String REDIRECCION = "REQUERIMIENTO_REDIRECCION_QA_HABILITADA";
-    private static final String ERROR_SMTP = "El requerimiento quedo PARA AUTORIZAR, pero no se pudo confirmar el envio del correo.";
+    private static final String MENSAJE_LOG = "No se pudo confirmar el correo de autorizacion. Estado PARA AUTORIZAR confirmado. id=" + ID;
+    private static final CapturaLog LOGS = new CapturaLog();
 
     public static void main(String[] args) throws Exception {
-        ConfiguracionComprasDatosFixture.instalar();
-        probarMime();
-        probarEnvio();
-        probarConfiguracion();
-        probarLimite();
-        probarContexto();
-        probarRelacion();
-        probarFallos();
-        System.out.println("COMPRAS_AUTORIZACION_EMAIL_OK checks=" + checks);
+        Logger logger = Logger.getLogger(NotificarAutorizacionCompraHelper.class.getName());
+        Level nivelAnterior = logger.getLevel();
+        boolean propagar = logger.getUseParentHandlers();
+        logger.setLevel(Level.ALL);
+        logger.setUseParentHandlers(false);
+        logger.addHandler(LOGS);
+        try {
+            ConfiguracionComprasDatosFixture.instalar();
+            probarMime();
+            probarClaveVaciaNoBloquea();
+            probarEnvio();
+            probarConfiguracion();
+            probarLimite();
+            probarContexto();
+            probarRelacion();
+            probarFallos();
+            System.out.println("COMPRAS_AUTORIZACION_EMAIL_OK checks=" + checks);
+        } finally {
+            logger.removeHandler(LOGS);
+            logger.setLevel(nivelAnterior);
+            logger.setUseParentHandlers(propagar);
+        }
     }
 
     private static void probarMime() throws Exception {
@@ -71,18 +89,31 @@ public class ComprasAutorizacionEmailTest {
         verificar(Arrays.equals(esperado.getContenido(), salida.toByteArray()), "Bytes MIME " + esperado.getNombre());
     }
 
+    private static void probarClaveVaciaNoBloquea() throws Exception {
+        Fixture f = new Fixture();
+        f.configuracion.put(DESTINO, "");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "La clave vacia no envia a destinos alternativos.");
+        verificar(f.eventos.equals(Arrays.asList(new String[] {"cambiar"})), "La clave vacia confirma el estado sin recuperar documentos.");
+        aprobado("CLAVE_VACIA_NO_BLOQUEA_PARA_AUTORIZAR");
+    }
+
     private static void probarEnvio() throws Exception {
         Fixture f = new Fixture();
         f.enviarAAutorizar(ID, "usuario-prueba", contexto());
         verificar(f.cambios == 1 && f.envios == 1 && f.estadoPersistido == 6, "Confirma el estado y envia una sola vez.");
-        verificar(f.eventos.equals(Arrays.asList(new String[] {"pedido", "adjuntos", "cambiar", "correo"})), "Adjuntos antes del cambio; correo despues de confirmar.");
+        verificar(f.eventos.equals(Arrays.asList(new String[] {"cambiar", "pedido", "adjuntos", "correo"})), "Confirma la transicion antes de preparar o enviar el correo.");
         verificar(Arrays.equals(f.destinos, new String[] {"autorizacion@example.invalid", "suplente@example.invalid", "tercera@example.invalid"}), "Resuelve ambos separadores configurables.");
         verificar("RP:68180-APELLIDO NOMBRE-DU:12345678-LOCALIDAD-PROVINCIA-ID:1376-COMPARATIVA".equals(f.asunto), "Asunto respeta el formato RP y los datos del afiliado en mayusculas.");
         verificar(f.pedidoEnviado == f.pedido && f.adjuntosEnviados == f.adjuntos, "Conserva documentos recuperados para el envio.");
         aprobado("ENVIO_UNICO_DESPUES_DE_CAMBIO_CONFIRMADO");
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 1 && f.envios == 1, "Segundo intento rechazado por la transicion vigente sin reenviar.");
-        aprobado("DOBLE_PETICION_NO_REENVIA");
+        f.configuracion.clear();
+        LOGS.registros.clear();
+        Exception error = fallo(f, null, "La transicion ya fue procesada.");
+        verificar(LOGS.registros.isEmpty(), "El rechazo de doble peticion no intenta ni registra fallo de notificacion.");
+        verificar(error == f.errorDuplicado, "La doble peticion conserva el error original de transicion.");
+        verificar(f.cambios == 1 && f.envios == 1 && f.eventos.size() == 5 && "cambiar".equals(f.eventos.get(4)), "Segundo intento no prepara ni reenvia el correo.");
+        aprobado("DOBLE_PETICION_RECHAZADA_ANTES_DE_PREPARAR_CORREO");
 
         f = new Fixture();
         f.requerimiento.setSectorDescripcion("SISTEMAS");
@@ -91,10 +122,12 @@ public class ComprasAutorizacionEmailTest {
         f.estadoPersistido = 1;
         f.configuracion.clear();
         f.relacion = null;
-        f.enviarAAutorizar(ID, "usuario-prueba", contexto());
-        verificar(f.cambios == 1 && f.envios == 0, "Sector empresa conserva la transicion sin correo de RP.");
+        LOGS.registros.clear();
+        f.enviarAAutorizar(ID, "usuario-prueba", null);
+        verificar(LOGS.registros.isEmpty(), "Empresa sin RP conserva exito sin incidencia de correo.");
+        verificar(f.cambios == 1 && f.envios == 0, "Empresa confirma sin contexto documental, RP ni correo configurado.");
         verificar(f.eventos.equals(Arrays.asList(new String[] {"cambiar"})), "Sector empresa no recupera documentos de RP.");
-        aprobado("EMPRESA_SIN_RP_CONSERVA_FLUJO");
+        aprobado("EMPRESA_SIN_RP_NI_CONTEXTO_CONSERVA_FLUJO");
     }
 
     private static void probarConfiguracion() throws Exception {
@@ -102,10 +135,10 @@ public class ComprasAutorizacionEmailTest {
         for (int i = 0; i < invalidas.length; i++) {
             Fixture f = new Fixture();
             f.configuracion.put(DESTINO, invalidas[i]);
-            fallo(f, contexto(), null);
-            verificar(f.cambios == 0 && f.envios == 0, "Configuracion invalida no cambia ni envia: caso " + i);
+            incidencia(f, contexto(), null);
+            verificar(f.envios == 0 && f.eventos.equals(Arrays.asList(new String[] {"cambiar"})), "Destino invalido no prepara ni envia correo: caso " + i);
         }
-        aprobado("CONFIGURACION_VACIA_INVALIDA_O_INYECCION_RECHAZADA");
+        aprobado("CONFIGURACION_INVALIDA_SE_REGISTRA_SIN_BLOQUEAR_NI_ENVIAR");
         Fixture f = new Fixture();
         f.configuracion.put(REDIRECCION, " true ");
         f.configuracion.put(QA, "qa@example.invalid");
@@ -115,9 +148,9 @@ public class ComprasAutorizacionEmailTest {
         f = new Fixture();
         f.configuracion.put(REDIRECCION, " true ");
         f.configuracion.put(QA, "invalido");
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "QA invalido no cae en destino real.");
-        aprobado("QA_INVALIDO_FAIL_CLOSED");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0 && f.eventos.equals(Arrays.asList(new String[] {"cambiar"})), "QA invalido conserva estado sin caer en destino real.");
+        aprobado("QA_INVALIDO_NO_ENVIA_A_DESTINO_REAL");
     }
 
     private static void probarLimite() throws Exception {
@@ -125,25 +158,26 @@ public class ComprasAutorizacionEmailTest {
         for (int i = 0; i < invalidos.length; i++) {
             Fixture f = new Fixture();
             f.configuracion.put("GMAIL_SIZE_VALIDO_ADJUNTOS", invalidos[i]);
-            fallo(f, contexto(), null);
-            verificar(f.cambios == 0 && f.envios == 0, "Limite invalido no cambia ni envia: " + invalidos[i]);
+            incidencia(f, contexto(), null);
+            verificar(f.envios == 0, "Limite invalido no envia: " + invalidos[i]);
         }
         Fixture f = new Fixture();
         f.configuracion.put("GMAIL_SIZE_VALIDO_ADJUNTOS", "1");
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "Documentos que exceden el limite abortan antes de confirmar.");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "Documentos que exceden el limite no se envian.");
         f = new Fixture();
         long total = f.pedido.getContenido().length;
         for (int i = 0; i < f.adjuntos.size(); i++) total += f.adjuntos.get(i).getContenido().length;
         f.configuracion.put("GMAIL_SIZE_VALIDO_ADJUNTOS", String.valueOf(total));
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "El total exacto del limite tambien se rechaza.");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "El total exacto del limite no se envia.");
         f = new Fixture();
         f.configuracion.put("GMAIL_SIZE_VALIDO_ADJUNTOS", "10000000");
         f.enviarAAutorizar(ID, "usuario-prueba", contexto());
         verificar(f.cambios == 1 && f.envios == 1, "Limite suficiente permite todos los documentos.");
-        aprobado("LIMITE_DOCUMENTAL_CONFIGURABLE_ANTES_DEL_CAMBIO");
+        aprobado("LIMITE_DOCUMENTAL_SE_REGISTRA_SIN_BLOQUEAR_ESTADO");
     }
+
     private static void probarContexto() throws Exception {
         Contexto sinUsuario = contexto();
         sinUsuario.usuario = null;
@@ -152,78 +186,102 @@ public class ComprasAutorizacionEmailTest {
         ThemeDisplay[] invalidos = {null, sinUsuario, sinChecker, contexto(0L, 10136L, 501L, 501L), contexto(1L, 0L, 501L, 501L), contexto(1L, 10136L, 501L, 999L)};
         for (int i = 0; i < invalidos.length; i++) {
             Fixture f = new Fixture();
-            fallo(f, invalidos[i], null);
-            verificar(f.cambios == 0 && f.envios == 0, "Contexto incompleto o ajeno no cambia ni envia: caso " + i);
+            incidencia(f, invalidos[i], null);
+            verificar(f.envios == 0 && f.eventos.equals(Arrays.asList(new String[] {"cambiar"})), "Contexto documental incompleto o ajeno no envia: caso " + i);
         }
-        aprobado("CONTEXTO_IDENTIDAD_EMPRESA_GRUPO_Y_PERMISOS");
+        aprobado("CONTEXTO_DOCUMENTAL_INVALIDO_NO_REVIERTE_TRANSICION");
+        // Estas lecturas ocurren despues del commit; la validacion central ya fue ejecutada por cambiarEstado.
         Fixture f = new Fixture();
         f.requerimiento.setBajaFecha(new Date());
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "Requerimiento inactivo rechazado.");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "Lectura postcommit inactiva no envia correo.");
         f = new Fixture();
         f.requerimiento.setId(Integer.valueOf(ID + 1));
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "Requerimiento ajeno rechazado.");
-        aprobado("REQUERIMIENTO_ACTIVO_E_IDENTIDAD");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "Lectura postcommit de otro requerimiento no envia correo.");
+        aprobado("LECTURA_POSTCOMMIT_INCONSISTENTE_SE_REGISTRA");
     }
 
     private static void probarRelacion() throws Exception {
         Fixture f = new Fixture();
         f.relacion = null;
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "Exige relacion de RP.");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "No envia sin relacion de RP vigente.");
         f = new Fixture();
         f.relacion.setEstado(WebKeysCompras.VINCULO_RECLAMO_RESERVADO);
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "Exige RP vinculado.");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "No envia con RP reservado.");
         f = new Fixture();
         f.relacion.setIdRequerimientoCompra(ID + 1);
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "Exige relacion del mismo requerimiento.");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "No envia con relacion de otro requerimiento.");
         f = new Fixture();
         f.relacion.setBajaFecha(new Date());
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "Excluye relacion de baja.");
-        aprobado("RELACION_RP_VIGENTE_DEL_MISMO_REQUERIMIENTO");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "No envia con relacion de baja.");
+        aprobado("RELACION_DOCUMENTAL_INVALIDA_NO_REVIERTE_TRANSICION");
     }
 
     private static void probarFallos() throws Exception {
         Fixture f = new Fixture();
         f.fallaPedido = true;
-        fallo(f, contexto(), "Fallo DL pedido simulado.");
-        verificar(f.cambios == 0 && f.envios == 0, "Error de pedido aborta antes de cambiar.");
+        incidencia(f, contexto(), "Fallo DL pedido simulado.");
+        verificar(f.envios == 0, "Pedido faltante no envia correo incompleto.");
         f = new Fixture();
         f.fallaAdjuntos = true;
-        fallo(f, contexto(), "Fallo DL adjuntos simulado.");
-        verificar(f.cambios == 0 && f.envios == 0, "Error de adjuntos aborta antes de cambiar.");
-        aprobado("FALLOS_DOCUMENTALES_NO_CAMBIAN_ESTADO");
+        incidencia(f, contexto(), "Fallo DL adjuntos simulado.");
+        verificar(f.envios == 0, "Fallo DL no envia correo incompleto.");
+        aprobado("FALLOS_DOCUMENTALES_SE_REGISTRAN_SIN_REVERTIR_ESTADO");
         f = new Fixture();
         f.adjuntos.set(0, new AdjuntoOrdenMedica(new byte[] {1, 2, 3}, "comparativa.pdf", "application/pdf"));
-        fallo(f, contexto(), null);
-        verificar(f.cambios == 0 && f.envios == 0, "Contenido documental invalido aborta antes de cambiar.");
-        aprobado("MIME_SE_VALIDA_ANTES_DE_CAMBIAR_ESTADO");
+        incidencia(f, contexto(), null);
+        verificar(f.envios == 0, "MIME invalido no se envia aunque el estado este confirmado.");
+        aprobado("MIME_INVALIDO_NO_ENVIA_NI_REVIERTE_ESTADO");
         f = new Fixture();
         f.fallaCambio = true;
-        fallo(f, contexto(), "Fallo de persistencia simulado.");
-        verificar(f.cambios == 0 && f.envios == 0 && f.estadoPersistido == 4, "Fallo transaccional no envia.");
-        aprobado("FALLO_PERSISTENCIA_NO_ENVIA");
+        f.configuracion.clear();
+        LOGS.registros.clear();
+        Exception error = fallo(f, null, "Fallo de persistencia simulado.");
+        verificar(LOGS.registros.isEmpty(), "Fallo central de persistencia no se confunde con fallo de correo.");
+        verificar(error == f.errorCambio, "El fallo de transicion conserva la excepcion original.");
+        verificar(f.cambios == 0 && f.envios == 0 && f.estadoPersistido == 4 && f.eventos.equals(Arrays.asList(new String[] {"cambiar"})), "Fallo transaccional no prepara ni envia.");
+        aprobado("FALLO_PERSISTENCIA_PROPAGA_ERROR_Y_NO_PREPARA_CORREO");
         f = new Fixture();
         f.fallaSmtp = true;
-        Exception error = fallo(f, contexto(), ERROR_SMTP);
-        verificar(f.cambios == 1 && f.envios == 1 && f.estadoPersistido == 6, "SMTP fallido conserva estado confirmado.");
-        verificar(error.getMessage().indexOf("detalle interno") < 0, "No expone mensaje interno SMTP al usuario.");
-        aprobado("FALLO_SMTP_INFORMA_ESTADO_Y_NO_EXPONE_CAUSA");
+        LogRecord registro = incidencia(f, contexto(), "detalle interno SMTP que no debe mostrarse");
+        verificar(f.envios == 1, "SMTP se intento una vez despues del estado confirmado.");
+        verificar(registro.getMessage().indexOf("detalle interno") < 0, "El texto del log identifica la incidencia sin incorporar el mensaje de la causa.");
+        aprobado("FALLO_SMTP_LOGUEADO_CON_RETORNO_NORMAL_Y_ESTADO_CONFIRMADO");
     }
 
+    /** Captura el LogFactory Jdk14 real; no agrega hooks a la clase productiva. */
+    private static final class CapturaLog extends Handler {
+        private final List<LogRecord> registros = new ArrayList<LogRecord>();
+        public void publish(LogRecord registro) { registros.add(registro); }
+        public void flush() { }
+        public void close() { }
+    }
+
+    private static LogRecord incidencia(Fixture f, ThemeDisplay contexto, String causa) throws Exception {
+        LOGS.registros.clear();
+        f.enviarAAutorizar(ID, "usuario-prueba", contexto);
+        verificar(f.cambios == 1 && f.estadoPersistido == 6, "El correo no debe impedir ni revertir la transicion a PARA AUTORIZAR.");
+        verificar(LOGS.registros.size() == 1, "La incidencia del correo se registra una vez y el metodo retorna normalmente.");
+        LogRecord registro = LOGS.registros.get(0);
+        verificar(registro.getLevel().intValue() >= Level.SEVERE.intValue(), "La incidencia se registra como error.");
+        verificar(MENSAJE_LOG.equals(registro.getMessage()), "El log informa id y estado confirmado con el texto esperado.");
+        verificar(registro.getThrown() instanceof Exception, "El log conserva la excepcion original para el diagnostico.");
+        if (causa != null) verificar(causa.equals(registro.getThrown().getMessage()), "El log conserva la causa original.");
+        return registro;
+    }
     private static Exception fallo(Fixture f, ThemeDisplay contexto, String mensaje) throws Exception {
         try { f.enviarAAutorizar(ID, "usuario-prueba", contexto); }
         catch (Exception error) {
-            if (mensaje != null) verificar(ERROR_SMTP.equals(mensaje) ? error.getMessage().startsWith(mensaje) : mensaje.equals(error.getMessage()), "Mensaje esperado: " + mensaje + "; recibido: " + error.getMessage());
+            if (mensaje != null) verificar(mensaje.equals(error.getMessage()), "Mensaje esperado: " + mensaje + "; recibido: " + error.getMessage());
             return error;
         }
         throw new IllegalStateException("Debia rechazar el caso.");
     }
-
     private static Contexto contexto() { return contexto(1L, 10136L, 501L, 501L); }
     private static Contexto contexto(long empresa, long grupo, long usuario, long checkerUsuario) {
         return new Contexto(empresa, grupo,
@@ -309,6 +367,8 @@ public class ComprasAutorizacionEmailTest {
         boolean fallaAdjuntos;
         boolean fallaCambio;
         boolean fallaSmtp;
+        final Exception errorCambio = new Exception("Fallo de persistencia simulado.");
+        final Exception errorDuplicado = new Exception("La transicion ya fue procesada.");
 
         Fixture() throws Exception {
             requerimiento.setId(Integer.valueOf(ID));
@@ -347,8 +407,8 @@ public class ComprasAutorizacionEmailTest {
         }
         protected void cambiarEstado(int id, String usuario) throws Exception {
             eventos.add("cambiar");
-            if (fallaCambio) throw new Exception("Fallo de persistencia simulado.");
-            if (estadoPersistido == 6) throw new Exception("La transicion ya fue procesada.");
+            if (fallaCambio) throw errorCambio;
+            if (estadoPersistido == 6) throw errorDuplicado;
             estadoPersistido = 6;
             cambios++;
         }

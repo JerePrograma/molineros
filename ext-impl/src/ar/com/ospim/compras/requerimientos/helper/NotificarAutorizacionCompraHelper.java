@@ -11,6 +11,8 @@ import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraSe
 import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraReclamoPrestacionalServiceUtil;
 import ar.com.ospim.global.services.TraeListasServiceUtil;
 import ar.com.ospim.servlets.PdfServlet;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.security.permission.ActionKeys;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portlet.documentlibrary.model.DLFileEntry;
@@ -25,19 +27,25 @@ import java.util.Locale;
 import java.util.Set;
 import javax.mail.internet.InternetAddress;
 
-/** Aviso de autorizacion del RP. Adapta PreAutorizacionAction y las descargas de Compras. */
+/** Correo posterior al guardado, como EditarOrdenesPagoOspimAction de Liquidaciones. */
 public class NotificarAutorizacionCompraHelper {
+    private static final Log _log = LogFactoryUtil.getLog(NotificarAutorizacionCompraHelper.class);
+
     public static final String CONFIG_EMAIL_AUTORIZACION = "COMPRAS_EMAIL_AUTORIZACION";
 
     private final CotizacionPrestadorMailHelper mailHelper = new CotizacionPrestadorMailHelper();
 
+    /** La transicion es autoritativa; el aviso de correo no puede impedirla. */
     public void enviarAAutorizar(int id, String usuario, ThemeDisplay contexto) throws Exception {
-        if (id <= 0 || contexto == null || contexto.getCompanyId() <= 0L
-                || contexto.getScopeGroupId() <= 0L || contexto.getUser() == null
-                || contexto.getPermissionChecker() == null
-                || contexto.getPermissionChecker().getUserId() != contexto.getUser().getUserId()) {
-            throw new Exception("No se pudo determinar el contexto del envio a autorizar.");
+        cambiarEstado(id, usuario);
+        try {
+            notificarAutorizacion(id, usuario, contexto);
+        } catch (Exception e) {
+            _log.error("No se pudo confirmar el correo de autorizacion. Estado PARA AUTORIZAR confirmado. id=" + id, e);
         }
+    }
+
+    private void notificarAutorizacion(int id, String usuario, ThemeDisplay contexto) throws Exception {
         RequerimientoCompra requerimiento = obtenerRequerimiento(id);
         if (requerimiento == null || !requerimiento.isActivo()
                 || requerimiento.getIdRequerimientoCompra() != id) {
@@ -45,8 +53,13 @@ public class NotificarAutorizacionCompraHelper {
         }
         // RRHH/Sistemas no poseen RP: conservar su circuito vigente.
         if (requerimiento.esSectorSinCotizacionPrestador()) {
-            cambiarEstado(id, usuario);
             return;
+        }
+        if (id <= 0 || contexto == null || contexto.getCompanyId() <= 0L
+                || contexto.getScopeGroupId() <= 0L || contexto.getUser() == null
+                || contexto.getPermissionChecker() == null
+                || contexto.getPermissionChecker().getUserId() != contexto.getUser().getUserId()) {
+            throw new Exception("No se pudo determinar el contexto del envio a autorizar.");
         }
         RequerimientoCompraReclamoPrestacional relacion = obtenerRelacion(id);
         if (relacion == null || !relacion.isVinculado() || relacion.getBajaFecha() != null
@@ -71,17 +84,10 @@ public class NotificarAutorizacionCompraHelper {
                 + ", vinculado al Reclamo Prestacional Nro. " + relacion.getIdReclamoPrestacionalInt()
                 + ".\n\nSe adjuntan la comparativa, la ficha imprimible del RP, las ordenes medicas"
                 + " y el pedido de presupuesto.\n\nUsuario: " + usuario;
-        // Validar el MIME completo antes de confirmar el estado; no enviar documentos incompletos.
+        // Validar el MIME completo antes del correo; no enviar documentos incompletos.
         mailHelper.construirMultipart(cuerpo, pedido.getContenido(), pedido.getNombre(), adjuntos);
         validarTamanoCorreo(pedido, adjuntos);
-        cambiarEstado(id, usuario);
-        try {
-            enviarCorreo(destinos, asunto, cuerpo, pedido, adjuntos);
-        } catch (Exception e) {
-            // SMTP no participa de la transaccion. No revertir el estado ni reenviar automaticamente.
-            throw new Exception("El requerimiento quedo PARA AUTORIZAR, pero no se pudo confirmar el envio del correo."
-                    + " Informe a Sistemas antes de reenviar el aviso.", e);
-        }
+        enviarCorreo(destinos, asunto, cuerpo, pedido, adjuntos);
     }
 
     private String textoAsunto(String valor) {
