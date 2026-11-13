@@ -10,6 +10,8 @@ para Compras con RP vinculado, luego prepara un unico correo con los documentos:
   {idRP}-ComparativaCompra_{idCompra}.pdf.
 - Ficha imprimible del RP generada con el reporte Jasper vigente: RP {idRP}.pdf.
 - Todas las ordenes medicas activas de la compra, con sus nombres y formatos originales.
+- Todos los presupuestos PDF activos cargados en la grilla Cotizaciones, de todos
+  los prestadores, conservando sus nombres y bytes originales. No se adjunta OC.
 
 La ficha PDF corresponde a la aclaracion funcional del 05/11/2026.
 No se adjuntan otros archivos de la pestana Imagenes del RP.
@@ -21,6 +23,8 @@ vigentes del afiliado y de la compra, sin prefijo de reenvio:
 Los campos faltantes se muestran como S/D. Los controles y saltos de linea
 se retiran del asunto. El cuerpo informa el envio a autorizar y la lista
 de documentos, sin copiar firmas, direcciones o destinatarios del ejemplo.
+Comienza con "Se envía a autorizar el requerimiento de compra Nro. " seguido
+del ID y el RP; no incluye la linea Usuario ni el nombre de quien opera.
 
 ## Configuracion
 
@@ -31,6 +35,9 @@ no lo aplica a una base de datos ni cambia direcciones reales.
 
 Completar el destinatario en SystemConfig para habilitar el aviso por correo.
 Admite una o varias direcciones separadas por punto y coma o coma.
+Como cotizacion, ignora elementos vacios entre separadores, incluido el punto
+y coma final. Exige al menos una direccion valida y sigue rechazando cualquier
+direccion no vacia invalida o saltos de linea. Esto aplica tambien al destino QA.
 Una clave vacia o con cualquier direccion invalida impide enviar el correo,
 pero no bloquea la transicion de estado: la incidencia se registra en el log.
 No se omiten destinatarios invalidos ni se afirma un envio que no se confirmo.
@@ -88,6 +95,9 @@ permisos de lectura de comparativa y Ordenes de Compra/suministro/seguimiento.
 Ejecutar test/compras/autorizacion_email_test.ps1 con Java 8 source/target 1.5.
 Comprueba MIME real, documentos multiples, asunto, configuracion/QA, contexto,
 relacion, secuencia de operaciones, limites y fallos de datos/persistencia/SMTP.
+La recuperacion de presupuestos usa la misma lista activa de la grilla, verifica
+identidad DL, empresa, sitio, VIEW y PDF antes de agregarlos al MIME y al limite.
+El numero de adjuntos varia con las ordenes medicas y los presupuestos cargados.
 Las fronteras de datos, DL y SMTP se simulan; no demuestra entrega real ni
 persistencia en base de datos. El mismo script ejecuta tambien la clase existente
 ComprasAutorizadorPermisosTest para la regresion de reglas y transiciones.

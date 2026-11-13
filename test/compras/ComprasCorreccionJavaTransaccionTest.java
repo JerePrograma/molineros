@@ -299,8 +299,90 @@ public class ComprasCorreccionJavaTransaccionTest {
             e=nuevo(445,10415,3);e.requerimiento.setEstado(6);e.existeRP=true;e.estadoRp="BAJA";e.rpBaja=true;e.vinculoBaja=true;instalar(e,buscar,editar);
             rechazo=false;try{new EditarRequerimientoCompraHelper().anularRequerimiento(1388,"motivo","prueba");}catch(Exception esperado){rechazo=true;}
             comprobar(rechazo&&e.estadosEscritos==0&&e.rollbacks==1,"PARA AUTORIZAR con RP BAJA conserva prohibicion de anulacion");
+            probarBajasConComparativa(buscar,editar);
             System.out.println("APROBADAS_CORRECCION="+pruebas+"; alcance=Helper/JDBC reales con conexion simulada, sin DB ni UI");
         } finally {buscar.set(null,anteriorBusqueda);editar.set(null,anteriorEdicion);}
+    }
+    private static void probarBajasConComparativa(Field buscar,Field editar)throws Exception{
+        Estado directa=nuevoParaBaja();
+        directa.origen.setPrecioUnitarioEstimado(BigDecimal.ZERO);
+        directa.comparativa.add(Integer.valueOf(11515));
+        instalar(directa,buscar,editar);
+        boolean rechazoDirecto=false;
+        try{new EditarRequerimientoCompraHelper().borrarDetalle(1388,445,"prueba");}
+        catch(Exception esperada){rechazoDirecto=esperada.getMessage()!=null&&esperada.getMessage().toLowerCase(Locale.ROOT).contains("comparativa");}
+        boolean directaSegura=rechazoDirecto&&sinEscriturasBaja(directa)&&directa.rollbacks==1&&directa.commits==0;
+
+        Estado cotizacion=nuevoParaBaja();
+        List<RequerimientoCompraDetalle> recibidos=remanente(cotizacion);
+        // El presupuesto aparece despues de abrir la pantalla de cotizacion.
+        cotizacion.comparativa.add(Integer.valueOf(11515));
+        instalar(cotizacion,buscar,editar);
+        boolean rechazoCotizacion=false;
+        try{guardarBajaCotizacion(cotizacion,recibidos,Arrays.asList(Integer.valueOf(445)));}
+        catch(Exception esperada){rechazoCotizacion=esperada.getMessage()!=null&&esperada.getMessage().toLowerCase(Locale.ROOT).contains("comparativa");}
+        boolean cotizacionSegura=rechazoCotizacion&&sinEscriturasBaja(cotizacion)&&cotizacion.rollbacks==1&&cotizacion.commits==0;
+        System.out.println("REGRESION_BAJA_COTIZADA directa="+directaSegura+" cotizacion="+cotizacionSegura);
+        comprobar(directaSegura&&cotizacionSegura,
+                "Baja directa y formulario anterior a presupuesto rechazan renglones cotizados antes de cualquier escritura, incluso cero");
+        comprobar(directa.eventos.indexOf("LOCK_DETALLES")<directa.eventos.indexOf("LOCK_COMPARATIVA")
+                &&directa.eventos.indexOf("LOCK_COMPARATIVA")<directa.eventos.indexOf("LOCK_COMPARATIVA_DETALLE"),
+                "Prevencion revalida comparativa bajo el orden legacy de locks");
+
+        Estado sinPresupuesto=nuevoParaBaja();sinPresupuesto.presupuesto=false;instalar(sinPresupuesto,buscar,editar);
+        new EditarRequerimientoCompraHelper().borrarDetalle(1388,445,"prueba");
+        comprobar(sinPresupuesto.bajasEscritas==1&&sinPresupuesto.commits==1&&sinPresupuesto.comparativasEscritas==0,
+                "Baja directa sin presupuesto conserva su comportamiento");
+        sinPresupuesto=nuevoParaBaja();sinPresupuesto.presupuesto=false;instalar(sinPresupuesto,buscar,editar);
+        guardarBajaCotizacion(sinPresupuesto,remanente(sinPresupuesto),Arrays.asList(Integer.valueOf(445)));
+        comprobar(sinPresupuesto.bajasEscritas==1&&sinPresupuesto.importesEscritos==1&&sinPresupuesto.commits==1,
+                "Cotizacion parcial sin presupuesto conserva la baja y el importe remanente");
+
+        Estado vaciado=nuevoParaBaja();vaciado.presupuesto=true;instalar(vaciado,buscar,editar);
+        new EditarRequerimientoCompraHelper().borrarDetalle(1388,445,"prueba");
+        comprobar(vaciado.bajasEscritas==1&&vaciado.commits==1,
+                "Baja directa permite presupuesto cuyo renglon comparativo fue vaciado previamente");
+        vaciado=nuevoParaBaja();vaciado.presupuesto=true;instalar(vaciado,buscar,editar);
+        guardarBajaCotizacion(vaciado,remanente(vaciado),Arrays.asList(Integer.valueOf(445)));
+        comprobar(vaciado.bajasEscritas==1&&vaciado.commits==1,
+                "Cotizacion permite presupuesto cuyo renglon comparativo fue vaciado previamente");
+
+        Estado compartida=nuevoParaBaja();compartida.requerimiento.getDetalles().get(1).setIdPrestacion(Integer.valueOf(11515));
+        compartida.comparativa.add(Integer.valueOf(11515));instalar(compartida,buscar,editar);
+        new EditarRequerimientoCompraHelper().borrarDetalle(1388,445,"prueba");
+        comprobar(compartida.bajasEscritas==1&&compartida.commits==1&&compartida.comparativasEscritas==0,
+                "Baja directa no rechaza si otro detalle vigente representa la misma prestacion cotizada");
+        compartida=nuevoParaBaja();compartida.requerimiento.getDetalles().get(1).setIdPrestacion(Integer.valueOf(11515));
+        compartida.comparativa.add(Integer.valueOf(11515));instalar(compartida,buscar,editar);
+        guardarBajaCotizacion(compartida,remanente(compartida),Arrays.asList(Integer.valueOf(445)));
+        comprobar(compartida.bajasEscritas==1&&compartida.commits==1&&compartida.comparativasEscritas==0,
+                "Cotizacion conserva importes compartidos mientras quede otra representacion vigente");
+
+        Estado todas=nuevoParaBaja();todas.requerimiento.getDetalles().get(1).setIdPrestacion(Integer.valueOf(11515));
+        RequerimientoCompraDetalle tercero=copiar(todas.origen);tercero.setId(Integer.valueOf(447));tercero.setIdPrestacion(Integer.valueOf(11403));
+        tercero.setPrecioUnitarioEstimado(null);todas.requerimiento.getDetalles().add(tercero);
+        todas.comparativa.add(Integer.valueOf(11515));instalar(todas,buscar,editar);
+        List<RequerimientoCompraDetalle> conservados=new ArrayList<RequerimientoCompraDetalle>();conservados.add(copiar(tercero));
+        boolean rechazoTodas=false;
+        try{guardarBajaCotizacion(todas,conservados,Arrays.asList(Integer.valueOf(445),Integer.valueOf(446)));}
+        catch(Exception esperada){rechazoTodas=true;}
+        comprobar(rechazoTodas&&sinEscriturasBaja(todas)&&todas.rollbacks==1&&todas.commits==0,
+                "Cotizacion rechaza quitar todas las representaciones de una prestacion con presupuesto");
+    }
+    private static Estado nuevoParaBaja()throws Exception{
+        Estado e=nuevo(445,11515,3);e.requerimiento.setEstado(2);
+        RequerimientoCompraDetalle otro=copiar(e.origen);otro.setId(Integer.valueOf(446));otro.setIdPrestacion(Integer.valueOf(11403));
+        otro.setPrecioUnitarioEstimado(null);otro.setPrecioTotalEstimado(null);e.requerimiento.getDetalles().add(otro);return e;
+    }
+    private static List<RequerimientoCompraDetalle> remanente(Estado e){
+        List<RequerimientoCompraDetalle> recibidos=new ArrayList<RequerimientoCompraDetalle>();
+        recibidos.add(copiar(e.requerimiento.getDetalles().get(1)));return recibidos;
+    }
+    private static void guardarBajaCotizacion(Estado e,List<RequerimientoCompraDetalle> detalles,List<Integer> bajas)throws Exception{
+        new EditarRequerimientoCompraHelper().guardarAvanceCotizacion(1388,detalles,bajas,false,"prueba");
+    }
+    private static boolean sinEscriturasBaja(Estado e){
+        return e.bajasEscritas==0&&e.importesEscritos==0&&e.surgeEscritos==0&&e.estadosEscritos==0&&e.comparativasEscritas==0;
     }
     private static void rechazar(Estado e,RequerimientoCompraDetalle entrada)throws Exception{
         boolean fallo=false;try{new EditarRequerimientoCompraHelper().corregirItem(entrada,"prueba");}

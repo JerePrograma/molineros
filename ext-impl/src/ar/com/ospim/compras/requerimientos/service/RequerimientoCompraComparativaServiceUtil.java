@@ -18,6 +18,16 @@ public class RequerimientoCompraComparativaServiceUtil {
         return service.listar(idRequerimiento, idPrestador);
     }
 
+    public static List<RequerimientoCompraComparativa> listarParaRecuperacion(int idRequerimiento)
+            throws Exception {
+        return service.listarParaRecuperacion(idRequerimiento);
+    }
+
+    public static List<RequerimientoCompraComparativa> listarParaRecuperacion(java.sql.Connection con,
+            int idRequerimiento) throws Exception {
+        return service.listarParaRecuperacion(con, idRequerimiento);
+    }
+
     public static void guardar(List<RequerimientoCompraComparativa> comparativas,
             List<Integer> detallesVaciados, String usuario) throws Exception {
         service.guardar(comparativas, detallesVaciados, usuario);

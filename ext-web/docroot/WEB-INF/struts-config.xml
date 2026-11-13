@@ -1412,6 +1412,9 @@
 		<action path="/tesoreria/traer_conceptos_egreso_completo_para_periodo"
 			type="ar.com.ospim.global.actions.TraeConceptosEgresoParaPeriodoAction" />
 			
+	    <action path="/farmacia/traer_conceptos_egreso_completo_para_periodo"
+			type="ar.com.ospim.global.actions.TraeConceptosEgresoParaPeriodoAction" />
+					
 		<action path="/uoma/traer_conceptos_egreso_completo_para_periodo"
 			type="ar.com.ospim.global.actions.TraeConceptosEgresoParaPeriodoAction" />	
 			
@@ -4892,6 +4895,7 @@
 			<forward name="portlet.autorizaciones.editar_autorizacion_prestacional" path="portlet.autorizaciones.editar_autorizacion_prestacional" />
 			<forward name="portlet.autorizaciones.error" path="portlet.autorizaciones.error" />
 			<forward name="portlet.autorizaciones.reporte.avisos_vencimientos_cud" path="portlet.autorizaciones.reporte.avisos_vencimientos_cud" />	
+			<forward name="portlet.autorizaciones.autorizacion_prestacional_prestaciones" path="portlet.autorizaciones.autorizacion_prestacional_prestaciones" />
 
 	</action>	
 	
@@ -7316,6 +7320,12 @@
 		</action>
 
 		<action path="/afiliados/reporte_padrones_ppp" forward="portlet.afiliados.reporte.reporte_padrones_ppp" />
+		
+		<action path="/liquidaciones/upload_archivo_afip"
+			type="ar.com.ospim.tesoreria.afip.action.UploadArchivoAfipAction">
+			<forward name="portlet.liquidaciones.view" path="portlet.liquidaciones.view" />
+			<forward name="portlet.liquidaciones.error" path="portlet.liquidaciones.error" />
+		</action>
 
  </action-mappings>
   

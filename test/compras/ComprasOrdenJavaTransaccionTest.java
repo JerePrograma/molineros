@@ -119,6 +119,11 @@ public class ComprasOrdenJavaTransaccionTest {
         b=prestador();BusquedaRequerimientoCompraServiceUtil.documentos.clear();rechazo=false;try{new Helper(b).crear(42,entrada(),"auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0,"Presupuesto prestador activo obligatorio.");
         b=new BD();rechazo=false;try{new Helper(b).crearDirecta(42,"auditoria","auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0&&b.r.getEstado()==7,"Directa nueva no emite sin formulario/fecha.");
         b=new BD();Map<String,String> sinFecha=entrada();sinFecha.remove("fecha_estimada_entrega");rechazo=false;try{new Helper(b).crear(42,sinFecha,"auditoria");}catch(IllegalArgumentException e){rechazo=true;}ok(rechazo&&b.inserts==0&&b.r.getEstado()==7,"Sin fecha revierte sin persistir.");
+        b=prestador();b.r.setEstado(6);int presupuestoPrevia=new Helper(b).obtenerPresupuestoOrigenConsulta(42);
+        ok(presupuestoPrevia==101,"PARA AUTORIZAR consulta el presupuesto del prestador adjudicado.");
+        ok(b.r.getEstado()==6&&b.orden==0&&b.inserts==0&&b.version==0&&b.fechaEstimada==null,"Consulta previa conserva estado y no emite ni completa entrega.");
+        ok(b.commits==1&&b.rollbacks==0,"Consulta de origen confirma solo su transaccion de lectura.");
+        for(String q:b.sql)ok(q.startsWith("SELECT ")||q.equals("{call compras.bloquear_requerimiento_reclamo_prestacional(?)}"),"Consulta previa sin DML: "+q);
         ok(ar.com.ospim.util.ConnectionHelper.aperturas==0,"Ninguna conexion global oculta.");
         System.out.println("APROBADAS="+checks+"; JDBC simulado, sin DB, UI ni DL reales.");
     }

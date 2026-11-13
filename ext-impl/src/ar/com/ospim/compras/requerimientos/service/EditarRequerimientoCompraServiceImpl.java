@@ -323,6 +323,21 @@ public class EditarRequerimientoCompraServiceImpl {
         }
     }
 
+    private boolean tieneOrdenCompra(Connection con, int idRequerimiento) throws Exception {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = con.prepareStatement("SELECT 1 FROM compras.requerimiento_orden_compra "
+                    + "WHERE id_requerimiento = ?");
+            stmt.setInt(1, idRequerimiento);
+            rs = stmt.executeQuery();
+            return rs.next();
+        } finally {
+            cerrar(rs);
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
     private void bloquearRequerimientoYDetalles(
             Connection con, int idRequerimiento) throws Exception {
         CallableStatement bloqueo = null;
@@ -1041,6 +1056,15 @@ public class EditarRequerimientoCompraServiceImpl {
 
         public String getConfiguracionCompra(String clave) throws Exception {
             return BusquedaRequerimientoCompraServiceUtil.getConfiguracionCompra(clave, con);
+        }
+
+        public boolean tieneOrdenCompra(int id) throws Exception {
+            return service.tieneOrdenCompra(con, id);
+        }
+
+        public java.util.List<ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa>
+                listarComparativasParaRecuperacion(int id) throws Exception {
+            return RequerimientoCompraComparativaServiceUtil.listarParaRecuperacion(con, id);
         }
 
         public List<Integer> bloquearPrestacionesComparativaCorreccion(int id) throws Exception {

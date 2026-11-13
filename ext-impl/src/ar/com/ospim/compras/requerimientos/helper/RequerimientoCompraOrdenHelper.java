@@ -224,6 +224,36 @@ public class RequerimientoCompraOrdenHelper {
         return orden;
     }
 
+    /** Vista previa del correo; adapta prepararPrestador sin emitir ni guardar una OC. */
+    public RequerimientoCompraOrden prepararParaAutorizacion(int id, String nombreUsuario)
+            throws Exception {
+        RequerimientoCompra r = cargarRequerimiento(id, null);
+        if (!WebKeysCompras.esParaAutorizar(r.getEstado()) || esEmpresa(r, null)
+                || obtenerOrden(id) != null) {
+            throw new IllegalArgumentException(
+                    "El requerimiento debe estar PARA AUTORIZAR y no tener una Orden de Compra emitida.");
+        }
+        RequerimientoCompraReclamoPrestacional relacion = obtenerRelacionRp(id);
+        if (relacion == null || !relacion.isVinculado() || relacion.getBajaFecha() != null
+                || relacion.getIdRequerimientoCompra() != id) {
+            throw new IllegalArgumentException("El Reclamo Prestacional vinculado ya no esta disponible.");
+        }
+        validarDetalles(r, false, null);
+        RequerimientoCompraOrden orden = new RequerimientoCompraOrden();
+        orden.setIdRequerimientoCompra(id);
+        orden.setRequerimiento(r);
+        // Fecha del documento previo, sin alta, numero ni fecha de entrega definitiva.
+        orden.setFechaEmision(new Date());
+        orden.setIva(BigDecimal.ZERO);
+        orden.setIibb(BigDecimal.ZERO);
+        orden.setConfeccionadoPor(texto(nombreUsuario, 250, true, "Confeccionado por"));
+        orden.setSolicitante(texto(r.getAltaUsr(), 250, false, "Solicitante"));
+        orden.setObservaciones(texto(r.getObservaciones(), 4000, false, "Observaciones"));
+        prepararPrestador(r, orden, null);
+        completarDatosConsulta(orden, r);
+        return orden;
+    }
+
     /** Prepara los datos propios para validar y guardar sin consultar padrones de presentacion. */
     public RequerimientoCompraOrden prepararParaGuardar(int id, String nombreUsuario)
             throws Exception {

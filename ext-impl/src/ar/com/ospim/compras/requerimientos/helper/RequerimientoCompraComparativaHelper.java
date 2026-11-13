@@ -196,6 +196,235 @@ public class RequerimientoCompraComparativaHelper {
         calcular(c);
     }
 
+    public List<RequerimientoCompraComparativa> listarParaRecuperacion(int id) throws Exception {
+        if (id <= 0) throw new IllegalArgumentException("Debe informar el requerimiento.");
+        return RequerimientoCompraComparativaServiceUtil.listarParaRecuperacion(id);
+    }
+
+    public List<RequerimientoCompraComparativa> obtenerInconsistencias(RequerimientoCompra r,
+            List<RequerimientoCompraComparativa> guardadas) {
+        if (r == null || guardadas == null) {
+            throw new IllegalArgumentException("No se pudo revisar la comparativa.");
+        }
+        validarPrestaciones(r.getDetalles());
+        Set<Integer> vigentes = new HashSet<Integer>();
+        for (RequerimientoCompraDetalle item : r.getDetalles()) vigentes.add(item.getIdPrestacion());
+        List<RequerimientoCompraComparativa> inconsistencias =
+                new ArrayList<RequerimientoCompraComparativa>();
+        for (RequerimientoCompraComparativa c : guardadas) {
+            List<RequerimientoCompraComparativaDetalle> fuera =
+                    new ArrayList<RequerimientoCompraComparativaDetalle>();
+            for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
+                if (!vigentes.contains(Integer.valueOf(d.getIdPrestacion()))) {
+                    RequerimientoCompraComparativaDetalle copia = new RequerimientoCompraComparativaDetalle();
+                    copia.setIdDetalle(d.getIdDetalle()); copia.setIdPrestacion(d.getIdPrestacion());
+                    copia.setCodigo(d.getCodigo()); copia.setPrestacion(d.getPrestacion());
+                    copia.setCantidad(d.getCantidad()); copia.setImporteUnitario(d.getImporteUnitario());
+                    copia.setBajaReal(d.isBajaReal()); fuera.add(copia);
+                }
+            }
+            if (!fuera.isEmpty()) {
+                RequerimientoCompraComparativa diagnostico = copiarCabeceraRecuperacion(c, fuera);
+                calcular(diagnostico);
+                inconsistencias.add(diagnostico);
+            }
+        }
+        return inconsistencias;
+    }
+
+    public String firmaRecuperacion(RequerimientoCompra r,
+            List<RequerimientoCompraComparativa> guardadas) {
+        if (r == null || r.getIdRequerimientoCompra() <= 0 || guardadas == null) {
+            throw new IllegalArgumentException("No se pudo verificar la comparativa a corregir.");
+        }
+        validarPrestaciones(r.getDetalles());
+        StringBuilder firma = new StringBuilder("RC1:");
+        agregarFirmaRecuperacion(firma, Integer.valueOf(r.getIdRequerimientoCompra()));
+        agregarFirmaRecuperacion(firma, Integer.valueOf(r.getEstado()));
+        agregarFirmaRecuperacion(firma, Boolean.valueOf(r.isActivo()));
+        Map<Integer, RequerimientoCompraDetalle> vigentes = new TreeMap<Integer, RequerimientoCompraDetalle>();
+        for (RequerimientoCompraDetalle d : r.getDetalles()) vigentes.put(d.getIdPrestacion(), d);
+        agregarFirmaRecuperacion(firma, Integer.valueOf(vigentes.size()));
+        for (RequerimientoCompraDetalle d : vigentes.values()) {
+            agregarFirmaRecuperacion(firma, d.getId());
+            agregarFirmaRecuperacion(firma, d.getIdPrestacion());
+            agregarFirmaRecuperacion(firma, d.getCantidad());
+            agregarFirmaRecuperacion(firma, d.getPrecioUnitarioEstimado());
+        }
+        Map<Integer, RequerimientoCompraComparativa> ordenadas =
+                new TreeMap<Integer, RequerimientoCompraComparativa>();
+        for (RequerimientoCompraComparativa c : guardadas) {
+            if (c == null || c.getIdComparativa() <= 0 || c.getIdRequerimiento() != r.getIdRequerimientoCompra()
+                    || ordenadas.put(Integer.valueOf(c.getIdComparativa()), c) != null) {
+                throw new IllegalArgumentException("La comparativa cambio. Actualice la pantalla.");
+            }
+        }
+        agregarFirmaRecuperacion(firma, Integer.valueOf(ordenadas.size()));
+        Set<Integer> ids = new HashSet<Integer>();
+        for (RequerimientoCompraComparativa c : ordenadas.values()) {
+            agregarFirmaRecuperacion(firma, Integer.valueOf(c.getIdComparativa()));
+            agregarFirmaRecuperacion(firma, Integer.valueOf(c.getIdPrestador()));
+            agregarFirmaRecuperacion(firma, c.getFechaPresupuesto() == null ? null
+                    : Long.valueOf(c.getFechaPresupuesto().getTime()));
+            agregarFirmaRecuperacion(firma, c.getFormaPago());
+            agregarFirmaRecuperacion(firma, c.getPlazoEntrega());
+            agregarFirmaRecuperacion(firma, c.getValidezPresupuesto());
+            agregarFirmaRecuperacion(firma, c.getEnvio());
+            agregarFirmaRecuperacion(firma, c.getIva());
+            agregarFirmaRecuperacion(firma, c.getIibb());
+            Map<Integer, RequerimientoCompraComparativaDetalle> detalles =
+                    new TreeMap<Integer, RequerimientoCompraComparativaDetalle>();
+            for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
+                if (d == null || d.getIdDetalle() <= 0 || d.getIdPrestacion() <= 0
+                        || !ids.add(Integer.valueOf(d.getIdDetalle()))) {
+                    throw new IllegalArgumentException("Los renglones de comparativa no son validos.");
+                }
+                detalles.put(Integer.valueOf(d.getIdDetalle()), d);
+            }
+            agregarFirmaRecuperacion(firma, Integer.valueOf(detalles.size()));
+            for (RequerimientoCompraComparativaDetalle d : detalles.values()) {
+                agregarFirmaRecuperacion(firma, Integer.valueOf(d.getIdDetalle()));
+                agregarFirmaRecuperacion(firma, Integer.valueOf(d.getIdPrestacion()));
+                agregarFirmaRecuperacion(firma, d.getCantidad());
+                agregarFirmaRecuperacion(firma, d.getImporteUnitario());
+                agregarFirmaRecuperacion(firma, Boolean.valueOf(d.isBajaReal()));
+            }
+        }
+        return firma.toString();
+    }
+
+    private void agregarFirmaRecuperacion(StringBuilder firma, Object valor) {
+        String dato = valor == null ? null : valor instanceof BigDecimal
+                ? ((BigDecimal) valor).toPlainString() : String.valueOf(valor);
+        if (dato == null) firma.append("-1:");
+        else firma.append(dato.length()).append(':').append(dato);
+    }
+
+    public boolean puedeReparar(RequerimientoCompra r,
+            List<RequerimientoCompraComparativa> inconsistencias) throws Exception {
+        if (r == null || !r.isActivo() || !tienenBajaRealRecuperacion(inconsistencias)) return false;
+        ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx =
+                ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+        try {
+            return estadoPermiteRecuperacion(r, tx.getConfiguracionCompra("COMPRAS_ESTADOS_IDS"))
+                    && !tx.tieneCreacionReclamoPrestacional(r.getIdRequerimientoCompra())
+                    && !tx.tieneOrdenCompra(r.getIdRequerimientoCompra());
+        } finally {
+            try { tx.rollback(); } finally { tx.cerrar(); }
+        }
+    }
+
+    private boolean estadoPermiteRecuperacion(RequerimientoCompra r, String estados) {
+        return r != null && r.isActivo()
+                && (r.getEstado() == ConfiguracionComprasHelper.resolverEstado("A_COTIZAR", estados)
+                    || r.getEstado() == ConfiguracionComprasHelper.resolverEstado("COTIZADO", estados));
+    }
+
+    private boolean tienenBajaRealRecuperacion(List<RequerimientoCompraComparativa> inconsistencias) {
+        if (inconsistencias == null || inconsistencias.isEmpty()) return false;
+        for (RequerimientoCompraComparativa c : inconsistencias) {
+            if (c == null || c.getDetalles() == null || c.getDetalles().isEmpty()) return false;
+            for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
+                if (d == null || d.getIdDetalle() <= 0 || !d.isBajaReal()) return false;
+            }
+        }
+        return true;
+    }
+
+    public int reparar(int id, String firma, String usuario) throws Exception {
+        if (id <= 0 || firma == null || firma.length() == 0) {
+            throw new IllegalArgumentException("Actualice la comparativa antes de corregirla.");
+        }
+        if (usuario == null || usuario.trim().length() == 0 || usuario.length() > 100) {
+            throw new IllegalArgumentException("No se pudo determinar el usuario de auditoria.");
+        }
+        ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx =
+                ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.abrirTransaccion();
+        boolean commitIniciado = false;
+        try {
+            RequerimientoCompra actual = tx.bloquearYObtenerRequerimiento(id);
+            if (!estadoPermiteRecuperacion(actual, tx.getConfiguracionCompra("COMPRAS_ESTADOS_IDS"))) {
+                throw new IllegalArgumentException("La comparativa no puede corregirse en el estado actual.");
+            }
+            if (tx.tieneCreacionReclamoPrestacional(id) || tx.tieneOrdenCompra(id)) {
+                throw new IllegalArgumentException("No se puede corregir una comparativa con RP u orden de compra iniciados.");
+            }
+            tx.bloquearPrestacionesComparativaCorreccion(id);
+            List<RequerimientoCompraComparativa> guardadas = tx.listarComparativasParaRecuperacion(id);
+            if (!firma.equals(firmaRecuperacion(actual, guardadas))) {
+                throw new IllegalArgumentException("La comparativa o sus prestaciones cambiaron. Actualice la pantalla.");
+            }
+            List<RequerimientoCompraComparativa> inconsistencias = obtenerInconsistencias(actual, guardadas);
+            if (!tienenBajaRealRecuperacion(inconsistencias)) {
+                throw new IllegalArgumentException("No se pudo acreditar la baja de todas las prestaciones. Requiere revision manual.");
+            }
+            List<Integer> retirados = new ArrayList<Integer>();
+            List<RequerimientoCompraComparativa> auditoria = new ArrayList<RequerimientoCompraComparativa>();
+            for (RequerimientoCompraComparativa c : inconsistencias) {
+                for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
+                    retirados.add(Integer.valueOf(d.getIdDetalle()));
+                }
+                auditoria.add(copiarCabeceraRecuperacion(c,
+                        new ArrayList<RequerimientoCompraComparativaDetalle>()));
+            }
+            Set<Integer> idsRetirados = new HashSet<Integer>(retirados);
+            List<RequerimientoCompraComparativa> esperadas = new ArrayList<RequerimientoCompraComparativa>();
+            int antes = 0;
+            for (RequerimientoCompraComparativa c : guardadas) {
+                List<RequerimientoCompraComparativaDetalle> conservados =
+                        new ArrayList<RequerimientoCompraComparativaDetalle>();
+                for (RequerimientoCompraComparativaDetalle d : c.getDetalles()) {
+                    antes++;
+                    if (!idsRetirados.contains(Integer.valueOf(d.getIdDetalle()))) conservados.add(d);
+                }
+                esperadas.add(copiarCabeceraRecuperacion(c, conservados));
+            }
+            String firmaEsperada = firmaRecuperacion(actual, esperadas);
+            tx.guardarDatosComparativas(auditoria, retirados, usuario);
+            List<RequerimientoCompraComparativa> restantes = tx.listarComparativasParaRecuperacion(id);
+            int despues = 0;
+            for (RequerimientoCompraComparativa c : restantes) despues += c.getDetalles().size();
+            if (antes - despues != retirados.size() || !firmaEsperada.equals(firmaRecuperacion(actual, restantes))
+                    || !obtenerInconsistencias(actual, restantes).isEmpty()) {
+                throw new IllegalArgumentException("No se pudo verificar la correccion completa de la comparativa.");
+            }
+            commitIniciado = true;
+            tx.commit();
+            return retirados.size();
+        } catch (Exception error) {
+            try {
+                tx.rollback();
+            } catch (Exception rollbackError) {
+                com.liferay.portal.kernel.log.LogFactoryUtil.getLog(RequerimientoCompraComparativaHelper.class)
+                        .error("No se pudo confirmar el rollback de la recuperacion de comparativa.", rollbackError);
+                throw new Exception("No se pudo confirmar la correccion. Actualice la pantalla antes de reintentar.", error);
+            }
+            if (commitIniciado) {
+                throw new Exception("No se pudo confirmar la correccion. Consulte la comparativa antes de reintentar.", error);
+            }
+            if (error instanceof java.sql.SQLException) {
+                com.liferay.portal.kernel.log.LogFactoryUtil.getLog(RequerimientoCompraComparativaHelper.class)
+                        .error("No se pudo persistir la recuperacion de comparativa.", error);
+                throw new Exception("No se pudo corregir la comparativa por un error de persistencia.", error);
+            }
+            throw error;
+        } finally {
+            tx.cerrar();
+        }
+    }
+
+    private RequerimientoCompraComparativa copiarCabeceraRecuperacion(RequerimientoCompraComparativa origen,
+            List<RequerimientoCompraComparativaDetalle> detalles) {
+        RequerimientoCompraComparativa copia = RequerimientoCompraComparativa.paraMapeo();
+        copia.setIdComparativa(origen.getIdComparativa()); copia.setIdRequerimiento(origen.getIdRequerimiento());
+        copia.setIdPrestador(origen.getIdPrestador()); copia.setPrestador(origen.getPrestador());
+        copia.setFechaPresupuesto(origen.getFechaPresupuesto()); copia.setFormaPago(origen.getFormaPago());
+        copia.setPlazoEntrega(origen.getPlazoEntrega()); copia.setValidezPresupuesto(origen.getValidezPresupuesto());
+        copia.setEnvio(origen.getEnvio()); copia.setIva(origen.getIva()); copia.setIibb(origen.getIibb());
+        copia.setDetalles(detalles);
+        return copia;
+    }
+
     public void guardar(List<RequerimientoCompraComparativa> lista,
             Map<String, String> entrada, String usuario) throws Exception {
         ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil.Transaccion tx =

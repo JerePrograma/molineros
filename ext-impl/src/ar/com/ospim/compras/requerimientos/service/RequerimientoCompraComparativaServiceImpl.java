@@ -30,12 +30,37 @@ public class RequerimientoCompraComparativaServiceImpl {
 
     public List<RequerimientoCompraComparativa> listar(Connection con, int idRequerimiento,
             int idPrestador) throws Exception {
+        return listar(con, idRequerimiento, idPrestador, false);
+    }
+
+    public List<RequerimientoCompraComparativa> listarParaRecuperacion(int idRequerimiento)
+            throws Exception {
+        Connection con = ConnectionHelper.getConnection();
+        try {
+            return listarParaRecuperacion(con, idRequerimiento);
+        } finally {
+            ConnectionHelper.cerrar(con);
+        }
+    }
+
+    public List<RequerimientoCompraComparativa> listarParaRecuperacion(Connection con,
+            int idRequerimiento) throws Exception {
+        return listar(con, idRequerimiento, 0, true);
+    }
+
+    private List<RequerimientoCompraComparativa> listar(Connection con, int idRequerimiento,
+            int idPrestador, boolean recuperacion) throws Exception {
         PreparedStatement stmt = null;
         List<RequerimientoCompraComparativa> resultado =
                 new ArrayList<RequerimientoCompraComparativa>();
         try {
             stmt = con.prepareStatement(
-                    idPrestador > 0
+                    recuperacion
+                    ? "SELECT c.*, c.id_prestador AS prestador_id, p.descripcion "
+                        + "FROM compras.requerimiento_comparativa c "
+                        + "JOIN public.prestador p ON p.id_prestador = c.id_prestador "
+                        + "WHERE c.id_requerimiento = ? ORDER BY c.id_comparativa"
+                    : idPrestador > 0
                     ? "SELECT c.*, p.id_prestador AS prestador_id, p.descripcion "
                         + "FROM public.prestador p "
                         + "LEFT JOIN compras.requerimiento_comparativa c "
@@ -78,15 +103,27 @@ public class RequerimientoCompraComparativaServiceImpl {
                 rs.close();
             }
             stmt.close();
-            stmt = con.prepareStatement(
-                    "SELECT id_detalle, id_prestacion, cantidad, importe_unitario "
-                    + "FROM compras.requerimiento_comparativa_detalle "
-                    + "WHERE id_comparativa = ? ORDER BY id_prestacion");
+            stmt = con.prepareStatement(recuperacion
+                    ? "SELECT cd.id_detalle, cd.id_prestacion, cd.cantidad, cd.importe_unitario, "
+                        + "n.codigo, n.descripcion, EXISTS (SELECT 1 FROM compras.requerimiento_detalle d "
+                        + "WHERE d.id_requerimiento = ? AND d.id_prestacion = cd.id_prestacion "
+                        + "AND d.baja_fecha IS NOT NULL) AS baja_real "
+                        + "FROM compras.requerimiento_comparativa_detalle cd "
+                        + "LEFT JOIN autorizaciones.nomenclador n ON n.id_prestacion = cd.id_prestacion "
+                        + "WHERE cd.id_comparativa = ? ORDER BY cd.id_prestacion"
+                    : "SELECT id_detalle, id_prestacion, cantidad, importe_unitario "
+                        + "FROM compras.requerimiento_comparativa_detalle "
+                        + "WHERE id_comparativa = ? ORDER BY id_prestacion");
             for (RequerimientoCompraComparativa c : resultado) {
                 if (c.getIdComparativa() == 0) {
                     continue;
                 }
-                stmt.setInt(1, c.getIdComparativa());
+                if (recuperacion) {
+                    stmt.setInt(1, idRequerimiento);
+                    stmt.setInt(2, c.getIdComparativa());
+                } else {
+                    stmt.setInt(1, c.getIdComparativa());
+                }
                 rs = stmt.executeQuery();
                 try {
                     while (rs.next()) {
@@ -97,6 +134,11 @@ public class RequerimientoCompraComparativaServiceImpl {
                         int cantidad = rs.getInt("cantidad");
                         d.setCantidad(rs.wasNull() ? null : Integer.valueOf(cantidad));
                         d.setImporteUnitario(rs.getBigDecimal("importe_unitario"));
+                        if (recuperacion) {
+                            d.setCodigo(rs.getString("codigo"));
+                            d.setPrestacion(rs.getString("descripcion"));
+                            d.setBajaReal(rs.getBoolean("baja_real"));
+                        }
                         c.getDetalles().add(d);
                     }
                 } finally {

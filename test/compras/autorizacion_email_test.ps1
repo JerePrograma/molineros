@@ -36,9 +36,9 @@ if (Test-Path -LiteralPath $logPath) {
     ('Inicio UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss')),
     ('Inicio Argentina: ' + [TimeZoneInfo]::ConvertTimeBySystemTimeZoneId([DateTime]::UtcNow, 'Argentina Standard Time').ToString('yyyy-MM-dd HH:mm:ss')),
     ('HEAD inicial: ' + $initialHead),
-    'Estado inicial: el correo con clave vacia o documentos faltantes bloqueaba el envio a autorizar; la transicion central debe conservar su autoridad.',
+    'Estado inicial: la transicion se confirma antes del correo; se revisan separadores finales, cuerpo sin usuario y todos los presupuestos cargados.',
     ('Log inicial: ' + $initialLog),
-    'Pruebas: MIME real con pedido, comparativa, ficha RP y dos ordenes medicas; configuracion estricta/QA; incidencias registradas en log posterior commit como Liquidaciones; contexto; relacion; estado antes de preparar correo; fallos DL/persistencia/SMTP y doble peticion.',
+    'Pruebas: MIME real con pedido, comparativa, ficha RP, tres ordenes medicas y dos presupuestos originales sin OC; separadores finales y configuracion estricta/QA; recuperacion productiva de presupuestos con identidad, sitio, VIEW y version DL; cuerpo sin usuario; incidencias en log posterior commit como Liquidaciones; limites y fallos DL/persistencia/SMTP y doble peticion.',
     'Fronteras de datos, DL, persistencia y SMTP simuladas; sin DB, red, correo real, Tomcat ni UI.'
 ), $latinEncoding)
 $sourcepath = @('ext-impl\src', 'ext-service\src', 'ext-web\docroot\WEB-INF\src') | ForEach-Object { Join-Path $repoPath $_ }

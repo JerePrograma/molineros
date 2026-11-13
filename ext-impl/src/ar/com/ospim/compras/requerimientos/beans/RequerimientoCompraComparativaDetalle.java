@@ -11,6 +11,7 @@ public class RequerimientoCompraComparativaDetalle {
     private Integer cantidad;
     private BigDecimal importeUnitario;
     private BigDecimal subtotal;
+    private boolean bajaReal;
 
     public int getIdDetalle() { return idDetalle; }
     public void setIdDetalle(int idDetalle) { this.idDetalle = idDetalle; }
@@ -29,6 +30,9 @@ public class RequerimientoCompraComparativaDetalle {
 
     public BigDecimal getImporteUnitario() { return importeUnitario; }
     public void setImporteUnitario(BigDecimal importeUnitario) { this.importeUnitario = importeUnitario; }
+
+    public boolean isBajaReal() { return bajaReal; }
+    public void setBajaReal(boolean bajaReal) { this.bajaReal = bajaReal; }
 
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }

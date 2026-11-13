@@ -3343,4 +3343,36 @@ public class TraeListasServiceImpl {
 			}
 			return listaTipos;
 		}
+	 
+	 public List<String> getInterbankingComprobantesTransferencias() {
+
+		    Connection con = null;
+		    PreparedStatement stmt = null;
+
+		    List<String> procesos = new ArrayList<String>();
+
+		    try {
+
+		        String sql = "select  * from interbanking_comprobantes_transferencias_procesados()";
+
+		        con = ConnectionHelper.getConnection();
+		        stmt = con.prepareStatement(sql);
+		      
+		        ResultSet rs = stmt.executeQuery();
+
+		        while (rs.next()) {
+		            procesos.add(rs.getDate("proceso")+" -- "+rs.getInt("cantidad"));
+		        }
+
+		    } catch (Exception e) {
+
+		        _log.error("Error obteniendo interbanking_comprobantes_transferencias " ,e);
+
+		    } finally {
+
+		        ConnectionHelper.cerrar(stmt, con);
+		    }
+
+		    return procesos;
+	}
 }

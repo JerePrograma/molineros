@@ -399,6 +399,15 @@ public class EditarRequerimientoCompraServiceUtil {
             return delegate.getConfiguracionCompra(clave);
         }
 
+        public boolean tieneOrdenCompra(int id) throws Exception {
+            return delegate.tieneOrdenCompra(id);
+        }
+
+        public java.util.List<ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa>
+                listarComparativasParaRecuperacion(int id) throws Exception {
+            return delegate.listarComparativasParaRecuperacion(id);
+        }
+
         public List<Integer> bloquearPrestacionesComparativaCorreccion(int id) throws Exception {
             return delegate.bloquearPrestacionesComparativaCorreccion(id);
         }

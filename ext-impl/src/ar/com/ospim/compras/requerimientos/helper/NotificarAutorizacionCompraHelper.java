@@ -72,6 +72,7 @@ public class NotificarAutorizacionCompraHelper {
         if (pedido == null || adjuntos == null || adjuntos.size() < 3) {
             throw new Exception("No se recuperaron todos los documentos del RP para el correo.");
         }
+        adjuntos.addAll(recuperarPresupuestos(id, contexto));
         String nombre = (requerimiento.getAfiliadoApellidoVisible() + " "
                 + requerimiento.getAfiliadoNombreVisible()).trim();
         if (nombre.length() == 0) nombre = requerimiento.getAfiliadoNombreApellidoVisible();
@@ -80,10 +81,10 @@ public class NotificarAutorizacionCompraHelper {
                 + "-" + textoAsunto(requerimiento.getAfiliadoLocalidadVisible())
                 + "-" + textoAsunto(requerimiento.getAfiliadoProvinciaVisible())
                 + "-ID:" + id + "-COMPARATIVA";
-        String cuerpo = "Se envio a autorizar el requerimiento de compra Nro. " + id
+        String cuerpo = "Se envía a autorizar el requerimiento de compra Nro. " + id
                 + ", vinculado al Reclamo Prestacional Nro. " + relacion.getIdReclamoPrestacionalInt()
                 + ".\n\nSe adjuntan la comparativa, la ficha imprimible del RP, las ordenes medicas"
-                + " y el pedido de presupuesto.\n\nUsuario: " + usuario;
+                + ", el pedido de presupuesto y todos los presupuestos cargados.";
         // Validar el MIME completo antes del correo; no enviar documentos incompletos.
         mailHelper.construirMultipart(cuerpo, pedido.getContenido(), pedido.getNombre(), adjuntos);
         validarTamanoCorreo(pedido, adjuntos);
@@ -130,6 +131,7 @@ public class NotificarAutorizacionCompraHelper {
         LinkedHashMap<String, String> unicos = new LinkedHashMap<String, String>();
         for (int i = 0; i < partes.length; i++) {
             String email = partes[i].trim();
+            if (email.length() == 0) continue;
             try {
                 if (!email.matches("^[^@\\s<>;,]+@[^@\\s<>;,]+\\.[^@\\s<>;,]+$")) {
                     throw new Exception("Formato de destinatario invalido.");
@@ -139,6 +141,9 @@ public class NotificarAutorizacionCompraHelper {
                 throw new Exception("Configure un destinatario valido en SystemConfig: " + clave + ".");
             }
             unicos.put(email.toLowerCase(Locale.ENGLISH), email);
+        }
+        if (unicos.isEmpty()) {
+            throw new Exception("Configure un destinatario valido en SystemConfig: " + clave + ".");
         }
         return unicos.values().toArray(new String[unicos.size()]);
     }
@@ -211,6 +216,40 @@ public class NotificarAutorizacionCompraHelper {
             DocumentoLibraryComprasHelper.OrdenMedicaContenido contenido =
                     DocumentoLibraryComprasHelper.leerOrdenMedicaValidada(entry, orden.getNombreOriginal());
             adjuntos.add(adjunto(contenido.getContenido(), contenido.getNombreOriginal(), contenido.getContentType()));
+        }
+        return adjuntos;
+    }
+
+    protected List<AdjuntoOrdenMedica> recuperarPresupuestos(int id, ThemeDisplay contexto) throws Exception {
+        List<RequerimientoCompraPresupuesto> presupuestos =
+                BusquedaRequerimientoCompraServiceUtil.listarPresupuestos(id);
+        if (presupuestos == null) {
+            throw new Exception("No se pudieron recuperar los presupuestos cargados de la compra.");
+        }
+        List<AdjuntoOrdenMedica> adjuntos = new ArrayList<AdjuntoOrdenMedica>();
+        Set<Long> documentos = new HashSet<Long>();
+        for (int i = 0; i < presupuestos.size(); i++) {
+            RequerimientoCompraPresupuesto presupuesto = presupuestos.get(i);
+            if (presupuesto == null || presupuesto.getIdRequerimientoPresupuesto() == null
+                    || presupuesto.getIdRequerimientoPresupuesto().intValue() <= 0
+                    || presupuesto.getIdRequerimiento() == null || presupuesto.getIdRequerimiento().intValue() != id
+                    || presupuesto.getTipoDocumento() == null
+                    || presupuesto.getTipoDocumento().intValue() != RequerimientoCompraPresupuesto.TIPO_DOCUMENTO_PRESUPUESTO
+                    || presupuesto.getIdPrestador() == null || presupuesto.getIdPrestador().intValue() <= 0
+                    || !presupuesto.isActivo()) {
+                throw new Exception("La asociacion de un presupuesto cargado es inconsistente.");
+            }
+            DocumentoLibraryComprasHelper.validarIdentidadAsociacionDocumento(presupuesto);
+            DLFileEntry entry = DLFileEntryLocalServiceUtil.getDLFileEntry(presupuesto.getDlFileEntryId().longValue());
+            if (!DocumentoLibraryComprasHelper.coincideIdentidadAsociacionDocumento(presupuesto, entry)) {
+                throw new Exception("La identidad del presupuesto no coincide con Document Library.");
+            }
+            if (!documentos.add(Long.valueOf(entry.getFileEntryId()))) {
+                throw new Exception("Hay presupuestos duplicados en Document Library.");
+            }
+            validarVista(entry, contexto);
+            adjuntos.add(adjunto(DocumentoLibraryComprasHelper.leerContenidoDocumentLibrary(entry),
+                    presupuesto.getNombreOriginal(), "application/pdf"));
         }
         return adjuntos;
     }

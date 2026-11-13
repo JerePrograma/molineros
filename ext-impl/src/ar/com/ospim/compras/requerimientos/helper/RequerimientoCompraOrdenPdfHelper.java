@@ -1,5 +1,7 @@
 package ar.com.ospim.compras.requerimientos.helper;
 
+import ar.com.ospim.compras.WebKeysCompras;
+import ar.com.ospim.global.WebKeysGlobal;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraOrden;
@@ -30,8 +32,27 @@ public class RequerimientoCompraOrdenPdfHelper {
     private static final String REPORTE = "jasper/compras/orden_compra.jrxml";
 
     public byte[] generar(RequerimientoCompraOrden orden) throws Exception {
-        if (orden == null || orden.getIdOrdenCompra() <= 0
-                || orden.getIdRequerimientoCompra() <= 0
+        if (orden == null || orden.getIdOrdenCompra() <= 0) {
+            throw new IllegalArgumentException("No hay una orden de compra emitida para imprimir.");
+        }
+        return generarDocumento(orden, false);
+    }
+
+    /** Adapta el reporte como adjunto de autorizacion sin emitir ni guardar una OC. */
+    public byte[] generarParaAutorizacion(RequerimientoCompraOrden orden) throws Exception {
+        if (orden == null || orden.getIdOrdenCompra() != 0
+                || orden.getRequerimiento() == null
+                || orden.getIdRequerimientoCompra() != orden.getRequerimiento().getIdRequerimientoCompra()
+                || !orden.getRequerimiento().isActivo()
+                || !WebKeysCompras.esParaAutorizar(orden.getRequerimiento().getEstado())) {
+            throw new IllegalArgumentException("La orden previa no esta disponible para autorizar.");
+        }
+        return generarDocumento(orden, true);
+    }
+
+    private byte[] generarDocumento(RequerimientoCompraOrden orden,
+            boolean paraAutorizacion) throws Exception {
+        if (orden.getIdRequerimientoCompra() <= 0
                 || orden.getFechaEmision() == null
                 || orden.getRequerimiento() == null
                 || orden.getDetalles() == null || orden.getDetalles().isEmpty()) {
@@ -51,7 +72,10 @@ public class RequerimientoCompraOrdenPdfHelper {
                 new DecimalFormatSymbols(new Locale("es", "AR")));
         Map<String, Object> parametros = new HashMap<String, Object>();
         parametros.put("LOGO", getClass().getClassLoader().getResource("jasper/logo_negro.jpg"));
-        parametros.put("NUMERO", String.valueOf(orden.getIdOrdenCompra()));
+        parametros.put("NUMERO", paraAutorizacion ? "PENDIENTE DE EMISION"
+                : new DecimalFormat("00000000").format(orden.getIdOrdenCompra()));
+        parametros.put("ESTADO", paraAutorizacion ? "PARA AUTORIZAR - SIN EMITIR" : "EMITIDA");
+        parametros.put("FECHA_TIPO", paraAutorizacion ? "Fecha del documento: " : "Fecha de emision: ");
         parametros.put("FECHA", fechas.format(orden.getFechaEmision()));
         parametros.put("REQUERIMIENTO", String.valueOf(orden.getIdRequerimientoCompra()));
         parametros.put("SECTOR", texto(requerimiento.getSectorDescripcionVisible()));
@@ -83,10 +107,59 @@ public class RequerimientoCompraOrdenPdfHelper {
                         ? fechas.format(orden.getFechaOrdenMedica()) : "")
                 + "\nFecha recepción: " + (orden.getFechaRecepcion() != null
                         ? fechas.format(orden.getFechaRecepcion()) : ""));
-        parametros.put("ENTREGA", "Entrega: " + texto(orden.getEntrega()));
+        parametros.put("ENTREGA", "Fecha estimada de entrega confirmada por el proveedor: "
+                + (paraAutorizacion ? "Pendiente de confirmacion"
+                        : orden.getFechaEstimadaEntrega() == null ? ""
+                                : fechas.format(orden.getFechaEstimadaEntrega()))
+                + "\nEntrega: " + texto(orden.getEntrega()));
         parametros.put("OBSERVACIONES", "Observaciones: " + texto(orden.getObservaciones()));
         parametros.put("CONFECCION", "Confeccionado por: " + texto(orden.getConfeccionadoPor())
                 + "\nTeléfono de Compras: " + texto(orden.getTelefonoCompras()));
+        String cuitOspim = WebKeysGlobal.CUIT_OSPIM;
+        parametros.put("ORG_CUIT", cuitOspim.substring(0, 2) + "-"
+                + cuitOspim.substring(2, 10) + "-" + cuitOspim.substring(10));
+        parametros.put("FECHA_RECEPCION", orden.getFechaRecepcion() == null ? ""
+                : fechas.format(orden.getFechaRecepcion()));
+        parametros.put("RP_NUMERO", orden.getIdReclamoPrestacional() > 0
+                ? String.valueOf(orden.getIdReclamoPrestacional()) : "");
+        parametros.put("CONFECCIONADO_POR", texto(orden.getConfeccionadoPor()));
+        parametros.put("PROVEEDOR_NOMBRE", texto(orden.getProveedor()));
+        parametros.put("PROVEEDOR_CUIT", texto(orden.getProveedorCuit()));
+        parametros.put("PROVEEDOR_CONTACTO", texto(orden.getProveedorContacto()));
+        parametros.put("PROVEEDOR_TELEFONO", texto(orden.getProveedorTelefono()));
+        parametros.put("PROVEEDOR_EMAIL", texto(orden.getProveedorEmail()));
+        parametros.put("PROVEEDOR_DOMICILIO", texto(orden.getProveedorDomicilio()));
+        parametros.put("FORMA_PAGO", texto(orden.getFormaPago()));
+        parametros.put("PLAZO_PAGO", texto(orden.getPlazoPago()));
+        parametros.put("CONTACTO_EMISOR", texto(orden.getTelefonoCompras()));
+        parametros.put("CONDICION", texto(orden.getCondicion()));
+        parametros.put("SOLICITANTE_NOMBRE", texto(orden.getSolicitante()));
+        parametros.put("AFILIADO_NOMBRE", texto(requerimiento.getAfiliadoNombreApellidoVisible()));
+        String numeroAfiliado = texto(requerimiento.getAfiliadoIdOspimString());
+        String documentoAfiliado = texto(requerimiento.getAfiliadoDocumentoVisible());
+        parametros.put("AFILIADO_IDENTIFICACION", numeroAfiliado
+                + (numeroAfiliado.length() > 0 && documentoAfiliado.length() > 0 ? " / " : "")
+                + documentoAfiliado);
+        String domicilioAfiliado = texto(requerimiento.getAfiliadoDireccionVisible());
+        String localidadAfiliado = texto(requerimiento.getAfiliadoLocalidadVisible());
+        parametros.put("AFILIADO_DOMICILIO", domicilioAfiliado
+                + (domicilioAfiliado.length() > 0 && localidadAfiliado.length() > 0 ? " - " : "")
+                + localidadAfiliado);
+        parametros.put("AFILIADO_PLAN", texto(orden.getPlan()));
+        String telefonoAfiliado = texto(requerimiento.getAfiliadoTelefonoVisible());
+        String celularAfiliado = texto(requerimiento.getAfiliadoCelularVisible());
+        parametros.put("AFILIADO_TELEFONOS", telefonoAfiliado
+                + (telefonoAfiliado.length() > 0 && celularAfiliado.length() > 0 ? " / " : "")
+                + celularAfiliado);
+        parametros.put("AFILIADO_PROVINCIA", texto(requerimiento.getAfiliadoProvinciaVisible()));
+        parametros.put("AFILIADO_EMAIL", texto(requerimiento.getAfiliadoEmailVisible()));
+        parametros.put("FECHA_ORDEN_MEDICA", orden.getFechaOrdenMedica() == null ? ""
+                : fechas.format(orden.getFechaOrdenMedica()));
+        parametros.put("FECHA_ENTREGA", paraAutorizacion ? "Pendiente de confirmacion"
+                : orden.getFechaEstimadaEntrega() == null ? ""
+                        : fechas.format(orden.getFechaEstimadaEntrega()));
+        parametros.put("ENTREGA_TEXTO", texto(orden.getEntrega()));
+        parametros.put("OBSERVACIONES_TEXTO", texto(orden.getObservaciones()));
         List<Map<String, Object>> filas = new ArrayList<Map<String, Object>>();
         BigDecimal subtotal = BigDecimal.ZERO;
         boolean subtotalInformado = true;
@@ -96,7 +169,7 @@ public class RequerimientoCompraOrdenPdfHelper {
             }
             BigDecimal unitario = detalle.getPrecioUnitarioEstimado();
             BigDecimal totalDetalle = detalle.getPrecioTotalEstimado();
-            if (requerimiento.esSectorSinCotizacionPrestador()
+            if ((paraAutorizacion || requerimiento.esSectorSinCotizacionPrestador())
                     && (unitario == null || totalDetalle == null)) {
                 throw new IllegalArgumentException(
                         "Debe completar los precios de la Orden de Compra antes de imprimir.");
@@ -127,6 +200,10 @@ public class RequerimientoCompraOrdenPdfHelper {
             } else {
                 subtotal = subtotal.add(totalDetalle);
             }
+        }
+        if (paraAutorizacion && (!subtotalInformado || orden.getTotal() == null
+                || orden.getTotal().compareTo(subtotal.add(orden.getIva()).add(orden.getIibb())) != 0)) {
+            throw new IllegalArgumentException("La orden previa contiene un total inconsistente.");
         }
         parametros.put("SUBTOTAL", importe(subtotalInformado ? subtotal : null, importes));
         parametros.put("IVA", importe(orden.getIva(), importes));

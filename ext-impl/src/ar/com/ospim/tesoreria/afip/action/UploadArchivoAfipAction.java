@@ -160,6 +160,9 @@ public class UploadArchivoAfipAction extends PortletAction {
 		//	actionRequest.setAttribute("archivoSubidoBco", AfipServiceUtil.getArchivosSubidosBco());
 			setForward(actionRequest, "portlet.farmacia.view");
 			actionRequest.setAttribute("tabs1", "subir-archivo");
+		}else if(nombreArchivo.toUpperCase().startsWith("REPORTE") && actionResponse.getNamespace().equals("_LIQ_1_") ) {
+			setForward(actionRequest, "portlet.liquidaciones.view");
+			actionRequest.setAttribute("tabs1", "consulta_interbanking");
 		}else{
 			actionRequest.setAttribute("archivoSubidoAfip", AfipServiceUtil.getArchivosSubidosAfip());
 			setForward(actionRequest, "portlet.tesoreria.view");

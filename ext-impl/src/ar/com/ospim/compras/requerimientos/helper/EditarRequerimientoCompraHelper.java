@@ -1308,6 +1308,9 @@ public class EditarRequerimientoCompraHelper {
             obtenerDetallePersistido(r,detalle);
             if(r.getEstado()==estadoEnTransaccion(tx,"A_COTIZAR")&&r.getDetalles().size()<=1)
                 throw errorUsuario("El requerimiento ENVIADO A COTIZAR debe conservar al menos una prestacion.");
+            List<Integer> eliminados = new ArrayList<Integer>();
+            eliminados.add(Integer.valueOf(detalle));
+            validarBajasSinDatosComparativa(tx, r, eliminados);
             if(tx.persistirBajaDetalle(id,detalle,normalizarUsuario(usuario))!=1)
                 throw errorUsuario("El detalle cambio mientras se quitaba. Actualice la pantalla.");
             tx.commit();
@@ -1315,6 +1318,38 @@ public class EditarRequerimientoCompraHelper {
             if(tx!=null)try{tx.rollback();}catch(Exception fallo){e.addSuppressed(fallo);}
             throw manejarErrorOperacion("quitar el detalle del requerimiento","No se pudo quitar el detalle. Actualice la pantalla e intente nuevamente.",e,"idRequerimiento="+id+", idDetalle="+detalle);
         }finally{if(tx!=null)tx.cerrar();}
+    }
+
+    private void validarBajasSinDatosComparativa(
+            EditarRequerimientoCompraServiceUtil.Transaccion tx,
+            RequerimientoCompra vigente, List<Integer> eliminados) throws Exception {
+        if (eliminados == null || eliminados.isEmpty()) {
+            return;
+        }
+        Set<Integer> retiradas = new HashSet<Integer>();
+        Set<Integer> remanentes = new HashSet<Integer>();
+        for (RequerimientoCompraDetalle detalle : vigente.getDetalles()) {
+            Integer prestacion = detalle.getIdPrestacion();
+            if (prestacion == null || prestacion.intValue() <= 0) {
+                continue;
+            }
+            if (eliminados.contains(Integer.valueOf(detalle.getIdInt()))) {
+                retiradas.add(prestacion);
+            } else {
+                remanentes.add(prestacion);
+            }
+        }
+        if (retiradas.isEmpty()) {
+            return;
+        }
+        List<Integer> cotizadas = tx.bloquearPrestacionesComparativaCorreccion(
+                vigente.getIdRequerimientoCompra());
+        for (Integer prestacion : cotizadas) {
+            if (retiradas.contains(prestacion) && !remanentes.contains(prestacion)) {
+                throw errorUsuario("La prestación que intenta quitar tiene datos guardados en la comparativa. "
+                        + "Deje vacías su cantidad y su importe en los presupuestos y vuelva a guardar.");
+            }
+        }
     }
 
     public void cambiarEstado(int id, int nuevo, String usuario) throws Exception {
@@ -2932,6 +2967,7 @@ private void prepararDetalleParaGuardar(
         if(incluidos.size()!=vigente.getDetalles().size())throw errorUsuario("Los detalles cambiaron mientras se guardaba la cotizacion.");
         for(int i=0;i<vigente.getDetalles().size();i++)if(!incluidos.contains(Integer.valueOf(vigente.getDetalles().get(i).getIdInt())))
             throw errorUsuario("La cotizacion no coincide con los detalles activos del requerimiento.");
+        validarBajasSinDatosComparativa(tx, vigente, eliminados);
         Integer prestador=obtenerPrestadorAdjudicadoUnico(detalles);String estadoPrestador=null,cotizadoPrestador=null;
         if(prestador!=null){
             if(prestador.intValue()<=0)throw errorUsuario("Debe seleccionar un prestador valido.");

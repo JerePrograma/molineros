@@ -643,4 +643,106 @@ public class ReporteEstadisticaEmpleadores extends ReporteXLS {
 		return col;
 		
 	}
+	
+	
+	public static HSSFWorkbook generaReporteEmpresasSinDDJJ(List<FichaBoletaPortal> fichasBoletas) {
+		
+		
+		SimpleDateFormat sdf=new SimpleDateFormat("dd/MM/yyyy");
+		Date hoy=new Date();
+		
+		int fichasBoleta = fichasBoletas.size();
+		
+		HSSFWorkbook wb = new HSSFWorkbook();
+		HSSFSheet sheet = wb.createSheet("EMPRESAS SIN DDJJ ");
+
+		HSSFPrintSetup ps = sheet.getPrintSetup();
+		sheet.setAutobreaks(true);
+		ps.setPaperSize(HSSFPrintSetup.A4_PAPERSIZE);
+		ps.setFitHeight((short) 0);
+		ps.setFitWidth((short) 1);
+
+		HSSFCellStyle styleAll = getStyleAllWithBorder(wb);
+		HSSFCellStyle styleNumber=  getStyleNumber(wb);
+		HSSFCellStyle styleMoney = getStyleMoneyWithBorder(wb);
+		HSSFCellStyle syleAll = getStyleAll(wb);	
+		HSSFCellStyle verticalCenter = getStyleAlignVerticalCenter(wb);	
+		HSSFCellStyle boldAlignedCenter = getStyleBoldAligned(wb,HorizontalAlignment.CENTER);
+		HSSFCellStyle fondoGrisWithBorder =  getStyleFondoGrisWithBorder(wb);
+		HSSFCellStyle borderTop =  getBorderTop(wb);
+		HSSFCellStyle styleRight = getStyleRight(wb);
+		
+		String  titulo1= "EMPRESAS SIN DDJJ";
+	
+		sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
+				
+		int index = 0;		
+		int col = -1;
+		HSSFRow rowHeaderANT = sheet.createRow(index);		
+		HSSFCell cell0HA = rowHeaderANT.createCell(0);
+		
+		cell0HA.setCellValue(new HSSFRichTextString(titulo1));
+		cell0HA.setCellStyle(boldAlignedCenter);
+		
+		index++;
+		//sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 1));
+		HSSFRow rowsBoletas = sheet.createRow(index); 
+
+		
+		//sheet.addMergedRegion(new CellRangeAddress(2, fichasBoleta +1 , 0, 1));
+		rowsBoletas = sheet.createRow(index); 
+			
+	
+		
+		//Boleta
+		//sheet.addMergedRegion(new CellRangeAddress(1, 1 , 2, 4));
+		rowsBoletas = sheet.createRow(index); 
+		col = 0;
+		HSSFCell cell016H = rowsBoletas.createCell(++col);
+		cell016H.setCellValue(new HSSFRichTextString("CUIT"));
+		cell016H.setCellStyle(fondoGrisWithBorder);
+		
+		HSSFCell cell16H = rowsBoletas.createCell(++col);
+		cell16H.setCellValue(new HSSFRichTextString("RAZON SOCIAL"));
+		cell16H.setCellStyle(fondoGrisWithBorder);
+					
+		HSSFCell cell20H = rowsBoletas.createCell(++col);
+		cell20H.setCellValue(new HSSFRichTextString("PERIODO"));
+		cell20H.setCellStyle(fondoGrisWithBorder);
+		
+		index++;				
+		for (FichaBoletaPortal fichaBoletaPortal : fichasBoletas) {
+			col=0;
+			rowsBoletas = sheet.createRow(index); 
+			HSSFCell cell100 = rowsBoletas.createCell(++col);
+			cell100.setCellValue(new HSSFRichTextString(fichaBoletaPortal.getCuit()));
+			cell100.setCellStyle(styleAll);
+			
+			HSSFCell cell101 = rowsBoletas.createCell(++col);
+			cell101.setCellValue(new HSSFRichTextString(fichaBoletaPortal.getRazon_Soc()));
+			cell101.setCellStyle(styleAll);
+			
+			HSSFCell cell102 = rowsBoletas.createCell(++col);
+			cell102.setCellValue(new HSSFRichTextString(fichaBoletaPortal.getPeriodoAsString()));
+			cell102.setCellStyle(styleAll);
+			index++;
+		}
+			
+		sheet.autoSizeColumn((short) 0);
+		sheet.autoSizeColumn((short) 1);
+		sheet.autoSizeColumn((short) 2);
+		sheet.autoSizeColumn((short) 3);
+		sheet.autoSizeColumn((short) 4);
+		sheet.autoSizeColumn((short) 5);
+		sheet.autoSizeColumn((short) 6);
+		sheet.autoSizeColumn((short) 7);
+		sheet.autoSizeColumn((short) 8);
+		sheet.autoSizeColumn((short) 9);
+		sheet.autoSizeColumn((short) 10);
+		sheet.autoSizeColumn((short) 11);
+		sheet.autoSizeColumn((short) 12);
+		return wb;
+
+    }
+	
 }

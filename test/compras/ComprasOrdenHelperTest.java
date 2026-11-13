@@ -47,6 +47,7 @@ public class ComprasOrdenHelperTest {
         importes();
         estadoYAdjudicacion();
         medicina();
+        previaAutorizacion();
         edicionCondiciones();
         configuracionGestion();
         permisosEdicion();
@@ -718,6 +719,48 @@ public class ComprasOrdenHelperTest {
         }
     }
 
+    private static void previaAutorizacion() throws Exception {
+        Mock h = medicinaFixture();
+        h.r.setEstado(ConfiguracionComprasHelper.getEstadoParaAutorizar());
+        RequerimientoCompraOrden orden = h.prepararParaAutorizacion(40, "Compras");
+        igual("previa no asigna numero", Integer.valueOf(0), Integer.valueOf(orden.getIdOrdenCompra()));
+        igual("previa no infiere entrega", null, orden.getFechaEstimadaEntrega());
+        igual("previa no tiene alta", null, orden.getAltaFecha());
+        igual("previa conserva requerimiento", h.r, orden.getRequerimiento());
+        igual("previa conserva RP", Integer.valueOf(68030), Integer.valueOf(orden.getIdReclamoPrestacional()));
+        igual("previa completa datos de presentacion", Integer.valueOf(1), Integer.valueOf(h.consultasPadron));
+        igual("previa conserva estado", Integer.valueOf(ConfiguracionComprasHelper.getEstadoParaAutorizar()), Integer.valueOf(h.r.getEstado()));
+        igual("previa no persiste", Integer.valueOf(0), Integer.valueOf(h.guardados));
+        igual("previa no abre transaccion de emision", Integer.valueOf(0), Integer.valueOf(h.transacciones));
+        igual("previa no crea snapshot persistido", null, h.guardada);
+        igual("previa proveedor adjudicado", "Prestador de prueba", orden.getProveedor());
+        igual("previa cantidad adjudicada", Integer.valueOf(3), orden.getDetalles().get(0).getCantidad());
+        decimal("previa precio adjudicado", "50", orden.getDetalles().get(0).getPrecioUnitarioEstimado());
+        decimal("previa impuestos y total adjudicados", "165", orden.getTotal());
+        decimal("previa no modifica precio del requerimiento", "100", h.detalles.get(0).getPrecioUnitarioEstimado());
+        try { h.prepararParaGuardar(40, "Compras"); throw new AssertionError("Emision antes de autorizar aceptada"); }
+        catch (IllegalArgumentException esperado) { checks++; }
+
+        h = medicinaFixture(); rechazaPrevia(h, "previa de autorizado");
+        h = medicinaFixture(); h.r.setEstado(ConfiguracionComprasHelper.getEstadoOrdenCompra()); rechazaPrevia(h, "previa de emitido");
+        h = medicinaFixture(); h.r.setEstado(ConfiguracionComprasHelper.getEstadoParaAutorizar()); h.r.setBajaFecha(new Date()); rechazaPrevia(h, "previa inactiva");
+        h = medicinaFixture(); h.r.setEstado(ConfiguracionComprasHelper.getEstadoParaAutorizar()); h.guardada = new RequerimientoCompraOrden(); h.guardada.setIdOrdenCompra(900); rechazaPrevia(h, "previa con OC existente");
+        h = empresaFixture(); h.r.setEstado(ConfiguracionComprasHelper.getEstadoParaAutorizar()); rechazaPrevia(h, "previa empresa sin RP");
+        h = medicinaFixture(); h.r.setEstado(ConfiguracionComprasHelper.getEstadoParaAutorizar()); h.relacion.setBajaFecha(new Date()); rechazaPrevia(h, "previa RP dado de baja");
+        h = medicinaFixture(); h.r.setEstado(ConfiguracionComprasHelper.getEstadoParaAutorizar()); h.comparativas.clear(); rechazaPrevia(h, "previa sin comparativa");
+        h = medicinaFixture(); h.r.setEstado(ConfiguracionComprasHelper.getEstadoParaAutorizar()); h.comparativas.get(0).getDetalles().get(0).setImporteUnitario(null); rechazaPrevia(h, "previa sin precio");
+    }
+
+    private static void rechazaPrevia(Mock h, String caso) throws Exception {
+        try { h.prepararParaAutorizacion(40, "Compras"); }
+        catch (IllegalArgumentException esperado) {
+            igual(caso + " sin emision", Integer.valueOf(0), Integer.valueOf(h.guardados));
+            igual(caso + " sin transaccion", Integer.valueOf(0), Integer.valueOf(h.transacciones));
+            return;
+        }
+        throw new AssertionError("No rechazo: " + caso);
+    }
+
     private static void fechasEntrega() throws Exception {
         String[] invalidas = { null, "", "31/02/2026", "2026-11-20", "20/11/2026resto", "00/11/2026", "20/00/2026", "20/11/0000" };
         for (int i = 0; i < invalidas.length; i++) {
@@ -1008,9 +1051,11 @@ public class ComprasOrdenHelperTest {
         List<RequerimientoCompraPresupuesto> documentos = new ArrayList<RequerimientoCompraPresupuesto>();
         RequerimientoCompraReclamoPrestacional relacion;
         int guardados;
+        int transacciones;
         int actualizaciones;
         int consultasPadron;
         protected RequerimientoCompraOrdenServiceUtil.Transaccion abrirTransaccion() throws Exception {
+            transacciones++;
             final Mock modelo=this;
             ComprasFuenteDatosFixture fuente=new ComprasFuenteDatosFixture(){
                 public RequerimientoCompra getRequerimientoCompra(Connection con,int id){modelo.r.setDetalles(modelo.detalles);return modelo.r;}

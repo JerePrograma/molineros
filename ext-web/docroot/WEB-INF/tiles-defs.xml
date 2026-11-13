@@ -2965,18 +2965,17 @@
 			value="/portlet/autorizaciones/reclamos_prestacionales/lista_contactos_reclamo.jsp" />
 	</definition>
 
-
-
-
-
-
 	<definition name="portlet.autorizaciones.editar_autorizacion_prestacional"
 		extends="portlet.autorizaciones">
 		<put name="portlet_content"
 			value="/portlet/autorizaciones/autorizaciones_prestacionales/editar_autorizacion_prestacional_entry.jsp" />
 	</definition>
 
-
+    <definition name="portlet.autorizaciones.autorizacion_prestacional_prestaciones"
+		extends="portlet.autorizaciones">
+		<put name="portlet_content"
+			value="/portlet/autorizaciones/autorizaciones_prestacionales/autorizacion_prestacional_prestaciones_result.jsp" />
+	</definition>
 
 	<definition name="portlet.autorizaciones.editar_autorizacion_imagen"
 		extends="portlet.autorizaciones">

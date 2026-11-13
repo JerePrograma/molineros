@@ -1795,4 +1795,8 @@ public class TraeListasServiceUtil {
 	public static List<MotivoExcepcion> getMotivosEstadosAutorizacionPrestacional(int estadoId){
 		return getInstance().getMotivosEstadosAutorizacionPrestacional(estadoId) ;
 	}
+	
+	public static List<String> getInterbankingComprobantesTransferencias() {
+	    return getInstance().getInterbankingComprobantesTransferencias();
+	}
 }

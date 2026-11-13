@@ -2,20 +2,42 @@
 <%@ taglib uri="http://java.sun.com/portlet_2_0" prefix="portlet" %>
 <portlet:defineObjects/>
 <%
- 
 Calendar fecha = CalendarFactoryUtil.getCalendar();
 fecha.setTime(new Date());
 int diasDelMes = fecha.getActualMaximum(Calendar.DAY_OF_MONTH);
+boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ENTIDAD_OSPIM);
+String portlet_name="liquidaciones";
 
- 		boolean showABMButtons = PermissionUtil.userContainsRole(user,WebKeysLiquidaciones.ROL_ENTIDAD_OSPIM);
+List<String> errores = (List<String>)request.getAttribute("errores");
+if (errores != null && !errores.isEmpty()){
+	%>
+	<table>
+	<%
+	for (String error : errores){
+		%>
+		<tr><td style="color:red">
+		<%=error%>
+		</td></tr>
+		<%
+	}
+	%>
+	</table>
+	<%
+}
+
 %>
+</form>
+<form action="" method="get" name="<portlet:namespace />fm2" enctype="multipart/form-data">
+<table>
+  <tr>
+    <td  style="width: 80%;">
 		<% if(showABMButtons) { %>
 		<fieldset class="block-labels">
 		<legend>Búsqueda Comprobantes de Transferencia de Interbanking</legend>
-		<table width="70%">
+		<table width="80%">
 				<tr>
 					<td><label><liferay-ui:message key="acreedor" />:</label></td>
-					<td colspan="7">
+					<td colspan="8">
 						<liferay-util:include page="/html/portlet/liquidaciones/ordenes_pago/busqueda_padron_entidades.jsp">
 					  		<liferay-util:param name="esEditable" value='true'/>
 						</liferay-util:include>
@@ -86,8 +108,31 @@ int diasDelMes = fecha.getActualMaximum(Calendar.DAY_OF_MONTH);
 			<div align="center" id="<portlet:namespace />comprobantesResultDiv">
 			</div>
 		</fieldset>
-			
+</td>
+<td  style="width: 20%;">
+ <fieldset class="block-labels">
+ <legend>Procesar Archivos</legend>
+    <table>
+     <tr>
+      <td>
+	   <input type="file" name="archivo"/>
+	  </td>
+	  <td> 
+	    <input type="submit" value="<liferay-ui:message key="upload-file" />" onClick="<portlet:namespace />uploadArchivo()"/>
+	  </td>  
+	  </tr>
+	</table>
+	<div id="<portlet:namespace />archivos_subidos_interbanking">
+		<jsp:include page='/html/portlet/liquidaciones/archivos_subidos_interbanking.jsp' />  
+	</div>
+ </fieldset>	
+</td>
+</tr>
+</table>
+</form>			
 <script type="text/javascript">
+    function cambiaCuit(){}
+
 	jQuery('#<portlet:namespace />buscando').hide();	
 	//jQuery('#<portlet:namespace />buscar').click(function(){
 
@@ -136,4 +181,11 @@ int diasDelMes = fecha.getActualMaximum(Calendar.DAY_OF_MONTH);
  	   url = url.replace("__Name",fileName).replace("__FolderId",folderId);
  	   window.open(url,'mywindow','width=800,height=800,toolbar=no,resizable=yes') 
   }
+    
+    
+  function <portlet:namespace />uploadArchivo() {			
+		var url = '<portlet:actionURL windowState="<%= LiferayWindowState.MAXIMIZED.toString() %>"/>&struts_action=/<%=portlet_name%>/upload_archivo_afip';
+		document.<portlet:namespace />fm2.method = 'post';
+		submitForm(document.<portlet:namespace />fm2, url);
+  }  
 </script>

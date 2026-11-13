@@ -782,4 +782,39 @@ public class PortalEmpleadoresServiceImpl {
 		_log.debug("Saliendo de Cobranza Boleta " + cuit + " " + nroBoleta.toString());
 		return ret;
 	}
+	
+	public List<FichaBoletaPortal> getEmpresasSinDDJJ() {
+	    SimpleDateFormat formateador = new SimpleDateFormat("dd/MM/yyyy");
+		Connection con = null;
+		CallableStatement stmt = null;
+		ArrayList<FichaBoletaPortal> listaFichas = null;
+		listaFichas = new ArrayList<FichaBoletaPortal>();
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+		try {
+
+			String sql = "{call fmail_notificacion_ddjj_pendiente_consul()}";
+			_log.debug("obteniendo conexion Empresas Sin DDJJ");
+			
+			con = ConnectionHelper.getConnectionPortalEmpleadoresV01();
+			stmt = con.prepareCall(sql.toString());
+
+			
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				FichaBoletaPortal ficha = new FichaBoletaPortal();
+				ficha.setCuit(rs.getString("cuit"));
+				ficha.setPeriodo_cod_barras( formateador.parse("01/"+rs.getString("periodo")));
+				ficha.setRazon_Soc(rs.getString("razon_social"));
+				listaFichas.add(ficha);
+			}
+		} catch (Exception e) {
+			_log.error(e);
+		} finally {
+			ConnectionHelper.cerrar(stmt, con);
+		}
+		return listaFichas;
+	}
+
+	
+	
 }

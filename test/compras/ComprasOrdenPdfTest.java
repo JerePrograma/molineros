@@ -19,12 +19,24 @@ public class ComprasOrdenPdfTest {
         for (int caso = 0; caso < nombres.length; caso++) {
             RequerimientoCompraOrden orden = fixture(caso);
             byte[] pdf = new RequerimientoCompraOrdenPdfHelper().generar(orden);
+            FileOutputStream out = new FileOutputStream(args[0] + "/" + nombres[caso] + ".pdf");
+            try { out.write(pdf); } finally { out.close(); }
             if (pdf.length < 1000 || pdf[0] != '%' || pdf[1] != 'P') throw new Exception("PDF invalido");
             comprobarPesos(pdf);
             comprobarCamposVacios(pdf, caso);
+            String emitida = texto(pdf);
+            String entregaConfirmada = new java.text.SimpleDateFormat("dd/MM/yyyy")
+                    .format(orden.getFechaEstimadaEntrega());
+            String numeroOrden = new java.text.DecimalFormat("00000000").format(orden.getIdOrdenCompra());
+            if (emitida.indexOf("EMITIDA") < 0 || emitida.indexOf(numeroOrden) < 0
+                    || emitida.indexOf(entregaConfirmada) < 0 || emitida.indexOf("PARA AUTORIZAR") >= 0) {
+                throw new Exception("La OC emitida debe conservar estado, fecha de emision y entrega confirmada.");
+            }
+            comprobarFinalesLargos(pdf, caso);
+            comprobarIdentidadYFirmas(pdf);
             if (caso == 1) {
                 String afiliado = texto(pdf);
-                String[] datos = { "DOMICILIO_AFILIADO", "PROVINCIA_AFILIADO", "TELEFONO_AFILIADO", "CELULAR_AFILIADO", "EMAIL_AFILIADO@example.invalid", "Plan de prueba" };
+                String[] datos = { "DOMICILIO_AFILIADO", "PROVINCIA_AFILIADO", "TELEFONO_AFILIADO", "CELULAR_AFILIADO", "EMAIL_AFILIADO@example.invalid", "Plan de prueba", "Documento de prueba", "Localidad de prueba", "1234" };
                 for (int i = 0; i < datos.length; i++) if (afiliado.indexOf(datos[i]) < 0) {
                     throw new Exception("El PDF recorto un dato de afiliado: " + datos[i]);
                 }
@@ -33,12 +45,12 @@ public class ComprasOrdenPdfTest {
             PdfReader reader = new PdfReader(pdf);
             int paginas;
             try { paginas = reader.getNumberOfPages(); } finally { reader.close(); }
+            comprobarPaginado(pdf, paginas);
             if (caso != 2 && caso != 3 && paginas != 1) throw new Exception("Formato normal no ocupa una pagina");
             if ((caso == 2 || caso == 3) && paginas <= 1) throw new Exception("Falta paginacion de campos o detalles largos");
-            FileOutputStream out = new FileOutputStream(args[0] + "/" + nombres[caso] + ".pdf");
-            try { out.write(pdf); } finally { out.close(); }
             System.out.println("PDF_OK caso=" + caso + " bytes=" + pdf.length + " paginas=" + paginas);
         }
+        probarAutorizacion(args[0]);
         RequerimientoCompraOrden monedaVacia = fixture(4);
         monedaVacia.setMoneda("  ");
         if (!"ARS".equals(monedaVacia.getMoneda())) throw new Exception("La moneda legacy vacia debe usar pesos.");
@@ -56,8 +68,9 @@ public class ComprasOrdenPdfTest {
         int inicioFinanzas = textoImpuestos.lastIndexOf("IVA");
         String finanzas = textoImpuestos.substring(inicioFinanzas,
                 Math.min(textoImpuestos.length(), inicioFinanzas + 140));
-        if (finanzas.indexOf("No informado") >= 0 || finanzas.indexOf("0,00") < 0
-                || finanzas.indexOf("7.407,36") < 0) {
+        if (textoImpuestos.indexOf("No informado") >= 0 || textoImpuestos.indexOf("IVA: 0,00") < 0
+                || textoImpuestos.indexOf("IIBB: 0,00") < 0
+                || textoImpuestos.indexOf("TOTAL GENERAL (ARS): $ 7.407,36") < 0) {
             throw new Exception("El PDF no muestra impuestos cero y total conocido: " + finanzas);
         }
         System.out.println("IMPUESTOS_OPCIONALES_CERO_TOTAL_CONOCIDO " + finanzas);
@@ -89,6 +102,116 @@ public class ComprasOrdenPdfTest {
         try { new RequerimientoCompraOrdenPdfHelper().generar(invalida); throw new Exception("Acepto borrador"); }
         catch (IllegalArgumentException expected) { System.out.println("BORRADOR_RECHAZADO"); }
     }
+    private static void probarAutorizacion(String destino) throws Exception {
+        String[] nombres = { "autorizar-medica", "autorizar-multipagina", "autorizar-campos-largos" };
+        RequerimientoCompraOrdenPdfHelper helper = new RequerimientoCompraOrdenPdfHelper();
+        for (int i = 0; i < nombres.length; i++) {
+            RequerimientoCompraOrden orden = previa(i + 1);
+            byte[] pdf = helper.generarParaAutorizacion(orden);
+            FileOutputStream out = new FileOutputStream(destino + "/" + nombres[i] + ".pdf");
+            try { out.write(pdf); } finally { out.close(); }
+            String contenido = texto(pdf);
+            String[] esperados = { "ORDEN DE COMPRA", "PARA AUTORIZAR - SIN EMITIR",
+                    "PENDIENTE DE EMISION", "Fecha del documento:", "Pendiente de confirmacion",
+                    "PROVEEDOR", "INSTRUCCIONES", "1234" };
+            for (int j = 0; j < esperados.length; j++) {
+                if (contenido.toUpperCase(new java.util.Locale("es", "AR")).indexOf(
+                        esperados[j].toUpperCase(new java.util.Locale("es", "AR"))) < 0) {
+                    throw new Exception("Falta dato en OC previa: " + esperados[j]);
+                }
+            }
+            if (contenido.toUpperCase(new java.util.Locale("es", "AR")).indexOf("FECHA DE EMISI") >= 0
+                    || contenido.indexOf("00000000") >= 0 || contenido.indexOf("OC N\u00b0 0") >= 0) {
+                throw new Exception("La previa no puede presentarse como una OC emitida o numerada.");
+            }
+            if (orden.getIdOrdenCompra() != 0 || orden.getFechaEstimadaEntrega() != null
+                    || orden.getRequerimiento().getEstado() != 46) {
+                throw new Exception("La generacion del PDF altero el estado de la orden previa.");
+            }
+            comprobarPesos(pdf);
+            comprobarFinalesLargos(pdf, i + 1);
+            comprobarIdentidadYFirmas(pdf);
+            PdfReader reader = new PdfReader(pdf);
+            int paginas;
+            try { paginas = reader.getNumberOfPages(); } finally { reader.close(); }
+            comprobarPaginado(pdf, paginas);
+            if (i == 0 && paginas != 1) throw new Exception("La previa normal no ocupa una pagina.");
+            if (i > 0 && paginas <= 1) throw new Exception("La previa extensa debe paginar.");
+            System.out.println("PREVIA_PDF_OK caso=" + i + " bytes=" + pdf.length + " paginas=" + paginas);
+        }
+        RequerimientoCompraOrden invalida = previa(1);
+        invalida.setIdOrdenCompra(101); rechazarPrevia(invalida, "NUMERO_DEFINITIVO");
+        invalida = previa(1); invalida.setIdOrdenCompra(-1); rechazarPrevia(invalida, "NUMERO_NEGATIVO");
+        invalida = previa(1); invalida.getRequerimiento().setBajaFecha(new Date());
+        rechazarPrevia(invalida, "REQUERIMIENTO_INACTIVO");
+        invalida = previa(1); invalida.getRequerimiento().setEstado(47);
+        rechazarPrevia(invalida, "ESTADO_AUTORIZADO");
+        invalida = previa(1); invalida.getRequerimiento().setId(Integer.valueOf(124));
+        rechazarPrevia(invalida, "REQUERIMIENTO_AJENO");
+        invalida = previa(1); invalida.getDetalles().get(0).setPrecioUnitarioEstimado(null);
+        invalida.getDetalles().get(0).setPrecioTotalEstimado(null);
+        rechazarPrevia(invalida, "PRECIO_AUSENTE");
+        invalida = previa(1); invalida.getDetalles().get(0).setPrecioTotalEstimado(BigDecimal.ONE);
+        rechazarPrevia(invalida, "TOTAL_DETALLE_INCONSISTENTE");
+        RequerimientoCompraOrden totalInvalido = new RequerimientoCompraOrden() {
+            public BigDecimal getTotal() { return BigDecimal.ONE; }
+        };
+        RequerimientoCompraOrden datos = previa(1);
+        totalInvalido.setIdRequerimientoCompra(datos.getIdRequerimientoCompra());
+        totalInvalido.setRequerimiento(datos.getRequerimiento());
+        totalInvalido.setFechaEmision(datos.getFechaEmision());
+        totalInvalido.setDetalles(datos.getDetalles());
+        rechazarPrevia(totalInvalido, "TOTAL_ORDEN_INCONSISTENTE");
+        invalida = previa(1); invalida.setFechaEmision(null); rechazarPrevia(invalida, "FECHA_DOCUMENTO_AUSENTE");
+        invalida = previa(1); invalida.setRequerimiento(null); rechazarPrevia(invalida, "REQUERIMIENTO_AUSENTE");
+        rechazarPrevia(null, "ORDEN_AUSENTE");
+    }
+    private static RequerimientoCompraOrden previa(int caso) {
+        RequerimientoCompraOrden orden = fixture(caso);
+        orden.setIdOrdenCompra(0);
+        orden.getRequerimiento().setEstado(46);
+        orden.setFechaEstimadaEntrega(null);
+        return orden;
+    }
+    private static void rechazarPrevia(RequerimientoCompraOrden orden, String caso) throws Exception {
+        try {
+            new RequerimientoCompraOrdenPdfHelper().generarParaAutorizacion(orden);
+            throw new Exception("Acepto previa invalida: " + caso);
+        } catch (IllegalArgumentException esperado) {
+            System.out.println("PREVIA_" + caso + "_RECHAZADA");
+        }
+    }
+    private static void comprobarFinalesLargos(byte[] pdf, int caso) throws Exception {
+        if (caso != 3) return;
+        String contenido = texto(pdf);
+        String[] finales = { "FIN_PROVEEDOR", "FIN_DOMICILIO", "FIN_CONTACTO", "FIN_EMAIL",
+                "FIN_CONDICION", "FIN_PAGO", "FIN_SOLICITANTE", "FIN_ENTREGA", "FIN_OBSERVACIONES" };
+        for (int i = 0; i < finales.length; i++) {
+            if (contenido.indexOf(finales[i]) < 0) throw new Exception("Texto largo recortado: " + finales[i]);
+        }
+    }
+    private static void comprobarIdentidadYFirmas(byte[] pdf) throws Exception {
+        String contenido = texto(pdf).toUpperCase(new java.util.Locale("es", "AR"));
+        String[] datos = { "OSPIM", "30-62913856-7", "SOLICITANTE", "AUDITOR", "FIRMA AUTORIZADA", "CORREO ELECTR\u00d3NICO", "CONTACTO EMISOR" };
+        for (int i = 0; i < datos.length; i++) {
+            if (contenido.indexOf(datos[i]) < 0) throw new Exception("Falta identidad o firma en PDF: " + datos[i]);
+        }
+    }
+    private static void comprobarPaginado(byte[] pdf, int paginas) throws Exception {
+        PDDocument documento = PDDocument.load(new ByteArrayInputStream(pdf));
+        try {
+            for (int pagina = 1; pagina <= paginas; pagina++) {
+                PDFTextStripper lector = new PDFTextStripper();
+                lector.setStartPage(pagina);
+                lector.setEndPage(pagina);
+                String contenido = lector.getText(documento).replaceAll("\\s+", " ");
+                if (contenido.toUpperCase(new java.util.Locale("es", "AR")).indexOf(
+                        "P\u00c1GINA " + pagina + " DE " + paginas) < 0) {
+                    throw new Exception("Falta numeracion completa en pagina " + pagina + " de " + paginas);
+                }
+            }
+        } finally { documento.close(); }
+    }
     private static String texto(byte[] pdf) throws Exception {
         PDDocument documento = PDDocument.load(new ByteArrayInputStream(pdf));
         try { return new PDFTextStripper().getText(documento).replaceAll("\\s+", " "); }
@@ -106,10 +229,10 @@ public class ComprasOrdenPdfTest {
             throw new Exception("Los campos sin datos deben quedar vacios en el PDF: caso " + caso);
         }
         if (caso == 4 || caso == 8) {
-            String[] etiquetas = { "Domicilio:", "Contacto:", "Correo:", "Condición:",
-                    "Forma de pago:", "Plazo de pago:", "Entrega:", "Observaciones:" };
+            String[] etiquetas = { "DOMICILIO", "CONTACTO", "CORREO",
+                    "FORMA DE PAGO", "PLAZO DE PAGO", "INSTRUCCIONES" };
             for (int i = 0; i < etiquetas.length; i++) {
-                if (contenido.indexOf(etiquetas[i]) < 0) {
+                if (contenido.toUpperCase(new java.util.Locale("es", "AR")).indexOf(etiquetas[i]) < 0) {
                     throw new Exception("Falta la etiqueta del campo vacio: " + etiquetas[i]);
                 }
             }
@@ -124,10 +247,9 @@ public class ComprasOrdenPdfTest {
             throw new Exception("Los precios, subtotales, impuestos y total cero deben conservarse.");
         }
         if (caso == 8) {
-            String[] etiquetas = { "Afiliado:", "Documento:", "Localidad:", "Provincia:", "Celular:",
-                    "Plan:", "Reclamo prestacional:", "Fecha orden médica:", "Fecha recepción:" };
+            String[] etiquetas = { "AFILIADO", "PLAN / COBERTURA", "TEL", "DOMICILIO", "PROVINCIA / EMAIL" };
             for (int i = 0; i < etiquetas.length; i++) {
-                if (contenido.indexOf(etiquetas[i]) < 0) {
+                if (contenido.toUpperCase(new java.util.Locale("es", "AR")).indexOf(etiquetas[i]) < 0) {
                     throw new Exception("Falta la etiqueta del dato medico vacio: " + etiquetas[i]);
                 }
             }
@@ -162,6 +284,7 @@ public class ComprasOrdenPdfTest {
         RequerimientoCompraOrden o = new RequerimientoCompraOrden();
         o.setIdOrdenCompra(100 + caso); o.setIdRequerimientoCompra(123); o.setFechaEmision(new Date(1792713600000L));
         o.setRequerimiento(r); o.setMoneda("ARS");
+        o.setFechaEstimadaEntrega(new Date(1793318400000L));
         o.setProveedor("PROVEEDOR DE PRUEBA"); o.setProveedorCuit("CUIT de prueba");
         o.setProveedorDomicilio("Domicilio de prueba"); o.setProveedorContacto("Contacto de prueba");
         o.setProveedorEmail("compras@example.invalid"); o.setProveedorTelefono("Telefono de prueba");
@@ -183,9 +306,11 @@ public class ComprasOrdenPdfTest {
         if (caso == 3) {
             String largo = "";
             for (int j = 0; j < 12; j++) largo += "Dato extenso de prueba ";
-            o.setProveedor(largo); o.setProveedorDomicilio(largo); o.setProveedorContacto(largo);
-            o.setProveedorEmail(largo); o.setCondicion(largo); o.setFormaPago(largo); o.setSolicitante(largo);
-            o.setEntrega(largo); o.setObservaciones(largo + largo);
+            o.setProveedor(largo + "FIN_PROVEEDOR"); o.setProveedorDomicilio(largo + "FIN_DOMICILIO");
+            o.setProveedorContacto(largo + "FIN_CONTACTO"); o.setProveedorEmail(largo + "FIN_EMAIL");
+            o.setCondicion(largo + "FIN_CONDICION"); o.setFormaPago(largo + "FIN_PAGO");
+            o.setSolicitante(largo + "FIN_SOLICITANTE");
+            o.setEntrega(largo + "FIN_ENTREGA"); o.setObservaciones(largo + largo + "FIN_OBSERVACIONES");
         }
         if (caso == 4) {
             o.setMoneda(null); o.setIva(null); o.setIibb(null);

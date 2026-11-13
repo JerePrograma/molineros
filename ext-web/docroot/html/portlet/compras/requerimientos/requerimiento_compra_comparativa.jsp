@@ -21,6 +21,9 @@ Map<String, String> comparativaEntrada =
 boolean comparativaEditable = Boolean.TRUE.equals(renderRequest.getAttribute("comparativaEditable"));
 boolean comparativaExiste = Boolean.TRUE.equals(renderRequest.getAttribute("comparativaExiste"));
 String comparativaError = (String) renderRequest.getAttribute("comparativaError");
+List<RequerimientoCompraComparativa> comparativaInconsistencias =
+        (List<RequerimientoCompraComparativa>) renderRequest.getAttribute("comparativaInconsistencias");
+boolean comparativaPuedeReparar = Boolean.TRUE.equals(renderRequest.getAttribute("comparativaPuedeReparar"));
 String comparativaArchivoActual = (String) renderRequest.getAttribute("comparativaArchivoActual");
 Map<String, List<String>> comparativaOpciones = null;
 boolean comparativaOpcionesDisponibles = true;
@@ -55,6 +58,50 @@ if (comparativaEditable) {
 <% } %>
 <% if (Boolean.TRUE.equals(renderRequest.getAttribute("comparativaGuardada"))) { %>
     <div class="portlet-msg-success">Comparativa guardada.</div>
+<% } %>
+<% if (renderRequest.getAttribute("comparativaReparada") != null) { %>
+    <div class="portlet-msg-success">Comparativa corregida. Renglones retirados: <%= HtmlUtil.escape(String.valueOf(renderRequest.getAttribute("comparativaReparada"))) %>.</div>
+<% } %>
+<% if (comparativaReq != null && comparativaInconsistencias != null && !comparativaInconsistencias.isEmpty()) { %>
+    <h3>Comparativa del requerimiento <%= comparativaReq.getIdRequerimientoCompra() %></h3>
+    <fieldset class="block-labels">
+        <legend>Prestaciones fuera del requerimiento</legend>
+        <p>Revise los renglones que se quitar&aacute;n de la comparativa. Los dem&aacute;s renglones y los archivos de presupuesto se conservan.</p>
+        <table class="lfr-table" width="100%">
+            <thead><tr><th>Proveedor</th><th>C&oacute;digo</th><th>Prestaci&oacute;n</th><th>Cantidad cotizada</th><th>Importe unitario neto</th><th>Subtotal</th><th>Situaci&oacute;n</th></tr></thead>
+            <tbody>
+            <% for (RequerimientoCompraComparativa inconsistencia : comparativaInconsistencias) {
+                for (RequerimientoCompraComparativaDetalle fuera : inconsistencia.getDetalles()) { %>
+                <tr>
+                    <td><%= HtmlUtil.escape(inconsistencia.getPrestador()) %></td>
+                    <td><%= HtmlUtil.escape(fuera.getCodigo()) %></td>
+                    <td><%= HtmlUtil.escape(fuera.getPrestacion()) %> (ID <%= fuera.getIdPrestacion() %>)</td>
+                    <td><%= valorComparativa(null, "", fuera.getCantidad()) %></td>
+                    <td><%= valorComparativa(null, "", fuera.getImporteUnitario()) %></td>
+                    <td><%= valorComparativa(null, "", fuera.getSubtotal()) %></td>
+                    <td><%= fuera.isBajaReal() ? "Baja registrada" : "Sin baja comprobada" %></td>
+                </tr>
+            <% } } %>
+            </tbody>
+        </table>
+        <% if (comparativaPuedeReparar) {
+            PortletURL repararComparativaURL = renderResponse.createActionURL();
+            repararComparativaURL.setWindowState(WindowState.MAXIMIZED);
+            repararComparativaURL.setParameter("struts_action", "/compras/comparativa");
+        %>
+        <form action="<%= repararComparativaURL.toString() %>" method="post" name="<portlet:namespace />repararComparativaForm"
+              onsubmit="if (!confirm('Se quitaran de la comparativa todos los renglones mostrados. Sus totales se recalcularan. Desea continuar?')) { return false; } document.getElementById('<portlet:namespace />repararComparativaBoton').disabled = true;">
+            <input type="hidden" name="<portlet:namespace />cmd" value="REPARAR_COMPARATIVA" />
+            <input type="hidden" name="<portlet:namespace />id_requerimiento_compra" value="<%= comparativaReq.getIdRequerimientoCompra() %>" />
+            <input type="hidden" name="<portlet:namespace />compras_save_token" value="<%= HtmlUtil.escape((String) renderRequest.getAttribute("COMPRAS_SAVE_TOKEN")) %>" />
+            <input type="hidden" name="<portlet:namespace />comparativa_firma_reparacion" value="<%= HtmlUtil.escape((String) renderRequest.getAttribute("comparativaFirmaReparacion")) %>" />
+            <input type="hidden" name="<portlet:namespace />comparativa_confirmar_reparacion" value="SI" />
+            <input type="submit" id="<portlet:namespace />repararComparativaBoton" value="Corregir comparativa" />
+        </form>
+        <% } else { %>
+        <div class="portlet-msg-info">La correcci&oacute;n requiere permiso de edici&oacute;n, estado A COTIZAR o COTIZADO, bajas comprobadas y ning&uacute;n RP u orden de compra iniciados. Cierre esta vista y vuelva a abrir Ver Comparativa; si no se habilita, solicite revisi&oacute;n.</div>
+        <% } %>
+    </fieldset>
 <% } %>
 <% if (comparativaReq != null && comparativas != null && (!comparativaEditable || comparativaOpcionesDisponibles)) { %>
     <% if (!comparativaEditable) { %>

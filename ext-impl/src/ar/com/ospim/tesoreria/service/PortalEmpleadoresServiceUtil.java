@@ -137,4 +137,10 @@ public class PortalEmpleadoresServiceUtil {
 	public static FichaBoletaPortal getBoletaCobranzaByCuitNroBoleta(String cuit,Integer nroBoleta,String nroMovimiento) throws SystemException {
 	    return   getInstance().getDatosCobranza(cuit, nroBoleta,nroMovimiento);
 	}
+	
+	public static List<FichaBoletaPortal> getEmpresasSinDDJJ() {
+		List<FichaBoletaPortal> reportes = getInstance()
+				.getEmpresasSinDDJJ();
+		return reportes;
+	} 
 }
