@@ -7,6 +7,7 @@ import ar.com.ospim.mail.MailUtils;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.sun.mail.smtp.SMTPSendFailedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import javax.mail.Address;
 import javax.mail.Message;
 import javax.mail.Multipart;
 import javax.mail.SendFailedException;
+import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -198,26 +200,13 @@ public class CotizacionPrestadorMailHelper {
         );
     }
 
-    private void enviarInterno(
-            String[] emailsDestino,
-            String[] emailsCopia,
-            String asunto,
-            String cuerpo,
-            byte[] pedidoPresupuestoPdf,
-            String nombrePedidoPresupuestoPdf,
-            List<AdjuntoOrdenMedica> ordenesMedicas)
+    /** Valida la configuracion antes de reservar; no crea Session ni Transport. */
+    public void validarConfiguracionEnvio() throws Exception {
+        prepararConfiguracionEnvio(ReportesServiceUtil.getConfiguracion());
+    }
+
+    private Properties prepararConfiguracionEnvio(ReportesAutomaticosConfiguracion configuracion)
             throws Exception {
-
-        validarParametros(
-                emailsDestino,
-                emailsCopia,
-                asunto,
-                cuerpo
-        );
-
-        ReportesAutomaticosConfiguracion configuracion =
-                ReportesServiceUtil.getConfiguracion();
-
         if (configuracion == null) {
             throw new Exception(
                     "No se encontró la configuración "
@@ -298,6 +287,35 @@ public class CotizacionPrestadorMailHelper {
                 remitente,
                 "remitente"
         );
+
+        return propiedades;
+    }
+
+    private void enviarInterno(
+            String[] emailsDestino,
+            String[] emailsCopia,
+            String asunto,
+            String cuerpo,
+            byte[] pedidoPresupuestoPdf,
+            String nombrePedidoPresupuestoPdf,
+            List<AdjuntoOrdenMedica> ordenesMedicas)
+            throws Exception {
+
+        validarParametros(
+                emailsDestino,
+                emailsCopia,
+                asunto,
+                cuerpo
+        );
+
+        ReportesAutomaticosConfiguracion configuracion =
+                ReportesServiceUtil.getConfiguracion();
+
+        Properties propiedades = prepararConfiguracionEnvio(configuracion);
+        String usuarioSmtp = normalizar(propiedades.getProperty("mail.smtp.user"));
+        String password = configuracion.getPass();
+        String remitente = normalizar(configuracion.getMailFrom());
+        if (remitente == null) remitente = usuarioSmtp;
 
         Session session =
                 Session.getInstance(
@@ -1054,6 +1072,37 @@ public class CotizacionPrestadorMailHelper {
         public String getName() {
             return nombre;
         }
+    }
+
+    /** Solo acredita rechazo cuando SMTP respondio negativamente antes de aceptar. */
+    public static boolean esRechazoSmtpConfirmado(Exception error) {
+        boolean autenticacionRechazada = error instanceof javax.mail.AuthenticationFailedException;
+        if (!autenticacionRechazada) {
+            if (!(error instanceof SMTPSendFailedException)) return false;
+            SMTPSendFailedException smtp = (SMTPSendFailedException) error;
+            int codigo = smtp.getReturnCode();
+            String comando = smtp.getCommand();
+            if (codigo < 400 || codigo >= 600 || comando == null) return false;
+            comando = comando.trim().toUpperCase(Locale.ENGLISH);
+            if (!comando.startsWith("MAIL FROM:") && !comando.startsWith("RCPT TO:")
+                    && !"DATA".equals(comando) && !".".equals(comando)) return false;
+        }
+        List<Throwable> causas = new ArrayList<Throwable>();
+        causas.add(error);
+        for (int i = 0; i < causas.size(); i++) {
+            if (i >= 32) return false;
+            Throwable causa = causas.get(i);
+            if (!(causa instanceof MessagingException)) return false;
+            if (causa instanceof SendFailedException) {
+                Address[] aceptados = ((SendFailedException) causa).getValidSentAddresses();
+                if (aceptados != null && aceptados.length > 0) return false;
+            }
+            Throwable siguiente = causa.getCause();
+            if (siguiente != null && !causas.contains(siguiente)) causas.add(siguiente);
+            Exception anidada = ((MessagingException) causa).getNextException();
+            if (anidada != null && !causas.contains(anidada)) causas.add(anidada);
+        }
+        return true;
     }
 
     public static final class EnvioParcialException

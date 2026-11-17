@@ -32,7 +32,7 @@
     <field name="unidad" class="java.lang.String"/>
     <field name="proveedores" class="java.util.Map"/>
     <group name="Cierre" keepTogether="true">
-        <groupExpression><![CDATA[Boolean.valueOf(!"detalle".equals($F{tipo}))]]></groupExpression>
+        <groupExpression><![CDATA["detalle".equals($F{tipo}) ? $V{REPORT_COUNT} : Integer.valueOf(-1)]]></groupExpression>
     </group>
     <pageHeader>
         <band height="24">

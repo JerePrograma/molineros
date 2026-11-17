@@ -291,6 +291,30 @@ public class BusquedaRequerimientoCompraServiceImpl {
                     + "ON rcp.id_requerimiento=pc.id_requerimiento AND rcp.id_prestador=pc.id_prestador WHERE pc.id_requerimiento=? "
                     + "AND pc.id_prestador=? AND pc.intento=rcp.intentos AND rcp.estado_envio IN (?,?) ORDER BY pc.intento DESC LIMIT 1";
 
+    private static final String SQL_GET_CONTEXTO_PEDIDO_AUTORIZACION =
+            "SELECT rcp.id_requerimiento,rcp.id_prestador,rcp.estado_envio,rcp.intentos,EXISTS (SELECT 1 FROM "
+                    + "compras.requerimiento_pedido_cotizacion pc WHERE pc.id_requerimiento=rcp.id_requerimiento "
+                    + "AND pc.id_prestador=rcp.id_prestador) AS tiene_pedido FROM compras.requerimiento_cotizacion_prestador rcp "
+                    + "WHERE rcp.id_requerimiento=? AND rcp.id_prestador=?";
+
+    /** Snapshot de las filas que alimentan los documentos, sin datos enviados al log. */
+    private static final String SQL_HUELLA_PREPARACION_AUTORIZACION =
+            "SELECT md5(COALESCE(string_agg(s.tipo || ':' || s.datos, chr(10) ORDER BY s.tipo,s.datos),'')) AS huella FROM ("
+                    + "SELECT 'requerimiento' AS tipo,row_to_json(r)::TEXT AS datos FROM compras.requerimiento r WHERE r.id_requerimiento=? "
+                    + "UNION ALL SELECT 'detalle',row_to_json(d)::TEXT FROM compras.requerimiento_detalle d WHERE d.id_requerimiento=? "
+                    + "UNION ALL SELECT 'vinculo_rp',row_to_json(rr)::TEXT FROM compras.requerimiento_reclamo_prestacional rr WHERE rr.id_requerimiento=? "
+                    + "UNION ALL SELECT 'rp',row_to_json(rp)::TEXT FROM autorizaciones.reclamos_prestacionales rp JOIN compras.requerimiento_reclamo_prestacional rr ON rr.id_reclamo_prestacional=rp.id WHERE rr.id_requerimiento=? "
+                    + "UNION ALL SELECT 'prestacion_rp',row_to_json(rpp)::TEXT FROM autorizaciones.reclamos_prestacionales_prestaciones rpp JOIN compras.requerimiento_reclamo_prestacional rr ON rr.id_reclamo_prestacional=rpp.id_reclamo_prestacional WHERE rr.id_requerimiento=? "
+                    + "UNION ALL SELECT 'estado_rp',row_to_json(rpe)::TEXT FROM autorizaciones.reclamos_prestacionales_estados rpe JOIN compras.requerimiento_reclamo_prestacional rr ON rr.id_reclamo_prestacional=rpe.id_reclamo_prestacional WHERE rr.id_requerimiento=? "
+                    + "UNION ALL SELECT 'notificacion_prestador',row_to_json(rcp)::TEXT FROM compras.requerimiento_cotizacion_prestador rcp WHERE rcp.id_requerimiento=? "
+                    + "UNION ALL SELECT 'pedido',row_to_json(pc)::TEXT FROM compras.requerimiento_pedido_cotizacion pc WHERE pc.id_requerimiento=? "
+                    + "UNION ALL SELECT 'documento',row_to_json(p)::TEXT FROM compras.requerimiento_presupuesto p WHERE p.id_requerimiento=? "
+                    + "UNION ALL SELECT 'comparativa',row_to_json(c)::TEXT FROM compras.requerimiento_comparativa c WHERE c.id_requerimiento=? "
+                    + "UNION ALL SELECT 'comparativa_detalle',row_to_json(cd)::TEXT FROM compras.requerimiento_comparativa_detalle cd JOIN compras.requerimiento_comparativa c ON c.id_comparativa=cd.id_comparativa WHERE c.id_requerimiento=?"
+                    + " UNION ALL SELECT 'cabecera_resuelta',row_to_json(cr)::TEXT FROM (" + SQL_CABECERA_BASE + " WHERE r.id_requerimiento=?) cr"
+                    + " UNION ALL SELECT 'detalle_resuelto',row_to_json(dr)::TEXT FROM (" + SQL_DETALLE_BASE + " AND d.id_requerimiento=?) dr"
+                    + ") s";
+
     private static final String SQL_GET_REQUERIMIENTO_PDF =
             "SELECT rb.id AS id_requerimiento,rb.alta_fecha,rb.alta_usr,rb.id_estado,rb.estado_descripcion,"
                     + "rb.id_sector,rb.sector_descripcion,rb.requiere_afiliado,rb.afiliado_id_ospim,rb.afiliado_int,"
@@ -1421,6 +1445,58 @@ public class BusquedaRequerimientoCompraServiceImpl {
         try {
             rs.close();
         } catch (Exception ignored) {
+        }
+    }
+
+    public String getHuellaPreparacionAutorizacion(int id) throws Exception {
+        Connection con = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            return getHuellaPreparacionAutorizacion(con, id);
+        } finally { ConnectionHelper.cerrar(con); }
+    }
+
+    public String getHuellaPreparacionAutorizacion(Connection con, int id) throws Exception {
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = con.prepareStatement(SQL_HUELLA_PREPARACION_AUTORIZACION);
+            for (int i = 1; i <= 13; i++) stmt.setInt(i, id);
+            rs = stmt.executeQuery();
+            if (!rs.next()) throw new Exception("No se pudo comprobar la preparacion documental del correo.");
+            String huella = rs.getString("huella");
+            if (huella == null || huella.length() != 32) {
+                throw new Exception("La comprobacion documental del correo no es valida.");
+            }
+            return huella;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt);
+        }
+    }
+
+    public Map<String, Object> getContextoPedidoAutorizacion(
+            int idRequerimientoCompra, int idPrestador) throws Exception {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectionHelper.getConnection();
+            stmt = con.prepareStatement(SQL_GET_CONTEXTO_PEDIDO_AUTORIZACION);
+            stmt.setInt(1, idRequerimientoCompra);
+            stmt.setInt(2, idPrestador);
+            rs = stmt.executeQuery();
+            if (!rs.next()) return null;
+            Map<String, Object> fila = new HashMap<String, Object>();
+            fila.put("id_requerimiento", getInteger(rs, "id_requerimiento"));
+            fila.put("id_prestador", getInteger(rs, "id_prestador"));
+            fila.put("estado_envio", rs.getString("estado_envio"));
+            fila.put("intentos", getInteger(rs, "intentos"));
+            fila.put("tiene_pedido", Boolean.valueOf(rs.getBoolean("tiene_pedido")));
+            return fila;
+        } finally {
+            closeQuietly(rs);
+            ConnectionHelper.cerrar(stmt, con);
         }
     }
 

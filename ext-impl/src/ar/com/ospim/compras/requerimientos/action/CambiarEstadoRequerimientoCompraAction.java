@@ -97,6 +97,9 @@ public class CambiarEstadoRequerimientoCompraAction
                         false
                 );
 
+        boolean reintentarAutorizacion = ParamUtil.getBoolean(
+                actionRequest, "reintentar_autorizacion", false);
+
         String strutsActionDestino =
                 STRUTS_ACTION_VER_REQUERIMIENTO;
 
@@ -124,7 +127,23 @@ public class CambiarEstadoRequerimientoCompraAction
                             actionRequest
                     );
 
-            if (reintentarNotificaciones) {
+            if (reintentarAutorizacion
+                    && (reintentarNotificaciones || estadoNuevo != 0)) {
+                throw new Exception("La solicitud contiene operaciones incompatibles.");
+            }
+            if (reintentarAutorizacion) {
+                validarRolCotizar(user);
+                RequerimientoCompraGuardadoToken.consumir(actionRequest,
+                        ParamUtil.getString(actionRequest, RequerimientoCompraGuardadoToken.PARAMETRO, ""));
+                if (!"SI".equals(ParamUtil.getString(actionRequest,
+                        "confirmar_reintento_autorizacion", ""))) {
+                    throw new Exception("Debe verificar el envio anterior antes de reintentar la notificacion.");
+                }
+                NotificarAutorizacionCompraHelper notificacion = new NotificarAutorizacionCompraHelper();
+                notificacion.reintentarNotificacion(idRequerimientoCompra, usuario,
+                        (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY));
+                operacionConfirmada = registrarResultadoAutorizacion(actionRequest, notificacion);
+            } else if (reintentarNotificaciones) {
                 validarRolCotizar(
                         user
                 );
@@ -227,7 +246,14 @@ public class CambiarEstadoRequerimientoCompraAction
                         user
                 );
 
-                new NotificarAutorizacionCompraHelper().enviarAAutorizar(
+                String tokenAutorizacion = ParamUtil.getString(actionRequest,
+                        RequerimientoCompraGuardadoToken.PARAMETRO, "");
+                // Los callers legacy sin token conservan la reserva persistida del correo.
+                if (tokenAutorizacion.trim().length() > 0) {
+                    RequerimientoCompraGuardadoToken.consumir(actionRequest, tokenAutorizacion);
+                }
+                NotificarAutorizacionCompraHelper notificacion = new NotificarAutorizacionCompraHelper();
+                notificacion.enviarAAutorizar(
                         idRequerimientoCompra,
                         usuario,
                         (ThemeDisplay) actionRequest.getAttribute(WebKeys.THEME_DISPLAY)
@@ -237,6 +263,7 @@ public class CambiarEstadoRequerimientoCompraAction
                         actionRequest,
                         "estado-requerimiento-compra-actualizado"
                 );
+                operacionConfirmada = registrarResultadoAutorizacion(actionRequest, notificacion);
 
             } else if (estadoNuevo
                     == ConfiguracionComprasHelper.getEstadoAutorizado()) {
@@ -309,7 +336,9 @@ public class CambiarEstadoRequerimientoCompraAction
                             + ", estadoNuevo="
                             + estadoNuevo
                             + ", reintentarNotificaciones="
-                            + reintentarNotificaciones,
+                            + reintentarNotificaciones
+                            + ", reintentarAutorizacion="
+                            + reintentarAutorizacion,
                     e
             );
 
@@ -358,6 +387,19 @@ public class CambiarEstadoRequerimientoCompraAction
                 WebKeysCompras
                         .FORWARD_COMPRAS_VER_REQUERIMIENTO
         );
+    }
+
+    private boolean registrarResultadoAutorizacion(ActionRequest request,
+            NotificarAutorizacionCompraHelper notificacion) {
+        String advertencia = notificacion.getAdvertenciaNotificacion();
+        if (advertencia != null && advertencia.length() > 0) {
+            request.setAttribute(WebKeysCompras.ERROR_PARA_ALERT, advertencia);
+            return false;
+        }
+        if (notificacion.isCorreoConfirmado()) {
+            SessionMessages.add(request, "correo-autorizacion-compra-confirmado");
+        }
+        return true;
     }
 
     private void registrarResultado(

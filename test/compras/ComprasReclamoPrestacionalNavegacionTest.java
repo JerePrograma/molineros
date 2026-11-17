@@ -1,20 +1,30 @@
+import ar.com.ospim.autorizaciones.action.EditarReclamosEntryAction;
 import ar.com.ospim.autorizaciones.beans.ReclamoPrestacional;
 import ar.com.ospim.autorizaciones.services.WebKeysAutorizaciones;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.ReclamoPrestacionalCompraContexto;
 import ar.com.ospim.compras.requerimientos.helper.ReclamoPrestacionalCompraPrecargaHelper;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.model.User;
+import com.liferay.portal.util.Portal;
+import com.liferay.portal.util.PortalUtil;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.portlet.ActionRequest;
+import javax.portlet.PortletRequest;
+import javax.portlet.RenderRequest;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 /* Navegacion segun Liquidaciones/ReintegroActionUtil.getReintegroEntry:
  * una apertura reemplaza el estado temporal, sin persistir el abandonado.
  * Adaptacion del harness aislado ComprasDocumentosPermisoAltaTest.
- * Solo metodos productivos del helper y una HttpSession simulada; sin DB ni red. */
+ * Metodos productivos del helper/Action y requests simulados; sin DB ni red. */
 public class ComprasReclamoPrestacionalNavegacionTest {
     private static final String USUARIO = "qa-reclamo";
     private static final String[] CLAVES_EDITOR = {
@@ -36,7 +46,7 @@ public class ComprasReclamoPrestacionalNavegacionTest {
     private static int fallidos;
 
     public static void main(String[] args) throws Exception {
-        for (int caso = 0; caso < 10; caso++) {
+        for (int caso = 0; caso < 25; caso++) {
             escenarios++;
             try {
                 ejecutar(caso);
@@ -51,6 +61,7 @@ public class ComprasReclamoPrestacionalNavegacionTest {
     }
 
     private static void ejecutar(int caso) throws Exception {
+        if (caso >= 10) { ejecutarSeleccion(caso - 10); return; }
         Sesion sesion = new Sesion();
         ReclamoPrestacional anterior = new ReclamoPrestacional();
         anterior.setId(caso == 0 ? 67428 : 0);
@@ -120,6 +131,103 @@ public class ComprasReclamoPrestacionalNavegacionTest {
         verificarLimpieza(sesion, null);
         ReclamoPrestacionalCompraPrecargaHelper.limpiarEstadoEditorReclamoPrestacional(sesion.proxy);
         verificarLimpieza(sesion, null);
+    }
+
+    /* Adapta ComprasPrimeraCargaVistaTest: Portal real con proxy reversible y
+     * metodo privado productivo por reflexion. No ejecuta la baja ni usa JDBC. */
+    private static void ejecutarSeleccion(int caso) throws Exception {
+        final Sesion sesion = new Sesion();
+        ReclamoPrestacional anterior = new ReclamoPrestacional();
+        anterior.setId(caso == 7 || caso == 8 ? 0 : 60001);
+        sesion.datos.put(WebKeysAutorizaciones.RECLAMO_PRESTACION_EN_EDICION, anterior);
+        sesion.datos.put(WebKeysAutorizaciones.LISTADO_PRESTACIONES_RECLAMOS_EN_SESION, new Object());
+        sesion.datos.put("otra.pantalla", "conservar");
+        final Map<String, String> parametros = new HashMap<String, String>();
+        final Map<String, Object> atributos = new HashMap<String, Object>();
+        parametros.put(Constants.CMD, Constants.DELETE);
+        parametros.put("id_reclamosel", "60002");
+        if (caso == 1 || caso == 12) { parametros.put(Constants.CMD, Constants.UPDATE); }
+        if (caso == 3) { parametros.put("id_reclamosel", "0"); }
+        if (caso == 4) { parametros.put("id_reclamosel", "-1"); }
+        if (caso == 5) { parametros.put("id_reclamosel", "no-es-un-id"); }
+        if (caso == 9) { parametros.put("origen", "compras"); }
+        if (caso == 10) { parametros.put(Constants.CMD, Constants.VIEW); }
+        if (caso == 11) { parametros.put(Constants.CMD, Constants.EDIT); }
+        if (caso == 13) { parametros.put("id_reclamosel", "60001"); }
+        if (caso == 6 || caso == 7 || caso == 8 || caso == 14) {
+            ReclamoPrestacionalCompraContexto contexto = contexto(100, "nonce-valido", System.currentTimeMillis());
+            contexto.setReclamoEnEdicion(anterior);
+            sesion.datos.put(WebKeysCompras.CONTEXTO_RECLAMO_PRESTACIONAL_COMPRA, contexto);
+            if (caso != 7) {
+                parametros.put(WebKeysCompras.PARAM_RECLAMO_PRESTACIONAL_NONCE,
+                        caso == 6 ? "nonce-invalido" : "nonce-valido");
+            }
+        }
+        final User usuario = (User) Proxy.newProxyInstance(User.class.getClassLoader(),
+                new Class[] {User.class}, new InvocationHandler() {
+                    public Object invoke(Object objeto, Method metodo, Object[] args) {
+                        if ("getScreenName".equals(metodo.getName())) { return USUARIO; }
+                        throw new UnsupportedOperationException("Usuario inesperado: " + metodo.getName());
+                    }
+                });
+        final HttpServletRequest http = (HttpServletRequest) Proxy.newProxyInstance(
+                HttpServletRequest.class.getClassLoader(), new Class[] {HttpServletRequest.class},
+                new InvocationHandler() {
+                    public Object invoke(Object objeto, Method metodo, Object[] args) {
+                        if ("getSession".equals(metodo.getName())) { return sesion.proxy; }
+                        throw new UnsupportedOperationException("HTTP inesperado: " + metodo.getName());
+                    }
+                });
+        PortletRequest request = (PortletRequest) Proxy.newProxyInstance(
+                PortletRequest.class.getClassLoader(),
+                new Class[] {caso == 2 || caso == 12 ? ActionRequest.class : RenderRequest.class},
+                new InvocationHandler() {
+                    public Object invoke(Object objeto, Method metodo, Object[] args) {
+                        String nombre = metodo.getName();
+                        if ("getParameter".equals(nombre)) { return parametros.get(args[0]); }
+                        if ("getAttribute".equals(nombre)) { return atributos.get(args[0]); }
+                        if ("setAttribute".equals(nombre)) { atributos.put((String) args[0], args[1]); return null; }
+                        throw new UnsupportedOperationException("Portlet inesperado: " + nombre);
+                    }
+                });
+        Map<String, Object> copia = new HashMap<String, Object>(sesion.datos);
+        Method resolver = EditarReclamosEntryAction.class.getDeclaredMethod("resolverContextoCompra",
+                new Class[] {HttpSession.class, PortletRequest.class, User.class});
+        resolver.setAccessible(true);
+        Portal portalAnterior = PortalUtil.getPortal();
+        Throwable rechazo = null;
+        Object resultado = null;
+        new PortalUtil().setPortal((Portal) Proxy.newProxyInstance(Portal.class.getClassLoader(),
+                new Class[] {Portal.class}, new InvocationHandler() {
+                    public Object invoke(Object objeto, Method metodo, Object[] args) {
+                        if ("getUser".equals(metodo.getName())) { return usuario; }
+                        if ("getHttpServletRequest".equals(metodo.getName())) { return http; }
+                        throw new UnsupportedOperationException("Portal inesperado: " + metodo.getName());
+                    }
+                }));
+        try {
+            try {
+                resultado = resolver.invoke(new EditarReclamosEntryAction(),
+                        new Object[] {sesion.proxy, request, usuario});
+            } catch (InvocationTargetException error) { rechazo = error.getCause(); }
+        } finally { new PortalUtil().setPortal(portalAnterior); }
+        comprobar(copia.equals(sesion.datos), "Seleccion conserva editor, listas y otras pantallas caso=" + caso);
+        comprobar(anterior.getId_reclamo() == (caso == 7 || caso == 8 ? 0 : 60001),
+                "Seleccion no cambia el ID del editor caso=" + caso);
+        boolean permitido = caso == 0 || caso == 10 || caso == 11 || caso == 13;
+        if (permitido) {
+            comprobar(rechazo == null, "Seleccion explicita permitida caso=" + caso + " error=" + rechazo);
+            comprobar(resultado == null, "Seleccion ordinaria no se convierte en precarga Compras");
+            comprobar(Boolean.FALSE.equals(atributos.get("rp.view.restringirRecuperableCompras")),
+                    "Seleccion ordinaria conserva vista sin contexto Compras");
+        } else {
+            comprobar(rechazo != null && rechazo.getClass() == Exception.class,
+                    "Rechazo funcional de ID/editor/contexto caso=" + caso + " error=" + rechazo);
+            if (caso == 1 || caso == 2 || caso == 3 || caso == 4 || caso == 12) {
+                comprobar(rechazo.getMessage().indexOf("El formulario pertenece a otro Reclamo Prestacional.") >= 0,
+                        "Mutacion/ID invalido conserva control de editor caso=" + caso);
+            }
+        }
     }
 
     private static ReclamoPrestacionalCompraContexto contexto(int id, String nonce, long fecha) {

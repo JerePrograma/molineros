@@ -23,6 +23,10 @@ boolean msgEstadoRequerimientoActualizado =
                 "estado-requerimiento-compra-actualizado"
         );
 
+boolean msgCorreoAutorizacionConfirmado =
+        com.liferay.portal.kernel.servlet.SessionMessages.contains(
+                renderRequest, "correo-autorizacion-compra-confirmado");
+
 boolean msgRequerimientoEnviadoACotizar =
         com.liferay.portal.kernel.servlet.SessionMessages.contains(
                 renderRequest,
@@ -593,6 +597,12 @@ if (WebKeysCompras.isEmpty(urlRespuestaOperacionCompra)) {
 %>">
     <div class="portlet-msg-success">
         El estado del requerimiento fue actualizado correctamente.
+    </div>
+</c:if>
+
+<c:if test="<%= msgCorreoAutorizacionConfirmado %>">
+    <div class="portlet-msg-success">
+        La notificaci&#243;n de autorizaci&#243;n fue aceptada por el servidor de correo.
     </div>
 </c:if>
 

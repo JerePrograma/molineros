@@ -116,6 +116,10 @@ public class ComprasComparativaSincronizacionTest {
         aprobado("CAMBIO_EN_ULTIMO_ITEM_MULTIPAGINA");
         escribir(args[0], "comparativa-multipagina.pdf", multipagina);
 
+        probarPaginacionA4(args[0], fixture(18, 1, false), 18, 1, "comparativa-18-items-1-proveedor");
+        comprobarPaginacionA4(multipagina, 60, 5);
+        aprobado("COMPARATIVA_60_ITEMS_5_PROVEEDORES_A4");
+        probarPaginacionA4(args[0], fixture(18, 6, false), 18, 6, "comparativa-18-items-6-proveedores");
         rechazarComparacion(new byte[] {1, 2, 3}, correcto, "PDF_ANTERIOR_INVALIDO");
         rechazarComparacion(correcto, new byte[] {1, 2, 3}, "PDF_NUEVO_INVALIDO");
         rechazarComparacion(null, correcto, "PDF_ANTERIOR_NULO");
@@ -125,6 +129,58 @@ public class ComprasComparativaSincronizacionTest {
         System.out.println("COMPARATIVA_SINCRONIZACION_OK pruebas=" + pruebas);
     }
 
+    private static void probarPaginacionA4(String ruta, Fixture fixture, int items,
+            int proveedores, String nombre) throws Exception {
+        byte[] pdf = generar(fixture);
+        escribir(ruta, nombre + ".pdf", pdf);
+        comprobarPaginacionA4(pdf, items, proveedores);
+        aprobado(nombre.toUpperCase().replace('-', '_'));
+    }
+
+    private static void comprobarPaginacionA4(byte[] pdf, int items, int proveedores) throws Exception {
+        PdfReader reader = new PdfReader(pdf);
+        PDDocument documento = PDDocument.load(new ByteArrayInputStream(pdf));
+        try {
+            StringBuffer completo = new StringBuffer();
+            for (int pagina = 1; pagina <= reader.getNumberOfPages(); pagina++) {
+                PDFTextStripper stripper = new PDFTextStripper();
+                stripper.setStartPage(pagina);
+                stripper.setEndPage(pagina);
+                String textoPagina = stripper.getText(documento).replaceAll("\\s+", " ");
+                if (pagina == 1) verificar(textoPagina.indexOf("COD0 - Item de prueba 0") >= 0,
+                        "Primera pagina sin el primer item: se perdieron renglones al paginar.");
+                com.lowagie.text.Rectangle hoja = reader.getPageSizeWithRotation(pagina);
+                verificar(Math.abs(hoja.getWidth() - 842) < 1 && Math.abs(hoja.getHeight() - 595) < 1,
+                        "Pagina " + pagina + " fuera de A4 horizontal: " + hoja);
+                verificar(textoPagina.indexOf("COD") >= 0 || textoPagina.indexOf("Subtotal (sin IVA)") >= 0,
+                        "Pagina " + pagina + " solo contiene encabezado y pie.");
+                if (textoPagina.indexOf("Subtotal (sin IVA)") >= 0) {
+                    verificar(textoPagina.indexOf("Total") >= 0 && textoPagina.indexOf("Forma de pago") >= 0
+                            && textoPagina.indexOf("Validez del presupuesto (hs)") >= 0
+                            && textoPagina.indexOf("Dictamen de") >= 0,
+                            "El cierre que cabe en una hoja se fragmento en pagina " + pagina);
+                }
+                completo.append(textoPagina).append(' ');
+            }
+            String texto = completo.toString();
+            int bloques = (proveedores + 3) / 4;
+            for (int item = 0; item < items; item++) {
+                String etiqueta = "COD" + item + " - Item de prueba " + item + " ";
+                int cantidad = 0;
+                for (int desde = texto.indexOf(etiqueta); desde >= 0;
+                        desde = texto.indexOf(etiqueta, desde + etiqueta.length())) cantidad++;
+                verificar(cantidad == bloques, "Item " + item + " impreso " + cantidad
+                        + " veces; se esperaba una por bloque de proveedores (" + bloques + ").");
+            }
+            for (int proveedor = 0; proveedor < proveedores; proveedor++) {
+                verificar(texto.indexOf("PROVEEDOR DE PRUEBA " + proveedor) >= 0,
+                        "Se perdio el proveedor " + proveedor + " al paginar.");
+            }
+        } finally {
+            documento.close();
+            reader.close();
+        }
+    }
     private static void comprobarImportes(byte[] correcto, byte[] erroneo) throws Exception {
         String actual = texto(correcto).replaceAll("\\s+", "");
         String anterior = texto(erroneo).replaceAll("\\s+", "");
@@ -200,7 +256,7 @@ public class ComprasComparativaSincronizacionTest {
                 d.setIdPrestacion(10609 + i);
                 d.setCodigo("COD" + i);
                 d.setPrestacion("Item de prueba " + i);
-                BigDecimal unitario = i == 0 ? BigDecimal.ZERO : new BigDecimal(importes[p]);
+                BigDecimal unitario = i == 0 ? BigDecimal.ZERO : new BigDecimal(importes[p % importes.length]);
                 d.setImporteUnitario(unitario);
                 d.setCantidad(Integer.valueOf(i == 0 ? 0 : cantidadErronea ? unitario.intValue() : 1));
                 c.getDetalles().add(d);
@@ -258,16 +314,21 @@ public class ComprasComparativaSincronizacionTest {
             verificar(Arrays.equals(nuevo, fake.contenido), "No persistio el PDF recien generado.");
             verificar(fake.documento.getFileEntryId() == ID_DOCUMENTO
                     && fake.documento.getFolderId() == ID_CARPETA
+                    && fake.documento.getGroupId() == ID_GRUPO
+                    && fake.documento.getCompanyId() == ID_COMPANIA
+                    && "uuid-comparativa-prueba".equals(fake.documento.getUuid())
                     && NOMBRE.equals(fake.documento.getName())
                     && TITULO.equals(fake.documento.getTitle()), "Cambio la identidad del documento.");
             verificar(fake.ultimoNombre.equals(NOMBRE) && fake.ultimoTitulo.equals(TITULO),
                     "La API no recibio el nombre y titulo originales.");
             aprobado("ACTUALIZA_MISMO_DOCUMENTO_SIN_ALTA");
 
+            double versionGuardada = fake.documento.getVersion();
             fake.permiteActualizar = false;
             fake.permisos.clear();
             verificar(!actualizar(mismaMetadata, fake), "Reimprimir valores iguales debe ser idempotente.");
-            verificar(fake.actualizaciones == 1, "Genero una version nueva sin cambios de contenido.");
+            verificar(fake.actualizaciones == 1 && fake.documento.getVersion() == versionGuardada,
+                    "Genero una version nueva sin cambios de contenido.");
             verificar(!fake.permisos.contains("UPDATE"), "Exigio UPDATE para imprimir contenido sin cambios.");
             aprobado("REIMPRESION_IGUAL_NO_ESCRIBE_NI_EXIGE_UPDATE");
 

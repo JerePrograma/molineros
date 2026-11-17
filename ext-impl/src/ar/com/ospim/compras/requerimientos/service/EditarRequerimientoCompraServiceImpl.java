@@ -891,6 +891,75 @@ public class EditarRequerimientoCompraServiceImpl {
         }finally{cerrar(rs);ConnectionHelper.cerrar(stmt);}
     }
 
+    /** Mismo orden de cabecera/detalles: bloquear antes de comprobar el snapshot del MIME. */
+    private void bloquearDocumentosAutorizacion(Connection con, int id) throws Exception {
+        String[] consultas = {
+            "SELECT rpp.id_reclamo_prestacional FROM autorizaciones.reclamos_prestacionales_prestaciones rpp JOIN compras.requerimiento_reclamo_prestacional rr ON rr.id_reclamo_prestacional=rpp.id_reclamo_prestacional WHERE rr.id_requerimiento=? ORDER BY rpp::TEXT FOR UPDATE OF rpp",
+            "SELECT rpe.id_reclamo_prestacional FROM autorizaciones.reclamos_prestacionales_estados rpe JOIN compras.requerimiento_reclamo_prestacional rr ON rr.id_reclamo_prestacional=rpe.id_reclamo_prestacional WHERE rr.id_requerimiento=? ORDER BY rpe::TEXT FOR UPDATE OF rpe",
+            "SELECT id_prestador FROM compras.requerimiento_cotizacion_prestador WHERE id_requerimiento=? ORDER BY id_prestador FOR UPDATE",
+            "SELECT intento FROM compras.requerimiento_pedido_cotizacion WHERE id_requerimiento=? ORDER BY id_prestador,intento FOR UPDATE",
+            "SELECT id_requerimiento_presupuesto FROM compras.requerimiento_presupuesto WHERE id_requerimiento=? ORDER BY id_requerimiento_presupuesto FOR UPDATE",
+            "SELECT id_comparativa FROM compras.requerimiento_comparativa WHERE id_requerimiento=? ORDER BY id_comparativa FOR UPDATE",
+            "SELECT cd.id_detalle FROM compras.requerimiento_comparativa_detalle cd JOIN compras.requerimiento_comparativa c ON c.id_comparativa=cd.id_comparativa WHERE c.id_requerimiento=? ORDER BY cd.id_detalle FOR UPDATE OF cd"
+        };
+        for (int i = 0; i < consultas.length; i++) {
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+            try {
+                stmt = con.prepareStatement(consultas[i]);
+                stmt.setInt(1, id);
+                rs = stmt.executeQuery();
+                while (rs.next()) rs.getInt(1);
+            } finally {
+                cerrar(rs);
+                ConnectionHelper.cerrar(stmt);
+            }
+        }
+    }
+
+    private int insertarReservaCorreoAutorizacion(Connection con, int id,
+            String token, String usuario) throws Exception {
+        PreparedStatement stmt = con.prepareStatement(
+                "INSERT INTO compras.requerimiento_autorizacion_notificacion "
+                        + "(id_requerimiento, token, estado_envio, alta_fecha, alta_usr) "
+                        + "VALUES (?, ?, 'ENVIANDO', clock_timestamp(), ?) "
+                        + "ON CONFLICT (id_requerimiento) DO NOTHING");
+        try {
+            stmt.setInt(1, id); stmt.setString(2, token); stmt.setString(3, usuario);
+            return stmt.executeUpdate();
+        } finally { ConnectionHelper.cerrar(stmt); }
+    }
+
+    private java.util.Map<String,Object> obtenerReservaCorreoAutorizacion(
+            Connection con, int id) throws Exception {
+        PreparedStatement stmt = con.prepareStatement(
+                "SELECT estado_envio, token, resultado_smtp FROM compras.requerimiento_autorizacion_notificacion "
+                        + "WHERE id_requerimiento = ? FOR UPDATE");
+        ResultSet rs = null;
+        try {
+            stmt.setInt(1, id); rs = stmt.executeQuery();
+            if (!rs.next()) return null;
+            java.util.Map<String,Object> fila = new java.util.HashMap<String,Object>();
+            fila.put("estado_envio", rs.getString("estado_envio"));
+            fila.put("token", rs.getString("token"));
+            fila.put("resultado_smtp", rs.getString("resultado_smtp"));
+            return fila;
+        } finally { cerrar(rs); ConnectionHelper.cerrar(stmt); }
+    }
+
+    private int finalizarCorreoAutorizacion(Connection con, int id,
+            String token, String estado, String resultado) throws Exception {
+        PreparedStatement stmt = con.prepareStatement(
+                "UPDATE compras.requerimiento_autorizacion_notificacion "
+                        + "SET estado_envio = ?, resultado_smtp = ?, fecha_resultado = clock_timestamp() "
+                        + "WHERE id_requerimiento = ? AND token = ? AND estado_envio = 'ENVIANDO'");
+        try {
+            stmt.setString(1, estado); stmt.setString(2, resultado);
+            stmt.setInt(3, id); stmt.setString(4, token);
+            return stmt.executeUpdate();
+        } finally { ConnectionHelper.cerrar(stmt); }
+    }
+
     public static final class Transaccion {
 
         private final EditarRequerimientoCompraServiceImpl service;
@@ -1151,6 +1220,32 @@ public class EditarRequerimientoCompraServiceImpl {
         public boolean actualizarEmpresaDocumento(int idRequerimiento, int idDocumento,
                 String nombre, String cuit, String sucursal, String usuario) throws Exception {
             return service.actualizarEmpresaDocumento(con, idRequerimiento, idDocumento, nombre, cuit, sucursal, usuario);
+        }
+
+        public String getHuellaPreparacionAutorizacion(int id) throws Exception {
+            service.bloquearDocumentosAutorizacion(con, id);
+            return BusquedaRequerimientoCompraServiceUtil.getHuellaPreparacionAutorizacion(con, id);
+        }
+
+        public int insertarReservaCorreoAutorizacion(int id, String token,
+                String usuario) throws Exception {
+            return service.insertarReservaCorreoAutorizacion(con, id, token, usuario);
+        }
+
+        public java.util.Map<String,Object> obtenerReservaCorreoAutorizacion(int id)
+                throws Exception {
+            return service.obtenerReservaCorreoAutorizacion(con, id);
+        }
+
+        public int finalizarCorreoAutorizacion(int id, String token, String estado)
+                throws Exception {
+            return finalizarCorreoAutorizacion(id, token, estado,
+                    "ENVIADO".equals(estado) ? "ACEPTADO" : "INCIERTO");
+        }
+
+        public int finalizarCorreoAutorizacion(int id, String token,
+                String estado, String resultado) throws Exception {
+            return service.finalizarCorreoAutorizacion(con, id, token, estado, resultado);
         }
 
         public void commit() throws Exception {

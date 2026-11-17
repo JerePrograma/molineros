@@ -5,6 +5,7 @@ import ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper;
 import ar.com.ospim.compras.WebKeysCompras;
 import ar.com.ospim.compras.requerimientos.beans.PrestadorCotizacion;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
+import ar.com.ospim.compras.requerimientos.helper.EditarRequerimientoCompraHelper;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper;
 import ar.com.ospim.compras.requerimientos.helper.RequerimientoCompraComparativaHelper;
@@ -67,6 +68,12 @@ public final class RequerimientoCompraRenderActionUtil {
     public static final String ATTR_PRESUPUESTO_DOWNLOAD_URL =
             "compras.requerimiento.presupuestoDownloadURL";
 
+    public static final String ATTR_DETALLE_ADJUDICADO =
+            "compras.requerimiento.detalleAdjudicado";
+
+    public static final String ATTR_ERROR_DETALLE_ADJUDICADO =
+            "compras.requerimiento.errorDetalleAdjudicado";
+
     public static final String ATTR_ORDENES_MEDICAS =
             "compras.requerimiento.ordenesMedicas";
 
@@ -82,6 +89,21 @@ public final class RequerimientoCompraRenderActionUtil {
 
         if (renderRequest == null) {
             return;
+        }
+
+        renderRequest.removeAttribute(ATTR_DETALLE_ADJUDICADO);
+        renderRequest.removeAttribute(ATTR_ERROR_DETALLE_ADJUDICADO);
+        try {
+            Map<Integer, ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle> detalleAdjudicado =
+                    new EditarRequerimientoCompraHelper().obtenerDetalleAdjudicadoParaVista(requerimiento);
+            if (detalleAdjudicado != null) {
+                renderRequest.setAttribute(ATTR_DETALLE_ADJUDICADO, detalleAdjudicado);
+            }
+        } catch (Exception e) {
+            LogFactoryUtil.getLog(RequerimientoCompraRenderActionUtil.class).error(
+                    "No se pudo consultar el detalle adjudicado del requerimiento.", e);
+            renderRequest.setAttribute(ATTR_ERROR_DETALLE_ADJUDICADO,
+                    "No se pudo consultar el detalle adjudicado. Se muestran los valores originales del requerimiento.");
         }
 
         boolean puedeCrearOrdenCompra = false;

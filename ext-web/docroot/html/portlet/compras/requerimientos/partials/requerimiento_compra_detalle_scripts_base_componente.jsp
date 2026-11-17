@@ -22,11 +22,30 @@ Map<Integer, Map<Integer, String>> preciosComparativaDetalle =
                 "compras.requerimiento.preciosComparativa");
 String errorPreciosComparativaDetalle = (String) request.getAttribute(
         "compras.requerimiento.errorPreciosComparativa");
+Map<Integer, RequerimientoCompraDetalle> detalleAdjudicadoVista =
+        (Map<Integer, RequerimientoCompraDetalle>) request.getAttribute(
+                RequerimientoCompraRenderActionUtil.ATTR_DETALLE_ADJUDICADO);
+String errorDetalleAdjudicadoVista = (String) request.getAttribute(
+        RequerimientoCompraRenderActionUtil.ATTR_ERROR_DETALLE_ADJUDICADO);
 %>
 <% if (puedeCotizarDetalle && errorPreciosComparativaDetalle != null) { %>
     <div class="portlet-msg-error"><%= HtmlUtil.escape(errorPreciosComparativaDetalle) %></div>
 <% } %>
+<% if (errorDetalleAdjudicadoVista != null) { %>
+    <div class="portlet-msg-error"><%= HtmlUtil.escape(errorDetalleAdjudicadoVista) %></div>
+<% } %>
 <script type="text/javascript">
+    // Solo celdas de consulta; detallesCompra conserva los valores para guardar.
+    var <portlet:namespace />detalleAdjudicadoVista = {};
+    <% if (!puedeABMDetalle && !puedeCotizarDetalle && detalleAdjudicadoVista != null) {
+        for (Map.Entry<Integer, RequerimientoCompraDetalle> adjudicadoVista : detalleAdjudicadoVista.entrySet()) { %>
+        <portlet:namespace />detalleAdjudicadoVista['<%= adjudicadoVista.getKey() %>'] = {
+            cantidad: '<%= jsDetalleCompra(adjudicadoVista.getValue().getCantidadString()) %>',
+            precioUnitario: '<%= jsDetalleCompra(adjudicadoVista.getValue().getPrecioUnitarioEstimadoString()) %>',
+            precioTotal: '<%= jsDetalleCompra(adjudicadoVista.getValue().getPrecioTotalEstimadoString()) %>'
+        };
+    <% }
+    } %>
     var <portlet:namespace />preciosComparativaDetalle = {};
     <% if (puedeCotizarDetalle && preciosComparativaDetalle != null) {
         for (Map.Entry<Integer, Map<Integer, String>> preciosPrestador
@@ -635,6 +654,7 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
 
         for (var i = 0; i < <portlet:namespace />detallesCompra.length; i++) {
             var detalle = <portlet:namespace />detallesCompra[i];
+            var detalleVisible = <portlet:namespace />detalleAdjudicadoVista[detalle.id] || detalle;
 
             var rowClass = (i % 2 == 0)
                     ? 'portlet-section-body results-row'
@@ -653,7 +673,7 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                     <portlet:namespace />detalleEscapeHtml(
                             <portlet:namespace />esDetalleMedicamentosFarmaciaCompra(detalle)
                                     ? detalle.droga : '') + '</td>';
-            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.cantidad) + '</td>';
+            html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalleVisible.cantidad) + '</td>';
             html += '<td class="compras-detalle-columna-observacion">' + <portlet:namespace />detalleEscapeHtml(detalle.observaciones) + '</td>';
 
             <% if (puedeVerCotizacionDetalle) { %>
@@ -662,8 +682,8 @@ String errorPreciosComparativaDetalle = (String) request.getAttribute(
                     html += '<td><span id="<portlet:namespace />detalle_total_estimado_' + i + '">' +
                             <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</span></td>';
                 <% } else { %>
-                    html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioUnitario) + '</td>';
-                    html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalle.precioTotal) + '</td>';
+                    html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalleVisible.precioUnitario) + '</td>';
+                    html += '<td>' + <portlet:namespace />detalleEscapeHtml(detalleVisible.precioTotal) + '</td>';
                 <% } %>
             <% } %>
 

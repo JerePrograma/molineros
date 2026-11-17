@@ -24,13 +24,19 @@ $sources = @(
     'ext-impl\src\ar\com\ospim\compras\requerimientos\helper\NotificarAutorizacionCompraHelper.java',
     'ext-impl\src\ar\com\ospim\compras\requerimientos\action\CambiarEstadoRequerimientoCompraAction.java',
     'test\compras\ComprasAutorizacionEmailTest.java',
-    'test\compras\ComprasAutorizadorPermisosTest.java'
+    'test\compras\ComprasAutorizacionReservaJdbcTest.java',
+    'test\compras\ComprasAutorizacionRecuperacionActionTest.java',
+    'test\compras\ComprasAutorizadorPermisosTest.java',
+    'test\compras\ComprasAutorizacionDocumentosTest.java'
 ) | ForEach-Object { Join-Path $repoPath $_ }
 $initialLog = 'Sin log de Tomcat disponible; pruebas offline sin iniciar el servidor.'
 $logPath = 'C:\apache-tomcat-8.5.23\logs'
 if (Test-Path -LiteralPath $logPath) {
     $recentLog = Get-ChildItem -LiteralPath $logPath -File -Filter '*.log' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-    if ($null -ne $recentLog) { $initialLog = 'Log existente no utilizado por el fixture offline: ' + $recentLog.FullName }
+    if ($null -ne $recentLog) {
+        $initialLog = 'Log existente no utilizado por el fixture offline: ' + $recentLog.FullName
+        [IO.File]::WriteAllLines((Join-Path $artifactPath 'backend-inicial.log'), @(Get-Content -LiteralPath $recentLog.FullName -Encoding Latin1 -Tail 25), $latinEncoding)
+    }
 }
 [IO.File]::WriteAllLines((Join-Path $artifactPath 'context.txt'), @(
     ('Inicio UTC: ' + [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss')),
@@ -38,7 +44,7 @@ if (Test-Path -LiteralPath $logPath) {
     ('HEAD inicial: ' + $initialHead),
     'Estado inicial: la transicion se confirma antes del correo; se revisan separadores finales, cuerpo sin usuario y todos los presupuestos cargados.',
     ('Log inicial: ' + $initialLog),
-    'Pruebas: MIME real con pedido, comparativa, ficha RP, tres ordenes medicas y dos presupuestos originales sin OC; separadores finales y configuracion estricta/QA; recuperacion productiva de presupuestos con identidad, sitio, VIEW y version DL; cuerpo sin usuario; incidencias en log posterior commit como Liquidaciones; limites y fallos DL/persistencia/SMTP y doble peticion.',
+    'Pruebas: MIME y validadores reales; originales obligatorios, copia actual reconstruible, RP/adjudicado coherentes, snapshot de reserva, recuperacion sin transicion, errores especificos y resultados SMTP tipados. Comparativa/ficha RP segun hooks focalizados; las fronteras siguen simuladas.',
     'Fronteras de datos, DL, persistencia y SMTP simuladas; sin DB, red, correo real, Tomcat ni UI.'
 ), $latinEncoding)
 $sourcepath = @('ext-impl\src', 'ext-service\src', 'ext-web\docroot\WEB-INF\src') | ForEach-Object { Join-Path $repoPath $_ }
@@ -64,3 +70,31 @@ $ErrorActionPreference = 'Stop'
 $permissionsOutput | Write-Output
 Write-Output ('permisos_java_exit=' + $permissionsExit)
 if ($permissionsExit -ne 0) { throw ('ComprasAutorizadorPermisosTest fallo: ' + $permissionsExit) }
+
+$ErrorActionPreference = 'Continue'
+$reservaOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath 'ComprasAutorizacionReservaJdbcTest' 2>&1 | ForEach-Object { $_.ToString() })
+$reservaExit = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
+[IO.File]::WriteAllLines((Join-Path $artifactPath 'ComprasAutorizacionReservaJdbcTest.log'), ($reservaOutput + ('java_exit=' + $reservaExit)), $latinEncoding)
+$reservaOutput | Write-Output
+Write-Output ('reserva_java_exit=' + $reservaExit)
+if ($reservaExit -ne 0) { throw ('ComprasAutorizacionReservaJdbcTest fallo: ' + $reservaExit) }
+
+$ErrorActionPreference = 'Continue'
+$actionOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath 'ComprasAutorizacionRecuperacionActionTest' 2>&1 | ForEach-Object { $_.ToString() })
+$actionExit = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
+[IO.File]::WriteAllLines((Join-Path $artifactPath 'ComprasAutorizacionRecuperacionActionTest.log'), ($actionOutput + ('java_exit=' + $actionExit)), $latinEncoding)
+$actionOutput | Write-Output
+Write-Output ('recuperacion_action_exit=' + $actionExit)
+if ($actionExit -ne 0) { throw ('ComprasAutorizacionRecuperacionActionTest fallo: ' + $actionExit) }
+
+
+$ErrorActionPreference = 'Continue'
+$documentosOutput = @(& 'C:\Program Files\Java\jdk1.8.0_251\bin\java.exe' '-Djava.awt.headless=true' '-cp' $classpath 'ComprasAutorizacionDocumentosTest' $artifactPath 2>&1 | ForEach-Object { $_.ToString() })
+$documentosExit = $LASTEXITCODE
+$ErrorActionPreference = 'Stop'
+[IO.File]::WriteAllLines((Join-Path $artifactPath 'ComprasAutorizacionDocumentosTest.log'), ($documentosOutput + ('java_exit=' + $documentosExit)), $latinEncoding)
+$documentosOutput | Write-Output
+Write-Output ('documentos_java_exit=' + $documentosExit)
+if ($documentosExit -ne 0) { throw ('ComprasAutorizacionDocumentosTest fallo: ' + $documentosExit) }

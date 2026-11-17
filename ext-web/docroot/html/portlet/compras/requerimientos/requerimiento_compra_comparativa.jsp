@@ -266,7 +266,11 @@ if (comparativaEditable) {
                 <% } %>
                 </tbody>
             </table>
-            <% if (!comparativaEditable) { %>
+            <% if (comparativaEditable) { %>
+                <p style="text-align:right;color:red;">Total: <span
+                        id="<portlet:namespace />totalPresupuesto<%= sufijoComparativa %>"
+                        class="comparativa-total-presupuesto" data-sufijo="<%= sufijoComparativa %>">0,00</span></p>
+            <% } else { %>
                 <p><strong>Neto:</strong> <%= valorComparativa(null, "", comparativa.getNeto()) %>
                    &nbsp; <strong><%= comparativa.getIncompleto() ? "Total parcial" : "Total" %>:</strong>
                    <%= valorComparativa(null, "", comparativa.getTotal()) %></p>
@@ -315,9 +319,35 @@ function <portlet:namespace />actualizarFechaComparativa() {
     });
     return valido;
 }
+function <portlet:namespace />actualizarTotalPresupuesto() {
+    var contenido = jQuery('#<portlet:namespace />comparativaPrestadorContenido');
+    contenido.find('.comparativa-total-presupuesto').each(function() {
+        var sufijo = jQuery(this).attr('data-sufijo');
+        var total = 0;
+        contenido.find('input[name^="<portlet:namespace />cantidad' + sufijo + '_"]').each(function() {
+            var clave = this.name.substring('<portlet:namespace />cantidad'.length);
+            var cantidad = Number(jQuery.trim(jQuery(this).val()));
+            var importe = Number(jQuery.trim(contenido.find(
+                    'input[name="<portlet:namespace />importe' + clave + '"]').val()).replace(',', '.'));
+            total += cantidad * Math.round(importe * 100);
+        });
+        var iva = Number(jQuery.trim(contenido.find(
+                '#<portlet:namespace />iva' + sufijo).val()).replace(',', '.'));
+        var iibb = Number(jQuery.trim(contenido.find(
+                '#<portlet:namespace />iibb' + sufijo).val()).replace(',', '.'));
+        total += Math.round(iva * 100) + Math.round(iibb * 100);
+        jQuery(this).text(isFinite(total)
+                ? (total / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+                : '--');
+    });
+}
+
 jQuery(function() {
     jQuery('#<portlet:namespace />comparativaPrestadorContenido .comparativa-fecha select')
             .change(<portlet:namespace />actualizarFechaComparativa);
+    jQuery('#<portlet:namespace />comparativaPrestadorContenido input[type="text"]')
+            .bind('input keyup change', <portlet:namespace />actualizarTotalPresupuesto);
+    <portlet:namespace />actualizarTotalPresupuesto();
 });
 </script>
 <% } %>

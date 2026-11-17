@@ -1227,7 +1227,9 @@ import ar.com.ospim.util.StringUtils;
 
         String cmd = ParamUtil.getString(request, Constants.CMD, "");
         return validarContextoEditorCompras(request, request instanceof RenderRequest
-                && (Constants.VIEW.equals(cmd) || Constants.EDIT.equals(cmd)));
+                && (Constants.VIEW.equals(cmd) || Constants.EDIT.equals(cmd)
+                        || (Constants.DELETE.equals(cmd)
+                                && ParamUtil.getInteger(request, "id_reclamosel", 0) > 0)));
 	}
 
 	private RequerimientoCompra validarContextoCompraParaGuardar(

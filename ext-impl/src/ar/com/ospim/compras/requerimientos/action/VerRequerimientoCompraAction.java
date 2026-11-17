@@ -168,8 +168,15 @@ public class VerRequerimientoCompraAction extends PortletAction {
                 );
             }
 
-            if (requerimiento.puedeEditarObservacionInterna()
-                    && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras())) {
+            boolean puedePrepararNotificacionAutorizacion = requerimiento.isActivo()
+                    && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolCotizarCompras())
+                    && (WebKeysCompras.puedeEnviarAAutorizar(requerimiento.getEstado())
+                            || WebKeysCompras.esParaAutorizar(requerimiento.getEstado())
+                            || (requerimiento.esSectorSinCotizacionPrestador()
+                                    && WebKeysCompras.esPendiente(requerimiento.getEstado())));
+            if ((requerimiento.puedeEditarObservacionInterna()
+                    && PermissionUtil.userContainsRole(user, ConfiguracionComprasHelper.getRolAutorizarCompras()))
+                    || puedePrepararNotificacionAutorizacion) {
                 RequerimientoCompraGuardadoToken.publicar(renderRequest);
             }
 

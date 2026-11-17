@@ -1,0 +1,1 @@
+protocol=smtp; type=transport; class=ComprasAutorizacionSmtpTransporteTest$TransporteCaptura; vendor=QA; version=1.0;

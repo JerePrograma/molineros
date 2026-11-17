@@ -8,6 +8,7 @@ import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPedidoCotiza
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 
 import com.liferay.documentlibrary.service.DLLocalServiceUtil;
+import com.lowagie.text.pdf.PdfReader;
 import com.liferay.portlet.documentlibrary.NoSuchFileEntryException;
 import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portal.kernel.log.Log;
@@ -36,6 +37,13 @@ import com.liferay.portlet.documentlibrary.service.DLFileEntryLocalServiceUtil;
 import com.liferay.portlet.documentlibrary.service.DLFolderLocalServiceUtil;
 
 import javax.portlet.ActionRequest;
+
+import java.awt.image.BufferedImage;
+import java.util.Iterator;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.event.IIOReadWarningListener;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
@@ -530,6 +538,99 @@ public class DocumentoLibraryComprasHelper
         );
 
         return contentTypeEsperado;
+    }
+
+    /** Validacion estructural del PDF adjuntado al correo, sin alterar el original. */
+    public static void validarPdfParaCorreoAutorizacion(
+            byte[] contenido, String nombre) throws Exception {
+        if (contenido == null || contenido.length < 5) {
+            throw new Exception("El PDF " + nombre + " esta vacio o incompleto.");
+        }
+        int inicio = Math.max(0, contenido.length - 1024);
+        String cierre = new String(contenido, inicio, contenido.length - inicio, "ISO-8859-1");
+        if (cierre.lastIndexOf("%%EOF") < 0) {
+            throw new Exception("El PDF " + nombre + " esta incompleto: falta su cierre.");
+        }
+        PdfReader lector = null;
+        try {
+            lector = new PdfReader(contenido);
+            if (lector.isEncrypted()) {
+                throw new Exception("El PDF " + nombre + " esta protegido y no puede verificarse.");
+            }
+            if (lector.isRebuilt()) {
+                throw new Exception("El PDF " + nombre + " requiere reparar su estructura.");
+            }
+            if (lector.getNumberOfPages() <= 0) {
+                throw new Exception("El PDF " + nombre + " no contiene paginas.");
+            }
+            for (int pagina = 1; pagina <= lector.getNumberOfPages(); pagina++) {
+                if (lector.getPageN(pagina) == null) {
+                    throw new Exception("El PDF " + nombre + " contiene una pagina invalida.");
+                }
+                // Leer tambien los streams evita aceptar un arbol de paginas sin contenido recuperable.
+                lector.getPageContent(pagina);
+            }
+        } catch (java.io.IOException e) {
+            throw new Exception("El PDF " + nombre + " no tiene una estructura valida o esta protegido.", e);
+        } finally {
+            if (lector != null) lector.close();
+        }
+    }
+    /** Decodifica imagenes del correo sin modificar originales ni las validaciones de carga. */
+    public static void validarImagenParaCorreoAutorizacion(
+            byte[] contenido, String nombre, String tipo) throws Exception {
+        if (!CONTENT_TYPE_PNG.equals(tipo) && !CONTENT_TYPE_JPEG.equals(tipo)) {
+            throw new Exception("La imagen " + nombre + " no es PNG ni JPEG.");
+        }
+        if (contenido == null || contenido.length == 0) {
+            throw new Exception("La imagen " + nombre + " esta vacia o incompleta.");
+        }
+        validarFirmaImagen(contenido, tipo);
+        byte[] cierre = CONTENT_TYPE_PNG.equals(tipo)
+                ? new byte[] {0, 0, 0, 0, 'I', 'E', 'N', 'D', (byte) 0xAE, 0x42, 0x60, (byte) 0x82}
+                : new byte[] {(byte) 0xFF, (byte) 0xD9};
+        if (contenido.length < cierre.length) {
+            throw new Exception("La imagen " + nombre + " esta incompleta: falta su cierre.");
+        }
+        for (int i = 0; i < cierre.length; i++) {
+            if (contenido[contenido.length - cierre.length + i] != cierre[i]) {
+                throw new Exception("La imagen " + nombre + " esta incompleta: falta su cierre.");
+            }
+        }
+        MemoryCacheImageInputStream entrada = new MemoryCacheImageInputStream(new ByteArrayInputStream(contenido));
+        ImageReader lector = null;
+        BufferedImage imagen = null;
+        try {
+            Iterator<ImageReader> lectores = ImageIO.getImageReaders(entrada);
+            if (!lectores.hasNext()) throw new Exception("La imagen " + nombre + " no tiene un formato decodificable.");
+            lector = lectores.next();
+            final boolean[] advertencia = new boolean[] {false};
+            lector.addIIOReadWarningListener(new IIOReadWarningListener() {
+                public void warningOccurred(ImageReader origen, String mensaje) { advertencia[0] = true; }
+            });
+            lector.setInput(entrada, false, false);
+            int ancho = lector.getWidth(0);
+            int alto = lector.getHeight(0);
+            if (ancho <= 0 || alto <= 0) throw new Exception("La imagen " + nombre + " no tiene dimensiones validas.");
+            long pixeles = (long) ancho * (long) alto;
+            Runtime memoria = Runtime.getRuntime();
+            long disponible = memoria.freeMemory() + memoria.maxMemory() - memoria.totalMemory();
+            // Hasta ocho bytes por pixel PNG de 16 bits, con reserva equivalente para el decoder.
+            if (pixeles > disponible / 16L) {
+                throw new Exception("No hay memoria suficiente para validar la imagen " + nombre + " con sus dimensiones actuales.");
+            }
+            imagen = lector.read(0);
+            if (imagen == null || imagen.getWidth() != ancho || imagen.getHeight() != alto || advertencia[0]) {
+                throw new Exception("La imagen " + nombre + " contiene datos incompletos o inconsistentes.");
+            }
+        } catch (java.io.IOException e) {
+            throw new Exception("La imagen " + nombre + " no puede decodificarse completamente.", e);
+        } finally {
+            if (imagen != null) imagen.flush();
+            if (lector != null) lector.dispose();
+            try { entrada.close(); }
+            catch (java.io.IOException e) { _log.warn("No se pudo cerrar el lector de imagen del correo.", e); }
+        }
     }
 
     public static DocumentoLibraryComprasHelper crear(

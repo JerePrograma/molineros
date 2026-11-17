@@ -198,6 +198,18 @@ boolean botoneraPuedeAutorizar =
         && botoneraTieneRolAutorizar
         && botoneraContextoAutorizacionValido;
 
+Object botoneraTokenAutorizacionAttr = renderRequest.getAttribute("COMPRAS_SAVE_TOKEN");
+String botoneraTokenAutorizacion = botoneraTokenAutorizacionAttr instanceof String
+        ? (String) botoneraTokenAutorizacionAttr : "";
+boolean botoneraPuedeReintentarAutorizacion =
+        botoneraRequerimientoPersistido
+        && req.isActivo()
+        && !req.esSectorSinCotizacionPrestador()
+        && WebKeysCompras.esParaAutorizar(botoneraEstadoActual)
+        && botoneraTieneRolCotizar
+        && botoneraContextoAutorizacionValido
+        && botoneraTokenAutorizacion.length() > 0;
+
 boolean botoneraPuedeReintentarCotizacion =
         botoneraRequerimientoPersistido
         && botoneraTieneRolCotizar
@@ -282,6 +294,8 @@ String botoneraAutorizacionFormId =
         namespaceCompra + "autorizacionRequerimientoCompraForm";
 String botoneraReintentarCotizacionFormId =
         namespaceCompra + "reintentarCotizacionRequerimientoCompraForm";
+String botoneraReintentarAutorizacionFormId =
+        namespaceCompra + "reintentarAutorizacionRequerimientoCompraForm";
 String botoneraReclamoPrestacionalFormId =
         namespaceCompra + "reclamoPrestacionalCompraForm";
 %>
@@ -305,6 +319,10 @@ String botoneraReclamoPrestacionalFormId =
           method="post"
           id="<%= botoneraAutorizacionFormId %>"
           style="display:none;">
+        <% if (botoneraPuedeEnviarAAutorizar && botoneraTokenAutorizacion.length() > 0) { %>
+        <input type="hidden" name="<portlet:namespace />compras_save_token"
+               value="<%= HtmlUtil.escape(botoneraTokenAutorizacion) %>" />
+        <% } %>
         <input type="hidden"
                name="<portlet:namespace />id_requerimiento_compra"
                value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
@@ -313,6 +331,18 @@ String botoneraReclamoPrestacionalFormId =
                value="<%= botoneraPuedeAutorizar
                        ? ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoAutorizado()
                        : ar.com.ospim.compras.requerimientos.helper.ConfiguracionComprasHelper.getEstadoParaAutorizar() %>" />
+    </form>
+<% } %>
+
+<% if (botoneraPuedeReintentarAutorizacion) { %>
+    <form action="<%= botoneraCambiarEstadoURL.toString() %>" method="post"
+          id="<%= botoneraReintentarAutorizacionFormId %>" style="display:none;">
+        <input type="hidden" name="<portlet:namespace />id_requerimiento_compra"
+               value="<%= String.valueOf(botoneraIdRequerimientoActual) %>" />
+        <input type="hidden" name="<portlet:namespace />reintentar_autorizacion" value="true" />
+        <input type="hidden" name="<portlet:namespace />confirmar_reintento_autorizacion" value="SI" />
+        <input type="hidden" name="<portlet:namespace />compras_save_token"
+               value="<%= HtmlUtil.escape(botoneraTokenAutorizacion) %>" />
     </form>
 <% } %>
 
@@ -364,6 +394,18 @@ String botoneraReclamoPrestacionalFormId =
                                        ? "Confirma autorizar el requerimiento?"
                                        : "Confirma enviar el requerimiento a autorizar?" %>',
                                '<%= botoneraPuedeAutorizar ? "Autorizando..." : "Enviando..." %>'
+                       );" />
+            <% } %>
+
+            <% if (botoneraPuedeReintentarAutorizacion) { %>
+                <input type="button"
+                       id="<portlet:namespace />btnReintentarAutorizacionRequerimientoCompra"
+                       value="Reintentar aviso de autorizaci&#243;n"
+                       onClick="return <%= namespaceCompra %>cambiarEstadoRequerimientoCompra(
+                               '<%= botoneraReintentarAutorizacionFormId %>',
+                               '<portlet:namespace />btnReintentarAutorizacionRequerimientoCompra',
+                               'Verifico que no hubo otro envio de este aviso y confirmo reintentar la notificacion de autorizacion. El estado no cambiara.',
+                               'Enviando...'
                        );" />
             <% } %>
 

@@ -58,6 +58,13 @@ import ar.com.ospim.util.ConnectionHelper;
 import ar.com.ospim.util.DateUtils;
 import ar.com.ospim.util.PermissionUtil;
 
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.BaseFont;
+import com.lowagie.text.pdf.PdfArray;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfName;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.PdfStamper;
 import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
 import com.liferay.portal.security.auth.PrincipalException;
@@ -1228,6 +1235,59 @@ public class PdfServlet extends HttpServlet {
         }
     }
 
+    /** Identifica una reconstruccion para autorizacion, solo en los bytes de la copia actual. */
+    public byte[] identificarCopiaActualAutorizacion(
+            byte[] contenido, int id, String documento) throws Exception {
+        if (id <= 0 || documento == null || documento.trim().length() == 0
+                || documento.length() > 60 || documento.matches(".*\\p{Cntrl}.*")) {
+            throw new Exception("No se pudo identificar la copia actual para autorizacion.");
+        }
+        ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper
+                .validarPdfParaCorreoAutorizacion(contenido, documento);
+        PdfReader lector = new PdfReader(contenido);
+        PdfStamper sello = null;
+        try {
+            for (int pagina = 1; pagina <= lector.getNumberOfPages(); pagina++) {
+                if (lector.getPageRotation(pagina) != 0) {
+                    throw new Exception("La copia actual contiene una rotacion de pagina no compatible.");
+                }
+            }
+            ByteArrayOutputStream salida = new ByteArrayOutputStream();
+            sello = new PdfStamper(lector, salida);
+            sello.setRotateContents(false);
+            BaseFont fuente = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, false);
+            String titulo = "COPIA ACTUAL - REQUERIMIENTO DE COMPRA NRO. " + id + " - " + documento.trim();
+            String fecha = "Generada: " + new SimpleDateFormat("dd/MM/yyyy HH:mm:ss Z").format(new Date())
+                    + " - Refleja datos vigentes; no acredita un envio historico.";
+            for (int pagina = 1; pagina <= lector.getNumberOfPages(); pagina++) {
+                Rectangle original = lector.getPageSize(pagina);
+                float superior = original.getTop();
+                PdfArray margen = new PdfArray(new float[] {original.getLeft(), original.getBottom(),
+                    original.getRight(), superior + 32.0f});
+                lector.getPageN(pagina).put(PdfName.MEDIABOX, margen);
+                lector.getPageN(pagina).put(PdfName.CROPBOX, margen);
+                PdfContentByte paginaSello = sello.getOverContent(pagina);
+                paginaSello.beginText();
+                paginaSello.setFontAndSize(fuente, 8.0f);
+                paginaSello.showTextAligned(0, titulo, original.getLeft() + 12.0f, superior + 19.0f, 0.0f);
+                paginaSello.setFontAndSize(fuente, 7.0f);
+                paginaSello.showTextAligned(0, fecha, original.getLeft() + 12.0f, superior + 8.0f, 0.0f);
+                paginaSello.endText();
+            }
+            sello.close();
+            sello = null;
+            byte[] resultado = salida.toByteArray();
+            ar.com.ospim.compras.requerimientos.documentos.DocumentoLibraryComprasHelper
+                    .validarPdfParaCorreoAutorizacion(resultado, documento + " copia actual");
+            return resultado;
+        } finally {
+            if (sello != null) {
+                try { sello.close(); }
+                catch (Exception e) { _log.warn("No se pudo cerrar el sello de la copia actual.", e); }
+            }
+            lector.close();
+        }
+    }
 	public byte[] crearRequerimientoCompraComoAdjunto(
 			int idRequerimiento) throws Exception {
 
@@ -1554,9 +1614,9 @@ public class PdfServlet extends HttpServlet {
 
             JasperPrint print = null;
 
-            int ancho = ids.size() > 4 ? 1151 : 802;
+            int ancho = 802;
             int inicioProveedores = 252 * ancho / 802;
-            int bloquesPorHoja = (ancho - inicioProveedores) / 110;
+            int bloquesPorHoja = 4;
 
             // Conserva un ancho minimo legible; los proveedores restantes
             // continuan en otra hoja.
@@ -1585,7 +1645,7 @@ public class PdfServlet extends HttpServlet {
                 in = null;
 
                 diseno.setPageWidth(ancho + 40);
-                diseno.setPageHeight(ids.size() > 4 ? 842 : 595);
+                diseno.setPageHeight(595);
                 diseno.setColumnWidth(ancho);
 
                 JRBand[] bandas = {

@@ -9,6 +9,8 @@ import ar.com.ospim.compras.requerimientos.beans.GuardadoCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.NotificacionCotizacionResultado;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompra;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraDetalle;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativa;
+import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraComparativaDetalle;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraPresupuesto;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraReclamoPrestacional;
 import ar.com.ospim.compras.requerimientos.beans.RequerimientoCompraSector;
@@ -22,6 +24,7 @@ import ar.com.ospim.compras.requerimientos.documentos.GestorOrdenMedicaDocumento
 import ar.com.ospim.compras.requerimientos.documentos.OrdenMedicaValidada;
 import ar.com.ospim.compras.requerimientos.service.BusquedaRequerimientoCompraServiceUtil;
 import ar.com.ospim.compras.requerimientos.service.EditarRequerimientoCompraServiceUtil;
+import ar.com.ospim.compras.requerimientos.service.RequerimientoCompraComparativaServiceUtil;
 import ar.com.ospim.farmacia.beans.Medicamento;
 import ar.com.ospim.farmacia.services.BusquedaMedicamentoServiceUtil;
 import ar.com.ospim.global.WebKeysGlobal;
@@ -1649,6 +1652,71 @@ public class EditarRequerimientoCompraHelper {
                             + usuario
             );
         }
+    }
+
+    /** Proyeccion exclusiva de pantalla; nunca sustituye los detalles compartidos.
+     * A COTIZAR conserva su vista: la comparativa aun puede editarse en ese estado.
+     * null significa que no hay una adjudicacion estructurada cerrada utilizable.
+     */
+    public Map<Integer, RequerimientoCompraDetalle> obtenerDetalleAdjudicadoParaVista(
+            RequerimientoCompra requerimiento) throws Exception {
+        if (requerimiento == null || requerimiento.getIdRequerimientoCompra() <= 0
+                || !requerimiento.isActivo() || requerimiento.esSectorSinCotizacionPrestador()
+                || !(requerimiento.isCotizado() || requerimiento.isReclamoRP()
+                    || WebKeysCompras.esParaAutorizar(requerimiento.getEstado())
+                    || WebKeysCompras.esAutorizado(requerimiento.getEstado())
+                    || requerimiento.isOrdenCompra())
+                || !requerimiento.tienePrestadorAdjudicado()) {
+            return null;
+        }
+        new RequerimientoCompraComparativaHelper().validarPrestaciones(requerimiento.getDetalles());
+        List<RequerimientoCompraComparativa> comparativas = obtenerComparativaParaDetalleAdjudicado(
+                requerimiento.getIdRequerimientoCompra(), requerimiento.getIdPrestadorAdjudicadoInt());
+        if (comparativas == null) throw errorUsuario("No se pudo recuperar la comparativa adjudicada.");
+        if (comparativas.isEmpty()) return null;
+        if (comparativas.size() != 1) throw errorUsuario("La comparativa adjudicada no es unica.");
+        RequerimientoCompraComparativa comparativa = comparativas.get(0);
+        if (comparativa == null) throw errorUsuario("No se pudo recuperar la comparativa adjudicada.");
+        if (comparativa.getIdComparativa() <= 0) return null;
+        if (comparativa.getIdRequerimiento() != requerimiento.getIdRequerimientoCompra()
+                || comparativa.getIdPrestador() != requerimiento.getIdPrestadorAdjudicadoInt()
+                || comparativa.getDetalles() == null) {
+            throw errorUsuario("La comparativa no corresponde a la adjudicacion guardada.");
+        }
+        if (comparativa.getDetalles().isEmpty()) return null;
+        Map<Integer, RequerimientoCompraComparativaDetalle> cotizados =
+                new HashMap<Integer, RequerimientoCompraComparativaDetalle>();
+        for (RequerimientoCompraComparativaDetalle cotizado : comparativa.getDetalles()) {
+            if (cotizado == null || cotizado.getIdDetalle() <= 0 || cotizado.getIdPrestacion() <= 0
+                    || cotizado.getCantidad() == null || cotizado.getCantidad().intValue() < 0
+                    || cotizado.getImporteUnitario() == null || cotizado.getImporteUnitario().signum() < 0
+                    || cotizados.put(Integer.valueOf(cotizado.getIdPrestacion()), cotizado) != null) {
+                throw errorUsuario("La comparativa adjudicada contiene detalles incompletos o repetidos.");
+            }
+        }
+        Map<Integer, RequerimientoCompraDetalle> vista = new HashMap<Integer, RequerimientoCompraDetalle>();
+        for (RequerimientoCompraDetalle original : requerimiento.getDetalles()) {
+            if (original.getIdInt() <= 0
+                    || original.getIdRequerimientoCompra() != requerimiento.getIdRequerimientoCompra()
+                    || vista.containsKey(original.getId())
+                    || original.getIdPrestadorInt() != requerimiento.getIdPrestadorAdjudicadoInt()) {
+                throw errorUsuario("Los detalles no corresponden a la adjudicacion guardada.");
+            }
+            RequerimientoCompraComparativaDetalle cotizado = cotizados.get(original.getIdPrestacion());
+            RequerimientoCompraDetalle visible = new RequerimientoCompraDetalle(original.getId());
+            visible.setIdRequerimientoCompra(requerimiento.getIdRequerimientoCompra());
+            visible.setCantidad(cotizado != null ? cotizado.getCantidad() : Integer.valueOf(0));
+            visible.setPrecioUnitarioEstimado(cotizado != null ? cotizado.getImporteUnitario() : BigDecimal.ZERO);
+            visible.setPrecioTotalEstimado(WebKeysCompras.calcularPrecioTotal(
+                    visible.getCantidad(), visible.getPrecioUnitarioEstimado()));
+            vista.put(original.getId(), visible);
+        }
+        return vista;
+    }
+
+    protected List<RequerimientoCompraComparativa> obtenerComparativaParaDetalleAdjudicado(
+            int idRequerimiento, int idPrestador) throws Exception {
+        return RequerimientoCompraComparativaServiceUtil.listar(idRequerimiento, idPrestador);
     }
 
     public GuardadoCotizacionResultado guardarAvanceCotizacion(

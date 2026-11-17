@@ -496,6 +496,30 @@ public class EditarRequerimientoCompraServiceUtil {
             return delegate.actualizarEmpresaDocumento(idRequerimiento, idDocumento, nombre, cuit, sucursal, usuario);
         }
 
+        public String getHuellaPreparacionAutorizacion(int id) throws Exception {
+            return delegate.getHuellaPreparacionAutorizacion(id);
+        }
+
+        public int insertarReservaCorreoAutorizacion(int id, String token,
+                String usuario) throws Exception {
+            return delegate.insertarReservaCorreoAutorizacion(id, token, usuario);
+        }
+
+        public java.util.Map<String,Object> obtenerReservaCorreoAutorizacion(int id)
+                throws Exception {
+            return delegate.obtenerReservaCorreoAutorizacion(id);
+        }
+
+        public int finalizarCorreoAutorizacion(int id, String token, String estado)
+                throws Exception {
+            return delegate.finalizarCorreoAutorizacion(id, token, estado);
+        }
+
+        public int finalizarCorreoAutorizacion(int id, String token,
+                String estado, String resultado) throws Exception {
+            return delegate.finalizarCorreoAutorizacion(id, token, estado, resultado);
+        }
+
         public void commit() throws Exception {
             delegate.commit();
         }

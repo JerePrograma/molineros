@@ -7,6 +7,7 @@ import ar.com.ospim.global.beans.Empresa;
 
 import com.liferay.portal.kernel.util.GetterUtil;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -487,6 +488,24 @@ public class BusquedaRequerimientoCompraServiceUtil {
                         idRequerimientoCompra,
                         idPrestador
                 );
+    }
+
+    public static String getHuellaPreparacionAutorizacion(int id) throws Exception {
+        validarIdRequerimiento(id);
+        return getInstance().getHuellaPreparacionAutorizacion(id);
+    }
+
+    public static String getHuellaPreparacionAutorizacion(Connection con, int id) throws Exception {
+        validarIdRequerimiento(id);
+        return getInstance().getHuellaPreparacionAutorizacion(con, id);
+    }
+
+    public static Map<String, Object> getContextoPedidoAutorizacionAdjudicado(
+            int idRequerimientoCompra) throws Exception {
+        validarIdRequerimiento(idRequerimientoCompra);
+        int idPrestador = resolverIdPrestadorAdjudicado(idRequerimientoCompra);
+        return getInstance().getContextoPedidoAutorizacion(
+                idRequerimientoCompra, idPrestador);
     }
 
     private static int resolverIdPrestadorAdjudicado(
